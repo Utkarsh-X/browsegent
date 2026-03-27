@@ -1,0 +1,27 @@
+{
+  "name": "browsegent",
+  "version": "1.0.0",
+  "description": "BrowseGent — Browser-native agentic DOM parser",
+  "main": "index.js",
+  "scripts": {
+    "extension:build": "tsx extension/build.ts",
+    "eval": "tsx tests/eval/run_eval.ts",
+    "comparison": "tsx tests/eval/run_comparison.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "esbuild": "^0.27.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "js-tiktoken": "^1.0.21",
+    "openai": "^6.32.0",
+    "playwright": "^1.58.2"
+  }
+}
