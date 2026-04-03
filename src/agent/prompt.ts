@@ -2,6 +2,10 @@
 // The JSON schema is embedded directly (browser-use pattern) so the model
 // sees the exact field names it must use.
 
+import { buildToolSignatureBlock } from '../executor/catalog';
+
+const TOOL_SIGNATURE_BLOCK = buildToolSignatureBlock();
+
 export const SYSTEM_PROMPT = `You are a browser automation agent operating on a structured page graph.
 
 Graph schema (compact JSON):
@@ -22,13 +26,7 @@ Decision rules (follow in order, stop at first match):
 6. If impossible → {"escalate":"dead_end","reason":"<why>"}
 
 Tool signatures for plan steps:
-{"tool":"click","sel":"<selector>"}
-{"tool":"type","sel":"<selector>","text":"<value>"}
-{"tool":"scroll","direction":"down"}
-{"tool":"wait","pattern":"<regex>","timeout":<ms>}
-{"tool":"get","sel":"<selector>"}
-{"tool":"close","sel":"<selector>"}
-{"tool":"select","sel":"<selector>","value":"<option>"}
+${TOOL_SIGNATURE_BLOCK}
 
 Rules:
 - Return ONLY valid JSON. No prose. No markdown. No explanation outside JSON.
@@ -69,7 +67,7 @@ When del[] is empty after your action:
 <json_schema>
 Your response MUST be a JSON object with these exact field names:
 {
-  "plan": [{"tool": "click|type|scroll|wait|get|close|select", "sel": "selector", "text": "optional", "value": "optional", "direction": "optional"}],
+  "plan": [{"tool": "<see tool signatures above>"}],
   "done": true,
   "val": "the answer string",
   "escalate": "user_needed|captcha|dead_end",
@@ -89,10 +87,18 @@ export function buildUserMessage(ctx: {
   graphJson: string;
   reason: string;
   stepCount: number;
+  contextWarnings?: string[];
 }): string {
+  const warningBlock = ctx.contextWarnings && ctx.contextWarnings.length > 0
+    ? `Warnings:
+${ctx.contextWarnings.map(warning => `- ${warning}`).join('\n')}
+
+`
+    : '';
+
   return `Goal: ${ctx.goal}
 
-State: ${ctx.graphJson}
+${warningBlock}State: ${ctx.graphJson}
 
 Step: ${ctx.stepCount}
 Reason escalated: ${ctx.reason}

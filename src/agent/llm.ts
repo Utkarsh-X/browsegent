@@ -5,6 +5,7 @@
 import { logger } from '../logger';
 import { countTokens } from '../brain1/serializer';
 import type { ActionHistoryEntry } from '../graph/serializer';
+import type { LLMPlanStep } from '../executor/types';
 
 import { robustJsonParse } from './parser';
 import { validatePlan } from './validator';
@@ -14,7 +15,7 @@ import { SYSTEM_PROMPT, EXTRACT_SYSTEM_PROMPT, buildUserMessage } from './prompt
 // ── Types (re-exported for backward compatibility) ──────────────────────────
 
 export interface LLMPlan {
-  plan?: PlanStep[];
+  plan?: LLMPlanStep[];
   done?: boolean;
   val?: string;
   escalate?: 'user_needed' | 'captcha' | 'dead_end';
@@ -22,15 +23,7 @@ export interface LLMPlan {
   confidence?: 'high' | 'medium' | 'low';
 }
 
-export interface PlanStep {
-  tool: 'click' | 'type' | 'scroll' | 'wait' | 'get' | 'close' | 'select';
-  sel?: string;
-  text?: string;
-  value?: string;
-  pattern?: string;
-  timeout?: number;
-  direction?: 'down' | 'up';
-}
+export type PlanStep = LLMPlanStep;
 
 export interface EscalationContext {
   goal: string;
@@ -38,6 +31,7 @@ export interface EscalationContext {
   actionHistory: ActionHistoryEntry[];
   reason: string;
   stepCount: number;
+  contextWarnings?: string[];
 }
 
 export interface LLMCallMetrics {

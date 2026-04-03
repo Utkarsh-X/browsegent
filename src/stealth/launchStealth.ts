@@ -1,6 +1,7 @@
 import { chromium, type BrowserContext } from 'playwright';
 import path from 'path';
 import fs from 'fs';
+import { getRuntimeConfig } from '../config/runtime';
 
 const EXTENSION_PATH = path.resolve('extension');
 const PHASE6_PROFILE_DIR = path.resolve('extension/.chrome_profile_phase6');
@@ -15,7 +16,8 @@ export interface StealthLaunchOptions {
 }
 
 export async function launchStealth(opts: StealthLaunchOptions = {}): Promise<BrowserContext> {
-  const headless = opts.headless ?? (process.env['PHASE6_HEADLESS'] !== 'false');
+  const runtime = getRuntimeConfig();
+  const headless = opts.headless ?? runtime.browser.headless;
   const profileDir = opts.profileDir ?? PHASE6_PROFILE_DIR;
   const { width, height } = opts.windowSize ?? { width: 1366, height: 768 };
 
@@ -25,7 +27,7 @@ export async function launchStealth(opts: StealthLaunchOptions = {}): Promise<Br
 
   // Use Playwright's bundled Chromium by default (supports --load-extension properly)
   // System Chrome can be set via CHROME_PATH if developer mode is enabled manually
-  const chromePath = process.env['CHROME_PATH'] || undefined;
+  const chromePath = runtime.browser.chromePath;
   console.log(`  Chrome: ${chromePath ?? 'Playwright bundled Chromium'}`);
   console.log(`  Mode:   ${headless ? 'headless (--headless=new)' : 'headful'}`);
   console.log(`  Profile: ${profileDir}`);
@@ -99,26 +101,4 @@ export async function warmupProfile(context: BrowserContext): Promise<void> {
   }
 
   console.log('  Warm-up complete\n');
-}
-
-// ── Stealth gate check ────────────────────────────────────────────────────────
-const STEALTH_CHECK_LOG = path.resolve('logs/stealth_check.json');
-const STEALTH_GATE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
-
-export function stealthGatePassed(): boolean {
-  if (process.env['PHASE6_DEBUG'] === 'true') return true;
-  try {
-    const data = JSON.parse(fs.readFileSync(STEALTH_CHECK_LOG, 'utf-8'));
-    return Date.now() - data.timestamp < STEALTH_GATE_TTL_MS && data.passed === true;
-  } catch {
-    return false;
-  }
-}
-
-export function recordStealthGateResult(passed: boolean, redFlags: number): void {
-  fs.writeFileSync(STEALTH_CHECK_LOG, JSON.stringify({
-    timestamp: Date.now(),
-    passed,
-    redFlags,
-  }));
 }

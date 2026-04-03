@@ -2,6 +2,7 @@ import { config } from 'dotenv';
 config();
 
 import { BrowseGent } from '../../src/BrowseGent';
+import { getRuntimeConfig, resolveLlmSelection } from '../../src/config/runtime';
 import fs from 'fs';
 
 interface EvalTask {
@@ -140,6 +141,20 @@ interface TaskResult {
     causeBreakdown: Record<string, number>;
     estimatedCostUsd: number;
     model: string;
+    progress: {
+      assessedActions: number;
+      strongActions: number;
+      weakActions: number;
+      noEffectActions: number;
+      noProgressAborts: number;
+      decisionCounts: {
+        accept: number;
+        watch: number;
+        warn: number;
+        abort: number;
+      };
+      signalCounts: Record<string, number>;
+    };
   };
 }
 
@@ -167,9 +182,11 @@ interface EvalReport {
 // ── Runner ─────────────────────────────────────────────────────────────────────
 
 async function runEval(modelOverride?: string, taskFilter?: string | null): Promise<void> {
-  const model = modelOverride ?? process.env['EVAL_MODEL'] ?? 'gemini-2.5-flash';
-  const headless = process.env['EVAL_HEADLESS'] !== 'false';
-  const warmup = process.env['EVAL_WARMUP'] !== 'false';
+  const runtime = getRuntimeConfig();
+  const llmSelection = resolveLlmSelection(modelOverride);
+  const model = llmSelection.modelId;
+  const headless = runtime.eval.headless;
+  const warmup = runtime.eval.warmup;
 
   // Per-run folder
   const runId = `${Date.now()}_${model.replace(/[^a-z0-9]/gi, '_')}`;
@@ -191,6 +208,7 @@ async function runEval(modelOverride?: string, taskFilter?: string | null): Prom
   console.log('║  BrowseGent — Global Evaluation Suite         ║');
   console.log('╚══════════════════════════════════════════════╝');
   console.log(`  Model:    ${model}`);
+  console.log(`  Guards:   ${runtime.agent.enforceProgressGuards ? 'enforced' : 'telemetry-only'}`);
   console.log(`  Tasks:    ${tasksToRun.length}${taskFilter ? ` (filtered: ${taskFilter})` : ''}`);
   console.log(`  RunID:    ${runId}`);
   console.log(`  Headless: ${headless}`);
@@ -220,6 +238,7 @@ async function runEval(modelOverride?: string, taskFilter?: string | null): Prom
       console.log(`  → Tokens: ${result.metrics.snapshotTokens} graph | ${result.metrics.inputTokens}in ${result.metrics.outputTokens}out LLM`);
       console.log(`  → Time: ${result.metrics.totalTimeMs}ms | Cost: $${result.metrics.estimatedCostUsd.toFixed(6)}`);
       console.log(`  → Attribution: ${(result.metrics.attributionRate * 100).toFixed(0)}% ${JSON.stringify(result.metrics.causeBreakdown)}`);
+      console.log(`  → Progress: ${result.metrics.progress.strongActions} strong | ${result.metrics.progress.weakActions} weak | ${result.metrics.progress.noEffectActions} none | aborts ${result.metrics.progress.noProgressAborts}`);
 
       results.push({
         taskId: task.id, category: task.category, url: task.url, goal: task.goal,
@@ -232,16 +251,17 @@ async function runEval(modelOverride?: string, taskFilter?: string | null): Prom
           totalDOMNodes: result.metrics.totalDOMNodes, snapshotTokens: result.metrics.snapshotTokens,
           attributionRate: result.metrics.attributionRate, causeBreakdown: result.metrics.causeBreakdown,
           estimatedCostUsd: result.metrics.estimatedCostUsd, model,
+          progress: result.metrics.progress,
         },
       });
 
     } catch (err) {
-      const errStr = String(err);
+        const errStr = String(err);
 
       // Quota error: save partial results and stop
       if (errStr.includes('API_QUOTA_EXCEEDED') || errStr.includes('429') || errStr.includes('RESOURCE_EXHAUSTED')) {
         console.error(`\n  ❌ API QUOTA EXCEEDED on task ${task.id}`);
-        console.error(`  Switch to next GEMINI_API_KEY in .env and re-run with: --task ${task.id}`);
+          console.error(`  Switch the active provider key in .env and re-run with: --task ${task.id}`);
         console.error(`  Partial results saved to ${runDir}`);
         // Save partial results before exiting
         await bg.close();
@@ -259,6 +279,15 @@ async function runEval(modelOverride?: string, taskFilter?: string | null): Prom
           inputTokens: 0, outputTokens: 0, llmDurationMs: 0, totalSteps: 0, totalTimeMs: 0,
           snapshotNodes: 0, totalDOMNodes: 0, snapshotTokens: 0,
           attributionRate: 0, causeBreakdown: {}, estimatedCostUsd: 0, model,
+          progress: {
+            assessedActions: 0,
+            strongActions: 0,
+            weakActions: 0,
+            noEffectActions: 0,
+            noProgressAborts: 0,
+            decisionCounts: { accept: 0, watch: 0, warn: 0, abort: 0 },
+            signalCounts: {},
+          },
         },
       });
     }

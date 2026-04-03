@@ -1,14 +1,35 @@
 // Graph Serializer — compact LLM-first schema
 import { logger } from '../logger';
 import { countTokens } from '../brain1/serializer';
+import { getBrain1NodePriority } from '../brain1/scoring';
+import type { ActionEffectSummary, ActionEffectStrength } from '../executor/types';
 import type { SemanticGraph } from './types';
 import type { CausalChain } from '../brain2/types';
 
 export interface ActionHistoryEntry {
   action: string;
   selector?: string;
-  result: 'ok' | 'timeout' | 'error' | 'goal_met' | 'plan_stale';
+  result:
+    | 'ok'
+    | 'timeout'
+    | 'error'
+    | 'goal_met'
+    | 'plan_stale'
+    | 'not_found'
+    | 'not_interactable'
+    | 'blocked'
+    | 'invalid_action'
+    | 'unsupported_runtime'
+    | 'execution_error'
+    | 'no_effect'
+    | 'no_progress';
   timestamp: number;
+  graphFingerprint?: string;
+  value?: string;
+  effect?: ActionEffectSummary;
+  progressStrength?: ActionEffectStrength;
+  progressDecision?: 'accept' | 'watch' | 'warn' | 'abort';
+  repeatCount?: number;
 }
 
 export interface SerializedGraph {
@@ -28,13 +49,15 @@ export function serializeGraph(
   actionHistory: ActionHistoryEntry[] = []
 ): { serialized: SerializedGraph; tokenCount: number } {
   try {
-    const dataNodes = graph.snapshot
+    const rankedSnapshot = [...graph.snapshot].sort((left, right) => getBrain1NodePriority(right) - getBrain1NodePriority(left));
+
+    const dataNodes = rankedSnapshot
       .filter(n => n.type === 'data' || n.type === 'input')
       .slice(0, 30)
       .map(n => [
         n.type[0]!,
         n.value.slice(0, 200),
-        n.sel,
+        (n as { sel?: string; selector?: string }).sel ?? (n as { selector?: string }).selector ?? '',
         '',
       ] as [string, string, string, string]);
 
@@ -46,12 +69,12 @@ export function serializeGraph(
       }
     }
 
-    const triggers = graph.snapshot
+    const triggers = rankedSnapshot
       .filter(n => n.type === 'trigger')
       .slice(0, 10)
       .map(n => [
         n.value.slice(0, 40),
-        n.sel,
+        (n as { sel?: string; selector?: string }).sel ?? (n as { selector?: string }).selector ?? '',
         null,
       ] as [string, string, string | null]);
 

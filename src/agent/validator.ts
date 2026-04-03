@@ -2,9 +2,12 @@
 // "Is this output actually usable?" — not just "did it parse?"
 // Returns specific error messages for targeted retry feedback.
 
-const VALID_TOOLS = new Set(['click', 'type', 'scroll', 'wait', 'get', 'close', 'select']);
+import { ACTION_CATALOG, getRequiredExternalFields, getValidActionKinds } from '../executor/catalog';
+import type { ActionKind } from '../executor/types';
+
+const VALID_TOOLS = new Set(getValidActionKinds());
 const VALID_ESCALATIONS = new Set(['user_needed', 'captcha', 'dead_end']);
-const TOOLS_REQUIRING_SEL = new Set(['click', 'type', 'get', 'close', 'select']);
+const VALID_CONFIDENCE = new Set(['high', 'medium', 'low']);
 
 export interface ValidationResult {
   valid: boolean;
@@ -44,6 +47,12 @@ export function validatePlan(plan: Record<string, unknown>): ValidationResult {
     }
   }
 
+  if (plan['confidence'] !== undefined) {
+    if (typeof plan['confidence'] !== 'string' || !VALID_CONFIDENCE.has(plan['confidence'] as string)) {
+      errors.push(`"confidence" must be one of: ${[...VALID_CONFIDENCE].join(', ')}`);
+    }
+  }
+
   // Validate plan steps
   if (hasPlan) {
     const steps = plan['plan'] as Record<string, unknown>[];
@@ -61,20 +70,37 @@ export function validatePlan(plan: Record<string, unknown>): ValidationResult {
       }
 
       // Tool must be known
-      if (typeof step['tool'] === 'string' && !VALID_TOOLS.has(step['tool'])) {
+      if (typeof step['tool'] === 'string' && !VALID_TOOLS.has(step['tool'] as ActionKind)) {
         errors.push(
           `Step ${i + 1} has unknown tool "${step['tool']}"; use: ${[...VALID_TOOLS].join(', ')}`
         );
+        continue;
       }
 
-      // Tools that need sel must have sel
-      if (typeof step['tool'] === 'string' && TOOLS_REQUIRING_SEL.has(step['tool']) && !step['sel']) {
-        errors.push(`Step ${i + 1} uses "${step['tool']}" but "sel" (selector) is missing`);
+      if (typeof step['tool'] !== 'string') continue;
+      const tool = step['tool'] as ActionKind;
+
+      for (const fieldName of getRequiredExternalFields(tool)) {
+        if (step[fieldName] === undefined || step[fieldName] === null || step[fieldName] === '') {
+          errors.push(`Step ${i + 1} uses "${tool}" but "${fieldName}" is missing`);
+        }
       }
 
-      // type tool needs text
-      if (step['tool'] === 'type' && !step['text']) {
-        errors.push(`Step ${i + 1} uses "type" but "text" (value to type) is missing`);
+      const entry = ACTION_CATALOG[tool];
+      for (const field of entry.fields) {
+        const value = step[field.name];
+        if (value === undefined) continue;
+        if (field.type === 'string' && typeof value !== 'string') {
+          errors.push(`Step ${i + 1} field "${field.name}" must be a string`);
+        }
+        if (field.type === 'number' && typeof value !== 'number') {
+          errors.push(`Step ${i + 1} field "${field.name}" must be a number`);
+        }
+        if (field.type === 'enum') {
+          if (typeof value !== 'string' || !(field.enumValues ?? []).includes(value)) {
+            errors.push(`Step ${i + 1} field "${field.name}" must be one of: ${(field.enumValues ?? []).join(', ')}`);
+          }
+        }
       }
     }
   }

@@ -2,6 +2,7 @@ import { config } from 'dotenv';
 config();
 
 import { BrowseGent } from '../../src/BrowseGent';
+import { getRuntimeConfig, resolveLlmSelection } from '../../src/config/runtime';
 import { NEW_COMPARISON_TASKS, type ComparisonTask } from './new_comparison_tasks';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -26,6 +27,20 @@ interface QueryResult {
   brain1WalkMs: number;
   totalTimeMs: number;
   estimatedCostUsd: number;
+  progress: {
+    assessedActions: number;
+    strongActions: number;
+    weakActions: number;
+    noEffectActions: number;
+    noProgressAborts: number;
+    decisionCounts: {
+      accept: number;
+      watch: number;
+      warn: number;
+      abort: number;
+    };
+    signalCounts: Record<string, number>;
+  };
 }
 
 interface ComparisonRun {
@@ -33,6 +48,7 @@ interface ComparisonRun {
   system: string;
   model: string;
   timestamp: string;
+  progressGuardsEnforced: boolean;
   totalQueries: number;
   passed: number;
   failed: number;
@@ -40,6 +56,19 @@ interface ComparisonRun {
   totalOutputTokens: number;
   totalCostUsd: number;
   avgTimeMs: number;
+  progressTotals: {
+    assessedActions: number;
+    strongActions: number;
+    weakActions: number;
+    noEffectActions: number;
+    noProgressAborts: number;
+    decisionCounts: {
+      accept: number;
+      watch: number;
+      warn: number;
+      abort: number;
+    };
+  };
   results: QueryResult[];
 }
 
@@ -50,16 +79,21 @@ const runName = process.argv[2] ?? `browsegent_${new Date().toISOString().slice(
 const logDir = path.join(__dirname, '..', '..', 'logs', 'comparison');
 
 async function runComparison(): Promise<void> {
+  const runtime = getRuntimeConfig();
+  const llmSelection = resolveLlmSelection();
+
   console.log('\n╔══════════════════════════════════════════════╗');
   console.log('║  BrowseGent — Comparison Runner               ║');
   console.log('╚══════════════════════════════════════════════╝');
   console.log(`  Run:    ${runName}`);
-  console.log(`  Model:  ${process.env['BROWSEGENT_MODEL'] ?? 'default'}`);
+  console.log(`  Model:  ${llmSelection.modelId}`);
+  console.log(`  Guards: ${runtime.agent.enforceProgressGuards ? 'enforced' : 'telemetry-only'}`);
   console.log(`  Tasks:  ${NEW_COMPARISON_TASKS.length}\n`);
 
   const bg = new BrowseGent({
-    headless: process.env['EVAL_HEADLESS'] !== 'false',
-    warmup: false,
+    model: llmSelection.modelId,
+    headless: runtime.eval.headless,
+    warmup: runtime.eval.warmup,
   });
 
   await bg.init();
@@ -70,6 +104,19 @@ async function runComparison(): Promise<void> {
   let totalCost = 0;
   let totalTime = 0;
   let passed = 0;
+  const progressTotals = {
+    assessedActions: 0,
+    strongActions: 0,
+    weakActions: 0,
+    noEffectActions: 0,
+    noProgressAborts: 0,
+    decisionCounts: {
+      accept: 0,
+      watch: 0,
+      warn: 0,
+      abort: 0,
+    },
+  };
 
   for (const task of NEW_COMPARISON_TASKS) {
     console.log(`\n── ${task.id}: ${task.category} ──────────────────────`);
@@ -100,6 +147,7 @@ async function runComparison(): Promise<void> {
         brain1WalkMs: result.metrics.brain1WalkMs,
         totalTimeMs: duration,
         estimatedCostUsd: result.metrics.estimatedCostUsd,
+        progress: result.metrics.progress,
       };
 
       results.push(qr);
@@ -108,9 +156,19 @@ async function runComparison(): Promise<void> {
       totalOutput += result.metrics.outputTokens;
       totalCost += result.metrics.estimatedCostUsd;
       totalTime += duration;
+      progressTotals.assessedActions += result.metrics.progress.assessedActions;
+      progressTotals.strongActions += result.metrics.progress.strongActions;
+      progressTotals.weakActions += result.metrics.progress.weakActions;
+      progressTotals.noEffectActions += result.metrics.progress.noEffectActions;
+      progressTotals.noProgressAborts += result.metrics.progress.noProgressAborts;
+      progressTotals.decisionCounts.accept += result.metrics.progress.decisionCounts.accept;
+      progressTotals.decisionCounts.watch += result.metrics.progress.decisionCounts.watch;
+      progressTotals.decisionCounts.warn += result.metrics.progress.decisionCounts.warn;
+      progressTotals.decisionCounts.abort += result.metrics.progress.decisionCounts.abort;
 
       console.log(`  ${result.success ? '✅' : '❌'} ${result.value?.slice(0, 80) ?? result.failureReason}`);
       console.log(`  LLM: ${result.metrics.llmCallCount} calls | ${result.metrics.inputTokens} in | ${result.metrics.outputTokens} out | ${duration}ms`);
+      console.log(`  Progress: ${result.metrics.progress.strongActions} strong | ${result.metrics.progress.weakActions} weak | ${result.metrics.progress.noEffectActions} none | aborts ${result.metrics.progress.noProgressAborts}`);
 
     } catch (err) {
       const duration = Date.now() - t0;
@@ -121,6 +179,15 @@ async function runComparison(): Promise<void> {
         llmCalls: 0, llmReasons: [], inputTokens: 0, outputTokens: 0,
         graphTokens: 0, snapshotNodes: 0, totalDOMNodes: 0,
         brain1WalkMs: 0, totalTimeMs: duration, estimatedCostUsd: 0,
+        progress: {
+          assessedActions: 0,
+          strongActions: 0,
+          weakActions: 0,
+          noEffectActions: 0,
+          noProgressAborts: 0,
+          decisionCounts: { accept: 0, watch: 0, warn: 0, abort: 0 },
+          signalCounts: {},
+        },
       });
       totalTime += duration;
     }
@@ -133,8 +200,9 @@ async function runComparison(): Promise<void> {
   const run: ComparisonRun = {
     runName,
     system: 'BrowseGent',
-    model: process.env['BROWSEGENT_MODEL'] ?? 'unknown',
+    model: llmSelection.modelId,
     timestamp: new Date().toISOString(),
+    progressGuardsEnforced: runtime.agent.enforceProgressGuards,
     totalQueries: NEW_COMPARISON_TASKS.length,
     passed,
     failed: NEW_COMPARISON_TASKS.length - passed,
@@ -142,6 +210,7 @@ async function runComparison(): Promise<void> {
     totalOutputTokens: totalOutput,
     totalCostUsd: totalCost,
     avgTimeMs: Math.round(totalTime / NEW_COMPARISON_TASKS.length),
+    progressTotals,
     results,
   };
 
@@ -165,9 +234,12 @@ async function runComparison(): Promise<void> {
   console.log('  COMPARISON SUMMARY');
   console.log('══════════════════════════════════════════════');
   console.log(`  Pass rate:      ${passed}/${NEW_COMPARISON_TASKS.length}`);
+  console.log(`  Guards:         ${runtime.agent.enforceProgressGuards ? 'enforced' : 'telemetry-only'}`);
   console.log(`  Total tokens:   ${totalInput} in / ${totalOutput} out`);
   console.log(`  Total cost:     $${totalCost.toFixed(6)}`);
   console.log(`  Avg time:       ${run.avgTimeMs}ms`);
+  console.log(`  Progress:       ${progressTotals.assessedActions} assessed | ${progressTotals.strongActions} strong | ${progressTotals.weakActions} weak | ${progressTotals.noEffectActions} none`);
+  console.log(`  Decisions:      accept=${progressTotals.decisionCounts.accept} watch=${progressTotals.decisionCounts.watch} warn=${progressTotals.decisionCounts.warn} abort=${progressTotals.decisionCounts.abort}`);
   console.log(`  Results:        ${outFile}`);
   console.log('══════════════════════════════════════════════\n');
 
