@@ -3,6 +3,12 @@ import { AdapterError } from '../browserAdapter';
 import type { BrowserAdapter } from '../browserAdapter';
 import type { BrowserRuntimeState } from '../types';
 import { capturePageRuntimeState } from './runtimeState';
+import {
+  countElementsSummary,
+  findElementsSummary,
+  inspectRegionSummary,
+  searchPageText,
+} from './readTools';
 
 type DomActionResult<T = unknown> =
   | { ok: true; value?: T }
@@ -137,6 +143,26 @@ export class DomBrowserAdapter implements BrowserAdapter {
       }
       return { found: true, value: el.textContent?.trim() ?? '' };
     }, target);
+  }
+
+  async searchPage(pattern: string, scopeSelector?: string): Promise<string> {
+    const page = this.requirePage();
+    return searchPageText(page, pattern, scopeSelector);
+  }
+
+  async findElements(selector: string): Promise<string> {
+    const page = this.requirePage();
+    return findElementsSummary(page, selector);
+  }
+
+  async countElements(selector: string): Promise<string> {
+    const page = this.requirePage();
+    return countElementsSummary(page, selector);
+  }
+
+  async inspectRegion(selector: string): Promise<string> {
+    const page = this.requirePage();
+    return inspectRegionSummary(page, selector);
   }
 
   async selectOption(target: string, option: string): Promise<void> {

@@ -306,3 +306,119 @@ test('executePlan keeps telemetry but does not abort when progress guards are di
   assert.equal(result.actionHistory[result.actionHistory.length - 1]?.progressDecision, 'abort');
   assert.equal(result.actionHistory[result.actionHistory.length - 1]?.result, 'ok');
 });
+
+test('executePlan stops remaining plan steps after a real page change', async () => {
+  const graph = makeGraph('page-change');
+  const result = await executePlan(
+    [
+      { tool: 'click', sel: 'a[href="/next"]' },
+      { tool: 'scroll', direction: 'down' },
+    ],
+    'Navigate to the next page',
+    graph,
+    makeExecutor(action => successResult(action, {
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: action.kind !== 'get' && action.kind !== 'wait',
+        effect: {
+          stateChanged: true,
+          primarySignal: 'url_changed',
+          signals: ['url_changed'],
+          strength: 'strong',
+        },
+      },
+    })),
+    [],
+    { mutationWaitMs: 0 },
+  );
+
+  assert.equal(result.abortReason, 'page_changed');
+  assert.equal(result.stepsExecuted, 1);
+});
+
+test('executePlan stops repeated same-result search_page actions on the fourth observation', async () => {
+  const graph = makeGraph('search-repeat');
+  const graphFingerprint = fingerprintGraph(graph);
+  const existingHistory: ActionHistoryEntry[] = [
+    {
+      action: 'search_page',
+      selector: 'pattern:pricing',
+      result: 'ok',
+      timestamp: 1,
+      graphFingerprint,
+      value: 'Found 1 match for "pricing".',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+        targetValue: 'Found 1 match for "pricing".',
+      },
+    },
+    {
+      action: 'search_page',
+      selector: 'pattern:pricing',
+      result: 'ok',
+      timestamp: 2,
+      graphFingerprint,
+      value: 'Found 1 match for "pricing".',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+        targetValue: 'Found 1 match for "pricing".',
+      },
+    },
+    {
+      action: 'search_page',
+      selector: 'pattern:pricing',
+      result: 'ok',
+      timestamp: 3,
+      graphFingerprint,
+      value: 'Found 1 match for "pricing".',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+        targetValue: 'Found 1 match for "pricing".',
+      },
+    },
+  ];
+
+  const result = await executePlan(
+    [{ tool: 'search_page', pattern: 'pricing' }],
+    'Check whether pricing exists',
+    graph,
+    makeExecutor(action => successResult(action, {
+      value: 'Found 1 match for "pricing".',
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: false,
+        effect: {
+          stateChanged: false,
+          primarySignal: 'target_value_observed',
+          signals: ['target_value_observed'],
+          strength: 'weak',
+          targetValue: 'Found 1 match for "pricing".',
+        },
+      },
+    })),
+    existingHistory,
+    { mutationWaitMs: 0 },
+  );
+
+  assert.equal(result.abortReason, 'no_progress');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.result, 'no_progress');
+});

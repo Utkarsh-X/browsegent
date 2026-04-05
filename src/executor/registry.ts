@@ -1,7 +1,11 @@
 import type { ActionDefinition, ActionKind } from './types';
 import { createClickDefinition } from './definitions/click';
 import { createCloseDefinition } from './definitions/close';
+import { createCountElementsDefinition } from './definitions/countElements';
+import { createFindElementsDefinition } from './definitions/findElements';
 import { createGetDefinition } from './definitions/get';
+import { createInspectRegionDefinition } from './definitions/inspectRegion';
+import { createSearchPageDefinition } from './definitions/searchPage';
 import { createScrollDefinition } from './definitions/scroll';
 import { createSelectDefinition } from './definitions/select';
 import { createTypeDefinition } from './definitions/type';
@@ -31,6 +35,10 @@ export function createDefaultRegistry(): ActionRegistry {
     createScrollDefinition(),
     createWaitDefinition(),
     createGetDefinition(),
+    createSearchPageDefinition(),
+    createFindElementsDefinition(),
+    createCountElementsDefinition(),
+    createInspectRegionDefinition(),
     createCloseDefinition(),
     createSelectDefinition(),
   ].forEach(definition => registry.register(definition));

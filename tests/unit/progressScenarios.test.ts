@@ -95,7 +95,7 @@ test('deriveActionEffect grades weak versus strong progress conservatively', () 
   assert.ok(strong?.signals.includes('dom_changed'));
 });
 
-test('scenario: repeated weak anchor progress escalates to no_progress', async () => {
+test('scenario: repeated weak anchor progress now interrupts the stale mini-plan early', async () => {
   const graph = makeGraph('anchor-loop');
   const plan: LLMPlanStep[] = [
     { tool: 'click', sel: 'a[href="#section"]' },
@@ -128,11 +128,11 @@ test('scenario: repeated weak anchor progress escalates to no_progress', async (
     { mutationWaitMs: 0 },
   );
 
-  assert.equal(result.abortReason, 'no_progress');
-  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.progressDecision, 'abort');
+  assert.equal(result.abortReason, 'page_changed');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.progressDecision, 'watch');
 });
 
-test('scenario: strong progress resets a weak anchor streak', async () => {
+test('scenario: strong page progress still interrupts the stale mini-plan after acceptance', async () => {
   const graph = makeGraph('strong-reset');
   const graphFingerprint = fingerprintGraph(graph);
   const existingHistory: ActionHistoryEntry[] = [
@@ -179,7 +179,7 @@ test('scenario: strong progress resets a weak anchor streak', async () => {
     { mutationWaitMs: 0 },
   );
 
-  assert.equal(result.abortReason, 'max_steps');
+  assert.equal(result.abortReason, 'page_changed');
   assert.equal(result.actionHistory[result.actionHistory.length - 1]?.progressDecision, 'accept');
 });
 

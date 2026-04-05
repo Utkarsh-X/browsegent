@@ -40,7 +40,13 @@ export function deriveActionEffect(
     }
   }
 
-  if (action.kind === 'get') {
+  if (
+    action.kind === 'get'
+    || action.kind === 'search_page'
+    || action.kind === 'find_elements'
+    || action.kind === 'count_elements'
+    || action.kind === 'inspect_region'
+  ) {
     if (afterValue !== undefined) {
       signals.push('target_value_observed');
     }

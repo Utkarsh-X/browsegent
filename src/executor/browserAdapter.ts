@@ -9,6 +9,10 @@ export interface BrowserAdapter {
   type(target: string, input: string, opts?: { clear: boolean }): Promise<void>;
   scroll(direction: 'down' | 'up'): Promise<void>;
   readValue(target: string): Promise<{ found: boolean; value: string }>;
+  searchPage(pattern: string, scopeSelector?: string): Promise<string>;
+  findElements(selector: string): Promise<string>;
+  countElements(selector: string): Promise<string>;
+  inspectRegion(selector: string): Promise<string>;
   selectOption(target: string, option: string): Promise<void>;
   waitForPattern(pattern: string, timeoutMs: number): Promise<boolean>;
   sleep(timeoutMs: number): Promise<void>;

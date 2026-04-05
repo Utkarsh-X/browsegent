@@ -1,6 +1,17 @@
 import type { BrowserAdapter } from './browserAdapter';
 
-export type ActionKind = 'click' | 'type' | 'scroll' | 'wait' | 'get' | 'close' | 'select';
+export type ActionKind =
+  | 'click'
+  | 'type'
+  | 'scroll'
+  | 'wait'
+  | 'get'
+  | 'close'
+  | 'select'
+  | 'search_page'
+  | 'find_elements'
+  | 'count_elements'
+  | 'inspect_region';
 export type BrowserRuntime = 'dom' | 'playwright' | 'none';
 export type ActionOrigin = 'llm';
 export type ActionEffectSignal =

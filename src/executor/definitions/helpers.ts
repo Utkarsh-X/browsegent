@@ -123,3 +123,10 @@ export function requireTimeoutNumber<T extends Action>(action: T): ValidationRes
   }
   return { ok: true, value: action as T };
 }
+
+export function requirePattern<T extends Action>(action: T): ValidationResult<T & { pattern: string }> {
+  if (!action.pattern) {
+    return createValidationError(`${action.kind} requires pattern`) as ValidationResult<T & { pattern: string }>;
+  }
+  return { ok: true, value: action as T & { pattern: string } };
+}

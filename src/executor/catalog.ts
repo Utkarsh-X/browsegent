@@ -45,6 +45,33 @@ const ACTION_CATALOG_LIST: ActionCatalogEntry[] = [
     fields: [{ name: 'sel', required: true, type: 'string' }],
   },
   {
+    kind: 'search_page',
+    description: 'Search page text for a literal pattern. Optionally limit search to a selector scope.',
+    mutating: false,
+    fields: [
+      { name: 'pattern', required: true, type: 'string' },
+      { name: 'sel', required: false, type: 'string' },
+    ],
+  },
+  {
+    kind: 'find_elements',
+    description: 'Inspect elements matching a selector without changing the page.',
+    mutating: false,
+    fields: [{ name: 'sel', required: true, type: 'string' }],
+  },
+  {
+    kind: 'count_elements',
+    description: 'Count how many elements match a selector without changing the page.',
+    mutating: false,
+    fields: [{ name: 'sel', required: true, type: 'string' }],
+  },
+  {
+    kind: 'inspect_region',
+    description: 'Inspect a page region by selector and summarize notable nodes in it.',
+    mutating: false,
+    fields: [{ name: 'sel', required: true, type: 'string' }],
+  },
+  {
     kind: 'close',
     description: 'Close a modal or dismiss UI by clicking a selector.',
     mutating: true,

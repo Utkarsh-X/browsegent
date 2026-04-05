@@ -16,9 +16,10 @@ Graph schema (compact JSON):
 - tr: trigger nodes [[actionText,selector,blocks], ...]
 - del: recent deltas [[oldValue,newValue,cause], ...]
 - h: action history [[action,selector,result], ...]
+- r: recent read observations [[action,key,value], ...]
 
 Decision rules (follow in order, stop at first match):
-1. If goal value exists in d[] → {"done":true,"val":"<value>"}
+1. If goal value exists in d[] or r[] → {"done":true,"val":"<value>"}
 2. If trigger in tr[] blocks goal → {"plan":[{"tool":"click","sel":"<sel>"},...],"confidence":"high|medium|low"}
 3. If del[] has new value matching goal → {"done":true,"val":"<newValue>"}
 4. If stuck → {"plan":[...up to 5 steps...],"reason":"<why stuck>","confidence":"high|medium|low"}
@@ -34,10 +35,14 @@ Rules:
 - Keep plans under 5 steps.
 - plan[] must be an array even for single actions.
 - confidence field required when returning plan.
+- Prefer read-only tools before click when the task is lookup, count, verify, inspect, or compare.
+- Use search_page to verify whether text exists on the page.
+- Use find_elements or count_elements to inspect repeated structures before clicking.
+- Use inspect_region to understand a card, result block, or section without changing the page.
 
 DIRECT ANSWER RULE:
-If the answer to the goal is already present in the graph data nodes (d[]) or
-recent mutation deltas (del[]), return {"done": true, "val": "<answer>"}
+If the answer to the goal is already present in the graph data nodes (d[]),
+recent read observations (r[]), or recent mutation deltas (del[]), return {"done": true, "val": "<answer>"}
 immediately. Do not plan tool steps when the answer is visible in the graph.
 
 Examples of direct answers from graph data:
@@ -47,7 +52,7 @@ Examples of direct answers from graph data:
 - Goal: "List the top 3 stories" → d[] has story titles → {"done":true,"val":"1. Title A, 2. Title B, 3. Title C"}
 
 Only plan tool steps when the required information is genuinely NOT present
-in the current graph data and an interaction is needed to reveal it.
+in the current graph data or recent read observations and an interaction is needed to reveal it.
 
 USING MUTATION DATA (del[]):
 del[] contains recent page changes with their causes.

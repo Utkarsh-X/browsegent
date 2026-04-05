@@ -40,6 +40,7 @@ export interface SerializedGraph {
   tr: Array<[string, string, string | null]>;
   del: Array<[string, string, string]>;
   h: Array<[string, string, string]>;
+  r: Array<[string, string, string]>;
   err: string[];
 }
 
@@ -91,6 +92,15 @@ export function serializeGraph(
       .slice(-5)
       .map(h => [h.action, h.selector ?? '', h.result] as [string, string, string]);
 
+    const readObservations = actionHistory
+      .filter(entry => isReadObservation(entry.action) && !!entry.value)
+      .slice(-4)
+      .map(entry => [
+        entry.action,
+        entry.selector ?? '',
+        (entry.value ?? '').slice(0, 220),
+      ] as [string, string, string]);
+
     const serialized: SerializedGraph = {
       g: goal,
       s: graph.status,
@@ -99,6 +109,7 @@ export function serializeGraph(
       tr: triggers,
       del: recentDeltas,
       h: history,
+      r: readObservations,
       err: graph.errors.slice(-3),
     };
 
@@ -117,10 +128,18 @@ export function serializeGraph(
   } catch (err) {
     logger.error('graph:serializer', 'serializeGraph failed', err);
     return {
-      serialized: { g: goal, s: 'error', lc: 'none', d: [], tr: [], del: [], h: [], err: [String(err)] },
+      serialized: { g: goal, s: 'error', lc: 'none', d: [], tr: [], del: [], h: [], r: [], err: [String(err)] },
       tokenCount: 0,
     };
   }
+}
+
+function isReadObservation(action: string): boolean {
+  return action === 'get'
+    || action === 'search_page'
+    || action === 'find_elements'
+    || action === 'count_elements'
+    || action === 'inspect_region';
 }
 
 function buildCauseSummary(chain: CausalChain): string {

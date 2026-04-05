@@ -234,7 +234,12 @@ export function fingerprintAction(action: Action): ActionFingerprint {
     case 'click':
     case 'close':
     case 'get':
+    case 'find_elements':
+    case 'count_elements':
+    case 'inspect_region':
       return `${action.kind}|${normalizeLoopText(action.target)}`;
+    case 'search_page':
+      return `${action.kind}|${normalizeLoopText(action.pattern)}|${normalizeLoopText(action.target)}`;
     case 'type':
       return `${action.kind}|${normalizeLoopText(action.target)}|${normalizeLoopText(action.input)}`;
     case 'scroll':

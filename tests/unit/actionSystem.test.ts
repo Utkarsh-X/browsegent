@@ -9,6 +9,8 @@ import { normalizePlanStep } from '../../src/executor/normalize';
 import { createDefaultRegistry } from '../../src/executor/registry';
 import type { BrowserRuntimeState } from '../../src/executor/types';
 import type { Action, ActionErrorCode } from '../../src/executor/types';
+import { serializeGraph } from '../../src/graph/serializer';
+import type { SemanticGraph } from '../../src/graph/types';
 
 class FakeAdapter implements BrowserAdapter {
   runtime: 'dom' | 'playwright';
@@ -56,6 +58,26 @@ class FakeAdapter implements BrowserAdapter {
   async readValue(target: string): Promise<{ found: boolean; value: string }> {
     this.calls.push(`read:${target}`);
     return { found: true, value: target };
+  }
+
+  async searchPage(pattern: string, scopeSelector?: string): Promise<string> {
+    this.calls.push(`search:${pattern}:${scopeSelector ?? '(page)'}`);
+    return `Found 1 match for "${pattern}".`;
+  }
+
+  async findElements(selector: string): Promise<string> {
+    this.calls.push(`find:${selector}`);
+    return `Found 2 elements matching "${selector}".`;
+  }
+
+  async countElements(selector: string): Promise<string> {
+    this.calls.push(`count:${selector}`);
+    return `Count for "${selector}": 2`;
+  }
+
+  async inspectRegion(selector: string): Promise<string> {
+    this.calls.push(`inspect:${selector}`);
+    return `Region "${selector}" contains 2 notable nodes.`;
   }
 
   async selectOption(target: string, option: string): Promise<void> {
@@ -164,6 +186,61 @@ test('executor records a no-effect summary for unchanged successful clicks', asy
   assert.equal(result.success, true);
   assert.equal(result.metadata.effect?.primarySignal, 'none');
   assert.equal(result.metadata.effect?.stateChanged, false);
+});
+
+test('executor surfaces read-only tool output as observed value', async () => {
+  const dom = new FakeAdapter('dom');
+  const playwright = new FakeAdapter('playwright', false);
+  const executor = new Executor({
+    executionId: 'exec-search',
+    registry: createDefaultRegistry(),
+    adapters: { dom, playwright },
+  });
+
+  const result = await executor.execute({
+    kind: 'search_page',
+    pattern: 'pricing',
+    origin: 'llm',
+    original: { tool: 'search_page', pattern: 'pricing' },
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Found 1 match for "pricing".');
+  assert.equal(result.metadata.effect?.primarySignal, 'target_value_observed');
+});
+
+test('serializeGraph includes compact recent read observations', () => {
+  const graph: SemanticGraph = {
+    snapshot: [
+      { type: 'data', tag: 'div', value: 'Acme Corp', sel: '#company', selType: 'id', rule: 'test' },
+      { type: 'trigger', tag: 'button', value: 'Search', sel: '#search', selType: 'id', rule: 'test' },
+    ],
+    deltas: [],
+    status: 'live',
+    lastCause: null,
+    errors: [],
+    pageUrl: 'https://example.com',
+    snapshotTimestamp: 1,
+    lastUpdateTimestamp: 1,
+  };
+
+  const { serialized } = serializeGraph(graph, 'Find the company', [
+    {
+      action: 'search_page',
+      selector: 'pattern:acme',
+      result: 'ok',
+      timestamp: 1,
+      value: 'Found 1 match for "acme".',
+    },
+    {
+      action: 'click',
+      selector: '#search',
+      result: 'ok',
+      timestamp: 2,
+    },
+  ]);
+
+  assert.deepEqual(serialized.r, [['search_page', 'pattern:acme', 'Found 1 match for "acme".']]);
 });
 
 test('executor returns validation failure without runtime execution', async () => {

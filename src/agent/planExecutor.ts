@@ -20,7 +20,7 @@ export interface PlanResult {
   completed: boolean;
   goalValue?: string;
   stepsExecuted: number;
-  abortReason?: 'goal_met' | 'plan_stale' | 'step_failed' | 'max_steps' | 'no_progress';
+  abortReason?: 'goal_met' | 'plan_stale' | 'step_failed' | 'max_steps' | 'no_progress' | 'page_changed';
   actionHistory: ActionHistoryEntry[];
   executedActions: Action[];
 }
@@ -66,10 +66,11 @@ export async function executePlan(
 
     executedActions.push(action);
     const result = await executor.execute(action);
+    const actionHistoryKey = getActionHistoryKey(action);
     const progress = assessActionProgress(action, result, history, graph);
     const historyEntry: ActionHistoryEntry = {
       action: action.kind,
-      selector: action.target,
+      selector: actionHistoryKey,
       result: toHistoryResult(result),
       timestamp: Date.now(),
       graphFingerprint: fingerprintGraph(graph),
@@ -115,7 +116,7 @@ export async function executePlan(
       logger.warn('agent:planExecutor', 'Repeated no-progress action detected', {
         step: i,
         tool: action.kind,
-        selector: action.target,
+        selector: actionHistoryKey,
         effect: result.metadata.effect?.primarySignal,
         strength: progress.strength,
         repeatCount: progress.repeatCount,
@@ -125,6 +126,22 @@ export async function executePlan(
         completed: false,
         stepsExecuted: i + 1,
         abortReason: 'no_progress',
+        actionHistory: history,
+        executedActions,
+      };
+    }
+
+    if (shouldStopPlanAfterPageChange(action, result)) {
+      logger.info('agent:planExecutor', 'Plan interrupted after page change', {
+        step: i,
+        tool: action.kind,
+        selector: actionHistoryKey,
+        effect: result.metadata.effect?.signals,
+      });
+      return {
+        completed: false,
+        stepsExecuted: i + 1,
+        abortReason: 'page_changed',
         actionHistory: history,
         executedActions,
       };
@@ -158,18 +175,19 @@ function assessActionProgress(
 } {
   const strength = result.metadata.effect?.strength ?? 'none';
   const graphFingerprint = fingerprintGraph(graph);
-  if (!result.success || !action.target) {
+  const actionHistoryKey = getActionHistoryKey(action);
+  if (!result.success || !actionHistoryKey) {
     return { decision: 'accept', repeatCount: 0, strength };
   }
 
   const recentMatches = history.slice(-RECENT_EFFECT_WINDOW).filter(entry =>
     entry.result === 'ok'
     && entry.action === action.kind
-    && entry.selector === action.target
+    && entry.selector === actionHistoryKey
     && entry.graphFingerprint === graphFingerprint,
   );
 
-  if (action.kind === 'get') {
+  if (isObservationAction(action.kind)) {
     const normalizedValue = normalizeRepeatedValue(result.value ?? result.metadata.effect?.targetValue);
     if (normalizedValue === undefined) {
       return { decision: 'accept', repeatCount: 0, strength };
@@ -206,6 +224,48 @@ function assessActionProgress(
   }
 
   return { decision: 'accept', repeatCount: 1, strength };
+}
+
+function isObservationAction(kind: Action['kind']): boolean {
+  return kind === 'get'
+    || kind === 'search_page'
+    || kind === 'find_elements'
+    || kind === 'count_elements'
+    || kind === 'inspect_region';
+}
+
+function getActionHistoryKey(action: Action): string | undefined {
+  if (action.kind === 'search_page') {
+    if (!action.pattern) {
+      return undefined;
+    }
+    return action.target
+      ? `pattern:${action.pattern} @ ${action.target}`
+      : `pattern:${action.pattern}`;
+  }
+
+  if (action.target) {
+    return action.target;
+  }
+
+  if (action.kind === 'wait' && action.pattern) {
+    return `pattern:${action.pattern}`;
+  }
+
+  return undefined;
+}
+
+function shouldStopPlanAfterPageChange(action: Action, result: ActionResult): boolean {
+  if (!result.success || !result.metadata.mutating) {
+    return false;
+  }
+
+  const signals = result.metadata.effect?.signals ?? [];
+  if (signals.includes('url_changed')) {
+    return true;
+  }
+
+  return (action.kind === 'click' || action.kind === 'close') && signals.includes('hash_changed');
 }
 
 function decideFromRepeatCount(
