@@ -55,6 +55,31 @@ function makeExecutor(): Executor {
   } as Executor;
 }
 
+function makeNotFoundExecutor(): Executor {
+  return {
+    execute: async (action: Action): Promise<ActionResult> => ({
+      success: false,
+      kind: action.kind,
+      error: {
+        code: 'not_found',
+        message: `Element not found: ${action.target ?? '(missing)'}`,
+        retryable: true,
+        shouldReplan: true,
+        runtime: 'dom',
+      },
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: action.kind !== 'get' && action.kind !== 'wait',
+      },
+    }),
+  } as Executor;
+}
+
 function makePlanResult(plan: LLMPlan): LLMCallResult {
   return {
     plan,
@@ -67,6 +92,10 @@ function makePlanResult(plan: LLMPlan): LLMCallResult {
 }
 
 test('action fingerprint normalization is kind-specific and stable', () => {
+  assert.equal(
+    fingerprintAction(makeAction({ target: 'a[href="#section-1"]' })),
+    'click|anchor_link',
+  );
   assert.equal(
     fingerprintAction(makeAction({ kind: 'type', input: '  Hello   World  ', original: { tool: 'type', sel: '[aria-label="Search"]', text: '  Hello   World  ' } })),
     'type|[aria-label="search"]|hello world',
@@ -88,10 +117,26 @@ test('action fingerprint normalization is kind-specific and stable', () => {
 test('graph fingerprint ignores timestamps but changes on meaningful content changes', () => {
   const first = makeGraph('stable');
   const second = { ...makeGraph('stable'), snapshotTimestamp: 99, lastUpdateTimestamp: 101 };
+  const hashA = { ...makeGraph('stable'), pageUrl: 'https://example.com/docs#intro' };
+  const hashB = { ...makeGraph('stable'), pageUrl: 'https://example.com/docs#api' };
+  const changedUrl = { ...makeGraph('stable'), pageUrl: 'https://example.com/other' };
   const changed = makeGraph('changed');
 
   assert.equal(fingerprintGraph(first), fingerprintGraph(second));
+  assert.equal(fingerprintGraph(hashA), fingerprintGraph(hashB));
+  assert.notEqual(fingerprintGraph(first), fingerprintGraph(changedUrl));
   assert.notEqual(fingerprintGraph(first), fingerprintGraph(changed));
+});
+
+test('anchor-link clicks are grouped into a single repetition family', () => {
+  const detector = new LoopDetector();
+  detector.recordAction(makeAction({ target: 'a[href="#section-a"]' }));
+  detector.recordAction(makeAction({ target: 'a[href="#section-b"]' }));
+  detector.recordAction(makeAction({ target: 'a[href="#section-c"]' }));
+
+  const debug = detector.getDebugState();
+  assert.equal(debug.repeatedFingerprint, 'click|anchor_link');
+  assert.equal(debug.repetitionCount, 3);
 });
 
 test('loop detector thresholds and critical persistence behave as expected', () => {
@@ -262,4 +307,48 @@ test('runAgentLoop direct success stays unchanged when there is no loop signal',
   assert.equal(result.value, 'direct answer');
   assert.equal(contexts.length, 1);
   assert.equal(contexts[0]?.contextWarnings, undefined);
+});
+
+test('runAgentLoop handles captcha escalation with explicit failure reason', async () => {
+  const result = await runAgentLoop({
+    goal: 'How many questions are tagged with javascript on Stack Overflow?',
+    graph: makeGraph('captcha'),
+    executor: makeExecutor(),
+    maxSteps: 2,
+    llmCaller: async () => makePlanResult({
+      escalate: 'captcha',
+      reason: 'Cloudflare verification required',
+      confidence: 'high',
+    }),
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'captcha_detected: Cloudflare verification required');
+  assert.equal(result.llmCallCount, 1);
+});
+
+test('runAgentLoop injects stale-selector warning after repeated not_found failures', async () => {
+  const contexts: EscalationContext[] = [];
+
+  await runAgentLoop({
+    goal: 'Open the list page',
+    graph: makeGraph('stale-selector'),
+    executor: makeNotFoundExecutor(),
+    maxSteps: 5,
+    llmCaller: async (ctx) => {
+      contexts.push(ctx);
+      return makePlanResult({
+        plan: [{ tool: 'click', sel: 'a[href="/wiki/List_of_people_who_have_walked_on_the_Moon"]' }],
+        confidence: 'high',
+      });
+    },
+    planMutationWaitMs: 0,
+  });
+
+  const warningFound = contexts.some(ctx =>
+    (ctx.contextWarnings ?? []).some(warning =>
+      warning.includes('failed with not_found') && warning.includes('stale on the current page'),
+    ),
+  );
+  assert.equal(warningFound, true);
 });

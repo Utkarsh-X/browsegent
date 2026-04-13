@@ -81,10 +81,13 @@ test('Brain1 prefers stable selectors and emits selector metadata', async () => 
     assert.equal(input.meta?.selectorSource, 'id');
     assert.equal(input.meta?.visibility, 'visible');
     assert.ok((input.meta?.selectorScore ?? 0) > 80);
+    assert.match(input.meta?.stableHash ?? '', /^sh_[a-z0-9]+$/);
+    assert.ok((input.meta?.nth ?? 0) >= 1);
 
     assert.ok(button);
     assert.equal(button.meta?.selectorSource, 'testid');
     assert.equal(button.type, 'trigger');
+    assert.match(button.meta?.stableHash ?? '', /^sh_[a-z0-9]+$/);
   });
 });
 
@@ -280,6 +283,34 @@ test('Brain1Service applies enrichment and merges local region rescans without w
     assert.ok(regionCalls.length <= 2);
     assert.ok(result.nodes.some(node => node.value === 'Acme Corp'));
     assert.ok(result.nodes.some(node => node.meta?.enrichmentState === 'enriched'));
+  });
+});
+
+test('Brain1Service assigns identity generation, internal refs, and backend node IDs for top actionable nodes', async () => {
+  await withBrainPage(`
+    <main>
+      <button id="primary-action">Search</button>
+      <input id="primary-input" placeholder="Search docs" />
+    </main>
+  `, async (page) => {
+    const service = new Brain1Service(page, { enableInteractionPipeline: false });
+
+    const first = await service.scan('search docs');
+    const firstTrigger = first.nodes.find(node => node.sel === '#primary-action');
+    const firstInput = first.nodes.find(node => node.sel === '#primary-input');
+
+    assert.ok(firstTrigger?.meta?.identityGeneration === 1 || firstInput?.meta?.identityGeneration === 1);
+    assert.match(firstTrigger?.meta?.refId ?? firstInput?.meta?.refId ?? '', /^bg1_\d+$/);
+    assert.ok(
+      typeof firstTrigger?.meta?.backendNodeId === 'number'
+      || typeof firstInput?.meta?.backendNodeId === 'number',
+    );
+
+    const second = await service.scan('search docs');
+    const secondTrigger = second.nodes.find(node => node.sel === '#primary-action');
+    const secondInput = second.nodes.find(node => node.sel === '#primary-input');
+    assert.ok(secondTrigger?.meta?.identityGeneration === 2 || secondInput?.meta?.identityGeneration === 2);
+    assert.match(secondTrigger?.meta?.refId ?? secondInput?.meta?.refId ?? '', /^bg2_\d+$/);
   });
 });
 

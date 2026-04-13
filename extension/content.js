@@ -285,6 +285,57 @@
         function buildNodeId(selector, tag, interactionKind, value) {
           return `n_${hashString(`${selector}|${tag}|${interactionKind}|${value.slice(0, 80)}`)}`;
         }
+        function normalizeHashToken(value) {
+          return normalizeText(value).toLowerCase().slice(0, 120);
+        }
+        function normalizeStableClassTokens(className) {
+          const tokens = normalizeText(className).split(/\s+/).map((token) => token.toLowerCase()).filter(
+            (token) => !!token && token.length >= 2 && !/\d{4,}/.test(token) && !/(^|[-_])(active|hover|focus|selected|open|closed|loading|loaded|enter|leave|anim|motion)($|[-_])/.test(token)
+          );
+          return tokens.slice(0, 3).join(".");
+        }
+        function getSiblingOrdinal(el) {
+          const parent = el.parentElement;
+          if (!parent) return 1;
+          const siblings = Array.from(parent.children).filter((child) => child.tagName === el.tagName);
+          const index = siblings.indexOf(el);
+          return index >= 0 ? index + 1 : 1;
+        }
+        function getStableAncestorPath(el) {
+          const segments = [];
+          let current = el.parentElement;
+          let depth = 0;
+          while (current && current !== document.body && current !== document.documentElement && depth < 4) {
+            const tag = current.tagName.toLowerCase();
+            const role = normalizeHashToken(current.getAttribute("role"));
+            const dataTestId = normalizeHashToken(current.getAttribute("data-testid") ?? current.getAttribute("data-test"));
+            const id = normalizeHashToken(current.getAttribute("id"));
+            const classToken = normalizeStableClassTokens(current.getAttribute("class"));
+            const marker = id ? `#${id}` : dataTestId ? `[${dataTestId}]` : classToken ? `.${classToken}` : "";
+            segments.unshift(`${tag}${role ? `:${role}` : ""}${marker}`);
+            current = current.parentElement;
+            depth += 1;
+          }
+          return segments.join(">");
+        }
+        function computeStableHash(el, tag, attrs, primaryValue, text, formValue) {
+          const role = normalizeHashToken(attrs.role);
+          const nameLike = normalizeHashToken(
+            attrs.ariaLabel || attrs.placeholder || attrs.name || text || formValue || primaryValue
+          );
+          const href = normalizeHashToken(attrs.href ? attrs.href.replace(/[?#].*$/, "") : "");
+          const attrSignature = [
+            normalizeHashToken(attrs.inputType),
+            normalizeHashToken(attrs.name),
+            normalizeHashToken(attrs.dataTestId),
+            href
+          ].filter(Boolean).join("|");
+          const classSignature = normalizeStableClassTokens(el.getAttribute("class"));
+          const ancestorPath = getStableAncestorPath(el);
+          const ordinal = getSiblingOrdinal(el);
+          const payload = `${tag}|${role}|${nameLike}|${attrSignature}|${classSignature}|${ancestorPath}|${ordinal}`;
+          return `sh_${hashString(payload)}`;
+        }
         function buildSelectorCandidates(target, cache) {
           const candidates = [];
           const seen = /* @__PURE__ */ new Set();
@@ -449,6 +500,8 @@
           const selType = getSelectorSource(el, cache, shadowHost);
           const selectorScore = getSelectorScore(el, cache, shadowHost);
           const regionSelector = getRegionSelector(el, cache, shadowHost);
+          const nth = getSiblingOrdinal(el);
+          const stableHash = computeStableHash(el, tag, attrs, primaryValue, text, formValue);
           const totalScore = goalScore * 4 + interactionScore * 2 + actionabilityScore * 2 + selectorScore * 1.5 + (visibility.state === "visible" ? 18 : 6) + (confidence === "high" ? 12 : confidence === "medium" ? 4 : -8) - (inShadow ? 10 : 0) + (classification.type === "input" ? 10 : classification.type === "trigger" ? 8 : 0);
           return {
             type: classification.type,
@@ -460,6 +513,8 @@
             attrs,
             meta: {
               nodeId: buildNodeId(sel, tag, interactionKind, primaryValue),
+              stableHash,
+              nth,
               selectorScore,
               interactionScore,
               actionabilityScore,

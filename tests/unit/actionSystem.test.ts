@@ -8,6 +8,7 @@ import { Executor } from '../../src/executor/executor';
 import { normalizePlanStep } from '../../src/executor/normalize';
 import { createDefaultRegistry } from '../../src/executor/registry';
 import type { BrowserRuntimeState } from '../../src/executor/types';
+import type { ActionTargetHint } from '../../src/executor/types';
 import type { Action, ActionErrorCode } from '../../src/executor/types';
 import { serializeGraph } from '../../src/graph/serializer';
 import type { SemanticGraph } from '../../src/graph/types';
@@ -15,7 +16,8 @@ import type { SemanticGraph } from '../../src/graph/types';
 class FakeAdapter implements BrowserAdapter {
   runtime: 'dom' | 'playwright';
   calls: string[] = [];
-  clickImpl?: (target: string) => Promise<void>;
+  clickImpl?: (target: string, targetHint?: ActionTargetHint) => Promise<void>;
+  lastClickHint?: ActionTargetHint;
 
   constructor(runtime: 'dom' | 'playwright', private readonly available = true) {
     this.runtime = runtime;
@@ -40,10 +42,11 @@ class FakeAdapter implements BrowserAdapter {
     };
   }
 
-  async click(target: string): Promise<void> {
+  async click(target: string, targetHint?: ActionTargetHint): Promise<void> {
     this.calls.push(`click:${target}`);
+    this.lastClickHint = targetHint;
     if (this.clickImpl) {
-      await this.clickImpl(target);
+      await this.clickImpl(target, targetHint);
     }
   }
 

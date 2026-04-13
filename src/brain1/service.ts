@@ -16,6 +16,7 @@ import type {
 
 const MAX_ENRICHMENT_CANDIDATES = 8;
 const MAX_REGION_RESCANS = 2;
+const MAX_IDENTITY_CANDIDATES = 12;
 const MAX_FINAL_NODES = 240;
 
 export interface Brain1CandidateEnrichment {
@@ -30,6 +31,7 @@ export interface Brain1ServiceOptions {
   enableInteractionPipeline?: boolean;
   maxEnrichmentCandidates?: number;
   maxRegionRescans?: number;
+  maxIdentityCandidates?: number;
   enricher?: (node: FilteredNode, page: Page) => Promise<Brain1CandidateEnrichment | null>;
   regionScanner?: (regionSelector: string, goal: string, page: Page) => Promise<Brain1Result>;
 }
@@ -48,6 +50,8 @@ interface RawBrain1Result {
 export class Brain1Service {
   private readonly page: Page;
   private readonly opts: Required<Brain1ServiceOptions>;
+  private identityGeneration = 0;
+  private readonly identitySessionId = `brain1_${Math.random().toString(36).slice(2, 10)}`;
 
   constructor(page: Page, options: Brain1ServiceOptions = {}) {
     const runtime = getRuntimeConfig();
@@ -56,6 +60,7 @@ export class Brain1Service {
       enableInteractionPipeline: options.enableInteractionPipeline ?? runtime.brain1.interactionPipeline,
       maxEnrichmentCandidates: options.maxEnrichmentCandidates ?? MAX_ENRICHMENT_CANDIDATES,
       maxRegionRescans: options.maxRegionRescans ?? MAX_REGION_RESCANS,
+      maxIdentityCandidates: options.maxIdentityCandidates ?? MAX_IDENTITY_CANDIDATES,
       enricher: options.enricher ?? defaultCandidateEnricher,
       regionScanner: options.regionScanner ?? defaultRegionScanner,
     };
@@ -67,7 +72,12 @@ export class Brain1Service {
     );
 
     if (!this.opts.enableInteractionPipeline) {
-      return finalizeBrain1Result(base);
+      const finalResult = await this.finalizeWithIdentity(base);
+      logger.info('brain1', 'Scan completed (interaction pipeline disabled)', {
+        baseNodes: base.nodes.length,
+        finalNodes: finalResult.nodes.length,
+      });
+      return finalResult;
     }
 
     let nodes = [...base.nodes];
@@ -97,7 +107,7 @@ export class Brain1Service {
       }
     }
 
-    const finalResult = finalizeBrain1Result({
+    const finalResult = await this.finalizeWithIdentity({
       nodes,
       errors,
       metrics: {
@@ -106,13 +116,34 @@ export class Brain1Service {
         nodesDropped: Math.max(0, metrics.totalNodesWalked - nodes.length),
       },
     });
-
     logger.info('brain1', 'Interaction pipeline completed', {
       baseNodes: base.nodes.length,
       finalNodes: finalResult.nodes.length,
       enrichedCandidates: enrichmentCandidates.length,
       rescannedRegions: regionCandidates.length,
     });
+    return finalResult;
+  }
+
+  private async finalizeWithIdentity(result: Brain1Result): Promise<Brain1Result> {
+    const finalized = finalizeBrain1Result(result);
+    const generation = ++this.identityGeneration;
+    const withRefs = attachIdentityScaffold(finalized.nodes, generation);
+    const identityCandidates = selectIdentityCandidates(withRefs, this.opts.maxIdentityCandidates);
+    const identityResolutions = await resolveNodeIdentities(this.page, identityCandidates);
+    const withIdentity = applyIdentityResolutions(withRefs, identityResolutions, this.identitySessionId);
+
+    logger.info('brain1', 'Identity scaffold updated', {
+      generation,
+      nodes: withIdentity.length,
+      resolved: identityResolutions.filter(resolution => typeof resolution.backendNodeId === 'number').length,
+      candidates: identityCandidates.length,
+    });
+
+    const finalResult: Brain1Result = {
+      ...finalized,
+      nodes: withIdentity,
+    };
 
     return finalResult;
   }
@@ -316,6 +347,13 @@ function normalizeMeta(
 
   return {
     nodeId: rawMeta?.nodeId ?? buildNodeId(selector, tag, interactionKind, value),
+    refId: rawMeta?.refId,
+    stableHash: rawMeta?.stableHash ?? `sh_${hashString(`${tag}|${selector}|${normalizeHashValue(value)}|${normalizeHashValue(rawMeta?.role)}`)}`,
+    identityGeneration: rawMeta?.identityGeneration,
+    backendNodeId: rawMeta?.backendNodeId,
+    frameId: rawMeta?.frameId,
+    sessionId: rawMeta?.sessionId,
+    nth: rawMeta?.nth,
     selectorScore,
     interactionScore,
     actionabilityScore,
@@ -432,6 +470,140 @@ function finalizeBrain1Result(result: Brain1Result): Brain1Result {
   };
 }
 
+interface IdentityResolution {
+  nodeId: string;
+  backendNodeId?: number;
+  frameId?: string;
+}
+
+function attachIdentityScaffold(nodes: FilteredNode[], generation: number): FilteredNode[] {
+  const ranked = [...nodes].sort((left, right) => getBrain1NodePriority(right) - getBrain1NodePriority(left));
+  const refByNodeId = new Map<string, string>();
+  let nextRefIndex = 1;
+
+  for (const node of ranked) {
+    if (!node.meta) continue;
+    if (node.type !== 'trigger' && node.type !== 'input') continue;
+    const refId = `bg${generation}_${nextRefIndex++}`;
+    refByNodeId.set(node.meta.nodeId, refId);
+  }
+
+  return nodes.map(node => {
+    if (!node.meta) return node;
+    return {
+      ...node,
+      meta: {
+        ...node.meta,
+        identityGeneration: generation,
+        refId: refByNodeId.get(node.meta.nodeId),
+      },
+    };
+  });
+}
+
+function selectIdentityCandidates(nodes: FilteredNode[], limit: number): FilteredNode[] {
+  return [...nodes]
+    .filter(node =>
+      !!node.meta
+      && !!node.sel
+      && node.meta.visibility !== 'hidden'
+      && (node.type === 'trigger' || node.type === 'input'),
+    )
+    .sort((left, right) => getBrain1NodePriority(right) - getBrain1NodePriority(left))
+    .slice(0, limit);
+}
+
+async function resolveNodeIdentities(page: Page, candidates: FilteredNode[]): Promise<IdentityResolution[]> {
+  if (candidates.length === 0) {
+    return [];
+  }
+
+  let cdpSession: CDPSession | null = null;
+  const resolutions: IdentityResolution[] = [];
+
+  try {
+    cdpSession = await page.context().newCDPSession(page);
+
+    for (const candidate of candidates) {
+      if (!candidate.meta || !candidate.sel) {
+        continue;
+      }
+
+      let objectId: string | undefined;
+      try {
+        const nthIndex = Math.max(0, (candidate.meta.nth ?? 1) - 1);
+        const expression = `(() => {
+          try {
+            const matches = document.querySelectorAll(${JSON.stringify(candidate.sel)});
+            if (!matches || matches.length === 0) return null;
+            return matches[${nthIndex}] || matches[0] || null;
+          } catch {
+            return null;
+          }
+        })()`;
+
+        const evaluated = await cdpSession.send('Runtime.evaluate', {
+          expression,
+          returnByValue: false,
+        });
+        objectId = evaluated.result?.objectId;
+        if (!objectId) {
+          resolutions.push({ nodeId: candidate.meta.nodeId });
+          continue;
+        }
+
+        const described = await cdpSession.send('DOM.describeNode', { objectId });
+        const describedNode = described.node;
+        if (describedNode && typeof describedNode.backendNodeId === 'number') {
+          resolutions.push({
+            nodeId: candidate.meta.nodeId,
+            backendNodeId: describedNode.backendNodeId,
+            frameId: typeof describedNode.frameId === 'string' ? describedNode.frameId : undefined,
+          });
+        } else {
+          resolutions.push({ nodeId: candidate.meta.nodeId });
+        }
+      } catch {
+        resolutions.push({ nodeId: candidate.meta.nodeId });
+      } finally {
+        if (objectId) {
+          await cdpSession.send('Runtime.releaseObject', { objectId }).catch(() => {});
+        }
+      }
+    }
+  } catch {
+    return [];
+  } finally {
+    if (cdpSession) {
+      await cdpSession.detach().catch(() => {});
+    }
+  }
+
+  return resolutions;
+}
+
+function applyIdentityResolutions(
+  nodes: FilteredNode[],
+  resolutions: IdentityResolution[],
+  identitySessionId: string,
+): FilteredNode[] {
+  const resolutionByNodeId = new Map(resolutions.map(resolution => [resolution.nodeId, resolution]));
+  return nodes.map(node => {
+    if (!node.meta) return node;
+    const resolution = resolutionByNodeId.get(node.meta.nodeId);
+    if (!resolution) return node;
+    return {
+      ...node,
+      meta: {
+        ...node.meta,
+        backendNodeId: resolution.backendNodeId,
+        frameId: resolution.frameId,
+        sessionId: resolution.backendNodeId ? identitySessionId : node.meta.sessionId,
+      },
+    };
+  });
+}
+
 function mergeCounts(target: Record<string, number>, incoming: Record<string, number>): void {
   for (const [key, value] of Object.entries(incoming)) {
     target[key] = (target[key] ?? 0) + value;
@@ -504,4 +676,8 @@ function hashString(value: string): string {
     hash = Math.imul(hash, 16777619);
   }
   return (hash >>> 0).toString(36);
+}
+
+function normalizeHashValue(value: string | undefined): string {
+  return (value ?? '').trim().replace(/\s+/g, ' ').toLowerCase().slice(0, 120);
 }

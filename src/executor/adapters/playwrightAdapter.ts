@@ -2,6 +2,7 @@ import type { ElementHandle, Page } from 'playwright';
 import { AdapterError } from '../browserAdapter';
 import type { BrowserAdapter } from '../browserAdapter';
 import type { BrowserRuntimeState } from '../types';
+import type { ActionTargetHint } from '../types';
 import { capturePageRuntimeState } from './runtimeState';
 import {
   countElementsSummary,
@@ -34,7 +35,7 @@ export class PlaywrightBrowserAdapter implements BrowserAdapter {
     return capturePageRuntimeState(page, target);
   }
 
-  async click(target: string): Promise<void> {
+  async click(target: string, _targetHint?: ActionTargetHint): Promise<void> {
     const el = await this.waitForElement(target);
     try {
       await el.scrollIntoViewIfNeeded().catch(() => {});

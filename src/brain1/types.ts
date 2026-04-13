@@ -16,6 +16,13 @@ export type Brain1EnrichmentState = 'base' | 'enriched';
 
 export interface FilteredNodeMeta {
   nodeId: string;
+  refId?: string;
+  stableHash?: string;
+  identityGeneration?: number;
+  backendNodeId?: number;
+  frameId?: string;
+  sessionId?: string;
+  nth?: number;
   selectorScore: number;
   interactionScore: number;
   actionabilityScore: number;

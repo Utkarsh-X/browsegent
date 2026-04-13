@@ -1,11 +1,11 @@
 import type { Page } from 'playwright';
-import type { ActionErrorCode, BrowserRuntime, BrowserRuntimeState } from './types';
+import type { ActionErrorCode, ActionTargetHint, BrowserRuntime, BrowserRuntimeState } from './types';
 
 export interface BrowserAdapter {
   runtime: Exclude<BrowserRuntime, 'none'>;
   isAvailable(): Promise<boolean>;
   captureState(target?: string): Promise<BrowserRuntimeState>;
-  click(target: string): Promise<void>;
+  click(target: string, targetHint?: ActionTargetHint): Promise<void>;
   type(target: string, input: string, opts?: { clear: boolean }): Promise<void>;
   scroll(direction: 'down' | 'up'): Promise<void>;
   readValue(target: string): Promise<{ found: boolean; value: string }>;

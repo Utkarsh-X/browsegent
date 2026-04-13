@@ -37,6 +37,9 @@ export interface RuntimeConfig {
   agent: {
     enforceProgressGuards: boolean;
   };
+  executor: {
+    cdpClickEnabled: boolean;
+  };
   brain1: {
     interactionPipeline: boolean;
   };
@@ -86,6 +89,9 @@ export function getRuntimeConfig(): RuntimeConfig {
     },
     agent: {
       enforceProgressGuards: getEnvBoolean('BROWSEGENT_ENFORCE_PROGRESS_GUARDS', true),
+    },
+    executor: {
+      cdpClickEnabled: getEnvBoolean('BROWSEGENT_CDP_CLICK_ENABLED', true),
     },
     brain1: {
       interactionPipeline: getEnvBoolean('BROWSEGENT_BRAIN1_INTERACTION_PIPELINE', true),

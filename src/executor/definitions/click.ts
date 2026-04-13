@@ -18,7 +18,7 @@ export function createClickDefinition(): ActionDefinition<ClickAction, void> {
     },
     async execute(action: ClickAction, ctx: ActionExecutionContext): Promise<void> {
       await ctx.adapter.recordClickCause?.(action.target);
-      await ctx.adapter.click(action.target);
+      await ctx.adapter.click(action.target, action.targetHint);
     },
     normalizeSuccess(_raw: void, action: ClickAction, meta: AttemptMeta): ActionResult {
       return successResult(action, meta);

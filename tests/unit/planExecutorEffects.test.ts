@@ -422,3 +422,86 @@ test('executePlan stops repeated same-result search_page actions on the fourth o
   assert.equal(result.abortReason, 'no_progress');
   assert.equal(result.actionHistory[result.actionHistory.length - 1]?.result, 'no_progress');
 });
+
+test('executePlan forwards Brain1 target identity hints for click actions', async () => {
+  const graph: SemanticGraph = {
+    snapshot: [
+      {
+        type: 'trigger',
+        tag: 'button',
+        value: 'Search',
+        sel: '[aria-label="Search"]',
+        selType: 'aria',
+        rule: 'test',
+        meta: {
+          nodeId: 'n_low',
+          refId: 'bg1_2',
+          backendNodeId: 1002,
+          frameId: 'frame-low',
+          sessionId: 'brain1_sess',
+          nth: 2,
+          stableHash: 'sh_low',
+          selectorScore: 40,
+          interactionScore: 42,
+          actionabilityScore: 44,
+          interactionKind: 'button',
+          confidence: 'low',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 1,
+        },
+      },
+      {
+        type: 'trigger',
+        tag: 'button',
+        value: 'Search',
+        sel: '[aria-label="Search"]',
+        selType: 'aria',
+        rule: 'test',
+        meta: {
+          nodeId: 'n_high',
+          refId: 'bg1_1',
+          backendNodeId: 2001,
+          frameId: 'frame-main',
+          sessionId: 'brain1_sess',
+          nth: 1,
+          stableHash: 'sh_high',
+          selectorScore: 88,
+          interactionScore: 92,
+          actionabilityScore: 90,
+          interactionKind: 'button',
+          confidence: 'high',
+          enrichmentState: 'enriched',
+          visibility: 'visible',
+          goalScore: 8,
+        },
+      },
+    ],
+    deltas: [],
+    status: 'live',
+    lastCause: null,
+    errors: [],
+    pageUrl: 'https://example.com',
+    snapshotTimestamp: 1,
+    lastUpdateTimestamp: 1,
+  };
+
+  let capturedAction: Action | undefined;
+  const result = await executePlan(
+    [{ tool: 'click', sel: '[aria-label="Search"]' }],
+    'Use search',
+    graph,
+    makeExecutor(action => {
+      capturedAction = action;
+      return successResult(action);
+    }),
+    [],
+    { mutationWaitMs: 0 },
+  );
+
+  assert.equal(result.abortReason, 'max_steps');
+  assert.equal(capturedAction?.targetHint?.backendNodeId, 2001);
+  assert.equal(capturedAction?.targetHint?.refId, 'bg1_1');
+  assert.equal(capturedAction?.targetHint?.nth, 1);
+  assert.equal(capturedAction?.targetHint?.ambiguousSelector, true);
+});

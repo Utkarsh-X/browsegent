@@ -14,6 +14,7 @@ export type ActionKind =
   | 'inspect_region';
 export type BrowserRuntime = 'dom' | 'playwright' | 'none';
 export type ActionOrigin = 'llm';
+export type ActionTargetConfidence = 'high' | 'medium' | 'low';
 export type ActionEffectSignal =
   | 'none'
   | 'url_changed'
@@ -33,6 +34,19 @@ export type ActionErrorCode =
   | 'unsupported_runtime'
   | 'execution_error';
 
+export interface ActionTargetHint {
+  refId?: string;
+  backendNodeId?: number;
+  frameId?: string;
+  sessionId?: string;
+  stableHash?: string;
+  nth?: number;
+  confidence?: ActionTargetConfidence;
+  selectorScore?: number;
+  actionabilityScore?: number;
+  ambiguousSelector?: boolean;
+}
+
 export interface LLMPlanStep {
   tool: ActionKind;
   sel?: string;
@@ -46,6 +60,7 @@ export interface LLMPlanStep {
 export interface Action {
   kind: ActionKind;
   target?: string;
+  targetHint?: ActionTargetHint;
   input?: string;
   option?: string;
   direction?: 'down' | 'up';

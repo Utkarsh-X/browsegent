@@ -71,6 +71,7 @@ export interface ExtractResult<T = unknown> {
 export class BrowseGent {
   private context: BrowserContext | null = null;
   private page: Page | null = null;
+  private brain1Service: Brain1Service | null = null;
   private opts: Required<BrowseGentOptions>;
   private initialized = false;
 
@@ -92,6 +93,7 @@ export class BrowseGent {
     if (this.initialized) return;
     this.context = await launchStealth({ headless: this.opts.headless, profileDir: this.opts.profileDir });
     this.page = this.context.pages()[0] ?? await this.context.newPage();
+    this.brain1Service = null;
     if (this.opts.warmup) await warmupProfile(this.context);
     this.initialized = true;
   }
@@ -100,6 +102,7 @@ export class BrowseGent {
     this._assertInit();
     const t0 = Date.now();
     const executionId = this._createExecutionId();
+    this.brain1Service = null;
 
     await this._navigate(url, goal);
     await this.page!.waitForTimeout(this.opts.pageWaitMs);
@@ -186,6 +189,7 @@ export class BrowseGent {
   ): Promise<ExtractResult<T>> {
     this._assertInit();
     const t0 = Date.now();
+    this.brain1Service = null;
 
     await this._navigate(url, instruction);
     await this.page!.waitForTimeout(this.opts.pageWaitMs);
@@ -250,6 +254,7 @@ export class BrowseGent {
     await this.context?.close();
     this.context = null;
     this.page = null;
+    this.brain1Service = null;
     this.initialized = false;
   }
 
@@ -276,7 +281,10 @@ export class BrowseGent {
   }
 
   private async _brain1(goal: string): Promise<Brain1Result> {
-    return new Brain1Service(this.page!).scan(goal);
+    if (!this.brain1Service) {
+      this.brain1Service = new Brain1Service(this.page!);
+    }
+    return this.brain1Service.scan(goal);
   }
 
   private async _domCount(): Promise<number> {

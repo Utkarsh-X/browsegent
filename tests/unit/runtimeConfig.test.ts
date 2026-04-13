@@ -74,3 +74,16 @@ test('runtime config exposes Brain1 interaction pipeline toggle', () => {
 
   assert.equal(runtime.brain1.interactionPipeline, false);
 });
+
+test('runtime config exposes CDP click toggle', () => {
+  process.env.BROWSEGENT_LLM_PROVIDER = 'gemini';
+  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+  process.env.BROWSEGENT_CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
+  process.env.BROWSEGENT_OLLAMA_MODEL = 'qwen3.5:4b';
+  process.env.BROWSEGENT_OPENAI_MODEL = 'gpt-4o-mini';
+  process.env.BROWSEGENT_CDP_CLICK_ENABLED = 'false';
+
+  const runtime = getRuntimeConfig();
+
+  assert.equal(runtime.executor.cdpClickEnabled, false);
+});

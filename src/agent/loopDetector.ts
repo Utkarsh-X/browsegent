@@ -233,6 +233,7 @@ export function fingerprintAction(action: Action): ActionFingerprint {
   switch (action.kind) {
     case 'click':
     case 'close':
+      return `${action.kind}|${normalizeActionTarget(action.kind, action.target)}`;
     case 'get':
     case 'find_elements':
     case 'count_elements':
@@ -257,7 +258,7 @@ export function fingerprintAction(action: Action): ActionFingerprint {
 
 export function fingerprintGraph(graph: SemanticGraph): GraphFingerprint {
   const payload = {
-    pageUrl: graph.pageUrl,
+    pageUrl: normalizeLoopPageUrl(graph.pageUrl),
     status: graph.status,
     counts: {
       total: graph.snapshot.length,
@@ -288,6 +289,35 @@ export function normalizeLoopText(value: string | undefined): string {
   if (value === undefined) return '(missing)';
   const normalized = value.trim().toLowerCase().replace(/\s+/g, ' ');
   return normalized || '(empty)';
+}
+
+function normalizeActionTarget(kind: Action['kind'], target: string | undefined): string {
+  const normalized = normalizeLoopText(target);
+  if ((kind === 'click' || kind === 'close') && isAnchorLinkSelector(normalized)) {
+    return 'anchor_link';
+  }
+  return normalized;
+}
+
+function normalizeLoopPageUrl(pageUrl: string): string {
+  try {
+    const parsed = new URL(pageUrl);
+    parsed.hash = '';
+    return parsed.toString();
+  } catch {
+    const hashIndex = pageUrl.indexOf('#');
+    return hashIndex >= 0 ? pageUrl.slice(0, hashIndex) : pageUrl;
+  }
+}
+
+function isAnchorLinkSelector(selector: string): boolean {
+  if (!selector.startsWith('a[')) {
+    return false;
+  }
+  return selector.includes('href="#')
+    || selector.includes("href='#")
+    || selector.includes('href^="#')
+    || selector.includes("href^='#");
 }
 
 function stableNodeSlice(node: FilteredNode): [string, string, string, string] {

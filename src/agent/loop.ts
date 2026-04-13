@@ -8,6 +8,8 @@ import { LoopDetector } from './loopDetector';
 import { getRuntimeConfig } from '../config/runtime';
 
 const MAX_STEPS = 15;
+const STALE_SELECTOR_NOT_FOUND_THRESHOLD = 3;
+const STALE_SELECTOR_WINDOW = 8;
 
 export interface AgentLoopConfig {
   goal: string;
@@ -76,6 +78,7 @@ export async function runAgentLoop(config: AgentLoopConfig): Promise<AgentResult
 
     loopDetector.recordGraphState(graph);
     const loopSignal = loopDetector.getSignal();
+    const executionWarnings = buildExecutionWarnings(actionHistory);
     if (loopSignal) {
       logger.warn('agent:loop', 'Loop signal detected', {
         step: steps,
@@ -117,7 +120,7 @@ export async function runAgentLoop(config: AgentLoopConfig): Promise<AgentResult
       actionHistory,
       reason: `step_${steps}`,
       stepCount: steps,
-      contextWarnings: loopSignal ? [loopSignal.message] : undefined,
+      contextWarnings: buildContextWarnings(loopSignal?.message, executionWarnings),
     });
 
     const llmResponse = llmCallResult.plan;
@@ -156,6 +159,23 @@ export async function runAgentLoop(config: AgentLoopConfig): Promise<AgentResult
       return {
         success: false,
         failureReason: `User input required: ${llmResponse.reason}`,
+        totalSteps: steps,
+        llmCallCount,
+        llmCallReasons,
+        actionHistory,
+        totalInputTokens,
+        totalOutputTokens,
+        totalLlmDurationMs,
+      };
+    }
+
+    if (llmResponse.escalate === 'captcha') {
+      logger.info('agent:loop', 'LLM escalated: captcha', {
+        reason: llmResponse.reason,
+      });
+      return {
+        success: false,
+        failureReason: `captcha_detected: ${llmResponse.reason ?? 'verification wall encountered'}`,
         totalSteps: steps,
         llmCallCount,
         llmCallReasons,
@@ -255,4 +275,52 @@ export async function runAgentLoop(config: AgentLoopConfig): Promise<AgentResult
     totalOutputTokens,
     totalLlmDurationMs,
   };
+}
+
+function buildContextWarnings(loopMessage: string | undefined, executionWarnings: string[]): string[] | undefined {
+  const warnings: string[] = [];
+  if (loopMessage) {
+    warnings.push(loopMessage);
+  }
+  for (const warning of executionWarnings) {
+    if (!warnings.includes(warning)) {
+      warnings.push(warning);
+    }
+  }
+  return warnings.length > 0 ? warnings : undefined;
+}
+
+function buildExecutionWarnings(actionHistory: ActionHistoryEntry[]): string[] {
+  if (actionHistory.length === 0) {
+    return [];
+  }
+
+  const warnings: string[] = [];
+  const recent = actionHistory.slice(-STALE_SELECTOR_WINDOW);
+  const notFoundCounts = new Map<string, number>();
+
+  for (const entry of recent) {
+    if (entry.result !== 'not_found' || !entry.selector) {
+      continue;
+    }
+    notFoundCounts.set(entry.selector, (notFoundCounts.get(entry.selector) ?? 0) + 1);
+  }
+
+  let staleSelector: string | undefined;
+  let staleSelectorCount = 0;
+  for (const [selector, count] of notFoundCounts.entries()) {
+    if (count > staleSelectorCount) {
+      staleSelector = selector;
+      staleSelectorCount = count;
+    }
+  }
+
+  if (staleSelector && staleSelectorCount >= STALE_SELECTOR_NOT_FOUND_THRESHOLD) {
+    warnings.push(
+      `Recent attempts on selector "${staleSelector}" failed with not_found ${staleSelectorCount} times. ` +
+      'This selector is likely stale on the current page. Do not retry it; choose a currently visible selector or use read-only tools to extract from visible data.',
+    );
+  }
+
+  return warnings;
 }

@@ -1,4 +1,6 @@
 import { logger } from '../logger';
+import { getBrain1NodePriority } from '../brain1/scoring';
+import type { FilteredNode } from '../brain1/types';
 import type { Executor } from '../executor/executor';
 import { normalizePlanStep } from '../executor/normalize';
 import type { Action, ActionEffectStrength, ActionResult, LLMPlanStep } from '../executor/types';
@@ -49,7 +51,7 @@ export async function executePlan(
 
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i]!;
-    const action = normalizePlanStep(step);
+    const action = withTargetHint(normalizePlanStep(step), graph);
 
     const newDeltas = graph.deltas.length - deltaCountAtStart;
     if (i > 0 && newDeltas >= SIGNIFICANT_DELTA_COUNT) {
@@ -295,4 +297,60 @@ function truncateProgressValue(value: string | undefined): string | undefined {
 function normalizeRepeatedValue(value: string | undefined): string | undefined {
   if (value === undefined) return undefined;
   return value.trim().replace(/\s+/g, ' ').slice(0, 240);
+}
+
+function withTargetHint(action: Action, graph: SemanticGraph): Action {
+  if (!action.target) {
+    return action;
+  }
+
+  if (
+    action.kind !== 'click'
+    && action.kind !== 'type'
+    && action.kind !== 'select'
+    && action.kind !== 'get'
+  ) {
+    return action;
+  }
+
+  const matchingNodes = graph.snapshot
+    .filter(node => node.sel === action.target && !!node.meta)
+    .sort((left, right) => getNodeHintPriority(right, action.kind) - getNodeHintPriority(left, action.kind));
+
+  const primaryNode = matchingNodes[0];
+  if (!primaryNode?.meta) {
+    return action;
+  }
+
+  const uniqueHashes = new Set(
+    matchingNodes
+      .map(node => node.meta?.stableHash)
+      .filter((stableHash): stableHash is string => !!stableHash),
+  );
+  const hint = {
+    refId: primaryNode.meta.refId,
+    backendNodeId: primaryNode.meta.backendNodeId,
+    frameId: primaryNode.meta.frameId,
+    sessionId: primaryNode.meta.sessionId,
+    stableHash: primaryNode.meta.stableHash,
+    nth: primaryNode.meta.nth,
+    confidence: primaryNode.meta.confidence,
+    selectorScore: primaryNode.meta.selectorScore,
+    actionabilityScore: primaryNode.meta.actionabilityScore,
+    ambiguousSelector: uniqueHashes.size > 1,
+  };
+
+  return { ...action, targetHint: hint };
+}
+
+function getNodeHintPriority(node: FilteredNode, actionKind: Action['kind']): number {
+  let kindBonus = 0;
+  if (actionKind === 'click') {
+    kindBonus = node.type === 'trigger' ? 16 : node.type === 'input' ? 8 : 0;
+  } else if (actionKind === 'type' || actionKind === 'select') {
+    kindBonus = node.type === 'input' ? 18 : node.type === 'trigger' ? 4 : 0;
+  } else if (actionKind === 'get') {
+    kindBonus = node.type === 'data' || node.type === 'table_cell' ? 10 : 0;
+  }
+  return getBrain1NodePriority(node) + kindBonus;
 }
