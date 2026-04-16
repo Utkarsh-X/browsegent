@@ -7,6 +7,8 @@ import type { Action, ActionEffectStrength, ActionResult, LLMPlanStep } from '..
 import type { SemanticGraph } from '../graph/types';
 import type { ActionHistoryEntry } from '../graph/serializer';
 import { fingerprintGraph } from './loopDetector';
+import { assessTargetUtilityGuard, buildTargetUtilityHistoryValue } from './targetUtility';
+import { selectorsEquivalent } from './selectorMatch';
 
 const MAX_PLAN_STEPS = 5;
 const MUTATION_WAIT_MS = 1500;
@@ -15,6 +17,7 @@ const NO_EFFECT_REPEAT_THRESHOLD = 3;
 const SAME_VALUE_REPEAT_THRESHOLD = 3;
 const OBSERVED_VALUE_REPEAT_THRESHOLD = 4;
 const RECENT_EFFECT_WINDOW = 6;
+const STALE_SELECTOR_REPLAN_THRESHOLD = 3;
 
 type ProgressDecision = 'accept' | 'watch' | 'warn' | 'abort';
 
@@ -30,6 +33,7 @@ export interface PlanResult {
 export interface ExecutePlanOptions {
   mutationWaitMs?: number;
   enforceProgressGuards?: boolean;
+  enforceTargetUtilityGuards?: boolean;
 }
 
 export async function executePlan(
@@ -46,6 +50,7 @@ export async function executePlan(
   const steps = plan.slice(0, MAX_PLAN_STEPS);
   const mutationWaitMs = options.mutationWaitMs ?? MUTATION_WAIT_MS;
   const enforceProgressGuards = options.enforceProgressGuards ?? true;
+  const enforceTargetUtilityGuards = options.enforceTargetUtilityGuards ?? true;
 
   logger.info('agent:planExecutor', 'Executing plan', { steps: steps.length, goal });
 
@@ -66,9 +71,72 @@ export async function executePlan(
       };
     }
 
+    const actionHistoryKey = getActionHistoryKey(action);
+    if (actionHistoryKey && shouldReplanForRepeatedNotFound(action, actionHistoryKey, history)) {
+      history.push({
+        action: action.kind,
+        selector: actionHistoryKey,
+        result: 'plan_stale',
+        timestamp: Date.now(),
+        graphFingerprint: fingerprintGraph(graph),
+        value: 'utility_guard:stale_selector',
+        progressStrength: 'none',
+        progressDecision: 'warn',
+        repeatCount: 1,
+      });
+      logger.warn('agent:planExecutor', 'Selector stale guard requested replan', {
+        step: i,
+        tool: action.kind,
+        selector: actionHistoryKey,
+      });
+      return {
+        completed: false,
+        stepsExecuted: i,
+        abortReason: 'plan_stale',
+        actionHistory: history,
+        executedActions,
+      };
+    }
+
+    if (enforceTargetUtilityGuards) {
+      const utilityGuardSignal = assessTargetUtilityGuard(action, goal, graph, history);
+      if (utilityGuardSignal.shouldBlock) {
+        const historyValue = buildTargetUtilityHistoryValue(utilityGuardSignal);
+        const selector = actionHistoryKey;
+        history.push({
+          action: action.kind,
+          selector,
+          result: 'plan_stale',
+          timestamp: Date.now(),
+          graphFingerprint: fingerprintGraph(graph),
+          value: historyValue,
+          progressStrength: 'none',
+          progressDecision: 'warn',
+          repeatCount: 1,
+        });
+        logger.warn('agent:planExecutor', 'Target utility guard requested replan', {
+          step: i,
+          tool: action.kind,
+          selector,
+          reason: utilityGuardSignal.reason,
+          matchedNodes: utilityGuardSignal.matchedNodes,
+          actionableNodes: utilityGuardSignal.actionableNodes,
+          highConfidenceNodes: utilityGuardSignal.highConfidenceNodes,
+          maxGoalScore: utilityGuardSignal.maxGoalScore,
+          message: utilityGuardSignal.message,
+        });
+        return {
+          completed: false,
+          stepsExecuted: i,
+          abortReason: 'plan_stale',
+          actionHistory: history,
+          executedActions,
+        };
+      }
+    }
+
     executedActions.push(action);
     const result = await executor.execute(action);
-    const actionHistoryKey = getActionHistoryKey(action);
     const progress = assessActionProgress(action, result, history, graph);
     const historyEntry: ActionHistoryEntry = {
       action: action.kind,
@@ -270,6 +338,26 @@ function shouldStopPlanAfterPageChange(action: Action, result: ActionResult): bo
   return (action.kind === 'click' || action.kind === 'close') && signals.includes('hash_changed');
 }
 
+function shouldReplanForRepeatedNotFound(
+  action: Action,
+  actionHistoryKey: string,
+  history: ActionHistoryEntry[],
+): boolean {
+  if (!action.target) {
+    return false;
+  }
+  if (action.kind !== 'click' && action.kind !== 'close' && action.kind !== 'type' && action.kind !== 'select' && action.kind !== 'get') {
+    return false;
+  }
+
+  const repeatedNotFoundCount = history.slice(-RECENT_EFFECT_WINDOW).filter(entry =>
+    entry.selector === actionHistoryKey
+    && entry.result === 'not_found',
+  ).length;
+
+  return repeatedNotFoundCount >= STALE_SELECTOR_REPLAN_THRESHOLD;
+}
+
 function decideFromRepeatCount(
   repeatCount: number,
   strength: ActionEffectStrength,
@@ -314,7 +402,7 @@ function withTargetHint(action: Action, graph: SemanticGraph): Action {
   }
 
   const matchingNodes = graph.snapshot
-    .filter(node => node.sel === action.target && !!node.meta)
+    .filter(node => selectorsEquivalent(node.sel, action.target) && !!node.meta)
     .sort((left, right) => getNodeHintPriority(right, action.kind) - getNodeHintPriority(left, action.kind));
 
   const primaryNode = matchingNodes[0];

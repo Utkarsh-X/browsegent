@@ -352,3 +352,146 @@ test('runAgentLoop injects stale-selector warning after repeated not_found failu
   );
   assert.equal(warningFound, true);
 });
+
+test('runAgentLoop injects target-utility warning after guarded low-utility click', async () => {
+  const graph: SemanticGraph = {
+    snapshot: [
+      {
+        type: 'trigger',
+        tag: 'button',
+        value: 'Open',
+        sel: '[data-action="open"]',
+        selType: 'testid',
+        rule: 'test',
+        meta: {
+          nodeId: 't1',
+          selectorScore: 44,
+          interactionScore: 55,
+          actionabilityScore: 42,
+          interactionKind: 'button',
+          confidence: 'low',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 4,
+          stableHash: 'sh_1',
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'trigger',
+        tag: 'button',
+        value: 'Open',
+        sel: '[data-action="open"]',
+        selType: 'testid',
+        rule: 'test',
+        meta: {
+          nodeId: 't2',
+          selectorScore: 43,
+          interactionScore: 54,
+          actionabilityScore: 41,
+          interactionKind: 'button',
+          confidence: 'low',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 4,
+          stableHash: 'sh_2',
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'data',
+        tag: 'h3',
+        value: 'First listing',
+        sel: '.card h3',
+        selType: 'positional',
+        rule: 'test',
+        meta: {
+          nodeId: 'd1',
+          selectorScore: 52,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 26,
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'data',
+        tag: 'span',
+        value: 'Remote',
+        sel: '.card .location',
+        selType: 'positional',
+        rule: 'test',
+        meta: {
+          nodeId: 'd2',
+          selectorScore: 50,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 10,
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'data',
+        tag: 'span',
+        value: 'Posted today',
+        sel: '.card .posted',
+        selType: 'positional',
+        rule: 'test',
+        meta: {
+          nodeId: 'd3',
+          selectorScore: 49,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 7,
+          regionSelector: '.card',
+        },
+      },
+    ],
+    deltas: [],
+    status: 'live',
+    lastCause: null,
+    errors: [],
+    pageUrl: 'https://example.com/jobs',
+    snapshotTimestamp: 1,
+    lastUpdateTimestamp: 1,
+  };
+
+  const contexts: EscalationContext[] = [];
+  let calls = 0;
+
+  const result = await runAgentLoop({
+    goal: 'What company posted the first job listing shown?',
+    graph,
+    executor: makeExecutor(),
+    maxSteps: 3,
+    planMutationWaitMs: 0,
+    llmCaller: async (ctx) => {
+      contexts.push(ctx);
+      calls += 1;
+      if (calls === 1) {
+        return makePlanResult({
+          plan: [{ tool: 'click', sel: '[data-action="open"]' }],
+          confidence: 'medium',
+        });
+      }
+      return makePlanResult({ done: true, val: 'Acme Corp' });
+    },
+  });
+
+  assert.equal(result.success, true);
+  const warningFound = (contexts[1]?.contextWarnings ?? [])
+    .some(warning => warning.includes('ambiguous and low-utility'));
+  assert.equal(warningFound, true);
+});

@@ -94,7 +94,9 @@ async function callGemini(system: string, user: string, model: string): Promise<
     },
   });
 
-  const retries = 3;
+  const retries = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRIES', 6);
+  const retryBaseMs = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRY_BASE_MS', 4000);
+  const retryMaxMs = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRY_MAX_MS', 45000);
   const retryCodes = new Set([429, 500, 502, 503]);
 
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -127,7 +129,7 @@ async function callGemini(system: string, user: string, model: string): Promise<
     }
 
     if (retryCodes.has(response.status) && attempt < retries) {
-      const wait = Math.pow(2, attempt) * 1000;
+      const wait = Math.min(retryMaxMs, retryBaseMs * Math.pow(2, attempt - 1));
       logger.warn('providers', `Gemini ${response.status} retry ${attempt}/${retries} in ${wait}ms`);
       await new Promise(resolve => setTimeout(resolve, wait));
       continue;
@@ -216,4 +218,18 @@ async function callCerebras(system: string, user: string, model: string): Promis
   }
 
   throw new Error('Cerebras API: all retries exhausted');
+}
+
+function readPositiveIntEnv(name: string, fallback: number): number {
+  const raw = process.env[name]?.trim();
+  if (!raw) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+
+  return parsed;
 }

@@ -218,6 +218,7 @@ export async function runAgentLoop(config: AgentLoopConfig): Promise<AgentResult
         {
           mutationWaitMs: config.planMutationWaitMs,
           enforceProgressGuards: getRuntimeConfig().agent.enforceProgressGuards,
+          enforceTargetUtilityGuards: getRuntimeConfig().agent.enforceTargetUtilityGuards,
         },
       );
 
@@ -320,6 +321,44 @@ function buildExecutionWarnings(actionHistory: ActionHistoryEntry[]): string[] {
       `Recent attempts on selector "${staleSelector}" failed with not_found ${staleSelectorCount} times. ` +
       'This selector is likely stale on the current page. Do not retry it; choose a currently visible selector or use read-only tools to extract from visible data.',
     );
+  }
+
+  const recentUtilityGuard = [...recent]
+    .reverse()
+    .find(entry => entry.result === 'plan_stale' && entry.value?.startsWith('utility_guard:'));
+  if (recentUtilityGuard?.value) {
+    const reason = recentUtilityGuard.value.slice('utility_guard:'.length);
+    if (reason === 'read_before_click') {
+      warnings.push(
+        'Recent click plan was skipped because the target looked ambiguous and low-utility for this extraction goal. ' +
+        'Use read-only tools (search_page/find_elements/count_elements/inspect_region) before clicking.',
+      );
+    } else if (reason === 'low_actionability') {
+      warnings.push(
+        'Recent click plan was skipped because the target had no visible actionable candidates. ' +
+        'Choose a different selector from visible nodes before mutating the page.',
+      );
+    } else if (reason === 'same_page_anchor') {
+      warnings.push(
+        'Recent click plan was a same-page anchor and is unlikely to reveal new answer data. ' +
+        'Prefer read-only tools on current content first.',
+      );
+    } else if (reason === 'stale_selector') {
+      warnings.push(
+        'Recent selector has repeated not_found failures and is now treated as stale. ' +
+        'Do not use this selector again; choose a visible selector from the current graph state.',
+      );
+    } else if (reason === 'read_before_navigation') {
+      warnings.push(
+        'Current page already appears to contain goal-relevant data. ' +
+        'Use read-only tools or answer from current data before navigating to outbound links.',
+      );
+    } else if (reason === 'pagination_churn') {
+      warnings.push(
+        'Recent steps repeatedly paginated without yielding an extracted answer. ' +
+        'Stop moving to more pages and use read-only tools on the current page to extract the requested value.',
+      );
+    }
   }
 
   return warnings;

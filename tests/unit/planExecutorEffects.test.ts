@@ -505,3 +505,236 @@ test('executePlan forwards Brain1 target identity hints for click actions', asyn
   assert.equal(capturedAction?.targetHint?.nth, 1);
   assert.equal(capturedAction?.targetHint?.ambiguousSelector, true);
 });
+
+test('executePlan forwards target hints when selector differs only by escaping', async () => {
+  const graph: SemanticGraph = {
+    snapshot: [
+      {
+        type: 'trigger',
+        tag: 'a',
+        value: 'Human Moon landings',
+        sel: 'a[href="#Human_Moon_landings_(1969–1972)"]',
+        selType: 'href',
+        rule: 'test',
+        meta: {
+          nodeId: 'n1',
+          refId: 'bg1_7',
+          backendNodeId: 7007,
+          frameId: 'frame-main',
+          sessionId: 'brain1_sess',
+          nth: 1,
+          stableHash: 'sh_anchor',
+          selectorScore: 82,
+          interactionScore: 78,
+          actionabilityScore: 70,
+          interactionKind: 'link',
+          confidence: 'high',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 10,
+        },
+      },
+    ],
+    deltas: [],
+    status: 'live',
+    lastCause: null,
+    errors: [],
+    pageUrl: 'https://example.com',
+    snapshotTimestamp: 1,
+    lastUpdateTimestamp: 1,
+  };
+
+  let capturedAction: Action | undefined;
+  await executePlan(
+    [{ tool: 'click', sel: 'a[href="#Human_Moon_landings_\\(1969–1972\\)"]' }],
+    'How many people have walked on the Moon in total?',
+    graph,
+    makeExecutor(action => {
+      capturedAction = action;
+      return successResult(action);
+    }),
+    [],
+    { mutationWaitMs: 0, enforceTargetUtilityGuards: false },
+  );
+
+  assert.equal(capturedAction?.targetHint?.backendNodeId, 7007);
+  assert.equal(capturedAction?.targetHint?.refId, 'bg1_7');
+});
+
+test('executePlan blocks ambiguous low-utility click plans and returns to LLM', async () => {
+  const graph: SemanticGraph = {
+    snapshot: [
+      {
+        type: 'trigger',
+        tag: 'button',
+        value: 'Open',
+        sel: '[data-action="open"]',
+        selType: 'testid',
+        rule: 'test',
+        meta: {
+          nodeId: 't1',
+          selectorScore: 42,
+          interactionScore: 55,
+          actionabilityScore: 43,
+          interactionKind: 'button',
+          confidence: 'low',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 4,
+          stableHash: 'sh_1',
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'trigger',
+        tag: 'button',
+        value: 'Open',
+        sel: '[data-action="open"]',
+        selType: 'testid',
+        rule: 'test',
+        meta: {
+          nodeId: 't2',
+          selectorScore: 41,
+          interactionScore: 52,
+          actionabilityScore: 40,
+          interactionKind: 'button',
+          confidence: 'low',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 5,
+          stableHash: 'sh_2',
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'data',
+        tag: 'h3',
+        value: 'First Listing',
+        sel: '.card h3',
+        selType: 'positional',
+        rule: 'test',
+        meta: {
+          nodeId: 'd1',
+          selectorScore: 55,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 28,
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'data',
+        tag: 'span',
+        value: 'Remote',
+        sel: '.card .location',
+        selType: 'positional',
+        rule: 'test',
+        meta: {
+          nodeId: 'd2',
+          selectorScore: 52,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 8,
+          regionSelector: '.card',
+        },
+      },
+    ],
+    deltas: [],
+    status: 'live',
+    lastCause: null,
+    errors: [],
+    pageUrl: 'https://example.com/jobs',
+    snapshotTimestamp: 1,
+    lastUpdateTimestamp: 1,
+  };
+
+  let executeCount = 0;
+  const result = await executePlan(
+    [{ tool: 'click', sel: '[data-action="open"]' }],
+    'What company posted the first job listing shown?',
+    graph,
+    makeExecutor(action => {
+      executeCount += 1;
+      return successResult(action);
+    }),
+    [],
+    { mutationWaitMs: 0, enforceTargetUtilityGuards: true },
+  );
+
+  assert.equal(executeCount, 0);
+  assert.equal(result.abortReason, 'plan_stale');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.value, 'utility_guard:read_before_click');
+});
+
+test('executePlan can bypass target utility guard when disabled', async () => {
+  const graph = makeGraph('guard-disabled');
+  let executeCount = 0;
+
+  const result = await executePlan(
+    [{ tool: 'click', sel: '[aria-label="Search"]' }],
+    'What is visible here?',
+    graph,
+    makeExecutor(action => {
+      executeCount += 1;
+      return successResult(action);
+    }),
+    [],
+    { mutationWaitMs: 0, enforceTargetUtilityGuards: false },
+  );
+
+  assert.equal(executeCount, 1);
+  assert.equal(result.abortReason, 'max_steps');
+});
+
+test('executePlan replans when a selector has repeated not_found failures', async () => {
+  const graph = makeGraph('stale-selector-guard');
+  const graphFingerprint = fingerprintGraph(graph);
+  const existingHistory: ActionHistoryEntry[] = [
+    {
+      action: 'click',
+      selector: '[aria-label="Search"]',
+      result: 'not_found',
+      timestamp: 1,
+      graphFingerprint,
+    },
+    {
+      action: 'click',
+      selector: '[aria-label="Search"]',
+      result: 'not_found',
+      timestamp: 2,
+      graphFingerprint,
+    },
+    {
+      action: 'click',
+      selector: '[aria-label="Search"]',
+      result: 'not_found',
+      timestamp: 3,
+      graphFingerprint,
+    },
+  ];
+
+  let executeCount = 0;
+  const result = await executePlan(
+    [{ tool: 'click', sel: '[aria-label="Search"]' }],
+    'Open search',
+    graph,
+    makeExecutor(action => {
+      executeCount += 1;
+      return successResult(action);
+    }),
+    existingHistory,
+    { mutationWaitMs: 0 },
+  );
+
+  assert.equal(executeCount, 0);
+  assert.equal(result.abortReason, 'plan_stale');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.value, 'utility_guard:stale_selector');
+});

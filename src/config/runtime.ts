@@ -36,6 +36,7 @@ export interface RuntimeConfig {
   };
   agent: {
     enforceProgressGuards: boolean;
+    enforceTargetUtilityGuards: boolean;
   };
   executor: {
     cdpClickEnabled: boolean;
@@ -89,6 +90,7 @@ export function getRuntimeConfig(): RuntimeConfig {
     },
     agent: {
       enforceProgressGuards: getEnvBoolean('BROWSEGENT_ENFORCE_PROGRESS_GUARDS', true),
+      enforceTargetUtilityGuards: getEnvBoolean('BROWSEGENT_ENFORCE_TARGET_UTILITY_GUARDS', true),
     },
     executor: {
       cdpClickEnabled: getEnvBoolean('BROWSEGENT_CDP_CLICK_ENABLED', true),
