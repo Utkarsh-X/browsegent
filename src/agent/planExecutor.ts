@@ -8,7 +8,8 @@ import type { SemanticGraph } from '../graph/types';
 import type { ActionHistoryEntry } from '../graph/serializer';
 import { fingerprintGraph } from './loopDetector';
 import { assessTargetUtilityGuard, buildTargetUtilityHistoryValue } from './targetUtility';
-import { selectorsEquivalent } from './selectorMatch';
+import { selectorFamilyFingerprint, selectorsEquivalent } from './selectorMatch';
+import { classifyReadOutcome, type ReadOutcome, normalizeReadValue } from './readOutcome';
 
 const MAX_PLAN_STEPS = 5;
 const MUTATION_WAIT_MS = 1500;
@@ -16,8 +17,13 @@ const SIGNIFICANT_DELTA_COUNT = 3;
 const NO_EFFECT_REPEAT_THRESHOLD = 3;
 const SAME_VALUE_REPEAT_THRESHOLD = 3;
 const OBSERVED_VALUE_REPEAT_THRESHOLD = 4;
+const CONTEXT_READ_REPEAT_THRESHOLD = 4;
+const INSPECT_REGION_CONTEXT_REPEAT_THRESHOLD = 3;
+const NOISE_READ_REPEAT_THRESHOLD = 3;
 const RECENT_EFFECT_WINDOW = 6;
+const STALE_SELECTOR_REPLAN_WINDOW = 12;
 const STALE_SELECTOR_REPLAN_THRESHOLD = 3;
+const STALE_SELECTOR_FAMILY_REPLAN_THRESHOLD = 2;
 
 type ProgressDecision = 'accept' | 'watch' | 'warn' | 'abort';
 
@@ -137,7 +143,7 @@ export async function executePlan(
 
     executedActions.push(action);
     const result = await executor.execute(action);
-    const progress = assessActionProgress(action, result, history, graph);
+    const progress = assessActionProgress(action, result, history, graph, goal);
     const historyEntry: ActionHistoryEntry = {
       action: action.kind,
       selector: actionHistoryKey,
@@ -149,6 +155,7 @@ export async function executePlan(
       progressStrength: progress.strength,
       progressDecision: progress.decision,
       repeatCount: progress.repeatCount,
+      readOutcome: progress.readOutcome,
     };
     history.push(historyEntry);
 
@@ -161,6 +168,7 @@ export async function executePlan(
       strength: progress.strength,
       repeatCount: progress.repeatCount,
       decision: progress.decision,
+      readOutcome: progress.readOutcome,
       graphFingerprint: historyEntry.graphFingerprint,
       targetValue: truncateProgressValue(result.value ?? result.metadata.effect?.targetValue),
     });
@@ -238,10 +246,12 @@ function assessActionProgress(
   result: ActionResult,
   history: ActionHistoryEntry[],
   graph: SemanticGraph,
+  goal: string,
 ): {
   decision: ProgressDecision;
   repeatCount: number;
   strength: ActionEffectStrength;
+  readOutcome?: ReadOutcome;
 } {
   const strength = result.metadata.effect?.strength ?? 'none';
   const graphFingerprint = fingerprintGraph(graph);
@@ -258,20 +268,31 @@ function assessActionProgress(
   );
 
   if (isObservationAction(action.kind)) {
-    const normalizedValue = normalizeRepeatedValue(result.value ?? result.metadata.effect?.targetValue);
-    if (normalizedValue === undefined) {
-      return { decision: 'accept', repeatCount: 0, strength };
+    const readOutcome = classifyReadOutcome({
+      action,
+      value: result.value ?? result.metadata.effect?.targetValue,
+      goal,
+      history,
+      graphFingerprint,
+    });
+    if (readOutcome.normalizedValue === undefined) {
+      return { decision: 'accept', repeatCount: 0, strength, readOutcome: readOutcome.outcome };
     }
     const sameValueCount = recentMatches.filter(entry =>
-      normalizeRepeatedValue(entry.value ?? entry.effect?.targetValue) === normalizedValue,
+      normalizeReadValue(entry.value ?? entry.effect?.targetValue) === readOutcome.normalizedValue,
     ).length + 1;
     const observedOnly = result.metadata.effect?.primarySignal === 'target_value_observed'
       && recentMatches.every(entry => (entry.effect?.primarySignal ?? 'none') === 'target_value_observed');
-    return decideFromRepeatCount(
+    const threshold = getReadObservationAbortThreshold(action.kind, readOutcome.outcome, observedOnly);
+    const decision = decideFromRepeatCount(
       sameValueCount,
       strength,
-      observedOnly ? OBSERVED_VALUE_REPEAT_THRESHOLD : SAME_VALUE_REPEAT_THRESHOLD,
+      threshold,
     );
+    return {
+      ...decision,
+      readOutcome: readOutcome.outcome,
+    };
   }
 
   if (action.kind === 'click' || action.kind === 'close') {
@@ -294,6 +315,25 @@ function assessActionProgress(
   }
 
   return { decision: 'accept', repeatCount: 1, strength };
+}
+
+function getReadObservationAbortThreshold(
+  kind: Action['kind'],
+  outcome: ReadOutcome,
+  observedOnly: boolean,
+): number {
+  if (outcome === 'noise_repeat') {
+    return NOISE_READ_REPEAT_THRESHOLD;
+  }
+
+  if (outcome === 'context_only') {
+    if (kind === 'inspect_region') {
+      return INSPECT_REGION_CONTEXT_REPEAT_THRESHOLD;
+    }
+    return CONTEXT_READ_REPEAT_THRESHOLD;
+  }
+
+  return observedOnly ? OBSERVED_VALUE_REPEAT_THRESHOLD : SAME_VALUE_REPEAT_THRESHOLD;
 }
 
 function isObservationAction(kind: Action['kind']): boolean {
@@ -355,7 +395,18 @@ function shouldReplanForRepeatedNotFound(
     && entry.result === 'not_found',
   ).length;
 
-  return repeatedNotFoundCount >= STALE_SELECTOR_REPLAN_THRESHOLD;
+  if (repeatedNotFoundCount >= STALE_SELECTOR_REPLAN_THRESHOLD) {
+    return true;
+  }
+
+  const selectorFamily = selectorFamilyFingerprint(actionHistoryKey);
+  const repeatedFamilyNotFoundCount = history.slice(-STALE_SELECTOR_REPLAN_WINDOW).filter(entry =>
+    typeof entry.selector === 'string'
+    && entry.result === 'not_found'
+    && selectorFamilyFingerprint(entry.selector) === selectorFamily,
+  ).length;
+
+  return repeatedFamilyNotFoundCount >= STALE_SELECTOR_FAMILY_REPLAN_THRESHOLD;
 }
 
 function decideFromRepeatCount(
@@ -382,11 +433,6 @@ function truncateProgressValue(value: string | undefined): string | undefined {
   return value.replace(/\s+/g, ' ').slice(0, 140);
 }
 
-function normalizeRepeatedValue(value: string | undefined): string | undefined {
-  if (value === undefined) return undefined;
-  return value.trim().replace(/\s+/g, ' ').slice(0, 240);
-}
-
 function withTargetHint(action: Action, graph: SemanticGraph): Action {
   if (!action.target) {
     return action;
@@ -397,38 +443,55 @@ function withTargetHint(action: Action, graph: SemanticGraph): Action {
     && action.kind !== 'type'
     && action.kind !== 'select'
     && action.kind !== 'get'
+    && action.kind !== 'inspect_region'
   ) {
     return action;
   }
 
   const matchingNodes = graph.snapshot
-    .filter(node => selectorsEquivalent(node.sel, action.target) && !!node.meta)
+    .filter(node => selectorsEquivalent(node.sel, action.target))
     .sort((left, right) => getNodeHintPriority(right, action.kind) - getNodeHintPriority(left, action.kind));
 
   const primaryNode = matchingNodes[0];
+  const canonicalTarget = primaryNode?.sel ?? action.target;
   if (!primaryNode?.meta) {
+    if (canonicalTarget !== action.target) {
+      return { ...action, target: canonicalTarget };
+    }
+    return action;
+  }
+
+  const metaNodes = matchingNodes.filter(node => !!node.meta);
+  const primaryMetaNode = metaNodes[0];
+  if (!primaryMetaNode?.meta) {
+    if (canonicalTarget !== action.target) {
+      return { ...action, target: canonicalTarget };
+    }
     return action;
   }
 
   const uniqueHashes = new Set(
-    matchingNodes
+    metaNodes
       .map(node => node.meta?.stableHash)
       .filter((stableHash): stableHash is string => !!stableHash),
   );
   const hint = {
-    refId: primaryNode.meta.refId,
-    backendNodeId: primaryNode.meta.backendNodeId,
-    frameId: primaryNode.meta.frameId,
-    sessionId: primaryNode.meta.sessionId,
-    stableHash: primaryNode.meta.stableHash,
-    nth: primaryNode.meta.nth,
-    confidence: primaryNode.meta.confidence,
-    selectorScore: primaryNode.meta.selectorScore,
-    actionabilityScore: primaryNode.meta.actionabilityScore,
+    refId: primaryMetaNode.meta.refId,
+    backendNodeId: primaryMetaNode.meta.backendNodeId,
+    frameId: primaryMetaNode.meta.frameId,
+    sessionId: primaryMetaNode.meta.sessionId,
+    stableHash: primaryMetaNode.meta.stableHash,
+    tag: primaryMetaNode.tag,
+    role: primaryMetaNode.meta.role ?? primaryMetaNode.attrs?.role,
+    valueSample: primaryMetaNode.value.slice(0, 160),
+    nth: primaryMetaNode.meta.nth,
+    confidence: primaryMetaNode.meta.confidence,
+    selectorScore: primaryMetaNode.meta.selectorScore,
+    actionabilityScore: primaryMetaNode.meta.actionabilityScore,
     ambiguousSelector: uniqueHashes.size > 1,
   };
 
-  return { ...action, targetHint: hint };
+  return { ...action, target: canonicalTarget, targetHint: hint };
 }
 
 function getNodeHintPriority(node: FilteredNode, actionKind: Action['kind']): number {

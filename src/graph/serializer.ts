@@ -5,6 +5,7 @@ import { getBrain1NodePriority } from '../brain1/scoring';
 import type { ActionEffectSummary, ActionEffectStrength } from '../executor/types';
 import type { SemanticGraph } from './types';
 import type { CausalChain } from '../brain2/types';
+import { extractAnswerCandidate } from '../agent/readOutcome';
 
 export interface ActionHistoryEntry {
   action: string;
@@ -30,6 +31,7 @@ export interface ActionHistoryEntry {
   progressStrength?: ActionEffectStrength;
   progressDecision?: 'accept' | 'watch' | 'warn' | 'abort';
   repeatCount?: number;
+  readOutcome?: 'answer_evidence' | 'context_only' | 'noise_repeat';
 }
 
 export interface SerializedGraph {
@@ -92,14 +94,7 @@ export function serializeGraph(
       .slice(-5)
       .map(h => [h.action, h.selector ?? '', h.result] as [string, string, string]);
 
-    const readObservations = actionHistory
-      .filter(entry => isReadObservation(entry.action) && !!entry.value)
-      .slice(-4)
-      .map(entry => [
-        entry.action,
-        entry.selector ?? '',
-        (entry.value ?? '').slice(0, 220),
-      ] as [string, string, string]);
+    const readObservations = selectReadObservations(actionHistory, goal);
 
     const serialized: SerializedGraph = {
       g: goal,
@@ -140,6 +135,60 @@ function isReadObservation(action: string): boolean {
     || action === 'find_elements'
     || action === 'count_elements'
     || action === 'inspect_region';
+}
+
+function selectReadObservations(actionHistory: ActionHistoryEntry[], goal: string): Array<[string, string, string]> {
+  const recentReadEntries = actionHistory
+    .filter(entry => isReadObservation(entry.action) && !!entry.value && entry.readOutcome !== 'noise_repeat')
+    .slice(-12);
+
+  if (recentReadEntries.length === 0) {
+    return [];
+  }
+
+  const unique = new Set<string>();
+  const ranked = recentReadEntries
+    .map(entry => ({
+      entry,
+      score: readOutcomeScore(entry.readOutcome),
+    }))
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+      return right.entry.timestamp - left.entry.timestamp;
+    });
+
+  const selected: Array<[string, string, string]> = [];
+  for (const rankedEntry of ranked) {
+    const rawValue = rankedEntry.entry.value ?? '';
+    const candidate = rankedEntry.entry.readOutcome === 'answer_evidence'
+      ? extractAnswerCandidate(goal, rawValue)
+      : undefined;
+    const value = (candidate ?? rawValue).slice(0, 220);
+    const dedupeKey = `${rankedEntry.entry.action}|${rankedEntry.entry.selector ?? ''}|${value}`;
+    if (unique.has(dedupeKey)) {
+      continue;
+    }
+    unique.add(dedupeKey);
+    selected.push([
+      rankedEntry.entry.action,
+      rankedEntry.entry.selector ?? '',
+      value,
+    ]);
+    if (selected.length >= 4) {
+      break;
+    }
+  }
+
+  return selected;
+}
+
+function readOutcomeScore(outcome: ActionHistoryEntry['readOutcome']): number {
+  if (outcome === 'answer_evidence') return 3;
+  if (outcome === 'context_only') return 2;
+  if (outcome === 'noise_repeat') return 1;
+  return 0;
 }
 
 function buildCauseSummary(chain: CausalChain): string {

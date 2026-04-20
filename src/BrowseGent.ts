@@ -3,7 +3,7 @@ import { launchStealth, warmupProfile } from './stealth/launchStealth';
 import { createGraph } from './brain2/graphUpdater';
 import { runAgentLoop } from './agent/loop';
 import { serializeGraph, type ActionHistoryEntry } from './graph/serializer';
-import { callExtract } from './agent/llm';
+import { callExtract, callLLM } from './agent/llm';
 import { logger } from './logger';
 import type { SemanticGraph } from './graph/types';
 import type { Brain1Result } from './brain1/types';
@@ -133,6 +133,7 @@ export class BrowseGent {
       graph,
       executor,
       maxSteps: this.opts.maxSteps,
+      llmCaller: async (ctx) => callLLM({ ...ctx, model: this.opts.model }),
       beforeStep: async () => {
         // Sync Brain 2 deltas from page into graph
         await this._syncDeltas(graph);
@@ -208,6 +209,7 @@ export class BrowseGent {
       instruction,
       graphJson: JSON.stringify(serialized),
       schemaDescription,
+      model: this.opts.model,
     });
 
     let data: T | null = null;

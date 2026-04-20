@@ -423,6 +423,111 @@ test('executePlan stops repeated same-result search_page actions on the fourth o
   assert.equal(result.actionHistory[result.actionHistory.length - 1]?.result, 'no_progress');
 });
 
+test('executePlan marks direct get results as answer evidence', async () => {
+  const graph = makeGraph('get-answer-evidence');
+
+  const result = await executePlan(
+    [{ tool: 'get', sel: '#alpha' }],
+    'What is the headline?',
+    graph,
+    makeExecutor(action => successResult(action, {
+      value: 'NASA launches new mission',
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: false,
+        effect: {
+          stateChanged: false,
+          primarySignal: 'target_value_observed',
+          signals: ['target_value_observed'],
+          strength: 'weak',
+          targetValue: 'NASA launches new mission',
+        },
+      },
+    })),
+    [],
+    { mutationWaitMs: 0 },
+  );
+
+  assert.equal(result.abortReason, 'max_steps');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.readOutcome, 'answer_evidence');
+});
+
+test('executePlan escalates repeated low-value inspect_region summaries earlier', async () => {
+  const graph = makeGraph('inspect-repeat');
+  const graphFingerprint = fingerprintGraph(graph);
+  const summary = 'Region ".results" contains 8 notable nodes.';
+  const existingHistory: ActionHistoryEntry[] = [
+    {
+      action: 'inspect_region',
+      selector: '.results',
+      result: 'ok',
+      timestamp: 1,
+      graphFingerprint,
+      value: summary,
+      readOutcome: 'context_only',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+        targetValue: summary,
+      },
+    },
+    {
+      action: 'inspect_region',
+      selector: '.results',
+      result: 'ok',
+      timestamp: 2,
+      graphFingerprint,
+      value: summary,
+      readOutcome: 'context_only',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+        targetValue: summary,
+      },
+    },
+  ];
+
+  const result = await executePlan(
+    [{ tool: 'inspect_region', sel: '.results' }],
+    'Get the first laptop price from this page',
+    graph,
+    makeExecutor(action => successResult(action, {
+      value: summary,
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: false,
+        effect: {
+          stateChanged: false,
+          primarySignal: 'target_value_observed',
+          signals: ['target_value_observed'],
+          strength: 'weak',
+          targetValue: summary,
+        },
+      },
+    })),
+    existingHistory,
+    { mutationWaitMs: 0 },
+  );
+
+  assert.equal(result.abortReason, 'no_progress');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.readOutcome, 'noise_repeat');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.result, 'no_progress');
+});
+
 test('executePlan forwards Brain1 target identity hints for click actions', async () => {
   const graph: SemanticGraph = {
     snapshot: [
@@ -557,8 +662,76 @@ test('executePlan forwards target hints when selector differs only by escaping',
     { mutationWaitMs: 0, enforceTargetUtilityGuards: false },
   );
 
+  assert.equal(capturedAction?.target, 'a[href="#Human_Moon_landings_(1969–1972)"]');
   assert.equal(capturedAction?.targetHint?.backendNodeId, 7007);
   assert.equal(capturedAction?.targetHint?.refId, 'bg1_7');
+});
+
+test('executePlan canonicalizes equivalent escaped selectors for inspect_region', async () => {
+  const graph: SemanticGraph = {
+    snapshot: [
+      {
+        type: 'data',
+        tag: 'h2',
+        value: 'Featured laptop',
+        sel: 'h2[aria-label="Featured \\"Laptop\\""]',
+        selType: 'aria',
+        rule: 'test',
+        meta: {
+          nodeId: 'd1',
+          selectorScore: 70,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 22,
+          stableHash: 'sh_data',
+        },
+      },
+    ],
+    deltas: [],
+    status: 'live',
+    lastCause: null,
+    errors: [],
+    pageUrl: 'https://example.com',
+    snapshotTimestamp: 1,
+    lastUpdateTimestamp: 1,
+  };
+
+  let capturedAction: Action | undefined;
+  await executePlan(
+    [{ tool: 'inspect_region', sel: 'h2[aria-label="Featured \\\"Laptop\\\""]' }],
+    'Get the first laptop title',
+    graph,
+    makeExecutor(action => {
+      capturedAction = action;
+      return successResult(action, {
+        value: 'Region contains 3 notable nodes.',
+        metadata: {
+          attempts: 1,
+          durationMs: 0,
+          runtimePath: ['dom'],
+          finalRuntime: 'dom',
+          usedFallback: false,
+          target: action.target,
+          mutating: false,
+          effect: {
+            stateChanged: false,
+            primarySignal: 'target_value_observed',
+            signals: ['target_value_observed'],
+            strength: 'weak',
+            targetValue: 'Region contains 3 notable nodes.',
+          },
+        },
+      });
+    }),
+    [],
+    { mutationWaitMs: 0, enforceTargetUtilityGuards: false },
+  );
+
+  assert.equal(capturedAction?.target, 'h2[aria-label="Featured \\"Laptop\\""]');
 });
 
 test('executePlan blocks ambiguous low-utility click plans and returns to LLM', async () => {
@@ -694,6 +867,95 @@ test('executePlan can bypass target utility guard when disabled', async () => {
   assert.equal(result.abortReason, 'max_steps');
 });
 
+test('executePlan blocks repeated pagination churn and requests replan', async () => {
+  const graph: SemanticGraph = {
+    snapshot: [
+      {
+        type: 'trigger',
+        tag: 'a',
+        value: '5',
+        sel: 'a[href="/search?q=laptop&page=5"]',
+        selType: 'href',
+        rule: 'test',
+        meta: {
+          nodeId: 'p5',
+          selectorScore: 78,
+          interactionScore: 72,
+          actionabilityScore: 74,
+          interactionKind: 'link',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 8,
+        },
+      },
+    ],
+    deltas: [],
+    status: 'live',
+    lastCause: null,
+    errors: [],
+    pageUrl: 'https://example.com/search?q=laptop&page=4',
+    snapshotTimestamp: 1,
+    lastUpdateTimestamp: 1,
+  };
+
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=2"]',
+      result: 'ok',
+      timestamp: 1,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=3"]',
+      result: 'ok',
+      timestamp: 2,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=4"]',
+      result: 'ok',
+      timestamp: 3,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+  ];
+
+  let executeCount = 0;
+  const result = await executePlan(
+    [{ tool: 'click', sel: 'a[href="/search?q=laptop&page=5"]' }],
+    'Get the price of the first laptop listed after moving to the next page of results',
+    graph,
+    makeExecutor(action => {
+      executeCount += 1;
+      return successResult(action);
+    }),
+    history,
+    { mutationWaitMs: 0, enforceTargetUtilityGuards: true },
+  );
+
+  assert.equal(executeCount, 0);
+  assert.equal(result.abortReason, 'plan_stale');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.value, 'utility_guard:pagination_churn');
+});
+
 test('executePlan replans when a selector has repeated not_found failures', async () => {
   const graph = makeGraph('stale-selector-guard');
   const graphFingerprint = fingerprintGraph(graph);
@@ -725,6 +987,51 @@ test('executePlan replans when a selector has repeated not_found failures', asyn
   const result = await executePlan(
     [{ tool: 'click', sel: '[aria-label="Search"]' }],
     'Open search',
+    graph,
+    makeExecutor(action => {
+      executeCount += 1;
+      return successResult(action);
+    }),
+    existingHistory,
+    { mutationWaitMs: 0 },
+  );
+
+  assert.equal(executeCount, 0);
+  assert.equal(result.abortReason, 'plan_stale');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.value, 'utility_guard:stale_selector');
+});
+
+test('executePlan replans when selector family has repeated not_found failures', async () => {
+  const graph = makeGraph('stale-family-guard');
+  const graphFingerprint = fingerprintGraph(graph);
+  const existingHistory: ActionHistoryEntry[] = [
+    {
+      action: 'get',
+      selector: 'div:nth-of-type(3) > div:nth-of-type(1) > span:nth-of-type(2)',
+      result: 'not_found',
+      timestamp: 1,
+      graphFingerprint,
+    },
+    {
+      action: 'get',
+      selector: 'div:nth-of-type(4) > div:nth-of-type(1) > span:nth-of-type(2)',
+      result: 'not_found',
+      timestamp: 2,
+      graphFingerprint,
+    },
+    {
+      action: 'get',
+      selector: 'div:nth-of-type(5) > div:nth-of-type(1) > span:nth-of-type(2)',
+      result: 'not_found',
+      timestamp: 3,
+      graphFingerprint,
+    },
+  ];
+
+  let executeCount = 0;
+  const result = await executePlan(
+    [{ tool: 'get', sel: 'div:nth-of-type(6) > div:nth-of-type(1) > span:nth-of-type(2)' }],
+    'Get the first laptop price',
     graph,
     makeExecutor(action => {
       executeCount += 1;

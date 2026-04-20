@@ -33,6 +33,12 @@ interface CdpOutcomePolicy {
   reason: string;
 }
 
+interface SelectorRecoveryResolution {
+  backendNodeId: number;
+  frameId?: string;
+  recoveryMode: 'stable_hash' | 'identity_score' | 'nth';
+}
+
 const CDP_EVENT_TIMEOUT_MS = {
   move: 1000,
   down: 2500,
@@ -72,6 +78,17 @@ export function shouldAttemptCdpSelectorRecovery(result: CdpClickResult): boolea
     || result === 'geometry_unavailable'
     || result === 'stale_target'
     || result === 'timeout';
+}
+
+export function canAttemptIdentitySelectorRecovery(targetHint: ActionTargetHint): boolean {
+  if (!targetHint.ambiguousSelector) {
+    return true;
+  }
+  return !!targetHint.stableHash?.trim();
+}
+
+export function shouldRequireStableHashIdentityMatch(targetHint: ActionTargetHint): boolean {
+  return !!targetHint.ambiguousSelector && !!targetHint.stableHash?.trim();
 }
 
 function compilePatternMatcher(pattern: string): { mode: 'regex' | 'text'; pattern: string } {
@@ -353,7 +370,7 @@ export class DomBrowserAdapter implements BrowserAdapter {
       if (!shouldAttemptCdpSelectorRecovery(clickResult)) {
         return clickResult;
       }
-      if (targetHint.ambiguousSelector) {
+      if (!canAttemptIdentitySelectorRecovery(targetHint)) {
         logger.warn('executor:dom', 'Stale target recovery blocked due to ambiguous selector', {
           target,
           refId: targetHint.refId,
@@ -362,9 +379,27 @@ export class DomBrowserAdapter implements BrowserAdapter {
         return 'ambiguous_recovery_required';
       }
 
-      const recovered = await this.resolveBackendNodeBySelector(cdpSession, target, targetHint.nth);
+      const recovered = await this.resolveBackendNodeBySelector(cdpSession, target, targetHint);
       if (!recovered) {
+        if (shouldRequireStableHashIdentityMatch(targetHint)) {
+          logger.warn('executor:dom', 'Stable-hash recovery required but no matching candidate found', {
+            target,
+            refId: targetHint.refId,
+            backendNodeId: targetHint.backendNodeId,
+            stableHash: targetHint.stableHash,
+          });
+          return 'ambiguous_recovery_required';
+        }
         return clickResult === 'stale_target' ? 'stale_target' : clickResult;
+      }
+      if (targetHint.ambiguousSelector && recovered.recoveryMode !== 'stable_hash') {
+        logger.warn('executor:dom', 'Ambiguous selector recovery rejected without stable hash match', {
+          target,
+          refId: targetHint.refId,
+          backendNodeId: targetHint.backendNodeId,
+          recoveryMode: recovered.recoveryMode,
+        });
+        return 'ambiguous_recovery_required';
       }
       if (recovered.backendNodeId === originalBackendNodeId && clickResult === 'stale_target') {
         return 'stale_target';
@@ -376,6 +411,7 @@ export class DomBrowserAdapter implements BrowserAdapter {
         recoveredBackendNodeId: recovered.backendNodeId,
         previousFrameId: targetHint.frameId,
         recoveredFrameId: recovered.frameId,
+        recoveryMode: recovered.recoveryMode,
       });
 
       clickResult = await this.clickBackendNode(
@@ -502,17 +538,219 @@ export class DomBrowserAdapter implements BrowserAdapter {
   private async resolveBackendNodeBySelector(
     cdpSession: CDPSession,
     selector: string,
-    nth: number | undefined,
-  ): Promise<{ backendNodeId: number; frameId?: string } | null> {
+    targetHint: ActionTargetHint,
+  ): Promise<SelectorRecoveryResolution | null> {
     let objectId: string | undefined;
     try {
-      const nthIndex = Math.max(0, (nth ?? 1) - 1);
+      const nthIndex = Math.max(0, (targetHint.nth ?? 1) - 1);
+      const expectedStableHash = targetHint.stableHash?.trim() || '';
+      const expectedTag = targetHint.tag?.trim().toLowerCase() || '';
+      const expectedRole = targetHint.role?.trim().toLowerCase() || '';
+      const expectedValue = normalizeTextSample(targetHint.valueSample);
+      const requireStableMatch = shouldRequireStableHashIdentityMatch(targetHint);
       const evaluated = await cdpSession.send('Runtime.evaluate', {
         expression: `(() => {
+          const selector = ${JSON.stringify(selector)};
+          const nthIndex = ${nthIndex};
+          const expectedStableHash = ${JSON.stringify(expectedStableHash)};
+          const expectedTag = ${JSON.stringify(expectedTag)};
+          const expectedRole = ${JSON.stringify(expectedRole)};
+          const expectedValue = ${JSON.stringify(expectedValue)};
+          const requireStableMatch = ${requireStableMatch ? 'true' : 'false'};
+
+          const normalizeText = (value) => (value ?? '').toString().replace(/\\s+/g, ' ').trim();
+          const normalizeHashToken = (value) => normalizeText(value).toLowerCase().slice(0, 120);
+          const normalizeStableClassTokens = (className) => {
+            const tokens = normalizeText(className)
+              .split(/\\s+/)
+              .map(token => token.toLowerCase())
+              .filter(token =>
+                !!token
+                && token.length >= 2
+                && !/\\d{4,}/.test(token)
+                && !/(^|[-_])(active|hover|focus|selected|open|closed|loading|loaded|enter|leave|anim|motion)($|[-_])/.test(token),
+              );
+            return tokens.slice(0, 3).join('.');
+          };
+          const hashString = (value) => {
+            let hash = 2166136261;
+            for (let index = 0; index < value.length; index++) {
+              hash ^= value.charCodeAt(index);
+              hash = Math.imul(hash, 16777619);
+            }
+            return (hash >>> 0).toString(36);
+          };
+          const getElementText = (el, tag) => {
+            const role = el.getAttribute('role') ?? '';
+            if (tag === 'input' || tag === 'select' || tag === 'textarea') return '';
+            if (tag === 'button' || tag === 'a' || tag === 'summary' || tag === 'label' || role === 'button' || role === 'link') {
+              return normalizeText((el.textContent ?? '').slice(0, 200));
+            }
+            let directText = '';
+            for (const child of el.childNodes) {
+              if (child.nodeType === Node.TEXT_NODE) {
+                directText += ' ' + (child.textContent ?? '');
+              }
+            }
+            const normalizedDirectText = normalizeText(directText);
+            if (normalizedDirectText) return normalizedDirectText.slice(0, 200);
+            if (el.childElementCount <= 2) return normalizeText((el.textContent ?? '').slice(0, 200));
+            return '';
+          };
+          const getElementFormValue = (el, tag) => {
+            if (tag === 'input') {
+              const input = el;
+              if ((input.type ?? '').toLowerCase() === 'password') return '';
+              return normalizeText((input.value ?? '').slice(0, 200));
+            }
+            if (tag === 'textarea') {
+              return normalizeText((el.value ?? '').slice(0, 200));
+            }
+            if (tag === 'select') {
+              const selected = el.selectedOptions?.[0]?.textContent ?? el.value ?? '';
+              return normalizeText(selected.slice(0, 200));
+            }
+            if (el.isContentEditable) {
+              return normalizeText((el.textContent ?? '').slice(0, 200));
+            }
+            return '';
+          };
+          const getSiblingOrdinal = (el) => {
+            const parent = el.parentElement;
+            if (!parent) return 1;
+            const siblings = Array.from(parent.children).filter(child => child.tagName === el.tagName);
+            const index = siblings.indexOf(el);
+            return index >= 0 ? index + 1 : 1;
+          };
+          const getStableAncestorPath = (el) => {
+            const segments = [];
+            let current = el.parentElement;
+            let depth = 0;
+            while (current && current !== document.body && current !== document.documentElement && depth < 4) {
+              const tag = current.tagName.toLowerCase();
+              const role = normalizeHashToken(current.getAttribute('role'));
+              const dataTestId = normalizeHashToken(current.getAttribute('data-testid') ?? current.getAttribute('data-test'));
+              const id = normalizeHashToken(current.getAttribute('id'));
+              const classToken = normalizeStableClassTokens(current.getAttribute('class'));
+              const marker = id
+                ? '#' + id
+                : dataTestId
+                  ? '[' + dataTestId + ']'
+                  : classToken
+                    ? '.' + classToken
+                    : '';
+              segments.unshift(tag + (role ? ':' + role : '') + marker);
+              current = current.parentElement;
+              depth += 1;
+            }
+            return segments.join('>');
+          };
+          const computeStableHash = (el) => {
+            const tag = el.tagName.toLowerCase();
+            const attrs = {
+              placeholder: normalizeText(el.getAttribute('placeholder')) || '',
+              ariaLabel: normalizeText(el.getAttribute('aria-label')) || '',
+              name: normalizeText(el.getAttribute('name')) || '',
+              href: normalizeText(el.getAttribute('href')) || '',
+              inputType: normalizeText(el.getAttribute('type')) || '',
+              role: normalizeText(el.getAttribute('role')) || '',
+              dataTestId: normalizeText(el.getAttribute('data-testid') ?? el.getAttribute('data-test')) || '',
+            };
+            const text = getElementText(el, tag);
+            const formValue = getElementFormValue(el, tag);
+            const primaryValue = (
+              text
+              || formValue
+              || attrs.placeholder
+              || attrs.ariaLabel
+              || attrs.name
+              || attrs.href
+              || ''
+            ).slice(0, 200);
+            const role = normalizeHashToken(attrs.role);
+            const nameLike = normalizeHashToken(
+              attrs.ariaLabel
+              || attrs.placeholder
+              || attrs.name
+              || text
+              || formValue
+              || primaryValue,
+            );
+            const href = normalizeHashToken(attrs.href ? attrs.href.replace(/[?#].*$/, '') : '');
+            const attrSignature = [
+              normalizeHashToken(attrs.inputType),
+              normalizeHashToken(attrs.name),
+              normalizeHashToken(attrs.dataTestId),
+              href,
+            ]
+              .filter(Boolean)
+              .join('|');
+            const classSignature = normalizeStableClassTokens(el.getAttribute('class'));
+            const ancestorPath = getStableAncestorPath(el);
+            const ordinal = getSiblingOrdinal(el);
+            const payload = tag + '|' + role + '|' + nameLike + '|' + attrSignature + '|' + classSignature + '|' + ancestorPath + '|' + ordinal;
+            return 'sh_' + hashString(payload);
+          };
+          const getCandidateValue = (el) => {
+            const tag = el.tagName.toLowerCase();
+            const text = normalizeText(getElementText(el, tag));
+            const formValue = normalizeText(getElementFormValue(el, tag));
+            const placeholder = normalizeText(el.getAttribute('placeholder'));
+            const ariaLabel = normalizeText(el.getAttribute('aria-label'));
+            const name = normalizeText(el.getAttribute('name'));
+            const href = normalizeText(el.getAttribute('href'));
+            return normalizeText(text || formValue || placeholder || ariaLabel || name || href || '').toLowerCase().slice(0, 160);
+          };
+          const scoreCandidate = (el) => {
+            let score = 0;
+            const tag = el.tagName.toLowerCase();
+            const role = normalizeText(el.getAttribute('role')).toLowerCase();
+            const value = getCandidateValue(el);
+            if (expectedTag && tag === expectedTag) score += 3;
+            if (expectedRole && role === expectedRole) score += 2;
+            if (expectedValue) {
+              if (value === expectedValue) score += 4;
+              else if (value.includes(expectedValue) || expectedValue.includes(value)) score += 2;
+            }
+            return score;
+          };
+
           try {
-            const matches = document.querySelectorAll(${JSON.stringify(selector)});
-            if (!matches || matches.length === 0) return null;
-            return matches[${nthIndex}] || matches[0] || null;
+            const matches = Array.from(document.querySelectorAll(selector));
+            if (!matches || matches.length === 0) {
+              return null;
+            }
+
+            if (expectedStableHash) {
+              const stableMatches = matches.filter(el => computeStableHash(el) === expectedStableHash);
+              if (stableMatches.length > 0) {
+                return { element: stableMatches[0], mode: 'stable_hash' };
+              }
+              if (requireStableMatch) {
+                return null;
+              }
+            }
+
+            if (expectedTag || expectedRole || expectedValue) {
+              let best = null;
+              let bestScore = -1;
+              let ties = 0;
+              for (const candidate of matches) {
+                const score = scoreCandidate(candidate);
+                if (score > bestScore) {
+                  best = candidate;
+                  bestScore = score;
+                  ties = 1;
+                } else if (score === bestScore) {
+                  ties += 1;
+                }
+              }
+              if (best && bestScore > 0 && ties === 1) {
+                return { element: best, mode: 'identity_score' };
+              }
+            }
+
+            return { element: matches[nthIndex] || matches[0] || null, mode: 'nth' };
           } catch {
             return null;
           }
@@ -524,7 +762,24 @@ export class DomBrowserAdapter implements BrowserAdapter {
         return null;
       }
 
-      const described = await cdpSession.send('DOM.describeNode', { objectId }).catch(() => null);
+      const mode = await cdpSession.send('Runtime.callFunctionOn', {
+        objectId,
+        functionDeclaration: 'function() { return this?.mode || "nth"; }',
+        returnByValue: true,
+      }).catch(() => null);
+      const selectedElement = await cdpSession.send('Runtime.callFunctionOn', {
+        objectId,
+        functionDeclaration: 'function() { return this?.element || null; }',
+        returnByValue: false,
+      }).catch(() => null);
+
+      const selectedObjectId = selectedElement?.result?.objectId;
+      if (!selectedObjectId) {
+        return null;
+      }
+
+      const described = await cdpSession.send('DOM.describeNode', { objectId: selectedObjectId }).catch(() => null);
+      await cdpSession.send('Runtime.releaseObject', { objectId: selectedObjectId }).catch(() => {});
       const backendNodeId = described?.node?.backendNodeId;
       if (typeof backendNodeId !== 'number') {
         return null;
@@ -533,6 +788,7 @@ export class DomBrowserAdapter implements BrowserAdapter {
       return {
         backendNodeId,
         frameId: typeof described?.node?.frameId === 'string' ? described.node.frameId : undefined,
+        recoveryMode: normalizeRecoveryMode(mode?.result?.value),
       };
     } catch {
       return null;
@@ -612,6 +868,17 @@ export class DomBrowserAdapter implements BrowserAdapter {
     }
     return this.page;
   }
+}
+
+function normalizeTextSample(value: string | undefined): string {
+  return (value ?? '').trim().replace(/\s+/g, ' ').toLowerCase().slice(0, 160);
+}
+
+function normalizeRecoveryMode(value: unknown): SelectorRecoveryResolution['recoveryMode'] {
+  if (value === 'stable_hash' || value === 'identity_score' || value === 'nth') {
+    return value;
+  }
+  return 'nth';
 }
 
 function computeQuadCenter(quad: number[]): { x: number; y: number } | null {

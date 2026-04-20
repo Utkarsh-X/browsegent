@@ -32,6 +32,7 @@ export interface EscalationContext {
   reason: string;
   stepCount: number;
   contextWarnings?: string[];
+  model?: string;
 }
 
 export interface LLMCallMetrics {
@@ -49,6 +50,7 @@ export interface ExtractContext {
   instruction: string;
   graphJson: string;
   schemaDescription: string;
+  model?: string;
 }
 
 export interface ExtractCallResult {
@@ -77,7 +79,7 @@ export async function callLLM(ctx: EscalationContext): Promise<LLMCallResult> {
 
   try {
     // ── Attempt 1 ─────────────────────────────────────────────────────────
-    let result = await callProvider(SYSTEM_PROMPT, userMsg);
+    let result = await callProvider(SYSTEM_PROMPT, userMsg, ctx.model);
     totalInputTokens += result.inputTokens;
     totalOutputTokens += result.outputTokens;
 
@@ -100,7 +102,7 @@ export async function callLLM(ctx: EscalationContext): Promise<LLMCallResult> {
         `"plan", "done", "val", "escalate", "reason", "confidence". ` +
         `Do NOT add any text before or after the JSON.`;
 
-      result = await callProvider(SYSTEM_PROMPT, userMsg + '\n\n' + feedback);
+      result = await callProvider(SYSTEM_PROMPT, userMsg + '\n\n' + feedback, ctx.model);
       totalInputTokens += result.inputTokens;
       totalOutputTokens += result.outputTokens;
 
@@ -168,7 +170,7 @@ Graph: ${ctx.graphJson}`;
   const start = Date.now();
 
   try {
-    const result = await callProvider(EXTRACT_SYSTEM_PROMPT, userMessage);
+    const result = await callProvider(EXTRACT_SYSTEM_PROMPT, userMessage, ctx.model);
     const durationMs = Date.now() - start;
 
     return {

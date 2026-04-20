@@ -22,8 +22,12 @@ export function normalizeProviderModel(model: string): string {
   return resolveLlmSelection(model).model;
 }
 
-export async function callProvider(system: string, user: string): Promise<ProviderResult> {
-  const selection = resolveLlmSelection();
+export async function callProvider(
+  system: string,
+  user: string,
+  modelOverride?: string,
+): Promise<ProviderResult> {
+  const selection = resolveLlmSelection(modelOverride);
 
   switch (selection.provider) {
     case 'gemini':

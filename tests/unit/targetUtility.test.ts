@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { assessTargetUtilityGuard, buildTargetUtilityHistoryValue } from '../../src/agent/targetUtility';
-import { normalizeSelectorForComparison, selectorsEquivalent } from '../../src/agent/selectorMatch';
+import { normalizeSelectorForComparison, selectorFamilyFingerprint, selectorsEquivalent } from '../../src/agent/selectorMatch';
 import type { FilteredNode } from '../../src/brain1/types';
 import type { Action } from '../../src/executor/types';
 import type { SemanticGraph } from '../../src/graph/types';
+import type { ActionHistoryEntry } from '../../src/graph/serializer';
 
 function makeAction(target: string): Action {
   return {
@@ -13,6 +14,15 @@ function makeAction(target: string): Action {
     target,
     origin: 'llm',
     original: { tool: 'click', sel: target },
+  };
+}
+
+function makeGetAction(target: string): Action {
+  return {
+    kind: 'get',
+    target,
+    origin: 'llm',
+    original: { tool: 'get', sel: target },
   };
 }
 
@@ -197,6 +207,13 @@ test('selector matching treats escaped and unescaped selector variants as equiva
   );
 });
 
+test('selector family fingerprint groups positional sibling variants', () => {
+  const first = 'div:nth-of-type(3) > div:nth-of-type(1) > span:nth-of-type(2)';
+  const second = 'div:nth-of-type(4) > div:nth-of-type(1) > span:nth-of-type(5)';
+
+  assert.equal(selectorFamilyFingerprint(first), selectorFamilyFingerprint(second));
+});
+
 test('assessTargetUtilityGuard blocks outbound navigation when strong goal data is already present', () => {
   const graph = makeGraph([
     makeNode({
@@ -246,4 +263,585 @@ test('assessTargetUtilityGuard blocks outbound navigation when strong goal data 
   assert.equal(signal.shouldBlock, true);
   assert.equal(signal.reason, 'read_before_navigation');
   assert.equal(buildTargetUtilityHistoryValue(signal), 'utility_guard:read_before_navigation');
+});
+
+test('assessTargetUtilityGuard blocks repeated pagination churn on extraction goals', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'a',
+      sel: 'a[href="/search?q=laptop&page=5"]',
+      selType: 'href',
+      value: '5',
+      meta: {
+        nodeId: 'page-link',
+        selectorScore: 78,
+        interactionScore: 72,
+        actionabilityScore: 75,
+        interactionKind: 'link',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 9,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=2"]',
+      result: 'ok',
+      timestamp: 1,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=3"]',
+      result: 'ok',
+      timestamp: 2,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=4"]',
+      result: 'ok',
+      timestamp: 3,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('a[href="/search?q=laptop&page=5"]'),
+    'Get the price of the first laptop listed after moving to the next page of results',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'pagination_churn');
+  assert.equal(buildTargetUtilityHistoryValue(signal), 'utility_guard:pagination_churn');
+});
+
+test('assessTargetUtilityGuard treats inspect_region as exploratory and does not reset pagination churn', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'a',
+      sel: 'a[href="/search?q=laptop&page=6"]',
+      selType: 'href',
+      value: '6',
+      meta: {
+        nodeId: 'page-link',
+        selectorScore: 78,
+        interactionScore: 72,
+        actionabilityScore: 75,
+        interactionKind: 'link',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 9,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=3"]',
+      result: 'ok',
+      timestamp: 1,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=4"]',
+      result: 'ok',
+      timestamp: 2,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'inspect_region',
+      selector: '.result-list',
+      result: 'ok',
+      timestamp: 3,
+      value: 'Region ".result-list" contains 8 notable nodes.',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+      },
+    },
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=5"]',
+      result: 'ok',
+      timestamp: 4,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('a[href="/search?q=laptop&page=6"]'),
+    'Get the price of the first laptop listed after moving to the next page of results',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'pagination_churn');
+});
+
+test('assessTargetUtilityGuard keeps pagination churn when low-value read tools repeat', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'a',
+      sel: 'a[href="/search?q=laptop&page=7"]',
+      selType: 'href',
+      value: '7',
+      meta: {
+        nodeId: 'page-link',
+        selectorScore: 78,
+        interactionScore: 72,
+        actionabilityScore: 75,
+        interactionKind: 'link',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 9,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=4"]',
+      result: 'ok',
+      timestamp: 1,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=5"]',
+      result: 'ok',
+      timestamp: 2,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'find_elements',
+      selector: 'div.product-card',
+      result: 'ok',
+      timestamp: 3,
+      value: 'Found 12 elements matching "div.product-card". Showing 8.',
+      readOutcome: 'context_only',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+      },
+    },
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=6"]',
+      result: 'ok',
+      timestamp: 4,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('a[href="/search?q=laptop&page=7"]'),
+    'Get the price of the first laptop listed after moving to the next page of results',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'pagination_churn');
+});
+
+test('assessTargetUtilityGuard blocks immediate pagination continuation without read evidence', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'a',
+      sel: 'a[href="/search?q=laptop&page=7"]',
+      selType: 'href',
+      value: '7',
+      meta: {
+        nodeId: 'page-link',
+        selectorScore: 78,
+        interactionScore: 72,
+        actionabilityScore: 75,
+        interactionKind: 'link',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 9,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'get',
+      selector: '.results .product:nth-child(1) .price',
+      result: 'ok',
+      timestamp: 1,
+      value: 'INR 129,999',
+      readOutcome: 'answer_evidence',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+      },
+    },
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=6"]',
+      result: 'ok',
+      timestamp: 2,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('a[href="/search?q=laptop&page=7"]'),
+    'Get the price of the first laptop listed after moving to the next page of results',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'pagination_churn');
+});
+
+test('assessTargetUtilityGuard blocks immediate pagination continuation even when selector is unmatched', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'a',
+      sel: 'a[href="/search?q=laptop&page=2"]',
+      selType: 'href',
+      value: '2',
+      meta: {
+        nodeId: 'page-link',
+        selectorScore: 78,
+        interactionScore: 72,
+        actionabilityScore: 75,
+        interactionKind: 'link',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 9,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=2"]',
+      result: 'ok',
+      timestamp: 1,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('a[href="/search\\\\?q\\\\=laptop\\\\&page\\\\=3"]'),
+    'Get the price of the first laptop listed after moving to the next page of results',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'pagination_churn');
+});
+
+test('assessTargetUtilityGuard blocks extra pagination after answer evidence on single-page extraction goals', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'a',
+      sel: 'a[href="/search?q=laptop&page=7"]',
+      selType: 'href',
+      value: '7',
+      meta: {
+        nodeId: 'page-link',
+        selectorScore: 78,
+        interactionScore: 72,
+        actionabilityScore: 75,
+        interactionKind: 'link',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 9,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=6"]',
+      result: 'ok',
+      timestamp: 1,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'get',
+      selector: '.results .product:nth-child(1) .price',
+      result: 'ok',
+      timestamp: 2,
+      value: 'INR 129,999',
+      readOutcome: 'answer_evidence',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('a[href="/search?q=laptop&page=7"]'),
+    'Get the price of the first laptop listed after moving to the next page of results',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'pagination_answer_observed');
+  assert.equal(buildTargetUtilityHistoryValue(signal), 'utility_guard:pagination_answer_observed');
+});
+
+test('assessTargetUtilityGuard allows multi-page extraction goals to continue pagination without forced reads', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'a',
+      sel: 'a[href="/search?q=laptop&page=7"]',
+      selType: 'href',
+      value: '7',
+      meta: {
+        nodeId: 'page-link',
+        selectorScore: 78,
+        interactionScore: 72,
+        actionabilityScore: 75,
+        interactionKind: 'link',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 9,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'click',
+      selector: 'a[href="/search?q=laptop&page=6"]',
+      result: 'ok',
+      timestamp: 1,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('a[href="/search?q=laptop&page=7"]'),
+    'Collect prices across the next 3 pages and return the average laptop price',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, false);
+});
+
+test('assessTargetUtilityGuard blocks brittle unmatched get selectors to avoid stale read churn', () => {
+  const graph = makeGraph([
+    {
+      type: 'data',
+      tag: 'span',
+      value: 'INR 129,999',
+      sel: '.result .price',
+      selType: 'positional',
+      rule: 'test',
+      meta: {
+        nodeId: 'd1',
+        selectorScore: 58,
+        interactionScore: 0,
+        actionabilityScore: 0,
+        interactionKind: 'generic',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 24,
+      },
+    },
+  ]);
+
+  const signal = assessTargetUtilityGuard(
+    makeGetAction('div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > div'),
+    'Get the price of the first laptop product in the search results',
+    graph,
+    [],
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'stale_read_selector');
+  assert.equal(buildTargetUtilityHistoryValue(signal), 'utility_guard:stale_read_selector');
+});
+
+test('assessTargetUtilityGuard blocks repeated not_found get selectors even when selector is short', () => {
+  const graph = makeGraph([]);
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'get',
+      selector: '.price',
+      result: 'not_found',
+      timestamp: 1,
+    },
+    {
+      action: 'get',
+      selector: '.price',
+      result: 'not_found',
+      timestamp: 2,
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeGetAction('.price'),
+    'Get the first laptop price',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'stale_read_selector');
+});
+
+test('assessTargetUtilityGuard blocks repeated not_found get selector families', () => {
+  const graph = makeGraph([]);
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'get',
+      selector: 'div:nth-of-type(3) > span:nth-of-type(1) > span.price',
+      result: 'not_found',
+      timestamp: 1,
+    },
+    {
+      action: 'get',
+      selector: 'div:nth-of-type(4) > span:nth-of-type(1) > span.price',
+      result: 'not_found',
+      timestamp: 2,
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeGetAction('div:nth-of-type(5) > span:nth-of-type(1) > span.price'),
+    'Get the first laptop price',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'stale_read_selector');
+});
+
+test('assessTargetUtilityGuard allows get selectors that are present in current snapshot', () => {
+  const graph = makeGraph([
+    {
+      type: 'data',
+      tag: 'span',
+      value: '$129',
+      sel: '.price',
+      selType: 'positional',
+      rule: 'test',
+      meta: {
+        nodeId: 'p1',
+        selectorScore: 64,
+        interactionScore: 0,
+        actionabilityScore: 0,
+        interactionKind: 'generic',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 22,
+      },
+    },
+  ]);
+
+  const signal = assessTargetUtilityGuard(
+    makeGetAction('.price'),
+    'Get the first laptop price',
+    graph,
+    [],
+  );
+
+  assert.equal(signal.shouldBlock, false);
 });

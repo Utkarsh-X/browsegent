@@ -5,11 +5,33 @@ import { executePlan } from './planExecutor';
 import type { SemanticGraph } from '../graph/types';
 import type { Executor } from '../executor/executor';
 import { LoopDetector } from './loopDetector';
+import { selectorFamilyFingerprint } from './selectorMatch';
 import { getRuntimeConfig } from '../config/runtime';
+import { extractAnswerCandidate } from './readOutcome';
 
 const MAX_STEPS = 15;
 const STALE_SELECTOR_NOT_FOUND_THRESHOLD = 3;
 const STALE_SELECTOR_WINDOW = 8;
+const UTILITY_GUARD_REPLAN_WARNING_THRESHOLD = 2;
+const UTILITY_GUARD_REPLAN_ABORT_THRESHOLD = 4;
+const UTILITY_GUARD_REPLAN_WINDOW = 8;
+const UTILITY_GUARD_ACCUMULATED_WINDOW = 10;
+const UTILITY_GUARD_ACCUMULATED_ABORT_THRESHOLD = 3;
+const UTILITY_GUARD_ACCUMULATED_STAGNATION_THRESHOLD = 4;
+const RECENT_NO_PROGRESS_WINDOW = 3;
+const NO_PROGRESS_STAGNATION_ABORT_THRESHOLD = 6;
+const LOW_VALUE_READ_WINDOW = 8;
+const LOW_VALUE_READ_WARNING_THRESHOLD = 3;
+const LOW_VALUE_READ_ABORT_THRESHOLD = 5;
+const LOW_VALUE_READ_ABORT_STAGNATION_THRESHOLD = 4;
+const LOW_VALUE_READ_REPEAT_VALUE_THRESHOLD = 3;
+const SEARCH_MISS_WINDOW = 8;
+const SEARCH_MISS_WARNING_THRESHOLD = 2;
+const SEARCH_MISS_ABORT_THRESHOLD = 4;
+const SEARCH_MISS_ABORT_STAGNATION_THRESHOLD = 4;
+const ANSWER_EVIDENCE_LOOKBACK = 10;
+const STALE_SELECTOR_FAMILY_NOT_FOUND_THRESHOLD = 2;
+const STALE_SELECTOR_FAMILY_SAMPLE_LIMIT = 2;
 
 export interface AgentLoopConfig {
   goal: string;
@@ -33,6 +55,26 @@ export interface AgentResult {
   totalInputTokens: number;
   totalOutputTokens: number;
   totalLlmDurationMs: number;
+}
+
+interface UtilityGuardPattern {
+  reason: string;
+  count: number;
+}
+
+interface LowValueReadPattern {
+  count: number;
+  repeatedValueCount: number;
+  repeatedAction?: string;
+  repeatedSelector?: string;
+  repeatedValue?: string;
+}
+
+interface SearchMissPattern {
+  count: number;
+  selector?: string;
+  selectorCount?: number;
+  value?: string;
 }
 
 export async function runAgentLoop(config: AgentLoopConfig): Promise<AgentResult> {
@@ -78,7 +120,107 @@ export async function runAgentLoop(config: AgentLoopConfig): Promise<AgentResult
 
     loopDetector.recordGraphState(graph);
     const loopSignal = loopDetector.getSignal();
-    const executionWarnings = buildExecutionWarnings(actionHistory);
+    const repeatedUtilityGuard = getRepeatedUtilityGuardPattern(actionHistory);
+    const accumulatedUtilityGuard = getAccumulatedUtilityGuardPattern(actionHistory);
+    const lowValueReadPattern = getLowValueReadPattern(actionHistory);
+    const searchMissPattern = getRepeatedSearchMissPattern(actionHistory);
+    if (repeatedUtilityGuard && repeatedUtilityGuard.count >= UTILITY_GUARD_REPLAN_ABORT_THRESHOLD) {
+      logger.warn('agent:loop', 'Repeated utility-guard replans detected', {
+        step: steps,
+        reason: repeatedUtilityGuard.reason,
+        count: repeatedUtilityGuard.count,
+        decision: 'abort',
+      });
+      return {
+        success: false,
+        failureReason: 'no_progress_detected',
+        totalSteps: steps,
+        llmCallCount,
+        llmCallReasons,
+        actionHistory,
+        totalInputTokens,
+        totalOutputTokens,
+        totalLlmDurationMs,
+      };
+    }
+    if (
+      accumulatedUtilityGuard
+      && accumulatedUtilityGuard.count >= UTILITY_GUARD_ACCUMULATED_ABORT_THRESHOLD
+      && (loopSignal?.stagnantSteps ?? 0) >= UTILITY_GUARD_ACCUMULATED_STAGNATION_THRESHOLD
+    ) {
+      logger.warn('agent:loop', 'Accumulated utility-guard churn detected', {
+        step: steps,
+        reason: accumulatedUtilityGuard.reason,
+        count: accumulatedUtilityGuard.count,
+        stagnantSteps: loopSignal?.stagnantSteps ?? 0,
+        decision: 'abort',
+      });
+      return {
+        success: false,
+        failureReason: 'no_progress_detected',
+        totalSteps: steps,
+        llmCallCount,
+        llmCallReasons,
+        actionHistory,
+        totalInputTokens,
+        totalOutputTokens,
+        totalLlmDurationMs,
+      };
+    }
+    if (
+      lowValueReadPattern
+      && lowValueReadPattern.count >= LOW_VALUE_READ_ABORT_THRESHOLD
+      && lowValueReadPattern.repeatedValueCount >= LOW_VALUE_READ_REPEAT_VALUE_THRESHOLD
+      && (loopSignal?.stagnantSteps ?? 0) >= LOW_VALUE_READ_ABORT_STAGNATION_THRESHOLD
+    ) {
+      logger.warn('agent:loop', 'Persistent low-value read churn detected', {
+        step: steps,
+        count: lowValueReadPattern.count,
+        repeatedValueCount: lowValueReadPattern.repeatedValueCount,
+        repeatedAction: lowValueReadPattern.repeatedAction,
+        repeatedSelector: lowValueReadPattern.repeatedSelector,
+        stagnantSteps: loopSignal?.stagnantSteps ?? 0,
+        decision: 'abort',
+      });
+      return {
+        success: false,
+        failureReason: 'no_progress_detected',
+        totalSteps: steps,
+        llmCallCount,
+        llmCallReasons,
+        actionHistory,
+        totalInputTokens,
+        totalOutputTokens,
+        totalLlmDurationMs,
+      };
+    }
+    if (
+      searchMissPattern
+      && searchMissPattern.count >= SEARCH_MISS_ABORT_THRESHOLD
+      && (loopSignal?.stagnantSteps ?? 0) >= SEARCH_MISS_ABORT_STAGNATION_THRESHOLD
+    ) {
+      logger.warn('agent:loop', 'Repeated no-match search_page churn detected', {
+        step: steps,
+        count: searchMissPattern.count,
+        selector: searchMissPattern.selector,
+        selectorCount: searchMissPattern.selectorCount,
+        value: searchMissPattern.value,
+        stagnantSteps: loopSignal?.stagnantSteps ?? 0,
+        decision: 'abort',
+      });
+      return {
+        success: false,
+        failureReason: 'no_progress_detected',
+        totalSteps: steps,
+        llmCallCount,
+        llmCallReasons,
+        actionHistory,
+        totalInputTokens,
+        totalOutputTokens,
+        totalLlmDurationMs,
+      };
+    }
+    const executionWarnings = buildExecutionWarnings(actionHistory, repeatedUtilityGuard, goal);
     if (loopSignal) {
       logger.warn('agent:loop', 'Loop signal detected', {
         step: steps,
@@ -102,6 +244,24 @@ export async function runAgentLoop(config: AgentLoopConfig): Promise<AgentResult
           totalLlmDurationMs,
         };
       }
+    }
+    if (shouldAbortForPersistentNoProgress(actionHistory, loopSignal)) {
+      logger.warn('agent:loop', 'Persistent no-progress with stagnant graph detected', {
+        step: steps,
+        stagnantSteps: loopSignal?.stagnantSteps ?? 0,
+        lookback: RECENT_NO_PROGRESS_WINDOW,
+      });
+      return {
+        success: false,
+        failureReason: 'no_progress_detected',
+        totalSteps: steps,
+        llmCallCount,
+        llmCallReasons,
+        actionHistory,
+        totalInputTokens,
+        totalOutputTokens,
+        totalLlmDurationMs,
+      };
     }
 
     logger.info('agent:loop', `Step ${steps}`, { goal, graphStatus: graph.status });
@@ -291,7 +451,11 @@ function buildContextWarnings(loopMessage: string | undefined, executionWarnings
   return warnings.length > 0 ? warnings : undefined;
 }
 
-function buildExecutionWarnings(actionHistory: ActionHistoryEntry[]): string[] {
+function buildExecutionWarnings(
+  actionHistory: ActionHistoryEntry[],
+  repeatedUtilityGuard: UtilityGuardPattern | undefined,
+  goal: string,
+): string[] {
   if (actionHistory.length === 0) {
     return [];
   }
@@ -299,12 +463,21 @@ function buildExecutionWarnings(actionHistory: ActionHistoryEntry[]): string[] {
   const warnings: string[] = [];
   const recent = actionHistory.slice(-STALE_SELECTOR_WINDOW);
   const notFoundCounts = new Map<string, number>();
+  const notFoundFamilyCounts = new Map<string, number>();
+  const notFoundFamilySamples = new Map<string, string[]>();
 
   for (const entry of recent) {
     if (entry.result !== 'not_found' || !entry.selector) {
       continue;
     }
     notFoundCounts.set(entry.selector, (notFoundCounts.get(entry.selector) ?? 0) + 1);
+    const family = selectorFamilyFingerprint(entry.selector);
+    notFoundFamilyCounts.set(family, (notFoundFamilyCounts.get(family) ?? 0) + 1);
+    const samples = notFoundFamilySamples.get(family) ?? [];
+    if (samples.length < STALE_SELECTOR_FAMILY_SAMPLE_LIMIT && !samples.includes(entry.selector)) {
+      samples.push(entry.selector);
+      notFoundFamilySamples.set(family, samples);
+    }
   }
 
   let staleSelector: string | undefined;
@@ -320,6 +493,26 @@ function buildExecutionWarnings(actionHistory: ActionHistoryEntry[]): string[] {
     warnings.push(
       `Recent attempts on selector "${staleSelector}" failed with not_found ${staleSelectorCount} times. ` +
       'This selector is likely stale on the current page. Do not retry it; choose a currently visible selector or use read-only tools to extract from visible data.',
+    );
+  }
+
+  let staleSelectorFamily: string | undefined;
+  let staleSelectorFamilyCount = 0;
+  for (const [family, count] of notFoundFamilyCounts.entries()) {
+    if (count > staleSelectorFamilyCount) {
+      staleSelectorFamily = family;
+      staleSelectorFamilyCount = count;
+    }
+  }
+
+  if (staleSelectorFamily && staleSelectorFamilyCount >= STALE_SELECTOR_FAMILY_NOT_FOUND_THRESHOLD) {
+    const samples = notFoundFamilySamples.get(staleSelectorFamily) ?? [];
+    const sampleText = samples.length > 0
+      ? ` Similar failed selectors: ${samples.map(sample => `"${sample}"`).join(', ')}.`
+      : '';
+    warnings.push(
+      `Recent not_found failures are repeating across a selector family (${staleSelectorFamilyCount} times), which indicates stale positional targeting.` +
+      `${sampleText} Stop trying sibling selector variants; switch to read-only discovery (find_elements/search_page/inspect_region) and then choose a stable visible selector.`,
     );
   }
 
@@ -355,11 +548,314 @@ function buildExecutionWarnings(actionHistory: ActionHistoryEntry[]): string[] {
       );
     } else if (reason === 'pagination_churn') {
       warnings.push(
-        'Recent steps repeatedly paginated without yielding an extracted answer. ' +
+        'Recent steps repeatedly paginated, or continued pagination without reading answer evidence after page changes. ' +
         'Stop moving to more pages and use read-only tools on the current page to extract the requested value.',
+      );
+    } else if (reason === 'pagination_answer_observed') {
+      warnings.push(
+        'Answer evidence has already been observed after pagination for this extraction goal. ' +
+        'Do not continue paginating; extract and return the answer from current page evidence.',
       );
     }
   }
 
+  if (
+    repeatedUtilityGuard
+    && repeatedUtilityGuard.count >= UTILITY_GUARD_REPLAN_WARNING_THRESHOLD
+  ) {
+    warnings.push(
+      `The last ${repeatedUtilityGuard.count} plans were blocked by utility guard "${repeatedUtilityGuard.reason}" and this pattern is not making progress. ` +
+      'Change strategy: use read-only tools on visible data or choose a different actionable target.',
+    );
+  }
+
+  const lowValueReadPattern = getLowValueReadPattern(actionHistory);
+  if (lowValueReadPattern && lowValueReadPattern.count >= LOW_VALUE_READ_WARNING_THRESHOLD) {
+    warnings.push(
+      `Recent read-only actions are repeating low-value observations (${lowValueReadPattern.count} times) without new answer evidence. ` +
+      'This pattern is not making progress. Stop repeating inspect_region summaries and use concrete selectors with find_elements/count_elements/get on the current results area.',
+    );
+  }
+
+  const searchMissPattern = getRepeatedSearchMissPattern(actionHistory);
+  if (searchMissPattern && searchMissPattern.count >= SEARCH_MISS_WARNING_THRESHOLD) {
+    const selectorHint = searchMissPattern.selector
+      ? `; most frequent query key: "${searchMissPattern.selector}" (${searchMissPattern.selectorCount ?? 0}x)`
+      : '';
+    warnings.push(
+      `search_page has returned no matches repeatedly (${searchMissPattern.count} times)${selectorHint}. ` +
+      'This pattern is not making progress. Use a simpler literal pattern (avoid over-escaped punctuation) or switch to find_elements/get on visible selectors instead of repeating search_page.',
+    );
+  }
+
+  const answerEvidence = getRecentAnswerEvidenceHint(actionHistory, goal);
+  if (answerEvidence) {
+    warnings.push(
+      `Recent read evidence likely already contains the answer: "${answerEvidence.candidate}". ` +
+      'If this satisfies the goal, return done with this value now instead of taking more actions.',
+    );
+  }
+
   return warnings;
+}
+
+function getRepeatedUtilityGuardPattern(actionHistory: ActionHistoryEntry[]): UtilityGuardPattern | undefined {
+  const recent = actionHistory.slice(-UTILITY_GUARD_REPLAN_WINDOW);
+  if (recent.length === 0) {
+    return undefined;
+  }
+
+  let reason: string | undefined;
+  let count = 0;
+
+  for (let index = recent.length - 1; index >= 0; index -= 1) {
+    const entry = recent[index]!;
+    if (entry.result !== 'plan_stale' || !entry.value?.startsWith('utility_guard:')) {
+      break;
+    }
+
+    const entryReason = entry.value.slice('utility_guard:'.length);
+    if (!reason) {
+      reason = entryReason;
+    }
+    if (entryReason !== reason) {
+      break;
+    }
+
+    count += 1;
+  }
+
+  if (!reason || count === 0) {
+    return undefined;
+  }
+
+  return { reason, count };
+}
+
+function getAccumulatedUtilityGuardPattern(actionHistory: ActionHistoryEntry[]): UtilityGuardPattern | undefined {
+  const recent = actionHistory.slice(-UTILITY_GUARD_ACCUMULATED_WINDOW);
+  if (recent.length === 0) {
+    return undefined;
+  }
+
+  const counts = new Map<string, number>();
+  for (const entry of recent) {
+    if (entry.result !== 'plan_stale' || !entry.value?.startsWith('utility_guard:')) {
+      continue;
+    }
+    const reason = entry.value.slice('utility_guard:'.length);
+    counts.set(reason, (counts.get(reason) ?? 0) + 1);
+  }
+
+  let bestReason: string | undefined;
+  let bestCount = 0;
+  for (const [reason, count] of counts.entries()) {
+    if (count > bestCount) {
+      bestReason = reason;
+      bestCount = count;
+    }
+  }
+
+  if (!bestReason || bestCount === 0) {
+    return undefined;
+  }
+
+  return { reason: bestReason, count: bestCount };
+}
+
+function shouldAbortForPersistentNoProgress(
+  actionHistory: ActionHistoryEntry[],
+  loopSignal: ReturnType<LoopDetector['getSignal']>,
+): boolean {
+  const stagnantSteps = loopSignal?.stagnantSteps ?? 0;
+  if (stagnantSteps < NO_PROGRESS_STAGNATION_ABORT_THRESHOLD) {
+    return false;
+  }
+
+  const recent = actionHistory.slice(-RECENT_NO_PROGRESS_WINDOW);
+  return recent.some(entry => entry.result === 'no_progress');
+}
+
+function getLowValueReadPattern(actionHistory: ActionHistoryEntry[]): LowValueReadPattern | undefined {
+  const recent = actionHistory
+    .slice(-LOW_VALUE_READ_WINDOW)
+    .filter(entry =>
+      (entry.result === 'ok' || entry.result === 'no_progress')
+      && isReadObservation(entry.action),
+    );
+
+  if (recent.length === 0) {
+    return undefined;
+  }
+
+  const lowValueEntries = recent.filter(isLowValueReadEntry);
+  if (lowValueEntries.length === 0) {
+    return undefined;
+  }
+
+  const repeated = getMostRepeatedReadValue(lowValueEntries);
+  return {
+    count: lowValueEntries.length,
+    repeatedValueCount: repeated.count,
+    repeatedAction: repeated.action,
+    repeatedSelector: repeated.selector,
+    repeatedValue: repeated.value,
+  };
+}
+
+function getRepeatedSearchMissPattern(actionHistory: ActionHistoryEntry[]): SearchMissPattern | undefined {
+  const recent = actionHistory
+    .slice(-SEARCH_MISS_WINDOW)
+    .filter(entry =>
+      entry.action === 'search_page'
+      && (entry.result === 'ok' || entry.result === 'no_progress')
+      && (
+        entry.readOutcome === 'noise_repeat'
+        || /\b(no matches found|found 0 matches)\b/i.test(entry.value ?? '')
+      ),
+    );
+
+  if (recent.length === 0) {
+    return undefined;
+  }
+
+  const counts = new Map<string, number>();
+  const values = new Map<string, string | undefined>();
+  for (const entry of recent) {
+    const key = entry.selector ?? '(missing-pattern)';
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+    if (!values.has(key)) {
+      values.set(key, normalizeReadValue(entry.value));
+    }
+  }
+
+  let bestKey: string | undefined;
+  let bestCount = 0;
+  for (const [key, count] of counts.entries()) {
+    if (count > bestCount) {
+      bestKey = key;
+      bestCount = count;
+    }
+  }
+
+  if (!bestKey || bestCount === 0) {
+    return undefined;
+  }
+
+  return {
+    count: recent.length,
+    selector: bestKey,
+    selectorCount: bestCount,
+    value: values.get(bestKey),
+  };
+}
+
+function isReadObservation(action: string): boolean {
+  return action === 'get'
+    || action === 'search_page'
+    || action === 'find_elements'
+    || action === 'count_elements'
+    || action === 'inspect_region';
+}
+
+function isLowValueReadEntry(entry: ActionHistoryEntry): boolean {
+  if (entry.readOutcome === 'context_only' || entry.readOutcome === 'noise_repeat') {
+    return true;
+  }
+
+  if (entry.readOutcome === 'answer_evidence') {
+    return false;
+  }
+
+  const value = (entry.value ?? '').trim();
+  if (!value) {
+    return true;
+  }
+
+  if (/^(Region ".+" contains \d+ notable node|Region text:|Found \d+ elements? matching|Found \d+ matches? for|Count for ".+": \d+)/i.test(value)) {
+    return true;
+  }
+
+  if (/\b(not found|no matches found|found 0 elements)\b/i.test(value)) {
+    return true;
+  }
+
+  return false;
+}
+
+function getMostRepeatedReadValue(entries: ActionHistoryEntry[]): {
+  count: number;
+  action?: string;
+  selector?: string;
+  value?: string;
+} {
+  const counts = new Map<string, number>();
+  const meta = new Map<string, { action?: string; selector?: string; value?: string }>();
+
+  for (const entry of entries) {
+    const value = normalizeReadValue(entry.value);
+    if (!value) {
+      continue;
+    }
+    const key = `${entry.action}|${entry.selector ?? ''}|${value}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+    if (!meta.has(key)) {
+      meta.set(key, { action: entry.action, selector: entry.selector, value });
+    }
+  }
+
+  let bestKey: string | undefined;
+  let bestCount = 0;
+  for (const [key, count] of counts.entries()) {
+    if (count > bestCount) {
+      bestCount = count;
+      bestKey = key;
+    }
+  }
+
+  if (!bestKey) {
+    return { count: 0 };
+  }
+
+  const bestMeta = meta.get(bestKey);
+  return {
+    count: bestCount,
+    action: bestMeta?.action,
+    selector: bestMeta?.selector,
+    value: bestMeta?.value,
+  };
+}
+
+function normalizeReadValue(value: string | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const normalized = value.replace(/\s+/g, ' ').trim().slice(0, 240);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function getRecentAnswerEvidenceHint(
+  actionHistory: ActionHistoryEntry[],
+  goal: string,
+): { candidate: string } | undefined {
+  const recent = actionHistory.slice(-ANSWER_EVIDENCE_LOOKBACK);
+  for (let index = recent.length - 1; index >= 0; index -= 1) {
+    const entry = recent[index]!;
+    if (entry.result !== 'ok' || !isReadObservation(entry.action)) {
+      continue;
+    }
+    if (entry.readOutcome !== 'answer_evidence') {
+      continue;
+    }
+
+    const candidate = extractAnswerCandidate(goal, entry.value ?? entry.effect?.targetValue)
+      ?? normalizeReadValue(entry.value ?? entry.effect?.targetValue);
+    if (!candidate) {
+      continue;
+    }
+
+    return { candidate: candidate.slice(0, 120) };
+  }
+
+  return undefined;
 }

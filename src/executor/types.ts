@@ -40,6 +40,9 @@ export interface ActionTargetHint {
   frameId?: string;
   sessionId?: string;
   stableHash?: string;
+  tag?: string;
+  role?: string;
+  valueSample?: string;
   nth?: number;
   confidence?: ActionTargetConfidence;
   selectorScore?: number;

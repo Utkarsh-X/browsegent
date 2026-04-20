@@ -22,6 +22,7 @@ interface FindElementsPayload {
     tag: string;
     text?: string;
     attrs?: Record<string, string>;
+    prices?: string[];
     childrenCount: number;
   }>;
 }
@@ -125,6 +126,20 @@ const SEARCH_PAGE_EVAL = new Function('payload', `
 const FIND_ELEMENTS_EVAL = new Function('querySelector', `
   const normalize = (value, limit = 180) =>
     (value ?? '').replace(/\\s+/g, ' ').trim().slice(0, limit);
+  const extractPriceCandidates = (text) => {
+    const normalized = (text ?? '').replace(/\\s+/g, ' ').trim();
+    if (!normalized) return [];
+    const pattern = /(?:[$\\u20b9\\u20ac\\u00a3]\\s?\\d[\\d,]*(?:\\.\\d+)?|\\b(?:usd|inr|gbp|eur|aud|cad)\\b\\s?\\d[\\d,]*(?:\\.\\d+)?)/gi;
+    const matches = normalized.match(pattern) ?? [];
+    const unique = [];
+    for (const match of matches) {
+      const value = match.trim();
+      if (!value) continue;
+      if (!unique.includes(value)) unique.push(value);
+      if (unique.length >= 4) break;
+    }
+    return unique;
+  };
 
   try {
     const elements = document.querySelectorAll(querySelector);
@@ -134,6 +149,7 @@ const FIND_ELEMENTS_EVAL = new Function('querySelector', `
 
     for (let index = 0; index < showing; index += 1) {
       const element = elements[index];
+      const fullText = element.textContent ?? '';
       const attrs = {};
       for (const attr of ['href', 'src', 'aria-label', 'name', 'role', 'placeholder', 'data-testid', 'data-test']) {
         const value = element.getAttribute(attr);
@@ -144,8 +160,9 @@ const FIND_ELEMENTS_EVAL = new Function('querySelector', `
       results.push({
         index,
         tag: element.tagName.toLowerCase(),
-        text: normalize(element.textContent),
+        text: normalize(fullText),
         attrs: Object.keys(attrs).length ? attrs : undefined,
+        prices: extractPriceCandidates(fullText),
         childrenCount: element.children.length,
       });
     }
@@ -170,10 +187,29 @@ const COUNT_ELEMENTS_EVAL = new Function('querySelector', `
 `) as (selector: string) => number;
 
 const INSPECT_REGION_EVAL = new Function('regionSelector', `
+  const extractPriceCandidates = (text) => {
+    const normalized = (text ?? '').replace(/\\s+/g, ' ').trim();
+    if (!normalized) return [];
+    const pattern = /(?:[$\\u20b9\\u20ac\\u00a3]\\s?\\d[\\d,]*(?:\\.\\d+)?|\\b(?:usd|inr|gbp|eur|aud|cad)\\b\\s?\\d[\\d,]*(?:\\.\\d+)?)/gi;
+    const matches = normalized.match(pattern) ?? [];
+    const unique = [];
+    for (const match of matches) {
+      const value = match.trim();
+      if (!value) continue;
+      if (!unique.includes(value)) unique.push(value);
+      if (unique.length >= 4) break;
+    }
+    return unique;
+  };
+
   const summarizeFallback = (region) => {
     const text = (region.textContent ?? '').replace(/\\s+/g, ' ').trim().slice(0, 320);
     const interactiveCount = region.querySelectorAll('a,button,input,select,textarea,[role],[tabindex],[contenteditable]').length;
-    return 'Region text: ' + (text || '(empty)') + ' | interactive descendants: ' + interactiveCount;
+    const priceCandidates = extractPriceCandidates(region.textContent ?? '');
+    const priceSummary = priceCandidates.length > 0
+      ? ' | price candidates: ' + priceCandidates.join(', ')
+      : '';
+    return 'Region text: ' + (text || '(empty)') + ' | interactive descendants: ' + interactiveCount + priceSummary;
   };
 
   try {
@@ -189,9 +225,18 @@ const INSPECT_REGION_EVAL = new Function('regionSelector', `
 
     const result = scanner(regionSelector);
     const nodes = Array.isArray(result?.nodes) ? result.nodes.slice(0, 8) : [];
+    const regionText = (region.textContent ?? '').replace(/\\s+/g, ' ').trim();
+    const nodeText = nodes
+      .map(node => (node?.value ?? '').replace(/\\s+/g, ' ').trim())
+      .filter(Boolean)
+      .join(' ');
+    const priceCandidates = extractPriceCandidates((nodeText + ' ' + regionText).trim());
     const lines = [
       'Region "' + regionSelector + '" contains ' + nodes.length + ' notable node' + (nodes.length === 1 ? '' : 's') + '.',
     ];
+    if (priceCandidates.length > 0) {
+      lines.push('- price candidates ' + priceCandidates.join(', '));
+    }
 
     for (const node of nodes) {
       const value = (node?.value ?? '').replace(/\\s+/g, ' ').trim().slice(0, 140);
@@ -260,7 +305,10 @@ export async function findElementsSummary(page: Page, selector: string): Promise
       ? ` attrs=${Object.entries(element.attrs).map(([key, value]) => `${key}=${JSON.stringify(value)}`).join(', ')}`
       : '';
     const text = element.text ? ` text=${JSON.stringify(truncateInline(element.text, READ_TEXT_LIMIT))}` : '';
-    lines.push(`${element.index + 1}. <${element.tag}>${text}${attrs} children=${element.childrenCount}`);
+    const prices = element.prices && element.prices.length > 0
+      ? ` prices=${JSON.stringify(element.prices.slice(0, 3))}`
+      : '';
+    lines.push(`${element.index + 1}. <${element.tag}>${text}${attrs}${prices} children=${element.childrenCount}`);
   }
 
   return lines.join('\n');

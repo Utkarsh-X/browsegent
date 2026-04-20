@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  canAttemptIdentitySelectorRecovery,
   resolveCdpOutcomePolicy,
+  shouldRequireStableHashIdentityMatch,
   shouldAttemptCdpSelectorRecovery,
   shouldRetryCdpClickSameTarget,
 } from '../../src/executor/adapters/domAdapter';
@@ -71,4 +73,17 @@ test('shouldAttemptCdpSelectorRecovery is limited to staged recovery outcomes', 
   assert.equal(shouldAttemptCdpSelectorRecovery('occluded'), false);
   assert.equal(shouldAttemptCdpSelectorRecovery('unsupported_frame'), false);
   assert.equal(shouldAttemptCdpSelectorRecovery('ok'), false);
+});
+
+test('ambiguous selector recovery requires stable hash evidence', () => {
+  assert.equal(canAttemptIdentitySelectorRecovery({ ambiguousSelector: true }), false);
+  assert.equal(canAttemptIdentitySelectorRecovery({ ambiguousSelector: true, stableHash: '' }), false);
+  assert.equal(canAttemptIdentitySelectorRecovery({ ambiguousSelector: true, stableHash: 'sh_abc123' }), true);
+  assert.equal(canAttemptIdentitySelectorRecovery({ ambiguousSelector: false }), true);
+});
+
+test('stable hash requirement is enforced only for ambiguous selectors', () => {
+  assert.equal(shouldRequireStableHashIdentityMatch({ ambiguousSelector: true, stableHash: 'sh_abc123' }), true);
+  assert.equal(shouldRequireStableHashIdentityMatch({ ambiguousSelector: true }), false);
+  assert.equal(shouldRequireStableHashIdentityMatch({ ambiguousSelector: false, stableHash: 'sh_abc123' }), false);
 });

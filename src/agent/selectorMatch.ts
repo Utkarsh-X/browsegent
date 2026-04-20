@@ -18,3 +18,20 @@ export function normalizeSelectorForComparison(selector: string): string {
     .replace(/\[([^\]=]+)='([^']*)'\]/g, '[$1="$2"]')
     .replace(/\\([#.:()[\]="'])/g, '$1');
 }
+
+export function selectorFamilyFingerprint(selector: string): string {
+  let normalized = normalizeSelectorForComparison(selector).toLowerCase();
+
+  normalized = normalized
+    .replace(/:nth-(?:child|of-type)\(\s*\d+\s*\)/g, ':nth(*)')
+    .replace(/:eq\(\s*\d+\s*\)/g, ':eq(*)')
+    .replace(/:(?:first|last)-(?:child|of-type)\b/g, ':position')
+    .replace(/([?&](?:page|pg|start|offset)=)\d+/g, '$1#');
+
+  const positionalShape = normalized.includes('>') || /:nth\(\*\)|:eq\(\*\)|:position/.test(normalized);
+  if (positionalShape) {
+    normalized = normalized.replace(/\d+/g, '#');
+  }
+
+  return normalized;
+}

@@ -39,6 +39,8 @@ Rules:
 - Use search_page to verify whether text exists on the page.
 - Use find_elements or count_elements to inspect repeated structures before clicking.
 - Use inspect_region to understand a card, result block, or section without changing the page.
+- If read-only results keep repeating without new evidence, stop repeating inspect_region and extract from concrete selectors.
+- If warnings indicate answer evidence is already present, return {"done":true,"val":"..."} using that evidence unless clearly contradicted.
 
 DIRECT ANSWER RULE:
 If the answer to the goal is already present in the graph data nodes (d[]),

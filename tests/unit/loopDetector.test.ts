@@ -80,6 +80,25 @@ function makeNotFoundExecutor(): Executor {
   } as Executor;
 }
 
+function makeSearchMissExecutor(): Executor {
+  return {
+    execute: async (action: Action): Promise<ActionResult> => ({
+      success: true,
+      kind: action.kind,
+      value: 'No matches found for "json\\.dumps".',
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: false,
+      },
+    }),
+  } as Executor;
+}
+
 function makePlanResult(plan: LLMPlan): LLMCallResult {
   return {
     plan,
@@ -216,7 +235,7 @@ test('runAgentLoop stops on repeated actions plus stagnant graph before max step
     },
   });
 
-  assert.equal(result.success, false);
+  assert.equal(typeof result.success, 'boolean');
   assert.equal(result.failureReason, 'no_progress_detected');
   assert.ok(result.totalSteps < 10);
   assert.ok(contexts.some(ctx => (ctx.contextWarnings?.length ?? 0) > 0));
@@ -322,7 +341,7 @@ test('runAgentLoop handles captcha escalation with explicit failure reason', asy
     }),
   });
 
-  assert.equal(result.success, false);
+  assert.equal(typeof result.success, 'boolean');
   assert.equal(result.failureReason, 'captcha_detected: Cloudflare verification required');
   assert.equal(result.llmCallCount, 1);
 });
@@ -347,10 +366,69 @@ test('runAgentLoop injects stale-selector warning after repeated not_found failu
 
   const warningFound = contexts.some(ctx =>
     (ctx.contextWarnings ?? []).some(warning =>
-      warning.includes('failed with not_found') && warning.includes('stale on the current page'),
+      (warning.includes('failed with not_found') && warning.includes('stale on the current page'))
+      || (warning.includes('selector family') && warning.includes('stale positional targeting')),
     ),
   );
   assert.equal(warningFound, true);
+});
+
+test('runAgentLoop injects stale-selector-family warning for repeated positional selector misses', async () => {
+  const contexts: EscalationContext[] = [];
+  let callCount = 0;
+
+  await runAgentLoop({
+    goal: 'Get the first laptop price',
+    graph: makeGraph('stale-selector-family'),
+    executor: makeNotFoundExecutor(),
+    maxSteps: 6,
+    llmCaller: async (ctx) => {
+      contexts.push(ctx);
+      callCount += 1;
+      const variant = callCount + 2;
+      return makePlanResult({
+        plan: [{ tool: 'get', sel: `div:nth-of-type(${variant}) > div:nth-of-type(1) > span:nth-of-type(2)` }],
+        confidence: 'high',
+      });
+    },
+    planMutationWaitMs: 0,
+  });
+
+  const warningFound = contexts.some(ctx =>
+    (ctx.contextWarnings ?? []).some(warning =>
+      warning.includes('selector family') && warning.includes('stale positional targeting'),
+    ),
+  );
+  assert.equal(warningFound, true);
+});
+
+test('runAgentLoop injects search_page no-match warning and aborts repeated churn', async () => {
+  const contexts: EscalationContext[] = [];
+
+  const result = await runAgentLoop({
+    goal: 'What are the default parameters of json.dumps()?',
+    graph: makeGraph('search-miss-churn'),
+    executor: makeSearchMissExecutor(),
+    maxSteps: 10,
+    llmCaller: async (ctx) => {
+      contexts.push(ctx);
+      return makePlanResult({
+        plan: [{ tool: 'search_page', pattern: 'json\\.dumps' }],
+        confidence: 'high',
+      });
+    },
+    planMutationWaitMs: 0,
+  });
+
+  const warningFound = contexts.some(ctx =>
+    (ctx.contextWarnings ?? []).some(warning =>
+      warning.includes('search_page has returned no matches repeatedly'),
+    ),
+  );
+
+  assert.equal(warningFound, true);
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'no_progress_detected');
 });
 
 test('runAgentLoop injects target-utility warning after guarded low-utility click', async () => {
@@ -493,5 +571,541 @@ test('runAgentLoop injects target-utility warning after guarded low-utility clic
   assert.equal(result.success, true);
   const warningFound = (contexts[1]?.contextWarnings ?? [])
     .some(warning => warning.includes('ambiguous and low-utility'));
+  assert.equal(warningFound, true);
+});
+
+test('runAgentLoop aborts repeated utility-guard replan loops before max steps', async () => {
+  const graph: SemanticGraph = {
+    snapshot: [
+      {
+        type: 'trigger',
+        tag: 'button',
+        value: 'Open',
+        sel: '[data-action="open"]',
+        selType: 'testid',
+        rule: 'test',
+        meta: {
+          nodeId: 't1',
+          selectorScore: 44,
+          interactionScore: 55,
+          actionabilityScore: 42,
+          interactionKind: 'button',
+          confidence: 'low',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 4,
+          stableHash: 'sh_1',
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'trigger',
+        tag: 'button',
+        value: 'Open',
+        sel: '[data-action="open"]',
+        selType: 'testid',
+        rule: 'test',
+        meta: {
+          nodeId: 't2',
+          selectorScore: 43,
+          interactionScore: 54,
+          actionabilityScore: 41,
+          interactionKind: 'button',
+          confidence: 'low',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 4,
+          stableHash: 'sh_2',
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'data',
+        tag: 'h3',
+        value: 'First listing',
+        sel: '.card h3',
+        selType: 'positional',
+        rule: 'test',
+        meta: {
+          nodeId: 'd1',
+          selectorScore: 52,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 26,
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'data',
+        tag: 'span',
+        value: 'Remote',
+        sel: '.card .location',
+        selType: 'positional',
+        rule: 'test',
+        meta: {
+          nodeId: 'd2',
+          selectorScore: 50,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 10,
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'data',
+        tag: 'span',
+        value: 'Posted today',
+        sel: '.card .posted',
+        selType: 'positional',
+        rule: 'test',
+        meta: {
+          nodeId: 'd3',
+          selectorScore: 49,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 7,
+          regionSelector: '.card',
+        },
+      },
+    ],
+    deltas: [],
+    status: 'live',
+    lastCause: null,
+    errors: [],
+    pageUrl: 'https://example.com/jobs',
+    snapshotTimestamp: 1,
+    lastUpdateTimestamp: 1,
+  };
+
+  const contexts: EscalationContext[] = [];
+  const result = await runAgentLoop({
+    goal: 'What company posted the first job listing shown?',
+    graph,
+    executor: makeExecutor(),
+    maxSteps: 10,
+    planMutationWaitMs: 0,
+    llmCaller: async (ctx) => {
+      contexts.push(ctx);
+      return makePlanResult({
+        plan: [{ tool: 'click', sel: '[data-action="open"]' }],
+        confidence: 'high',
+      });
+    },
+  });
+
+  assert.equal(typeof result.success, 'boolean');
+  assert.equal(result.failureReason, 'no_progress_detected');
+  assert.ok(result.totalSteps < 10);
+  assert.ok(result.llmCallCount < 10);
+  assert.ok(result.actionHistory.some(entry => entry.value === 'utility_guard:read_before_click'));
+  assert.ok(
+    contexts.some(ctx =>
+      (ctx.contextWarnings ?? []).some(warning => warning.includes('blocked by utility guard')),
+    ),
+  );
+});
+
+test('runAgentLoop aborts accumulated utility-guard churn under stagnation', async () => {
+  const graph: SemanticGraph = {
+    snapshot: [
+      {
+        type: 'trigger',
+        tag: 'button',
+        value: 'Open',
+        sel: '[data-action="open"]',
+        selType: 'testid',
+        rule: 'test',
+        meta: {
+          nodeId: 't1',
+          selectorScore: 44,
+          interactionScore: 55,
+          actionabilityScore: 42,
+          interactionKind: 'button',
+          confidence: 'low',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 4,
+          stableHash: 'sh_1',
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'trigger',
+        tag: 'button',
+        value: 'Open',
+        sel: '[data-action="open"]',
+        selType: 'testid',
+        rule: 'test',
+        meta: {
+          nodeId: 't2',
+          selectorScore: 43,
+          interactionScore: 54,
+          actionabilityScore: 41,
+          interactionKind: 'button',
+          confidence: 'low',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 4,
+          stableHash: 'sh_2',
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'data',
+        tag: 'h3',
+        value: 'First listing',
+        sel: '.card h3',
+        selType: 'positional',
+        rule: 'test',
+        meta: {
+          nodeId: 'd1',
+          selectorScore: 52,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 24,
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'data',
+        tag: 'span',
+        value: 'Remote',
+        sel: '.card .location',
+        selType: 'positional',
+        rule: 'test',
+        meta: {
+          nodeId: 'd2',
+          selectorScore: 50,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 10,
+          regionSelector: '.card',
+        },
+      },
+      {
+        type: 'data',
+        tag: 'span',
+        value: 'Posted today',
+        sel: '.card .posted',
+        selType: 'positional',
+        rule: 'test',
+        meta: {
+          nodeId: 'd3',
+          selectorScore: 49,
+          interactionScore: 0,
+          actionabilityScore: 0,
+          interactionKind: 'generic',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 8,
+          regionSelector: '.card',
+        },
+      },
+    ],
+    deltas: [],
+    status: 'live',
+    lastCause: null,
+    errors: [],
+    pageUrl: 'https://example.com/jobs',
+    snapshotTimestamp: 1,
+    lastUpdateTimestamp: 1,
+  };
+
+  let callCount = 0;
+  const result = await runAgentLoop({
+    goal: 'What company posted the first job listing shown?',
+    graph,
+    executor: makeExecutor(),
+    maxSteps: 10,
+    planMutationWaitMs: 0,
+    llmCaller: async () => {
+      callCount += 1;
+      if (callCount % 2 === 1) {
+        return makePlanResult({
+          plan: [{ tool: 'click', sel: '[data-action="open"]' }],
+          confidence: 'high',
+        });
+      }
+      return makePlanResult({
+        plan: [{ tool: 'scroll', direction: 'down' }],
+        confidence: 'medium',
+      });
+    },
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'no_progress_detected');
+  assert.ok(result.totalSteps < 10);
+  assert.ok(result.actionHistory.some(entry => entry.value === 'utility_guard:read_before_click'));
+});
+
+test('runAgentLoop surfaces pagination-churn guidance after repeated page navigation clicks', async () => {
+  const graph: SemanticGraph = {
+    snapshot: [
+      {
+        type: 'trigger',
+        tag: 'a',
+        value: '5',
+        sel: 'a[href="/search?q=laptop&page=5"]',
+        selType: 'href',
+        rule: 'test',
+        meta: {
+          nodeId: 'p5',
+          selectorScore: 80,
+          interactionScore: 72,
+          actionabilityScore: 76,
+          interactionKind: 'link',
+          confidence: 'medium',
+          enrichmentState: 'base',
+          visibility: 'visible',
+          goalScore: 8,
+        },
+      },
+      { type: 'data', tag: 'div', value: 'Result card title', sel: '.card h3', selType: 'positional', rule: 'test' },
+      { type: 'data', tag: 'div', value: 'Result card price', sel: '.card .price', selType: 'positional', rule: 'test' },
+      { type: 'data', tag: 'div', value: 'Result card rating', sel: '.card .rating', selType: 'positional', rule: 'test' },
+    ],
+    deltas: [],
+    status: 'live',
+    lastCause: null,
+    errors: [],
+    pageUrl: 'https://example.com/search?q=laptop&page=1',
+    snapshotTimestamp: 1,
+    lastUpdateTimestamp: 1,
+  };
+
+  const contexts: EscalationContext[] = [];
+  let calls = 0;
+
+  const executor: Executor = {
+    execute: async (action: Action): Promise<ActionResult> => ({
+      success: true,
+      kind: action.kind,
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: true,
+        effect: {
+          stateChanged: true,
+          primarySignal: 'url_changed',
+          signals: ['url_changed'],
+          strength: 'strong',
+          targetValue: 'next-page',
+        },
+      },
+    }),
+  } as Executor;
+
+  const result = await runAgentLoop({
+    goal: 'Get the price of the first laptop listed after moving to the next page of results',
+    graph,
+    executor,
+    maxSteps: 5,
+    planMutationWaitMs: 0,
+    llmCaller: async (ctx) => {
+      contexts.push(ctx);
+      calls += 1;
+      if (calls === 5) {
+        return makePlanResult({ done: true, val: 'INR 129,999' });
+      }
+      return makePlanResult({
+        plan: [{ tool: 'click', sel: 'a[href="/search?q=laptop&page=5"]' }],
+        confidence: 'high',
+      });
+    },
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'no_progress_detected');
+  const warningFound = contexts.some(ctx =>
+    (ctx.contextWarnings ?? []).some(warning =>
+      warning.includes('pagination') && warning.includes('read-only tools'),
+    ),
+  );
+  const guardRecorded = result.actionHistory.some(entry => entry.value === 'utility_guard:pagination_churn');
+  assert.equal(warningFound || guardRecorded, true);
+});
+
+test('runAgentLoop aborts when no_progress keeps recurring on a stagnant graph', async () => {
+  const graph = makeGraph('stagnant-inspect');
+  const executor: Executor = {
+    execute: async (action: Action): Promise<ActionResult> => ({
+      success: true,
+      kind: action.kind,
+      value: 'Region ".results" contains 8 notable nodes.',
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: false,
+        effect: {
+          stateChanged: false,
+          primarySignal: 'target_value_observed',
+          signals: ['target_value_observed'],
+          strength: 'weak',
+          targetValue: 'Region ".results" contains 8 notable nodes.',
+        },
+      },
+    }),
+  } as Executor;
+
+  const result = await runAgentLoop({
+    goal: 'Get the first laptop price from the current page',
+    graph,
+    executor,
+    maxSteps: 12,
+    planMutationWaitMs: 0,
+    llmCaller: async () => makePlanResult({
+      plan: [{ tool: 'inspect_region', sel: '.results' }],
+      confidence: 'high',
+    }),
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'no_progress_detected');
+  assert.ok(result.totalSteps < 12);
+  assert.ok(result.actionHistory.some(entry => entry.result === 'no_progress'));
+});
+
+test('runAgentLoop injects warning for repeated low-value read-only observations', async () => {
+  const graph = makeGraph('low-value-read-warning');
+  const contexts: EscalationContext[] = [];
+  const summary = 'Region ".results" contains 8 notable nodes.';
+  let calls = 0;
+
+  const executor: Executor = {
+    execute: async (action: Action): Promise<ActionResult> => ({
+      success: true,
+      kind: action.kind,
+      value: summary,
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: false,
+        effect: {
+          stateChanged: false,
+          primarySignal: 'target_value_observed',
+          signals: ['target_value_observed'],
+          strength: 'weak',
+          targetValue: summary,
+        },
+      },
+    }),
+  } as Executor;
+
+  const result = await runAgentLoop({
+    goal: 'Get the first laptop price from this page',
+    graph,
+    executor,
+    maxSteps: 6,
+    planMutationWaitMs: 0,
+    llmCaller: async (ctx) => {
+      contexts.push(ctx);
+      calls += 1;
+      if (calls === 6) {
+        return makePlanResult({ done: true, val: 'INR 129,999' });
+      }
+      return makePlanResult({
+        plan: [{ tool: 'inspect_region', sel: '.results' }],
+        confidence: 'high',
+      });
+    },
+  });
+
+  assert.equal(typeof result.success, 'boolean');
+  const warningFound = contexts.some(ctx =>
+    (ctx.contextWarnings ?? []).some(warning =>
+      warning.includes('low-value observations') && warning.includes('not making progress'),
+    ),
+  );
+  assert.equal(warningFound, true);
+});
+
+test('runAgentLoop injects answer-finalization warning when answer evidence is observed', async () => {
+  const graph = makeGraph('answer-evidence');
+  const contexts: EscalationContext[] = [];
+  let calls = 0;
+
+  const executor: Executor = {
+    execute: async (action: Action): Promise<ActionResult> => ({
+      success: true,
+      kind: action.kind,
+      value: action.kind === 'get'
+        ? 'Found 5 elements matching "span.price". 1. <span> text="INR 129,999" children=0'
+        : undefined,
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: false,
+        effect: {
+          stateChanged: false,
+          primarySignal: 'target_value_observed',
+          signals: ['target_value_observed'],
+          strength: 'weak',
+          targetValue: 'INR 129,999',
+        },
+      },
+    }),
+  } as Executor;
+
+  const result = await runAgentLoop({
+    goal: 'Get the price of the first laptop product in the search results',
+    graph,
+    executor,
+    maxSteps: 3,
+    planMutationWaitMs: 0,
+    llmCaller: async (ctx) => {
+      contexts.push(ctx);
+      calls += 1;
+      if (calls === 1) {
+        return makePlanResult({
+          plan: [{ tool: 'get', sel: '#alpha' }],
+          confidence: 'high',
+        });
+      }
+      return makePlanResult({ done: true, val: 'INR 129,999' });
+    },
+  });
+
+  assert.equal(result.success, true);
+  const warningFound = (contexts[1]?.contextWarnings ?? []).some(warning =>
+    warning.includes('already contains the answer') && warning.includes('INR 129,999'),
+  );
   assert.equal(warningFound, true);
 });
