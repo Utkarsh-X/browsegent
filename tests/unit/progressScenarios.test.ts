@@ -88,11 +88,33 @@ test('deriveActionEffect grades weak versus strong progress conservatively', () 
     makeRuntimeState({ targetValue: 'moon', domSignature: 'changed' }),
     'moon',
   );
+  const domOnly = deriveActionEffect(
+    {
+      kind: 'click',
+      target: '#filter-panel-toggle',
+      origin: 'llm',
+      original: { tool: 'click', sel: '#filter-panel-toggle' },
+    },
+    makeRuntimeState({ domSignature: 'before' }),
+    makeRuntimeState({ domSignature: 'after' }),
+  );
+  const focusOnly = deriveActionEffect(
+    {
+      kind: 'click',
+      target: '#search',
+      origin: 'llm',
+      original: { tool: 'click', sel: '#search' },
+    },
+    makeRuntimeState({ focusKey: undefined }),
+    makeRuntimeState({ focusKey: '#search' }),
+  );
 
   assert.equal(weak?.strength, 'weak');
   assert.equal(weak?.primarySignal, 'hash_changed');
   assert.equal(strong?.strength, 'strong');
   assert.ok(strong?.signals.includes('dom_changed'));
+  assert.equal(domOnly?.strength, 'weak');
+  assert.equal(focusOnly?.strength, 'none');
 });
 
 test('scenario: repeated weak anchor progress now interrupts the stale mini-plan early', async () => {

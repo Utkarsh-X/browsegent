@@ -1,0 +1,62 @@
+{
+  "tasks": [
+    {
+      "id": "wiki_main_featured",
+      "category": "static_content",
+      "difficulty": "extraction",
+      "url": "https://en.wikipedia.org/wiki/Main_Page",
+      "goal": "Get the title of the featured article on Wikipedia today",
+      "description": "Simple static extraction baseline",
+      "expectedLlmCalls": {
+        "min": 0,
+        "max": 2,
+        "target": 1
+      },
+      "minLength": 10,
+      "requireAny": [
+        "[A-Za-z]"
+      ]
+    },
+    {
+      "id": "github_trending_first_repo",
+      "category": "interaction_spa",
+      "difficulty": "reasoning",
+      "url": "https://github.com/trending",
+      "goal": "Get the name and star count of the first trending repository today",
+      "description": "Trending extraction with numeric expectation",
+      "expectedLlmCalls": {
+        "min": 1,
+        "max": 5,
+        "target": 2
+      },
+      "minLength": 8,
+      "requireAll": [
+        "\\d",
+        "stars?"
+      ]
+    },
+    {
+      "id": "vercel_docs_heading",
+      "category": "spa_navigation",
+      "difficulty": "extraction",
+      "url": "https://vercel.com/docs",
+      "goal": "Get the main heading from the Vercel documentation page",
+      "description": "SPA docs heading baseline",
+      "expectedLlmCalls": {
+        "min": 0,
+        "max": 3,
+        "target": 1
+      },
+      "minLength": 5,
+      "requireAny": [
+        "vercel",
+        "documentation"
+      ],
+      "forbid": [
+        "error",
+        "blocked"
+      ]
+    }
+  ]
+}
+

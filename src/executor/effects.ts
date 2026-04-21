@@ -61,7 +61,7 @@ export function deriveActionEffect(
   }
 
   const uniqueSignals = dedupeSignals(signals);
-  const strength = deriveEffectStrength(uniqueSignals);
+  const strength = deriveEffectStrength(action, uniqueSignals);
 
   return {
     stateChanged: uniqueSignals.some(signal => signal !== 'none' && signal !== 'target_value_observed'),
@@ -72,9 +72,29 @@ export function deriveActionEffect(
   };
 }
 
-export function deriveEffectStrength(signals: ActionEffectSignal[]): ActionEffectStrength {
-  if (signals.some(signal => signal === 'url_changed' || signal === 'dom_changed' || signal === 'target_value_changed')) {
+export function deriveEffectStrength(action: Action, signals: ActionEffectSignal[]): ActionEffectStrength {
+  const hasSignal = (signal: ActionEffectSignal) => signals.includes(signal);
+
+  if (hasSignal('url_changed')) {
     return 'strong';
+  }
+
+  if ((action.kind === 'type' || action.kind === 'select') && hasSignal('target_value_changed')) {
+    return 'strong';
+  }
+
+  if (
+    hasSignal('dom_changed')
+    || hasSignal('hash_changed')
+    || hasSignal('scroll_changed')
+    || hasSignal('target_value_observed')
+    || hasSignal('target_value_changed')
+  ) {
+    return 'weak';
+  }
+
+  if (hasSignal('focus_changed')) {
+    return 'none';
   }
 
   if (signals.some(signal => signal !== 'none')) {

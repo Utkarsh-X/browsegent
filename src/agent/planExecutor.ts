@@ -16,6 +16,7 @@ const MUTATION_WAIT_MS = 1500;
 const SIGNIFICANT_DELTA_COUNT = 3;
 const NO_EFFECT_REPEAT_THRESHOLD = 3;
 const SAME_VALUE_REPEAT_THRESHOLD = 3;
+const TYPE_SAME_VALUE_REPEAT_THRESHOLD = 4;
 const OBSERVED_VALUE_REPEAT_THRESHOLD = 4;
 const CONTEXT_READ_REPEAT_THRESHOLD = 4;
 const INSPECT_REGION_CONTEXT_REPEAT_THRESHOLD = 3;
@@ -24,6 +25,8 @@ const RECENT_EFFECT_WINDOW = 6;
 const STALE_SELECTOR_REPLAN_WINDOW = 12;
 const STALE_SELECTOR_REPLAN_THRESHOLD = 3;
 const STALE_SELECTOR_FAMILY_REPLAN_THRESHOLD = 2;
+const TYPE_SELECTOR_REPLAN_THRESHOLD = 2;
+const TYPE_MISMATCH_ERROR_PATTERN = /(not an <input>|does not accept text|not editable|role allowing \[aria-readonly\]|typed value mismatch)/i;
 
 type ProgressDecision = 'accept' | 'watch' | 'warn' | 'abort';
 
@@ -78,7 +81,7 @@ export async function executePlan(
     }
 
     const actionHistoryKey = getActionHistoryKey(action);
-    if (actionHistoryKey && shouldReplanForRepeatedNotFound(action, actionHistoryKey, history)) {
+    if (actionHistoryKey && shouldReplanForRepeatedSelectorFailures(action, actionHistoryKey, history)) {
       history.push({
         action: action.kind,
         selector: actionHistoryKey,
@@ -150,7 +153,7 @@ export async function executePlan(
       result: toHistoryResult(result),
       timestamp: Date.now(),
       graphFingerprint: fingerprintGraph(graph),
-      value: result.value,
+      value: result.value ?? result.metadata.effect?.targetValue ?? result.error?.message,
       effect: result.metadata.effect,
       progressStrength: progress.strength,
       progressDecision: progress.decision,
@@ -295,6 +298,25 @@ function assessActionProgress(
     };
   }
 
+  if (action.kind === 'type' || action.kind === 'select') {
+    const normalizedValue = normalizeReadValue(result.value ?? result.metadata.effect?.targetValue);
+    if (!normalizedValue) {
+      return { decision: 'accept', repeatCount: 1, strength };
+    }
+    const sameValueCount = recentMatches.filter(entry =>
+      normalizeReadValue(entry.value ?? entry.effect?.targetValue) === normalizedValue,
+    ).length + 1;
+
+    if (sameValueCount >= TYPE_SAME_VALUE_REPEAT_THRESHOLD) {
+      return { decision: 'abort', repeatCount: sameValueCount, strength: 'weak' };
+    }
+    if (sameValueCount >= 2) {
+      return { decision: 'warn', repeatCount: sameValueCount, strength: 'weak' };
+    }
+
+    return { decision: 'accept', repeatCount: sameValueCount, strength };
+  }
+
   if (action.kind === 'click' || action.kind === 'close') {
     const weakOrNoneCount = recentMatches.filter(entry =>
       (entry.progressStrength ?? entry.effect?.strength ?? 'none') !== 'strong',
@@ -378,7 +400,7 @@ function shouldStopPlanAfterPageChange(action: Action, result: ActionResult): bo
   return (action.kind === 'click' || action.kind === 'close') && signals.includes('hash_changed');
 }
 
-function shouldReplanForRepeatedNotFound(
+function shouldReplanForRepeatedSelectorFailures(
   action: Action,
   actionHistoryKey: string,
   history: ActionHistoryEntry[],
@@ -399,6 +421,18 @@ function shouldReplanForRepeatedNotFound(
     return true;
   }
 
+  if (action.kind === 'type') {
+    const repeatedTypeFailureCount = history.slice(-RECENT_EFFECT_WINDOW).filter(entry =>
+      entry.action === 'type'
+      && entry.selector === actionHistoryKey
+      && isTypeSelectorFailure(entry),
+    ).length;
+
+    if (repeatedTypeFailureCount >= TYPE_SELECTOR_REPLAN_THRESHOLD) {
+      return true;
+    }
+  }
+
   const selectorFamily = selectorFamilyFingerprint(actionHistoryKey);
   const repeatedFamilyNotFoundCount = history.slice(-STALE_SELECTOR_REPLAN_WINDOW).filter(entry =>
     typeof entry.selector === 'string'
@@ -407,6 +441,23 @@ function shouldReplanForRepeatedNotFound(
   ).length;
 
   return repeatedFamilyNotFoundCount >= STALE_SELECTOR_FAMILY_REPLAN_THRESHOLD;
+}
+
+function isTypeSelectorFailure(entry: ActionHistoryEntry): boolean {
+  if (entry.result === 'not_found' || entry.result === 'not_interactable') {
+    return true;
+  }
+
+  if (entry.result !== 'execution_error' && entry.result !== 'timeout') {
+    return false;
+  }
+
+  const value = (entry.value ?? '').trim();
+  if (!value) {
+    return entry.result === 'timeout';
+  }
+
+  return TYPE_MISMATCH_ERROR_PATTERN.test(value);
 }
 
 function decideFromRepeatCount(

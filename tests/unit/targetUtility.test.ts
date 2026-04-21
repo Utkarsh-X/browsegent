@@ -26,6 +26,16 @@ function makeGetAction(target: string): Action {
   };
 }
 
+function makeTypeAction(target: string, input: string): Action {
+  return {
+    kind: 'type',
+    target,
+    input,
+    origin: 'llm',
+    original: { tool: 'type', sel: target, text: input },
+  };
+}
+
 function makeNode(overrides: Partial<FilteredNode>): FilteredNode {
   return {
     type: 'trigger',
@@ -722,6 +732,88 @@ test('assessTargetUtilityGuard allows multi-page extraction goals to continue pa
   assert.equal(signal.shouldBlock, false);
 });
 
+test('assessTargetUtilityGuard blocks interaction churn when extraction goal has no read observations', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'button',
+      sel: '[data-action="open-card"]',
+      selType: 'testid',
+      value: 'Open card',
+      meta: {
+        nodeId: 'open-card',
+        selectorScore: 72,
+        interactionScore: 70,
+        actionabilityScore: 74,
+        interactionKind: 'button',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 10,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    { action: 'click', selector: '#search', result: 'ok', timestamp: 1 },
+    { action: 'type', selector: '#search', result: 'ok', timestamp: 2 },
+    { action: 'click', selector: '#submit', result: 'ok', timestamp: 3 },
+    { action: 'scroll', result: 'ok', timestamp: 4 },
+    { action: 'click', selector: '.filters button', result: 'ok', timestamp: 5 },
+    { action: 'click', selector: '.sort button', result: 'ok', timestamp: 6 },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('[data-action="open-card"]'),
+    'What is the title of the first result shown on this page?',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'read_after_interaction_churn');
+  assert.equal(buildTargetUtilityHistoryValue(signal), 'utility_guard:read_after_interaction_churn');
+});
+
+test('assessTargetUtilityGuard allows interaction continuation after read observation appears', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'button',
+      sel: '[data-action="open-card"]',
+      selType: 'testid',
+      value: 'Open card',
+      meta: {
+        nodeId: 'open-card',
+        selectorScore: 72,
+        interactionScore: 70,
+        actionabilityScore: 74,
+        interactionKind: 'button',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 10,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    { action: 'click', selector: '#search', result: 'ok', timestamp: 1 },
+    { action: 'type', selector: '#search', result: 'ok', timestamp: 2 },
+    { action: 'click', selector: '#submit', result: 'ok', timestamp: 3 },
+    { action: 'get', selector: '.result .title', result: 'ok', timestamp: 4, value: 'First article', readOutcome: 'answer_evidence' },
+    { action: 'click', selector: '.next', result: 'ok', timestamp: 5 },
+    { action: 'scroll', result: 'ok', timestamp: 6 },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('[data-action="open-card"]'),
+    'What is the title of the first result shown on this page?',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, false);
+});
+
 test('assessTargetUtilityGuard blocks brittle unmatched get selectors to avoid stale read churn', () => {
   const graph = makeGraph([
     {
@@ -841,6 +933,147 @@ test('assessTargetUtilityGuard allows get selectors that are present in current 
     'Get the first laptop price',
     graph,
     [],
+  );
+
+  assert.equal(signal.shouldBlock, false);
+});
+
+test('assessTargetUtilityGuard enforces read transition after submit-like click before more typing', () => {
+  const graph = makeGraph([
+    {
+      type: 'input',
+      tag: 'input',
+      value: 'search',
+      sel: '#search-autocomplete-input',
+      selType: 'id',
+      rule: 'test',
+      meta: {
+        nodeId: 'input-1',
+        selectorScore: 84,
+        interactionScore: 74,
+        actionabilityScore: 78,
+        interactionKind: 'input',
+        confidence: 'high',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 18,
+      },
+    },
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'type',
+      selector: '#search-autocomplete-input',
+      result: 'ok',
+      timestamp: 1,
+      value: 'events',
+      effect: {
+        stateChanged: true,
+        primarySignal: 'target_value_changed',
+        signals: ['target_value_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'type',
+      selector: '#location-autocomplete',
+      result: 'ok',
+      timestamp: 2,
+      value: 'San Francisco, CA',
+      effect: {
+        stateChanged: true,
+        primarySignal: 'target_value_changed',
+        signals: ['target_value_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'click',
+      selector: '[data-testid="input-field-wrapper"]',
+      result: 'ok',
+      timestamp: 3,
+      value: 'Search events',
+      effect: {
+        stateChanged: true,
+        primarySignal: 'dom_changed',
+        signals: ['dom_changed'],
+        strength: 'weak',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeTypeAction('#search-autocomplete-input', 'events'),
+    'Use the search bar to find events in San Francisco and list event titles with price ranges.',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'read_after_submit_transition');
+  assert.equal(buildTargetUtilityHistoryValue(signal), 'utility_guard:read_after_submit_transition');
+});
+
+test('assessTargetUtilityGuard allows interaction once read evidence follows submit transition', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'button',
+      sel: 'button[type="submit"]',
+      selType: 'type',
+      value: 'Search',
+      attrs: { inputType: 'submit' },
+      meta: {
+        nodeId: 'submit-1',
+        selectorScore: 82,
+        interactionScore: 76,
+        actionabilityScore: 80,
+        interactionKind: 'button',
+        confidence: 'high',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 12,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    { action: 'type', selector: '#query', result: 'ok', timestamp: 1, value: 'events' },
+    { action: 'type', selector: '#location', result: 'ok', timestamp: 2, value: 'San Francisco, CA' },
+    {
+      action: 'click',
+      selector: 'button[type="submit"]',
+      result: 'ok',
+      timestamp: 3,
+      value: 'Search',
+      effect: {
+        stateChanged: true,
+        primarySignal: 'url_changed',
+        signals: ['url_changed'],
+        strength: 'strong',
+      },
+    },
+    {
+      action: 'find_elements',
+      selector: '.event-card',
+      result: 'ok',
+      timestamp: 4,
+      value: 'Found 8 elements matching ".event-card".',
+      readOutcome: 'context_only',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('button[type="submit"]'),
+    'Use the search bar to find events in San Francisco and list event titles with price ranges.',
+    graph,
+    history,
   );
 
   assert.equal(signal.shouldBlock, false);

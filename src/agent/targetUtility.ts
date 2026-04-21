@@ -11,6 +11,8 @@ export type TargetUtilityGuardReason =
   | 'read_before_navigation'
   | 'pagination_churn'
   | 'pagination_answer_observed'
+  | 'read_after_interaction_churn'
+  | 'read_after_submit_transition'
   | 'stale_read_selector';
 
 export interface TargetUtilityGuardSignal {
@@ -33,8 +35,13 @@ const PAGINATION_RECENT_READ_LOOKBACK = 5;
 const READ_SELECTOR_NOT_FOUND_THRESHOLD = 2;
 const READ_SELECTOR_NOT_FOUND_FAMILY_THRESHOLD = 2;
 const READ_SELECTOR_NOT_FOUND_LOOKBACK = 12;
+const INTERACTION_READ_CHURN_WINDOW = 10;
+const INTERACTION_READ_CHURN_THRESHOLD = 6;
+const FORM_SUBMIT_TRANSITION_WINDOW = 12;
 const READ_EMPTY_PATTERN = /\b(not found|no matches found|found 0 elements|count for ".+": 0)\b/i;
 const MULTI_PAGE_GOAL_PATTERN = /\b(page\s*(?:[3-9]|\d{2,})|third page|fourth page|fifth page|multiple pages|next \d+ pages)\b/i;
+const SUBMIT_SELECTOR_PATTERN = /\b(type\s*=\s*["']submit["']|submit|search|find|apply|go|query|lookup)\b/i;
+const SUBMIT_TEXT_PATTERN = /\b(search|submit|find|apply|go|lookup|show results?|view results?)\b/i;
 
 export function assessTargetUtilityGuard(
   action: Action,
@@ -58,9 +65,28 @@ export function assessTargetUtilityGuard(
   const navigationGoal = NAVIGATION_GOAL_PATTERN.test(goal);
   const howManyGoal = /\b(how many|number of|count|total)\b/i.test(goal);
   const paginationSelector = isLikelyPaginationSelector(action.target, matches);
+  const interactionReadChurn = extractionGoal && !navigationGoal
+    ? getInteractionWithoutReadPattern(actionHistory)
+    : undefined;
   const readRequired = extractionGoal && paginationSelector
     ? isPaginationReadRequired(actionHistory, goal)
     : false;
+  const formSubmitTransition = extractionGoal
+    ? getFormSubmitTransitionPattern(actionHistory)
+    : undefined;
+  const likelySubmitTarget = action.target
+    ? isLikelySubmitTarget(action.target, matches)
+    : false;
+  const hasRecentFormInput = extractionGoal
+    ? countRecentFormInputActions(actionHistory) > 0
+    : false;
+  const shouldEnforceReadAfterSubmitTransition = !!(
+    extractionGoal
+    && formSubmitTransition
+    && formSubmitTransition.hasPendingSubmitRead
+    && formSubmitTransition.recentFormInputCount > 0
+    && isFormInteractionAction(action.kind)
+  );
   const answerAlreadyObserved = extractionGoal
     && paginationSelector
     && !MULTI_PAGE_GOAL_PATTERN.test(goal)
@@ -85,6 +111,32 @@ export function assessTargetUtilityGuard(
       0,
       0,
       'A recent pagination click changed the page, but no answer-evidence read followed. Use get/find_elements/count_elements/search_page now before any further pagination.',
+    );
+  }
+
+  if (
+    interactionReadChurn
+    && interactionReadChurn.interactionCount >= INTERACTION_READ_CHURN_THRESHOLD
+    && interactionReadChurn.readObservationCount === 0
+  ) {
+    return blocked(
+      'read_after_interaction_churn',
+      matches.length,
+      0,
+      0,
+      0,
+      'Recent steps performed many interactions without any read observation. Pause clicking and use read-only tools (get/find_elements/count_elements/search_page/inspect_region) to verify answer evidence from the current page.',
+    );
+  }
+
+  if (shouldEnforceReadAfterSubmitTransition) {
+    return blocked(
+      'read_after_submit_transition',
+      matches.length,
+      0,
+      0,
+      0,
+      'A recent submit-like interaction likely completed form entry, but no read evidence has been collected since then. Switch to read-only tools now (get/find_elements/count_elements/search_page) before further typing/clicking.',
     );
   }
 
@@ -191,6 +243,7 @@ export function assessTargetUtilityGuard(
     && maxGoalScore < 16
     && maxSelectorScore < 65
     && regionDataCount >= 2
+    && !(likelySubmitTarget && hasRecentFormInput)
   ) {
     return blocked(
       'read_before_click',
@@ -219,7 +272,7 @@ export function buildTargetUtilityHistoryValue(signal: TargetUtilityGuardSignal)
 }
 
 function shouldEvaluateAction(action: Action): action is Action & { target: string } {
-  return (action.kind === 'click' || action.kind === 'close')
+  return (action.kind === 'click' || action.kind === 'close' || action.kind === 'type' || action.kind === 'select')
     && typeof action.target === 'string'
     && action.target.length > 0;
 }
@@ -477,6 +530,42 @@ function hasAnswerEvidenceSinceLastPagination(actionHistory: ActionHistoryEntry[
   return false;
 }
 
+function getInteractionWithoutReadPattern(actionHistory: ActionHistoryEntry[]): {
+  interactionCount: number;
+  readObservationCount: number;
+} {
+  const recent = actionHistory.slice(-INTERACTION_READ_CHURN_WINDOW);
+
+  let interactionCount = 0;
+  let readObservationCount = 0;
+
+  for (const entry of recent) {
+    if (entry.result !== 'ok' && entry.result !== 'no_progress') {
+      continue;
+    }
+
+    if (isReadObservation(entry.action)) {
+      readObservationCount += 1;
+      continue;
+    }
+
+    if (isInteractionAction(entry.action)) {
+      interactionCount += 1;
+    }
+  }
+
+  return { interactionCount, readObservationCount };
+}
+
+function isInteractionAction(action: string): boolean {
+  return action === 'click'
+    || action === 'close'
+    || action === 'type'
+    || action === 'select'
+    || action === 'scroll'
+    || action === 'wait';
+}
+
 function isAnswerEvidenceReadEntry(entry: ActionHistoryEntry): boolean {
   if (entry.readOutcome === 'answer_evidence') {
     return true;
@@ -516,6 +605,112 @@ function isReadObservation(action: string): boolean {
     || action === 'find_elements'
     || action === 'count_elements'
     || action === 'inspect_region';
+}
+
+function isFormInteractionAction(action: Action['kind']): boolean {
+  return action === 'click'
+    || action === 'close'
+    || action === 'type'
+    || action === 'select';
+}
+
+function countRecentFormInputActions(actionHistory: ActionHistoryEntry[]): number {
+  return actionHistory.slice(-FORM_SUBMIT_TRANSITION_WINDOW).filter(entry =>
+    entry.result === 'ok'
+    && (entry.action === 'type' || entry.action === 'select')
+    && typeof entry.selector === 'string'
+    && entry.selector.length > 0,
+  ).length;
+}
+
+function getFormSubmitTransitionPattern(actionHistory: ActionHistoryEntry[]): {
+  hasPendingSubmitRead: boolean;
+  recentSubmitLikeCount: number;
+  recentFormInputCount: number;
+} {
+  const recent = actionHistory.slice(-FORM_SUBMIT_TRANSITION_WINDOW);
+  if (recent.length === 0) {
+    return {
+      hasPendingSubmitRead: false,
+      recentSubmitLikeCount: 0,
+      recentFormInputCount: 0,
+    };
+  }
+
+  const recentFormInputCount = recent.filter(entry =>
+    entry.result === 'ok'
+    && (entry.action === 'type' || entry.action === 'select'),
+  ).length;
+
+  let lastSubmitLikeIndex = -1;
+  for (let index = recent.length - 1; index >= 0; index -= 1) {
+    const entry = recent[index]!;
+    if (!isSubmitLikeInteractionEntry(entry)) {
+      continue;
+    }
+    lastSubmitLikeIndex = index;
+    break;
+  }
+
+  if (lastSubmitLikeIndex < 0) {
+    return {
+      hasPendingSubmitRead: false,
+      recentSubmitLikeCount: 0,
+      recentFormInputCount,
+    };
+  }
+
+  const recentSubmitLikeCount = recent.filter(entry => isSubmitLikeInteractionEntry(entry)).length;
+  const hasReadAfterSubmit = recent.slice(lastSubmitLikeIndex + 1).some(entry =>
+    entry.result === 'ok'
+    && isExtractionEvidenceObservation(entry.action),
+  );
+
+  return {
+    hasPendingSubmitRead: !hasReadAfterSubmit,
+    recentSubmitLikeCount,
+    recentFormInputCount,
+  };
+}
+
+function isSubmitLikeInteractionEntry(entry: ActionHistoryEntry): boolean {
+  if (entry.result !== 'ok') {
+    return false;
+  }
+  if (entry.action !== 'click' && entry.action !== 'close') {
+    return false;
+  }
+  const selector = entry.selector ?? '';
+  if (SUBMIT_SELECTOR_PATTERN.test(selector)) {
+    return true;
+  }
+  const valueSample = `${entry.value ?? ''} ${entry.effect?.targetValue ?? ''}`.trim();
+  if (!valueSample) {
+    return false;
+  }
+  return SUBMIT_TEXT_PATTERN.test(valueSample);
+}
+
+function isLikelySubmitTarget(selector: string, matches: FilteredNode[]): boolean {
+  if (SUBMIT_SELECTOR_PATTERN.test(selector)) {
+    return true;
+  }
+
+  return matches.some(node => {
+    const nodeText = `${node.value} ${node.attrs?.ariaLabel ?? ''} ${node.attrs?.name ?? ''}`.trim();
+    if (SUBMIT_TEXT_PATTERN.test(nodeText)) {
+      return true;
+    }
+    const role = (node.meta?.role ?? node.attrs?.role ?? '').toLowerCase();
+    const inputType = (node.attrs?.inputType ?? '').toLowerCase();
+    if (inputType === 'submit') {
+      return true;
+    }
+    if (role === 'button' && SUBMIT_TEXT_PATTERN.test(nodeText)) {
+      return true;
+    }
+    return false;
+  });
 }
 
 function countRepeatedNotFoundReads(selector: string, actionHistory: ActionHistoryEntry[]): number {

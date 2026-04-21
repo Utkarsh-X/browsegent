@@ -556,6 +556,16 @@ function buildExecutionWarnings(
         'Answer evidence has already been observed after pagination for this extraction goal. ' +
         'Do not continue paginating; extract and return the answer from current page evidence.',
       );
+    } else if (reason === 'read_after_interaction_churn') {
+      warnings.push(
+        'Recent steps performed many interactions without any read observation. ' +
+        'This pattern is not making progress. Use read-only tools now to verify answer evidence on the current page before more clicks/typing.',
+      );
+    } else if (reason === 'read_after_submit_transition') {
+      warnings.push(
+        'A submit-like interaction likely completed form entry, but no read evidence was collected afterward. ' +
+        'This pattern is not making progress. Stop further typing/clicking and use read-only tools now (get/find_elements/count_elements/search_page) on the current page.',
+      );
     }
   }
 

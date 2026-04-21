@@ -11,6 +11,7 @@ import {
   inspectRegionSummary,
   searchPageText,
 } from './readTools';
+import { readTextValueWithFallback, setTextValueWithFallback } from './textValueHelpers';
 
 type DomActionResult<T = unknown> =
   | { ok: true; value?: T }
@@ -186,50 +187,17 @@ export class DomBrowserAdapter implements BrowserAdapter {
 
   async type(target: string, input: string, opts?: { clear: boolean }): Promise<void> {
     const page = this.requirePage();
-    await runDomResult(page, () =>
-      page.evaluate(([selector, value, clear]): DomActionResult => {
-        let el: HTMLInputElement | HTMLTextAreaElement | HTMLElement | null = null;
-        try {
-          el = document.querySelector(selector) as
-          | HTMLInputElement
-          | HTMLTextAreaElement
-          | HTMLElement
-          | null;
-        } catch (err) {
-          return { ok: false, code: 'execution_error', message: `Invalid selector: ${selector} (${String(err)})` };
-        }
-        if (!el) return { ok: false, code: 'not_found', message: `Element not found: ${selector}` };
-        const style = window.getComputedStyle(el);
-        if (style.display === 'none' || style.visibility === 'hidden') {
-          return { ok: false, code: 'not_interactable', message: `Element not interactable: ${selector}` };
-        }
-        try {
-          el.focus();
-          if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-            const proto = el instanceof HTMLInputElement
-              ? HTMLInputElement.prototype
-              : HTMLTextAreaElement.prototype;
-            const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
-            if (clear && setter) setter.call(el, '');
-            if (setter) setter.call(el, value);
-            else (el as HTMLInputElement).value = value;
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-            return { ok: true };
-          }
-          if (el.isContentEditable) {
-            if (clear) el.textContent = '';
-            el.textContent = value;
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-            return { ok: true };
-          }
-          return { ok: false, code: 'not_interactable', message: `Element does not accept text: ${selector}` };
-        } catch (err) {
-          return { ok: false, code: 'execution_error', message: String(err) };
-        }
-      }, [target, input, opts?.clear ?? true] as const),
-    );
+    await runDomResult(page, async () => {
+      const result = await setTextValueWithFallback(page, target, input, opts?.clear ?? true);
+      if (result.ok) {
+        return { ok: true };
+      }
+      return {
+        ok: false,
+        code: result.code ?? 'execution_error',
+        message: result.message ?? `Failed to type into target: ${target}`,
+      } as DomActionResult;
+    });
   }
 
   async scroll(direction: 'down' | 'up'): Promise<void> {
@@ -242,19 +210,7 @@ export class DomBrowserAdapter implements BrowserAdapter {
 
   async readValue(target: string): Promise<{ found: boolean; value: string }> {
     const page = this.requirePage();
-    return page.evaluate((selector) => {
-      let el: HTMLInputElement | HTMLTextAreaElement | HTMLElement | null = null;
-      try {
-        el = document.querySelector(selector) as HTMLInputElement | HTMLTextAreaElement | HTMLElement | null;
-      } catch {
-        return { found: false, value: '' };
-      }
-      if (!el) return { found: false, value: '' };
-      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-        return { found: true, value: el.value ?? '' };
-      }
-      return { found: true, value: el.textContent?.trim() ?? '' };
-    }, target);
+    return readTextValueWithFallback(page, target);
   }
 
   async searchPage(pattern: string, scopeSelector?: string): Promise<string> {

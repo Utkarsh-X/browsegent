@@ -84,6 +84,18 @@ test('classifyReadOutcome marks currency evidence as answer evidence for price g
   assert.equal(assessment.outcome, 'answer_evidence');
 });
 
+test('classifyReadOutcome keeps inspect_region summaries as contextual even with currency tokens', () => {
+  const assessment = classifyReadOutcome({
+    action: makeAction('inspect_region', 'main'),
+    value: 'Region "main" contains 8 notable nodes. - price candidates $4,269.06 - trigger Search',
+    goal: 'List each event title with ticket price range',
+    history: [],
+    graphFingerprint: 'abc',
+  });
+
+  assert.equal(assessment.outcome, 'context_only');
+});
+
 test('extractAnswerCandidate returns compact price candidate from noisy text', () => {
   const candidate = extractAnswerCandidate(
     'Get the price of the first laptop product in the search results',
@@ -101,4 +113,13 @@ test('extractAnswerCandidate can find price tokens beyond compact-history trunca
   );
 
   assert.equal(candidate, 'INR 59,999');
+});
+
+test('extractAnswerCandidate ignores inspect_region summary currency snippets', () => {
+  const candidate = extractAnswerCandidate(
+    'List each event title with ticket price range',
+    'Region "main" contains 8 notable nodes. - price candidates $4,269.06 - trigger Search',
+  );
+
+  assert.equal(candidate, undefined);
 });

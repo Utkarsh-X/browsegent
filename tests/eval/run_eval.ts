@@ -682,20 +682,33 @@ function validateTaskValue(task: EvalTask, value: string): ValueValidationResult
 }
 
 function classifyCrashFailure(errStr: string): EvalFailureType {
-  const text = errStr.toLowerCase();
-  if (
-    text.includes('api_quota_exceeded')
-    || text.includes('resource_exhausted')
-    || text.includes('429')
-    || text.includes('503')
-    || text.includes('timeout')
-    || text.includes('net::err')
-    || text.includes('enotfound')
-    || text.includes('econnreset')
-  ) {
+  if (looksLikeEnvironmentBlock(errStr)) {
     return 'environment_block';
   }
   return 'runtime_crash';
+}
+
+function looksLikeEnvironmentBlock(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return (
+    normalized.includes('api_quota_exceeded')
+    || normalized.includes('resource_exhausted')
+    || normalized.includes('429')
+    || normalized.includes('503')
+    || normalized.includes('timeout')
+    || normalized.includes('net::err')
+    || normalized.includes('enotfound')
+    || normalized.includes('econnreset')
+    || normalized.includes('fetch failed')
+    || normalized.includes('service unavailable')
+    || normalized.includes('temporarily unavailable')
+    || normalized.includes('connection reset')
+    || normalized.includes('gateway')
+    || normalized.includes('rate limit')
+    || normalized.includes('captcha')
+    || normalized.includes('access denied')
+    || normalized.includes('verification')
+  );
 }
 
 function classifyTaskFailure(
@@ -712,6 +725,9 @@ function classifyTaskFailure(
   const reason = (failureReason ?? '').toLowerCase();
 
   if (runSuccess && !validation.passed) {
+    if (looksLikeEnvironmentBlock(`${failureReason ?? ''} ${validation.preview}`)) {
+      return 'environment_block';
+    }
     if (progress.assessedActions === 0) return 'perception_error';
     if (progress.noEffectActions >= 2 && progress.strongActions === 0) return 'action_error';
     return 'validation_error';
@@ -763,11 +779,35 @@ function logAvailableTasks(suite: EvalSuite): void {
   console.log('');
 }
 
+function parseEnvRetryCount(raw?: string | null): number {
+  if (!raw) return 2;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 0 || n > 5) {
+    throw new Error(`Invalid --env-retries "${raw}". Expected integer 0..5.`);
+  }
+  return n;
+}
+
+function parseEnvRetryDelayMs(raw?: string | null): number {
+  if (!raw) return 15000;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1000 || n > 120000) {
+    throw new Error(`Invalid --env-retry-delay-ms "${raw}". Expected integer 1000..120000.`);
+  }
+  return n;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function runEval(
   modelOverride?: string,
   taskFilter?: string | null,
   suite: EvalSuite = 'core',
-  repeatCount = 1
+  repeatCount = 1,
+  envRetryCount = 2,
+  envRetryDelayMs = 15000
 ): Promise<void> {
   const runtime = getRuntimeConfig();
   const llmSelection = resolveLlmSelection(modelOverride);
@@ -797,6 +837,7 @@ async function runEval(
   console.log(`  Model:    ${model}`);
   console.log(`  Suite:    ${suite}`);
   console.log(`  Repeat:   ${repeatCount}`);
+  console.log(`  EnvRetry: ${envRetryCount} (base delay ${envRetryDelayMs}ms)`);
   console.log(`  Guards:   ${runtime.agent.enforceProgressGuards ? 'enforced' : 'telemetry-only'}`);
   console.log(`  Tasks:    ${tasksToRun.length}${taskFilter ? ` (filtered: ${taskFilter})` : ''}`);
   console.log(`  RunID:    ${runId}`);
@@ -818,142 +859,112 @@ async function runEval(
       console.log(`  ${task.url}`);
       console.log(`  Goal: ${task.goal}`);
 
-      try {
-        const result = await bg.run(task.url, task.goal);
-        const validation = validateTaskValue(task, result.value);
-        const llmUsage = evaluateLlmUsage(result.metrics.llmCallCount, task.expectedLlmCalls);
-        const passed = result.success && validation.passed;
-        const metExpected = llmUsage.status === 'in_range';
-        const failureType = passed
-          ? undefined
-          : classifyTaskFailure(result.success, result.failureReason, validation, result.metrics.progress);
-
-        console.log(
-          `  -> ${passed ? 'PASS' : 'FAIL'} | LLM: ${result.metrics.llmCallCount} (range ${llmUsage.expectation.min}-${llmUsage.expectation.max}) ${metExpected ? 'OK' : llmUsage.status.toUpperCase()}`
-        );
-        console.log(`  -> Value: "${validation.preview}"`);
-        if (!validation.passed) {
-          console.log(`  -> Validation: FAIL (${validation.reasons.join('; ')})`);
+      for (let retryAttempt = 0; retryAttempt <= envRetryCount; retryAttempt++) {
+        if (retryAttempt > 0) {
+          console.log(`  -> Retry ${retryAttempt}/${envRetryCount} after transient environment block`);
         }
-        if (!passed) {
-          console.log(`  -> FailureType: ${failureType ?? 'unknown'}`);
-          if (result.failureReason) {
-            console.log(`  -> FailureReason: ${result.failureReason}`);
+
+        try {
+          const result = await bg.run(task.url, task.goal);
+          const validation = validateTaskValue(task, result.value);
+          const llmUsage = evaluateLlmUsage(result.metrics.llmCallCount, task.expectedLlmCalls);
+          const passed = result.success && validation.passed;
+          const metExpected = llmUsage.status === 'in_range';
+          const failureType = passed
+            ? undefined
+            : classifyTaskFailure(result.success, result.failureReason, validation, result.metrics.progress);
+          const shouldRetry = !passed && failureType === 'environment_block' && retryAttempt < envRetryCount;
+
+          console.log(
+            `  -> ${passed ? 'PASS' : 'FAIL'} | LLM: ${result.metrics.llmCallCount} (range ${llmUsage.expectation.min}-${llmUsage.expectation.max}) ${metExpected ? 'OK' : llmUsage.status.toUpperCase()}`
+          );
+          console.log(`  -> Value: "${validation.preview}"`);
+          if (!validation.passed) {
+            console.log(`  -> Validation: FAIL (${validation.reasons.join('; ')})`);
           }
-        }
-        console.log(
-          `  -> Tokens: ${result.metrics.snapshotTokens} graph | ${result.metrics.inputTokens}in ${result.metrics.outputTokens}out LLM`
-        );
-        console.log(
-          `  -> Time: ${result.metrics.totalTimeMs}ms | Cost: $${result.metrics.estimatedCostUsd.toFixed(6)}`
-        );
-        console.log(
-          `  -> Progress: ${result.metrics.progress.strongActions} strong | ${result.metrics.progress.weakActions} weak | ${result.metrics.progress.noEffectActions} none | aborts ${result.metrics.progress.noProgressAborts}`
-        );
+          if (!passed) {
+            console.log(`  -> FailureType: ${failureType ?? 'unknown'}`);
+            if (result.failureReason) {
+              console.log(`  -> FailureReason: ${result.failureReason}`);
+            }
+          }
+          console.log(
+            `  -> Tokens: ${result.metrics.snapshotTokens} graph | ${result.metrics.inputTokens}in ${result.metrics.outputTokens}out LLM`
+          );
+          console.log(
+            `  -> Time: ${result.metrics.totalTimeMs}ms | Cost: $${result.metrics.estimatedCostUsd.toFixed(6)}`
+          );
+          console.log(
+            `  -> Progress: ${result.metrics.progress.strongActions} strong | ${result.metrics.progress.weakActions} weak | ${result.metrics.progress.noEffectActions} none | aborts ${result.metrics.progress.noProgressAborts}`
+          );
 
-        results.push({
-          taskId: task.id,
-          attempt,
-          category: task.category,
-          difficulty: task.difficulty,
-          url: task.url,
-          goal: task.goal,
-          passed,
-          metExpectedLlmCalls: metExpected,
-          llmUsage,
-          value: result.value,
-          validation,
-          failureType,
-          failureReason: result.failureReason,
-          metrics: {
-            llmCallCount: result.metrics.llmCallCount,
-            expectedLlmCalls: llmUsage.expectation,
-            inputTokens: result.metrics.inputTokens,
-            outputTokens: result.metrics.outputTokens,
-            llmDurationMs: result.metrics.llmDurationMs,
-            totalSteps: result.metrics.totalSteps,
-            totalTimeMs: result.metrics.totalTimeMs,
-            snapshotNodes: result.metrics.snapshotNodes,
-            totalDOMNodes: result.metrics.totalDOMNodes,
-            snapshotTokens: result.metrics.snapshotTokens,
-            attributionRate: result.metrics.attributionRate,
-            causeBreakdown: result.metrics.causeBreakdown,
-            estimatedCostUsd: result.metrics.estimatedCostUsd,
-            model,
-            progress: result.metrics.progress,
-          },
-        });
-      } catch (err) {
-        const errStr = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+          if (shouldRetry) {
+            const delayMs = envRetryDelayMs * (retryAttempt + 1);
+            console.log(`  -> Retrying after ${delayMs}ms due to transient environment block`);
+            await sleep(delayMs);
+            continue;
+          }
 
-        if (
-          errStr.includes('API_QUOTA_EXCEEDED')
-          || errStr.includes('429')
-          || errStr.includes('RESOURCE_EXHAUSTED')
-        ) {
-          console.error(`\n  QUOTA EXCEEDED on task ${task.id}`);
-          console.error(`  Switch active provider key in .env and re-run with: --task ${task.id}`);
-          console.error(`  Partial results saved to ${runDir}`);
-          await bg.close();
-          saveReport(results, runId, runDir, model, suite, repeatCount);
-          process.exit(1);
-        }
+          results.push({
+            taskId: task.id,
+            attempt,
+            category: task.category,
+            difficulty: task.difficulty,
+            url: task.url,
+            goal: task.goal,
+            passed,
+            metExpectedLlmCalls: metExpected,
+            llmUsage,
+            value: result.value,
+            validation,
+            failureType,
+            failureReason: result.failureReason,
+            metrics: {
+              llmCallCount: result.metrics.llmCallCount,
+              expectedLlmCalls: llmUsage.expectation,
+              inputTokens: result.metrics.inputTokens,
+              outputTokens: result.metrics.outputTokens,
+              llmDurationMs: result.metrics.llmDurationMs,
+              totalSteps: result.metrics.totalSteps,
+              totalTimeMs: result.metrics.totalTimeMs,
+              snapshotNodes: result.metrics.snapshotNodes,
+              totalDOMNodes: result.metrics.totalDOMNodes,
+              snapshotTokens: result.metrics.snapshotTokens,
+              attributionRate: result.metrics.attributionRate,
+              causeBreakdown: result.metrics.causeBreakdown,
+              estimatedCostUsd: result.metrics.estimatedCostUsd,
+              model,
+              progress: result.metrics.progress,
+            },
+          });
+          break;
+        } catch (err) {
+          const errStr = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
 
-        const llmUsage = evaluateLlmUsage(0, task.expectedLlmCalls);
-        const validation: ValueValidationResult = {
-          passed: false,
-          reasons: ['run crashed before value validation'],
-          preview: '',
-        };
-        const failureType = classifyTaskFailure(
-          false,
-          `crash: ${errStr}`,
-          validation,
-          {
-            assessedActions: 0,
-            strongActions: 0,
-            weakActions: 0,
-            noEffectActions: 0,
-            noProgressAborts: 0,
-            decisionCounts: { accept: 0, watch: 0, warn: 0, abort: 0 },
-            signalCounts: {},
-          },
-          errStr
-        );
+          if (
+            errStr.includes('API_QUOTA_EXCEEDED')
+            || errStr.includes('429')
+            || errStr.includes('RESOURCE_EXHAUSTED')
+          ) {
+            console.error(`\n  QUOTA EXCEEDED on task ${task.id}`);
+            console.error(`  Switch active provider key in .env and re-run with: --task ${task.id}`);
+            console.error(`  Partial results saved to ${runDir}`);
+            await bg.close();
+            saveReport(results, runId, runDir, model, suite, repeatCount);
+            process.exit(1);
+          }
 
-        console.log(`  -> CRASH: ${errStr.slice(0, 160)}`);
-        console.log(`  -> FailureType: ${failureType}`);
-
-        results.push({
-          taskId: task.id,
-          attempt,
-          category: task.category,
-          difficulty: task.difficulty,
-          url: task.url,
-          goal: task.goal,
-          passed: false,
-          metExpectedLlmCalls: false,
-          llmUsage,
-          value: '',
-          validation,
-          failureType,
-          failureReason: `crash: ${errStr.slice(0, 300)}`,
-          metrics: {
-            llmCallCount: 0,
-            expectedLlmCalls: llmUsage.expectation,
-            inputTokens: 0,
-            outputTokens: 0,
-            llmDurationMs: 0,
-            totalSteps: 0,
-            totalTimeMs: 0,
-            snapshotNodes: 0,
-            totalDOMNodes: 0,
-            snapshotTokens: 0,
-            attributionRate: 0,
-            causeBreakdown: {},
-            estimatedCostUsd: 0,
-            model,
-            progress: {
+          const llmUsage = evaluateLlmUsage(0, task.expectedLlmCalls);
+          const validation: ValueValidationResult = {
+            passed: false,
+            reasons: ['run crashed before value validation'],
+            preview: '',
+          };
+          const failureType = classifyTaskFailure(
+            false,
+            `crash: ${errStr}`,
+            validation,
+            {
               assessedActions: 0,
               strongActions: 0,
               weakActions: 0,
@@ -962,8 +973,62 @@ async function runEval(
               decisionCounts: { accept: 0, watch: 0, warn: 0, abort: 0 },
               signalCounts: {},
             },
-          },
-        });
+            errStr
+          );
+          const shouldRetry = failureType === 'environment_block' && retryAttempt < envRetryCount;
+
+          console.log(`  -> CRASH: ${errStr.slice(0, 160)}`);
+          console.log(`  -> FailureType: ${failureType}`);
+
+          if (shouldRetry) {
+            const delayMs = envRetryDelayMs * (retryAttempt + 1);
+            console.log(`  -> Retrying after ${delayMs}ms due to transient crash`);
+            await sleep(delayMs);
+            continue;
+          }
+
+          results.push({
+            taskId: task.id,
+            attempt,
+            category: task.category,
+            difficulty: task.difficulty,
+            url: task.url,
+            goal: task.goal,
+            passed: false,
+            metExpectedLlmCalls: false,
+            llmUsage,
+            value: '',
+            validation,
+            failureType,
+            failureReason: `crash: ${errStr.slice(0, 300)}`,
+            metrics: {
+              llmCallCount: 0,
+              expectedLlmCalls: llmUsage.expectation,
+              inputTokens: 0,
+              outputTokens: 0,
+              llmDurationMs: 0,
+              totalSteps: 0,
+              totalTimeMs: 0,
+              snapshotNodes: 0,
+              totalDOMNodes: 0,
+              snapshotTokens: 0,
+              attributionRate: 0,
+              causeBreakdown: {},
+              estimatedCostUsd: 0,
+              model,
+              progress: {
+                assessedActions: 0,
+                strongActions: 0,
+                weakActions: 0,
+                noEffectActions: 0,
+                noProgressAborts: 0,
+                decisionCounts: { accept: 0, watch: 0, warn: 0, abort: 0 },
+                signalCounts: {},
+              },
+            },
+          });
+          break;
+        }
       }
     }
   }
@@ -1112,20 +1177,28 @@ function saveReport(
   console.log('================================================\n');
 }
 
-const modelArg = process.argv[2];
+const modelArg = process.argv[2]?.startsWith('--') ? undefined : process.argv[2];
 const taskFilterIdx = process.argv.indexOf('--task');
 const taskFilter = taskFilterIdx !== -1 ? process.argv[taskFilterIdx + 1] ?? null : null;
 const suiteIdx = process.argv.indexOf('--suite');
 const suiteArg = suiteIdx !== -1 ? process.argv[suiteIdx + 1] ?? null : null;
 const repeatIdx = process.argv.indexOf('--repeat');
 const repeatArg = repeatIdx !== -1 ? process.argv[repeatIdx + 1] ?? null : null;
+const envRetriesIdx = process.argv.indexOf('--env-retries');
+const envRetriesArg = envRetriesIdx !== -1 ? process.argv[envRetriesIdx + 1] ?? null : null;
+const envRetryDelayIdx = process.argv.indexOf('--env-retry-delay-ms');
+const envRetryDelayArg = envRetryDelayIdx !== -1 ? process.argv[envRetryDelayIdx + 1] ?? null : null;
 const listOnly = process.argv.includes('--list');
 
 let suite: EvalSuite;
 let repeatCount: number;
+let envRetryCount: number;
+let envRetryDelayMs: number;
 try {
   suite = parseEvalSuite(suiteArg);
   repeatCount = parseRepeatCount(repeatArg);
+  envRetryCount = parseEnvRetryCount(envRetriesArg);
+  envRetryDelayMs = parseEnvRetryDelayMs(envRetryDelayArg);
 } catch (err) {
   console.error(String(err));
   process.exit(1);
@@ -1136,7 +1209,7 @@ if (listOnly) {
   process.exit(0);
 }
 
-runEval(modelArg, taskFilter, suite, repeatCount).catch((err) => {
+runEval(modelArg, taskFilter, suite, repeatCount, envRetryCount, envRetryDelayMs).catch((err) => {
   console.error('Eval crashed:', err);
   process.exit(1);
 });

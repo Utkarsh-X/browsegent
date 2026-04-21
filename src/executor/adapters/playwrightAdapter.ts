@@ -10,8 +10,12 @@ import {
   inspectRegionSummary,
   searchPageText,
 } from './readTools';
+import { readTextValueWithFallback, setTextValueWithFallback } from './textValueHelpers';
 
 function classifyPlaywrightError(err: unknown): AdapterError {
+  if (err instanceof AdapterError) {
+    return err;
+  }
   const message = err instanceof Error ? err.message : String(err);
   const lower = message.toLowerCase();
   if (lower.includes('timeout')) return new AdapterError('timeout', message, 'playwright');
@@ -48,13 +52,36 @@ export class PlaywrightBrowserAdapter implements BrowserAdapter {
   async type(target: string, input: string, opts?: { clear: boolean }): Promise<void> {
     const page = this.requirePage();
     await this.waitForElement(target);
+
+    const directResult = await setTextValueWithFallback(page, target, input, opts?.clear ?? true).catch(() => null);
+    if (directResult?.ok) {
+      return;
+    }
+
     try {
       const locator = page.locator(target).first();
       await locator.click();
       if (opts?.clear ?? true) {
-        await locator.fill('');
+        await page.keyboard.press('ControlOrMeta+A').catch(() => {});
+        await page.keyboard.press('Backspace').catch(() => {});
       }
       await page.keyboard.type(input);
+      const readback = await readTextValueWithFallback(page, target).catch(() => ({ found: false, value: '' }));
+      if (readback.found && readback.value === input) {
+        return;
+      }
+      if (directResult && !directResult.ok) {
+        throw new AdapterError(
+          directResult.code ?? 'not_interactable',
+          directResult.message ?? `Element does not accept text: ${target}`,
+          this.runtime,
+        );
+      }
+      throw new AdapterError(
+        'not_interactable',
+        `Typed value mismatch for ${target}. Expected "${input}" but found "${readback.value}".`,
+        this.runtime,
+      );
     } catch (err) {
       throw classifyPlaywrightError(err);
     }
@@ -74,16 +101,7 @@ export class PlaywrightBrowserAdapter implements BrowserAdapter {
 
   async readValue(target: string): Promise<{ found: boolean; value: string }> {
     const page = this.requirePage();
-    const el = await this.tryWaitForElement(target);
-    if (!el) return { found: false, value: '' };
-    try {
-      const value = await page.$eval(target, (node: Element) =>
-        (node as HTMLInputElement).value || node.textContent?.trim() || ''
-      );
-      return { found: true, value: value ?? '' };
-    } catch (err) {
-      throw classifyPlaywrightError(err);
-    }
+    return readTextValueWithFallback(page, target);
   }
 
   async searchPage(pattern: string, scopeSelector?: string): Promise<string> {

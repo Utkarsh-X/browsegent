@@ -109,7 +109,10 @@ export function extractAnswerCandidate(goal: string, value: string | undefined):
     return undefined;
   }
 
-  if (PRICE_GOAL_PATTERN.test(goal)) {
+  const isRegionSummaryLike = /^Region ".+" contains \d+ notable nodes?/i.test(expanded)
+    || expanded.startsWith('Region text:');
+
+  if (PRICE_GOAL_PATTERN.test(goal) && !isRegionSummaryLike) {
     const currencyMatch = expanded.match(CURRENCY_PATTERN)?.[0];
     if (currencyMatch) {
       return cleanCandidate(currencyMatch);
@@ -184,6 +187,10 @@ function inferReadOutcome(
   const patternOnly = inferReadOutcomeFromPatterns(action.kind, normalizedValue, sameValueCount);
   if (patternOnly === 'noise_repeat') {
     return patternOnly;
+  }
+
+  if (patternOnly === 'context_only' && action.kind === 'inspect_region') {
+    return sameValueCount >= 3 ? 'noise_repeat' : 'context_only';
   }
 
   if (action.kind === 'count_elements') {

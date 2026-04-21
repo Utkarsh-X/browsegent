@@ -238,6 +238,140 @@ test('executePlan stops repeated same-value gets on the fourth observed repetiti
   assert.equal(result.actionHistory[result.actionHistory.length - 1]?.result, 'no_progress');
 });
 
+test('executePlan warns when type repeats the same value on the same selector', async () => {
+  const graph = makeGraph('same-value-type-warn');
+  const graphFingerprint = fingerprintGraph(graph);
+  const existingHistory: ActionHistoryEntry[] = [
+    {
+      action: 'type',
+      selector: '#search',
+      result: 'ok',
+      timestamp: 1,
+      graphFingerprint,
+      value: 'events',
+      effect: {
+        stateChanged: true,
+        primarySignal: 'target_value_changed',
+        signals: ['target_value_changed'],
+        strength: 'strong',
+        targetValue: 'events',
+      },
+    },
+  ];
+
+  const result = await executePlan(
+    [{ tool: 'type', sel: '#search', text: 'events' }],
+    'Find events in San Francisco',
+    graph,
+    makeExecutor(action => successResult(action, {
+      value: 'events',
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: true,
+        effect: {
+          stateChanged: true,
+          primarySignal: 'target_value_changed',
+          signals: ['target_value_changed'],
+          strength: 'strong',
+          targetValue: 'events',
+        },
+      },
+    })),
+    existingHistory,
+    { mutationWaitMs: 0 },
+  );
+
+  assert.equal(result.abortReason, 'max_steps');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.progressDecision, 'warn');
+});
+
+test('executePlan aborts when type repeats same value for the fourth time', async () => {
+  const graph = makeGraph('same-value-type-abort');
+  const graphFingerprint = fingerprintGraph(graph);
+  const existingHistory: ActionHistoryEntry[] = [
+    {
+      action: 'type',
+      selector: '#search',
+      result: 'ok',
+      timestamp: 1,
+      graphFingerprint,
+      value: 'events',
+      effect: {
+        stateChanged: true,
+        primarySignal: 'target_value_changed',
+        signals: ['target_value_changed'],
+        strength: 'strong',
+        targetValue: 'events',
+      },
+    },
+    {
+      action: 'type',
+      selector: '#search',
+      result: 'ok',
+      timestamp: 2,
+      graphFingerprint,
+      value: 'events',
+      effect: {
+        stateChanged: true,
+        primarySignal: 'target_value_changed',
+        signals: ['target_value_changed'],
+        strength: 'strong',
+        targetValue: 'events',
+      },
+    },
+    {
+      action: 'type',
+      selector: '#search',
+      result: 'ok',
+      timestamp: 3,
+      graphFingerprint,
+      value: 'events',
+      effect: {
+        stateChanged: true,
+        primarySignal: 'target_value_changed',
+        signals: ['target_value_changed'],
+        strength: 'strong',
+        targetValue: 'events',
+      },
+    },
+  ];
+
+  const result = await executePlan(
+    [{ tool: 'type', sel: '#search', text: 'events' }],
+    'Find events in San Francisco',
+    graph,
+    makeExecutor(action => successResult(action, {
+      value: 'events',
+      metadata: {
+        attempts: 1,
+        durationMs: 0,
+        runtimePath: ['dom'],
+        finalRuntime: 'dom',
+        usedFallback: false,
+        target: action.target,
+        mutating: true,
+        effect: {
+          stateChanged: true,
+          primarySignal: 'target_value_changed',
+          signals: ['target_value_changed'],
+          strength: 'strong',
+          targetValue: 'events',
+        },
+      },
+    })),
+    existingHistory,
+    { mutationWaitMs: 0 },
+  );
+
+  assert.equal(result.abortReason, 'no_progress');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.result, 'no_progress');
+});
+
 test('executePlan allows a single no-effect click without escalating', async () => {
   const graph = makeGraph('single-click');
   const result = await executePlan(
@@ -1032,6 +1166,46 @@ test('executePlan replans when selector family has repeated not_found failures',
   const result = await executePlan(
     [{ tool: 'get', sel: 'div:nth-of-type(6) > div:nth-of-type(1) > span:nth-of-type(2)' }],
     'Get the first laptop price',
+    graph,
+    makeExecutor(action => {
+      executeCount += 1;
+      return successResult(action);
+    }),
+    existingHistory,
+    { mutationWaitMs: 0 },
+  );
+
+  assert.equal(executeCount, 0);
+  assert.equal(result.abortReason, 'plan_stale');
+  assert.equal(result.actionHistory[result.actionHistory.length - 1]?.value, 'utility_guard:stale_selector');
+});
+
+test('executePlan replans when type selector repeats non-fillable execution errors', async () => {
+  const graph = makeGraph('type-host-guard');
+  const graphFingerprint = fingerprintGraph(graph);
+  const existingHistory: ActionHistoryEntry[] = [
+    {
+      action: 'type',
+      selector: '#search-input',
+      result: 'execution_error',
+      timestamp: 1,
+      graphFingerprint,
+      value: 'locator.fill: Error: Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]',
+    },
+    {
+      action: 'type',
+      selector: '#search-input',
+      result: 'execution_error',
+      timestamp: 2,
+      graphFingerprint,
+      value: 'locator.fill: Error: Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]',
+    },
+  ];
+
+  let executeCount = 0;
+  const result = await executePlan(
+    [{ tool: 'type', sel: '#search-input', text: 'space images' }],
+    'Search archive for space images',
     graph,
     makeExecutor(action => {
       executeCount += 1;

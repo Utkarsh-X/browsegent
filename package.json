@@ -6,6 +6,7 @@
   "scripts": {
     "extension:build": "tsx extension/build.ts",
     "eval": "tsx tests/eval/run_eval.ts",
+    "eval:custom": "tsx tests/eval/run_custom_benchmark.ts",
     "comparison": "tsx tests/eval/run_comparison.ts",
     "comparison:ab": "tsx tests/eval/run_progress_ab.ts",
     "test:unit": "tsx --test tests/unit/**/*.test.ts"
