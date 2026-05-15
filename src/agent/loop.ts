@@ -541,6 +541,11 @@ function buildExecutionWarnings(
         'Recent selector has repeated not_found failures and is now treated as stale. ' +
         'Do not use this selector again; choose a visible selector from the current graph state.',
       );
+    } else if (reason === 'stale_read_selector') {
+      warnings.push(
+        'Recent read selector repeatedly produced no matches and is likely stale or over-specific for this page state. ' +
+        'Stop repeating it; use broader read-only discovery first (find_elements/search_page) and then choose a visible stable selector.',
+      );
     } else if (reason === 'read_before_navigation') {
       warnings.push(
         'Current page already appears to contain goal-relevant data. ' +
@@ -565,6 +570,16 @@ function buildExecutionWarnings(
       warnings.push(
         'A submit-like interaction likely completed form entry, but no read evidence was collected afterward. ' +
         'This pattern is not making progress. Stop further typing/clicking and use read-only tools now (get/find_elements/count_elements/search_page) on the current page.',
+      );
+    } else if (reason === 'submit_control_recovery') {
+      warnings.push(
+        'A submit-like control failed after form entry and the agent is retyping without discovery. ' +
+        'This pattern is not making progress. Use read-only discovery first (find_elements/get/search_page) to locate the actual actionable submit/result target before more typing.',
+      );
+    } else if (reason === 'weak_interaction_repeat') {
+      warnings.push(
+        'The same weak interaction control was clicked repeatedly after form entry without a result-page transition or answer evidence. ' +
+        'This pattern is not making progress. Stop repeating that control; use read-only discovery to identify a true submit/result target first.',
       );
     }
   }

@@ -1,6 +1,6 @@
 import type { Page } from 'playwright';
 
-import type { BrowserRuntimeState } from '../types';
+import type { BrowserRuntimeState } from '../executor/types';
 
 const CAPTURE_RUNTIME_STATE_FN = new Function('selector', `
   const normalizeText = (value, limit = 200) =>

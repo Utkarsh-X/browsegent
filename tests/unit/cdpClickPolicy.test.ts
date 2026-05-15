@@ -7,7 +7,7 @@ import {
   shouldRequireStableHashIdentityMatch,
   shouldAttemptCdpSelectorRecovery,
   shouldRetryCdpClickSameTarget,
-} from '../../src/executor/adapters/domAdapter';
+} from '../../src/adapters/domAdapter';
 
 test('resolveCdpOutcomePolicy maps hard failures to explicit throw semantics', () => {
   assert.deepEqual(resolveCdpOutcomePolicy('unsupported_frame'), {

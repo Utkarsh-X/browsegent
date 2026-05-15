@@ -1,9 +1,9 @@
 import type { CDPSession, Page } from 'playwright';
-import { getRuntimeConfig } from '../../config/runtime';
-import { logger } from '../../logger';
-import { AdapterError } from '../browserAdapter';
-import type { BrowserAdapter } from '../browserAdapter';
-import type { ActionTargetHint, BrowserRuntimeState } from '../types';
+import { getRuntimeConfig } from '../config/runtime';
+import { logger } from '../logger';
+import { AdapterError } from '../executor/browserAdapter';
+import type { BrowserAdapter } from '../executor/browserAdapter';
+import type { ActionTargetHint, BrowserRuntimeState } from '../executor/types';
 import { capturePageRuntimeState } from './runtimeState';
 import {
   countElementsSummary,

@@ -36,6 +36,15 @@ function makeTypeAction(target: string, input: string): Action {
   };
 }
 
+function makeFindElementsAction(target: string): Action {
+  return {
+    kind: 'find_elements',
+    target,
+    origin: 'llm',
+    original: { tool: 'find_elements', sel: target },
+  };
+}
+
 function makeNode(overrides: Partial<FilteredNode>): FilteredNode {
   return {
     type: 'trigger',
@@ -938,6 +947,69 @@ test('assessTargetUtilityGuard allows get selectors that are present in current 
   assert.equal(signal.shouldBlock, false);
 });
 
+test('assessTargetUtilityGuard blocks repeated zero-match find_elements selectors', () => {
+  const graph = makeGraph([
+    makeNode({
+      sel: '.result-item',
+      selType: 'positional',
+      value: 'Result item',
+      meta: {
+        nodeId: 'result-item',
+        selectorScore: 62,
+        interactionScore: 40,
+        actionabilityScore: 44,
+        interactionKind: 'generic',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 8,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    {
+      action: 'find_elements',
+      selector: '[data-testid="event-card"]',
+      result: 'ok',
+      timestamp: 1,
+      value: 'Found 0 elements matching "[data-testid=\\"event-card\\"]".',
+      readOutcome: 'noise_repeat',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+      },
+    },
+    {
+      action: 'find_elements',
+      selector: '[data-testid="event-card"]',
+      result: 'ok',
+      timestamp: 2,
+      value: 'Found 0 elements matching "[data-testid=\\"event-card\\"]".',
+      readOutcome: 'noise_repeat',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeFindElementsAction('[data-testid="event-card"]'),
+    'List events and prices on the current page.',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'stale_read_selector');
+  assert.equal(buildTargetUtilityHistoryValue(signal), 'utility_guard:stale_read_selector');
+});
+
 test('assessTargetUtilityGuard enforces read transition after submit-like click before more typing', () => {
   const graph = makeGraph([
     {
@@ -1065,6 +1137,341 @@ test('assessTargetUtilityGuard allows interaction once read evidence follows sub
         primarySignal: 'target_value_observed',
         signals: ['target_value_observed'],
         strength: 'weak',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('button[type="submit"]'),
+    'Use the search bar to find events in San Francisco and list event titles with price ranges.',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, false);
+});
+
+test('assessTargetUtilityGuard blocks repeated typing after submit-like failure until discovery occurs', () => {
+  const graph = makeGraph([
+    {
+      type: 'input',
+      tag: 'input',
+      value: 'search',
+      sel: '#search-autocomplete-input',
+      selType: 'id',
+      rule: 'test',
+      meta: {
+        nodeId: 'search-input',
+        selectorScore: 84,
+        interactionScore: 74,
+        actionabilityScore: 78,
+        interactionKind: 'input',
+        confidence: 'high',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 20,
+      },
+    },
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    { action: 'type', selector: '#search-autocomplete-input', result: 'ok', timestamp: 1, value: 'events' },
+    { action: 'type', selector: '#location-autocomplete', result: 'ok', timestamp: 2, value: 'San Francisco, CA' },
+    {
+      action: 'click',
+      selector: "button[type='submit']",
+      result: 'not_found',
+      timestamp: 3,
+      value: "Element not found: button[type='submit']",
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeTypeAction('#search-autocomplete-input', 'events'),
+    'Use the search bar to find events in San Francisco and list event titles with price ranges.',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'submit_control_recovery');
+  assert.equal(buildTargetUtilityHistoryValue(signal), 'utility_guard:submit_control_recovery');
+});
+
+test('assessTargetUtilityGuard allows alternative click recovery after submit-like failure', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'button',
+      sel: '[data-testid="text-list-item-button"]',
+      selType: 'testid',
+      value: 'Search',
+      meta: {
+        nodeId: 'recovery-button',
+        selectorScore: 72,
+        interactionScore: 68,
+        actionabilityScore: 71,
+        interactionKind: 'button',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 12,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    { action: 'type', selector: '#search-autocomplete-input', result: 'ok', timestamp: 1, value: 'events' },
+    { action: 'type', selector: '#location-autocomplete', result: 'ok', timestamp: 2, value: 'San Francisco, CA' },
+    {
+      action: 'click',
+      selector: "button[type='submit']",
+      result: 'not_found',
+      timestamp: 3,
+      value: "Element not found: button[type='submit']",
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('[data-testid="text-list-item-button"]'),
+    'Use the search bar to find events in San Francisco and list event titles with price ranges.',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, false);
+});
+
+test('assessTargetUtilityGuard clears submit recovery block once read discovery happens', () => {
+  const graph = makeGraph([
+    {
+      type: 'input',
+      tag: 'input',
+      value: 'search',
+      sel: '#search-autocomplete-input',
+      selType: 'id',
+      rule: 'test',
+      meta: {
+        nodeId: 'search-input',
+        selectorScore: 84,
+        interactionScore: 74,
+        actionabilityScore: 78,
+        interactionKind: 'input',
+        confidence: 'high',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 20,
+      },
+    },
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    { action: 'type', selector: '#search-autocomplete-input', result: 'ok', timestamp: 1, value: 'events' },
+    { action: 'type', selector: '#location-autocomplete', result: 'ok', timestamp: 2, value: 'San Francisco, CA' },
+    {
+      action: 'click',
+      selector: "button[type='submit']",
+      result: 'not_found',
+      timestamp: 3,
+      value: "Element not found: button[type='submit']",
+    },
+    {
+      action: 'find_elements',
+      selector: 'button, [role="button"]',
+      result: 'ok',
+      timestamp: 4,
+      value: 'Found 8 elements matching "button, [role=\\"button\\"]".',
+      readOutcome: 'context_only',
+      effect: {
+        stateChanged: false,
+        primarySignal: 'target_value_observed',
+        signals: ['target_value_observed'],
+        strength: 'weak',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeTypeAction('#search-autocomplete-input', 'events'),
+    'Use the search bar to find events in San Francisco and list event titles with price ranges.',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, false);
+});
+
+test('assessTargetUtilityGuard blocks repeated weak click churn on same selector after form entry', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'button',
+      sel: '[data-testid="text-list-item-button"]',
+      selType: 'testid',
+      value: 'San Francisco, CA',
+      meta: {
+        nodeId: 'suggestion-button',
+        selectorScore: 70,
+        interactionScore: 66,
+        actionabilityScore: 69,
+        interactionKind: 'button',
+        confidence: 'medium',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 8,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    { action: 'type', selector: '#search-autocomplete-input', result: 'ok', timestamp: 1, value: 'events' },
+    { action: 'type', selector: '#location-autocomplete', result: 'ok', timestamp: 2, value: 'San Francisco, CA' },
+    {
+      action: 'click',
+      selector: '[data-testid="text-list-item-button"]',
+      result: 'ok',
+      timestamp: 3,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'hash_changed',
+        signals: ['hash_changed'],
+        strength: 'weak',
+      },
+    },
+    {
+      action: 'click',
+      selector: '[data-testid="text-list-item-button"]',
+      result: 'ok',
+      timestamp: 4,
+      effect: {
+        stateChanged: false,
+        primarySignal: 'focus_changed',
+        signals: ['focus_changed'],
+        strength: 'none',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeAction('[data-testid="text-list-item-button"]'),
+    'Use the search bar to find events in San Francisco and list event titles with price ranges.',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'weak_interaction_repeat');
+  assert.equal(buildTargetUtilityHistoryValue(signal), 'utility_guard:weak_interaction_repeat');
+});
+
+test('assessTargetUtilityGuard blocks retyping after repeated weak click churn', () => {
+  const graph = makeGraph([
+    {
+      type: 'input',
+      tag: 'input',
+      value: 'search',
+      sel: '#search-autocomplete-input',
+      selType: 'id',
+      rule: 'test',
+      meta: {
+        nodeId: 'search-input',
+        selectorScore: 84,
+        interactionScore: 74,
+        actionabilityScore: 78,
+        interactionKind: 'input',
+        confidence: 'high',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 20,
+      },
+    },
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    { action: 'type', selector: '#search-autocomplete-input', result: 'ok', timestamp: 1, value: 'events' },
+    { action: 'type', selector: '#location-autocomplete', result: 'ok', timestamp: 2, value: 'San Francisco, CA' },
+    {
+      action: 'click',
+      selector: '[data-testid="text-list-item-button"]',
+      result: 'ok',
+      timestamp: 3,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'hash_changed',
+        signals: ['hash_changed'],
+        strength: 'weak',
+      },
+    },
+    {
+      action: 'click',
+      selector: '[data-testid="text-list-item-button"]',
+      result: 'ok',
+      timestamp: 4,
+      effect: {
+        stateChanged: false,
+        primarySignal: 'focus_changed',
+        signals: ['focus_changed'],
+        strength: 'none',
+      },
+    },
+  ];
+
+  const signal = assessTargetUtilityGuard(
+    makeTypeAction('#search-autocomplete-input', 'events'),
+    'Use the search bar to find events in San Francisco and list event titles with price ranges.',
+    graph,
+    history,
+  );
+
+  assert.equal(signal.shouldBlock, true);
+  assert.equal(signal.reason, 'weak_interaction_repeat');
+});
+
+test('assessTargetUtilityGuard allows alternate submit target after weak click churn', () => {
+  const graph = makeGraph([
+    makeNode({
+      tag: 'button',
+      sel: 'button[type="submit"]',
+      selType: 'type',
+      value: 'Search',
+      attrs: { inputType: 'submit' },
+      meta: {
+        nodeId: 'submit-button',
+        selectorScore: 83,
+        interactionScore: 76,
+        actionabilityScore: 80,
+        interactionKind: 'button',
+        confidence: 'high',
+        enrichmentState: 'base',
+        visibility: 'visible',
+        goalScore: 14,
+      },
+    }),
+  ]);
+
+  const history: ActionHistoryEntry[] = [
+    { action: 'type', selector: '#search-autocomplete-input', result: 'ok', timestamp: 1, value: 'events' },
+    { action: 'type', selector: '#location-autocomplete', result: 'ok', timestamp: 2, value: 'San Francisco, CA' },
+    {
+      action: 'click',
+      selector: '[data-testid="text-list-item-button"]',
+      result: 'ok',
+      timestamp: 3,
+      effect: {
+        stateChanged: true,
+        primarySignal: 'hash_changed',
+        signals: ['hash_changed'],
+        strength: 'weak',
+      },
+    },
+    {
+      action: 'click',
+      selector: '[data-testid="text-list-item-button"]',
+      result: 'ok',
+      timestamp: 4,
+      effect: {
+        stateChanged: false,
+        primarySignal: 'focus_changed',
+        signals: ['focus_changed'],
+        strength: 'none',
       },
     },
   ];

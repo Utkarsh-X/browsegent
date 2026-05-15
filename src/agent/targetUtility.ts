@@ -13,6 +13,8 @@ export type TargetUtilityGuardReason =
   | 'pagination_answer_observed'
   | 'read_after_interaction_churn'
   | 'read_after_submit_transition'
+  | 'submit_control_recovery'
+  | 'weak_interaction_repeat'
   | 'stale_read_selector';
 
 export interface TargetUtilityGuardSignal {
@@ -38,6 +40,8 @@ const READ_SELECTOR_NOT_FOUND_LOOKBACK = 12;
 const INTERACTION_READ_CHURN_WINDOW = 10;
 const INTERACTION_READ_CHURN_THRESHOLD = 6;
 const FORM_SUBMIT_TRANSITION_WINDOW = 12;
+const FORM_SUBMIT_FAILURE_THRESHOLD = 1;
+const WEAK_INTERACTION_REPEAT_THRESHOLD = 2;
 const READ_EMPTY_PATTERN = /\b(not found|no matches found|found 0 elements|count for ".+": 0)\b/i;
 const MULTI_PAGE_GOAL_PATTERN = /\b(page\s*(?:[3-9]|\d{2,})|third page|fourth page|fifth page|multiple pages|next \d+ pages)\b/i;
 const SUBMIT_SELECTOR_PATTERN = /\b(type\s*=\s*["']submit["']|submit|search|find|apply|go|query|lookup)\b/i;
@@ -74,6 +78,12 @@ export function assessTargetUtilityGuard(
   const formSubmitTransition = extractionGoal
     ? getFormSubmitTransitionPattern(actionHistory)
     : undefined;
+  const submitRecoveryPattern = extractionGoal
+    ? getSubmitControlRecoveryPattern(actionHistory)
+    : undefined;
+  const weakInteractionRepeatPattern = extractionGoal
+    ? getWeakInteractionRepeatPattern(actionHistory)
+    : undefined;
   const likelySubmitTarget = action.target
     ? isLikelySubmitTarget(action.target, matches)
     : false;
@@ -86,6 +96,27 @@ export function assessTargetUtilityGuard(
     && formSubmitTransition.hasPendingSubmitRead
     && formSubmitTransition.recentFormInputCount > 0
     && isFormInteractionAction(action.kind)
+  );
+  const shouldEnforceSubmitControlRecovery = !!(
+    extractionGoal
+    && submitRecoveryPattern
+    && submitRecoveryPattern.failedSubmitLikeCount >= FORM_SUBMIT_FAILURE_THRESHOLD
+    && submitRecoveryPattern.hasPendingFailureRead
+    && submitRecoveryPattern.recentFormInputCount > 0
+    && (action.kind === 'type' || action.kind === 'select')
+  );
+  const shouldEnforceWeakInteractionRepeat = !!(
+    extractionGoal
+    && weakInteractionRepeatPattern
+    && weakInteractionRepeatPattern.repeatCount >= WEAK_INTERACTION_REPEAT_THRESHOLD
+    && weakInteractionRepeatPattern.hasPendingRecovery
+    && weakInteractionRepeatPattern.recentFormInputCount > 0
+    && (
+      ((action.kind === 'click' || action.kind === 'close')
+        && selectorsEquivalent(action.target, weakInteractionRepeatPattern.selector))
+      || action.kind === 'type'
+      || action.kind === 'select'
+    )
   );
   const answerAlreadyObserved = extractionGoal
     && paginationSelector
@@ -137,6 +168,28 @@ export function assessTargetUtilityGuard(
       0,
       0,
       'A recent submit-like interaction likely completed form entry, but no read evidence has been collected since then. Switch to read-only tools now (get/find_elements/count_elements/search_page) before further typing/clicking.',
+    );
+  }
+
+  if (shouldEnforceSubmitControlRecovery) {
+    return blocked(
+      'submit_control_recovery',
+      matches.length,
+      0,
+      0,
+      0,
+      'A submit-like control failed after recent form entry, and no read/discovery step followed. Do not keep retyping fields. Use read-only discovery (find_elements/get/search_page) to locate the actionable submit or result region first.',
+    );
+  }
+
+  if (shouldEnforceWeakInteractionRepeat) {
+    return blocked(
+      'weak_interaction_repeat',
+      matches.length,
+      0,
+      0,
+      0,
+      'The same weak interaction target has been clicked repeatedly after form entry without producing answer evidence or a result-page transition. Stop repeating this control. Use read-only discovery to locate a true submit/result target first.',
     );
   }
 
@@ -277,19 +330,19 @@ function shouldEvaluateAction(action: Action): action is Action & { target: stri
     && action.target.length > 0;
 }
 
-function isGuardedReadAction(action: Action): action is Action & { kind: 'get'; target: string } {
-  return action.kind === 'get'
+function isGuardedReadAction(action: Action): action is Action & { kind: 'get' | 'find_elements' | 'count_elements'; target: string } {
+  return (action.kind === 'get' || action.kind === 'find_elements' || action.kind === 'count_elements')
     && typeof action.target === 'string'
     && action.target.length > 0;
 }
 
 function assessReadTargetUtility(
-  action: Action & { kind: 'get'; target: string },
+  action: Action & { kind: 'get' | 'find_elements' | 'count_elements'; target: string },
   graph: SemanticGraph,
   actionHistory: ActionHistoryEntry[],
 ): TargetUtilityGuardSignal {
   const matches = graph.snapshot.filter(node => selectorsEquivalent(node.sel, action.target));
-  if (matches.length > 0) {
+  if (action.kind === 'get' && matches.length > 0) {
     return {
       shouldBlock: false,
       matchedNodes: matches.length,
@@ -302,10 +355,12 @@ function assessReadTargetUtility(
   const brittleSelector = isLikelyBrittleReadSelector(action.target);
   const repeatedNotFoundCount = countRepeatedNotFoundReads(action.target, actionHistory);
   const repeatedFamilyNotFoundCount = countRepeatedNotFoundReadFamily(action.target, actionHistory);
+  const repeatedZeroMatchCount = countRepeatedZeroMatchReads(action.kind, action.target, actionHistory);
   if (
     brittleSelector
     || repeatedNotFoundCount >= READ_SELECTOR_NOT_FOUND_THRESHOLD
     || repeatedFamilyNotFoundCount >= READ_SELECTOR_NOT_FOUND_FAMILY_THRESHOLD
+    || repeatedZeroMatchCount >= READ_SELECTOR_NOT_FOUND_THRESHOLD
   ) {
     return blocked(
       'stale_read_selector',
@@ -623,6 +678,134 @@ function countRecentFormInputActions(actionHistory: ActionHistoryEntry[]): numbe
   ).length;
 }
 
+function getSubmitControlRecoveryPattern(actionHistory: ActionHistoryEntry[]): {
+  failedSubmitLikeCount: number;
+  hasPendingFailureRead: boolean;
+  recentFormInputCount: number;
+} {
+  const recent = actionHistory.slice(-FORM_SUBMIT_TRANSITION_WINDOW);
+  if (recent.length === 0) {
+    return {
+      failedSubmitLikeCount: 0,
+      hasPendingFailureRead: false,
+      recentFormInputCount: 0,
+    };
+  }
+
+  const recentFormInputCount = recent.filter(entry =>
+    entry.result === 'ok'
+    && (entry.action === 'type' || entry.action === 'select'),
+  ).length;
+
+  let formInputsSeen = 0;
+  const failureIndices: number[] = [];
+  for (let index = 0; index < recent.length; index += 1) {
+    const entry = recent[index]!;
+    if (entry.result === 'ok' && (entry.action === 'type' || entry.action === 'select')) {
+      formInputsSeen += 1;
+      continue;
+    }
+    if (isSubmitLikeFailureEntry(entry, formInputsSeen)) {
+      failureIndices.push(index);
+    }
+  }
+
+  if (failureIndices.length === 0) {
+    return {
+      failedSubmitLikeCount: 0,
+      hasPendingFailureRead: false,
+      recentFormInputCount,
+    };
+  }
+
+  const lastFailureIndex = failureIndices[failureIndices.length - 1]!;
+  const hasReadAfterFailure = recent.slice(lastFailureIndex + 1).some(entry =>
+    entry.result === 'ok'
+    && isExtractionEvidenceObservation(entry.action),
+  );
+
+  return {
+    failedSubmitLikeCount: failureIndices.length,
+    hasPendingFailureRead: !hasReadAfterFailure,
+    recentFormInputCount,
+  };
+}
+
+function getWeakInteractionRepeatPattern(actionHistory: ActionHistoryEntry[]): {
+  selector: string;
+  repeatCount: number;
+  recentFormInputCount: number;
+  hasPendingRecovery: boolean;
+} | undefined {
+  const recent = actionHistory.slice(-FORM_SUBMIT_TRANSITION_WINDOW);
+  if (recent.length === 0) {
+    return undefined;
+  }
+
+  const recentFormInputCount = recent.filter(entry =>
+    entry.result === 'ok'
+    && (entry.action === 'type' || entry.action === 'select'),
+  ).length;
+  if (recentFormInputCount === 0) {
+    return undefined;
+  }
+
+  const weakClickEntries = recent
+    .map((entry, index) => ({ entry, index }))
+    .filter(({ entry }) =>
+      entry.result === 'ok'
+      && (entry.action === 'click' || entry.action === 'close')
+      && typeof entry.selector === 'string'
+      && entry.selector.length > 0
+      && !isStrongTransitionEntry(entry),
+    );
+
+  if (weakClickEntries.length === 0) {
+    return undefined;
+  }
+
+  const perSelector = new Map<string, number>();
+  for (const { entry } of weakClickEntries) {
+    const selector = entry.selector!;
+    perSelector.set(selector, (perSelector.get(selector) ?? 0) + 1);
+  }
+
+  let bestSelector: string | undefined;
+  let bestCount = 0;
+  for (const [selector, count] of perSelector.entries()) {
+    if (count > bestCount) {
+      bestSelector = selector;
+      bestCount = count;
+    }
+  }
+
+  if (!bestSelector || bestCount < WEAK_INTERACTION_REPEAT_THRESHOLD) {
+    return undefined;
+  }
+
+  const firstSelectorWeakClickIndex = weakClickEntries.find(({ entry }) =>
+    selectorsEquivalent(entry.selector, bestSelector),
+  )?.index;
+  if (firstSelectorWeakClickIndex === undefined) {
+    return undefined;
+  }
+
+  const subsequent = recent.slice(firstSelectorWeakClickIndex + 1);
+  const hasResultTransition = subsequent.some(isStrongTransitionEntry);
+  const hasAnswerEvidence = subsequent.some(entry =>
+    entry.result === 'ok'
+    && isExtractionEvidenceObservation(entry.action)
+    && isAnswerEvidenceReadEntry(entry),
+  );
+
+  return {
+    selector: bestSelector,
+    repeatCount: bestCount,
+    recentFormInputCount,
+    hasPendingRecovery: !hasResultTransition && !hasAnswerEvidence,
+  };
+}
+
 function getFormSubmitTransitionPattern(actionHistory: ActionHistoryEntry[]): {
   hasPendingSubmitRead: boolean;
   recentSubmitLikeCount: number;
@@ -691,6 +874,42 @@ function isSubmitLikeInteractionEntry(entry: ActionHistoryEntry): boolean {
   return SUBMIT_TEXT_PATTERN.test(valueSample);
 }
 
+function isSubmitLikeFailureEntry(entry: ActionHistoryEntry, formInputsSeen: number): boolean {
+  if (entry.action !== 'click' && entry.action !== 'close') {
+    return false;
+  }
+
+  if (
+    entry.result !== 'not_found'
+    && entry.result !== 'not_interactable'
+    && entry.result !== 'execution_error'
+    && entry.result !== 'timeout'
+  ) {
+    return false;
+  }
+
+  const selector = entry.selector ?? '';
+  if (SUBMIT_SELECTOR_PATTERN.test(selector)) {
+    return true;
+  }
+
+  const valueSample = `${entry.value ?? ''} ${entry.effect?.targetValue ?? ''}`.trim();
+  if (valueSample && SUBMIT_TEXT_PATTERN.test(valueSample)) {
+    return true;
+  }
+
+  return formInputsSeen >= 2;
+}
+
+function isStrongTransitionEntry(entry: ActionHistoryEntry): boolean {
+  if (entry.result !== 'ok') {
+    return false;
+  }
+
+  return entry.effect?.primarySignal === 'url_changed'
+    || (entry.effect?.signals ?? []).includes('url_changed');
+}
+
 function isLikelySubmitTarget(selector: string, matches: FilteredNode[]): boolean {
   if (SUBMIT_SELECTOR_PATTERN.test(selector)) {
     return true;
@@ -732,6 +951,20 @@ function countRepeatedNotFoundReadFamily(selector: string, actionHistory: Action
   ).length;
 }
 
+function countRepeatedZeroMatchReads(
+  actionKind: 'get' | 'find_elements' | 'count_elements',
+  selector: string,
+  actionHistory: ActionHistoryEntry[],
+): number {
+  return actionHistory.slice(-READ_SELECTOR_NOT_FOUND_LOOKBACK).filter(entry =>
+    entry.action === actionKind
+    && (entry.result === 'ok' || entry.result === 'no_progress')
+    && typeof entry.selector === 'string'
+    && selectorsEquivalent(entry.selector, selector)
+    && isZeroMatchReadEntry(entry),
+  ).length;
+}
+
 function isLikelyBrittleReadSelector(selector: string): boolean {
   const normalized = normalizeSelectorForComparison(selector);
   if (!normalized) {
@@ -756,6 +989,21 @@ function isLikelyBrittleReadSelector(selector: string): boolean {
   }
 
   return false;
+}
+
+function isZeroMatchReadEntry(entry: ActionHistoryEntry): boolean {
+  if (entry.readOutcome === 'noise_repeat') {
+    return true;
+  }
+
+  const value = (entry.value ?? '').trim();
+  if (!value) {
+    return false;
+  }
+
+  return READ_EMPTY_PATTERN.test(value)
+    || /^Found 0 elements matching ".+"/i.test(value)
+    || /^Count for ".+": 0/i.test(value);
 }
 
 function isExtractionEvidenceObservation(action: string): boolean {

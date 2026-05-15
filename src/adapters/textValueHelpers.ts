@@ -1,5 +1,5 @@
 import type { Page } from 'playwright';
-import type { ActionErrorCode } from '../types';
+import type { ActionErrorCode } from '../executor/types';
 
 type TextErrorCode = Extract<ActionErrorCode, 'not_found' | 'not_interactable' | 'execution_error'>;
 

@@ -1,8 +1,8 @@
 import type { ElementHandle, Page } from 'playwright';
-import { AdapterError } from '../browserAdapter';
-import type { BrowserAdapter } from '../browserAdapter';
-import type { BrowserRuntimeState } from '../types';
-import type { ActionTargetHint } from '../types';
+import { AdapterError } from '../executor/browserAdapter';
+import type { BrowserAdapter } from '../executor/browserAdapter';
+import type { BrowserRuntimeState } from '../executor/types';
+import type { ActionTargetHint } from '../executor/types';
 import { capturePageRuntimeState } from './runtimeState';
 import {
   countElementsSummary,

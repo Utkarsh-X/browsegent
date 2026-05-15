@@ -9,7 +9,7 @@ import type { LLMPlanStep } from '../executor/types';
 
 import { robustJsonParse } from './parser';
 import { validatePlan } from './validator';
-import { callProvider } from './providers';
+import { callProvider } from '../providers';
 import { SYSTEM_PROMPT, EXTRACT_SYSTEM_PROMPT, buildUserMessage } from './prompt';
 
 // ── Types (re-exported for backward compatibility) ──────────────────────────

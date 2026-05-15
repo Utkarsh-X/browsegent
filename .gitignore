@@ -2,9 +2,14 @@ node_modules/
 dist/
 logs/
 .env
+*.secrets.*
+configs/secrets*
+*.key
 *.js.map
-extension/.chrome_profile_api/
+extension/.chrome_profile*/
 .DS_Store
+*.local
+coverage/
 browser-use-docs(inspiration-only)/
 skills/
 discussion/

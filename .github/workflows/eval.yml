@@ -1,0 +1,73 @@
+name: BrowseGent Eval Suite
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Eval suite to run
+        required: false
+        default: core
+        type: choice
+        options:
+          - core
+          - extended
+          - all
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Build extension
+        run: npm run extension:build
+
+      - name: Run eval suite
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          BROWSEGENT_LLM_PROVIDER: gemini
+          BROWSEGENT_GEMINI_MODEL: gemini-3.1-flash-lite-preview
+          BROWSEGENT_CEREBRAS_MODEL: qwen-3-235b-a22b-instruct-2507
+          BROWSEGENT_OLLAMA_MODEL: qwen3.5:4b
+          BROWSEGENT_OPENAI_MODEL: gpt-4o-mini
+          EVAL_HEADLESS: true
+          PHASE6_HEADLESS: true
+        run: npm run eval -- --suite ${{ github.event.inputs.suite || 'core' }}
+
+      - name: Upload eval results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-results-${{ github.run_id }}
+          path: logs/eval_runs/
+          retention-days: 30
+
+      - name: Print summary
+        if: always()
+        run: |
+          echo "## Eval Results" >> "$GITHUB_STEP_SUMMARY"
+          latest="$(find logs/eval_runs -name report.json -type f | sort | tail -n 1)"
+          if [ -n "$latest" ]; then
+            jq '{passRate: .summary.passRate, total: .summary.totalTasks, passed: .summary.passed, costUsd: .summary.totalCostUsd}' "$latest" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No report.json was produced." >> "$GITHUB_STEP_SUMMARY"
+          fi

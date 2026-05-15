@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { detectProvider, normalizeProviderModel } from '../../src/agent/providers';
+import { detectProvider, normalizeProviderModel } from '../../src/providers';
 
 test('normalizeProviderModel preserves native Gemini names and strips provider namespaces', () => {
   assert.equal(normalizeProviderModel('gemini-2.5-flash'), 'gemini-2.5-flash');
