@@ -87,6 +87,22 @@ Observed artifact result:
 - Provider smoke writes a report and remains skipped unless explicitly enabled.
 - Live provider smoke produced a validated `done` output from the configured provider after network access was allowed.
 
+## Repository Integration Evidence
+
+Local integration branch:
+
+- Branch: `browsegent-v2-release-hardening`
+- Commit: `f1fdbf8 feat: harden BrowseGent v2 release path`
+- Remote: `origin`
+- Pushed branch: `origin/browsegent-v2-release-hardening`
+- Pull request URL offered by GitHub: `https://github.com/Utkarsh-X/browsegent/pull/new/browsegent-v2-release-hardening`
+
+Integration notes:
+
+- Repo-local skill files under `skills/browsegent-dev` and `skills/codex.md` are intentionally tracked even though `skills/` is ignored, because the v2 release gate scans them.
+- `logs/` remains ignored and is not part of the integration commit.
+- `gh` is not installed in this shell, so PR creation and remote GitHub Actions status cannot be proven through the local CLI.
+
 ## Requirement Verdicts
 
 | Requirement | Verdict | Evidence |
@@ -104,19 +120,19 @@ Observed artifact result:
 ## Remaining Evidence Gaps
 
 - The GitHub Actions workflow exists locally but has not been observed running on GitHub Actions in this workspace state.
-- The current worktree is not staged or committed. `origin` is configured as `https://github.com/Utkarsh-X/browsegent.git`, the current branch is `main`, and `gh` is not installed in this shell, so remote PR creation cannot be proven from local evidence alone.
+- The release-hardening integration branch has been pushed, but no pull request has been created from this shell because `gh` is not installed and no GitHub connector is available in the current tool context.
 - Full production readiness should still be audited against any future requirements beyond the Phase 0-20 plans before marking the persistent thread goal complete.
 
 ## Current Worktree State
 
-Expected dirty state after this milestone:
+Expected local state after integration:
 
-- Modified tracked files: `package.json`, `src/BrowseGent.ts`, `src/config/runtime.ts`
-- New tracked-candidate paths: `.github/workflows/v2-release-gate.yml`, `docs/`, `scripts/check_v2_boundaries.ts`, `scripts/check_v2_no_cognition_leakage.ts`, `scripts/check_v2_release_gate.ts`, `src/v2/`, `tests/eval/v2/`, `tests/fixtures/`, `tests/integration/`, `tests/unit/v2/`
-- Ignored runtime/support paths: `logs/`, `skills/`
+- Current branch: `browsegent-v2-release-hardening`
+- Working tree: clean except ignored `logs/`
+- Tracked integration includes `.github/workflows/v2-release-gate.yml`, governance docs, refined architecture docs, implementation plans, v2 source, v2 tests/evals/fixtures, release-gate scripts, and repo-local skills.
 
 ## Audit Conclusion
 
-The Phase 16-20 release-hardening milestone is complete under offline local verification.
+The Phase 16-20 release-hardening milestone is complete under offline local verification, and the integration branch has been pushed to the configured GitHub remote.
 
-The broader BrowseGent v2 production objective remains active because remote CI execution and version-control integration are not yet proven from current evidence.
+The broader BrowseGent v2 production objective remains active because pull request creation and remote CI execution are not yet proven from current evidence.
