@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Static Controls Fixture</title>
+    <style>
+      #hidden-button {
+        display: none;
+      }
+      #offscreen-link {
+        position: absolute;
+        top: 2200px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Static controls</h1>
+      <button id="submit-button">Submit form</button>
+      <input id="search-input" name="q" placeholder="Search docs" />
+      <a id="docs-link" href="/docs">Read docs</a>
+      <select id="category-select" name="category">
+        <option>Guides</option>
+      </select>
+      <textarea id="notes-area" aria-label="Notes"></textarea>
+      <div id="editable-notes" contenteditable="true">Editable notes</div>
+      <button id="disabled-button" disabled>Disabled action</button>
+      <button id="hidden-button">Hidden action</button>
+      <a id="offscreen-link" href="/archive">Archive link</a>
+    </main>
+  </body>
+</html>

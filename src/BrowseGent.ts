@@ -13,6 +13,12 @@ import { PlaywrightBrowserAdapter } from './adapters/playwrightAdapter';
 import { Executor } from './executor/executor';
 import { createDefaultRegistry } from './executor/registry';
 import { getRuntimeConfig, resolveLlmSelection } from './config/runtime';
+import { V1CompatibilityAdapter } from './v2/adapter/V1CompatibilityAdapter';
+import { BrowseGentV2Harness } from './v2/harness/BrowseGentV2Harness';
+import { ProjectionService } from './v2/brain1/ProjectionService';
+import { ContinuityGraph } from './v2/graph/ContinuityGraph';
+import { PlannerInputComposer } from './v2/planner/PlannerInputComposer';
+import * as v2AgentLoopFactory from './v2/agent/createV2AgentLoop';
 
 export interface BrowseGentOptions {
   model?: string;           // default: read from centralized runtime config
@@ -99,6 +105,21 @@ export class BrowseGent {
   }
 
   async run(url: string, goal: string): Promise<RunResult> {
+    const runtime = getRuntimeConfig();
+    const adapter = V1CompatibilityAdapter.create<RunResult, ExtractResult>({
+      runtimeMode: runtime.v2.runtimeMode,
+      runV1: async input => this._runV1(input.url, input.goal),
+      extractV1: async input => this._extractV1(input.url, input.instruction, input.schemaDescription, input.parseResult),
+      runV2Diagnostic: async input => this._runV2Diagnostic(input.url, input.goal),
+      extractV2Diagnostic: async input => this._extractV2Diagnostic(input.url, input.instruction, input.schemaDescription),
+      runV2Agent: async input => this._runV2Agent(input.url, input.goal),
+      extractV2Agent: async input => this._extractV2Agent(input.url, input.instruction, input.schemaDescription, input.parseResult),
+    });
+
+    return adapter.run({ url, goal });
+  }
+
+  private async _runV1(url: string, goal: string): Promise<RunResult> {
     this._assertInit();
     const t0 = Date.now();
     const executionId = this._createExecutionId();
@@ -188,6 +209,36 @@ export class BrowseGent {
     schemaDescription: string,
     parseResult?: (raw: unknown) => T
   ): Promise<ExtractResult<T>> {
+    const runtime = getRuntimeConfig();
+    const adapter = V1CompatibilityAdapter.create<RunResult, ExtractResult<T>>({
+      runtimeMode: runtime.v2.runtimeMode,
+      runV1: async input => this._runV1(input.url, input.goal),
+      extractV1: async input => this._extractV1<T>(
+        input.url,
+        input.instruction,
+        input.schemaDescription,
+        input.parseResult as ((raw: unknown) => T) | undefined,
+      ),
+      runV2Diagnostic: async input => this._runV2Diagnostic(input.url, input.goal),
+      extractV2Diagnostic: async input => this._extractV2Diagnostic<T>(input.url, input.instruction, input.schemaDescription),
+      runV2Agent: async input => this._runV2Agent(input.url, input.goal),
+      extractV2Agent: async input => this._extractV2Agent<T>(
+        input.url,
+        input.instruction,
+        input.schemaDescription,
+        input.parseResult as ((raw: unknown) => T) | undefined,
+      ),
+    });
+
+    return adapter.extract<T>({ url, instruction, schemaDescription, parseResult });
+  }
+
+  private async _extractV1<T = unknown>(
+    url: string,
+    instruction: string,
+    schemaDescription: string,
+    parseResult?: (raw: unknown) => T
+  ): Promise<ExtractResult<T>> {
     this._assertInit();
     const t0 = Date.now();
     this.brain1Service = null;
@@ -250,6 +301,172 @@ export class BrowseGent {
         progress,
       },
     };
+  }
+
+  private async _runV2Diagnostic(url: string, goal: string): Promise<RunResult> {
+    this._assertInit();
+    const t0 = Date.now();
+
+    try {
+      const diagnostic = await this._captureV2Diagnostic(url, goal);
+      const metrics = this._emptyMetrics(t0);
+      metrics.totalSteps = 1;
+      metrics.brain1WalkMs = diagnostic.captureMs;
+      metrics.snapshotNodes = diagnostic.refCount;
+      metrics.totalDOMNodes = diagnostic.refCount;
+      metrics.snapshotTokens = diagnostic.plannerInputChars;
+
+      return {
+        success: false,
+        value: '',
+        failureReason: 'v2_mvr_diagnostic_mode',
+        metrics,
+      };
+    } catch (error) {
+      return this._fail(`v2_mvr_diagnostic_error: ${error instanceof Error ? error.message : String(error)}`, t0);
+    }
+  }
+
+  private async _extractV2Diagnostic<T = unknown>(
+    url: string,
+    instruction: string,
+    _schemaDescription: string,
+  ): Promise<ExtractResult<T>> {
+    this._assertInit();
+    const t0 = Date.now();
+
+    try {
+      const diagnostic = await this._captureV2Diagnostic(url, instruction);
+      const metrics = this._emptyMetrics(t0);
+      metrics.totalSteps = 1;
+      metrics.brain1WalkMs = diagnostic.captureMs;
+      metrics.snapshotNodes = diagnostic.refCount;
+      metrics.totalDOMNodes = diagnostic.refCount;
+      metrics.snapshotTokens = diagnostic.plannerInputChars;
+
+      return {
+        success: false,
+        data: null,
+        failureReason: 'v2_mvr_diagnostic_mode',
+        metrics,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        data: null,
+        failureReason: `v2_mvr_diagnostic_error: ${error instanceof Error ? error.message : String(error)}`,
+        metrics: this._emptyMetrics(t0),
+      };
+    }
+  }
+
+  private async _runV2Agent(url: string, goal: string): Promise<RunResult> {
+    this._assertInit();
+    const t0 = Date.now();
+    const runtime = getRuntimeConfig();
+
+    try {
+      // v2 browser mode is controlled by BROWSEGENT_V2_HEADED, not BrowseGentOptions.headless.
+      const result = await v2AgentLoopFactory.v2AgentLoopFactory.create({
+        headed: runtime.v2.headed,
+        traceDir: runtime.v2.traceDir,
+      }).run({
+        url,
+        goal,
+        maxSteps: this.opts.maxSteps,
+        model: this.opts.model,
+      });
+      const metrics = this._emptyMetrics(t0);
+
+      metrics.llmCallCount = result.metrics.plannerCalls;
+      metrics.llmCallReasons = Array.from({ length: result.metrics.plannerCalls }, (_, index) => `v2_agent_step_${index + 1}`);
+      metrics.inputTokens = result.metrics.inputTokens;
+      metrics.outputTokens = result.metrics.outputTokens;
+      metrics.llmDurationMs = result.metrics.plannerDurationMs;
+      metrics.totalSteps = result.steps;
+
+      return {
+        success: result.success,
+        value: result.value,
+        failureReason: result.failureReason,
+        metrics,
+      };
+    } catch (error) {
+      return this._fail(`v2_agent_error: ${error instanceof Error ? error.message : String(error)}`, t0);
+    }
+  }
+
+  private async _extractV2Agent<T = unknown>(
+    url: string,
+    instruction: string,
+    _schemaDescription: string,
+    parseResult?: (raw: unknown) => T,
+  ): Promise<ExtractResult<T>> {
+    const runResult = await this._runV2Agent(url, instruction);
+
+    if (!runResult.success) {
+      return {
+        success: false,
+        data: null,
+        rawJson: runResult.value,
+        failureReason: runResult.failureReason,
+        metrics: runResult.metrics,
+      };
+    }
+
+    try {
+      const parsed = JSON.parse(runResult.value);
+      return {
+        success: true,
+        data: parseResult ? parseResult(parsed) : parsed as T,
+        rawJson: runResult.value,
+        metrics: runResult.metrics,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        data: null,
+        rawJson: runResult.value,
+        failureReason: `JSON parse failed: ${String(error)}`,
+        metrics: runResult.metrics,
+      };
+    }
+  }
+
+  private async _captureV2Diagnostic(url: string, goal: string): Promise<{
+    refCount: number;
+    captureMs: number;
+    plannerInputChars: number;
+  }> {
+    const runtime = getRuntimeConfig();
+    const harness = new BrowseGentV2Harness({
+      headed: runtime.v2.headed,
+      traceDir: runtime.v2.traceDir,
+      runId: `v2run_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    });
+
+    try {
+      const observation = await harness.open(url);
+      const graph = new ContinuityGraph();
+      const graphSnapshot = graph.applyObservation(observation);
+      const projection = new ProjectionService().project(observation, graphSnapshot);
+      const plannerInput = new PlannerInputComposer().compose({
+        episodeId: `episode_${observation.observationId}`,
+        goal,
+        projection,
+        graphSnapshot,
+      });
+
+      await harness.flushTrace();
+
+      return {
+        refCount: observation.refs.length,
+        captureMs: observation.stats.durationMs,
+        plannerInputChars: JSON.stringify(plannerInput).length,
+      };
+    } finally {
+      await harness.close();
+    }
   }
 
   async close(): Promise<void> {

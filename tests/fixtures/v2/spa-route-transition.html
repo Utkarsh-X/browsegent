@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>SPA Route Transition Fixture</title>
+    <style>
+      body { font-family: sans-serif; margin: 32px; }
+      nav { display: flex; gap: 12px; margin-bottom: 24px; }
+      button, a { font-size: 16px; padding: 8px 12px; }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="#home" id="home-link">Home</a>
+      <a href="#settings" id="settings-link">Settings</a>
+    </nav>
+    <main id="view" aria-live="polite">
+      <button id="primary">Open Home Panel</button>
+    </main>
+    <script>
+      function render() {
+        const route = location.hash || '#home';
+        document.querySelector('#view').innerHTML = route === '#settings'
+          ? '<button id="save-settings">Save Settings</button>'
+          : '<button id="primary">Open Home Panel</button>';
+      }
+
+      addEventListener('hashchange', render);
+      render();
+    </script>
+  </body>
+</html>

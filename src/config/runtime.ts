@@ -1,4 +1,6 @@
 import { config as loadDotEnv } from 'dotenv';
+import { loadV2RuntimeConfig } from '../v2/runtime/config';
+import type { V2RuntimeMode } from '../v2/runtime/types';
 
 loadDotEnv();
 
@@ -44,6 +46,11 @@ export interface RuntimeConfig {
   brain1: {
     interactionPipeline: boolean;
   };
+  v2: {
+    runtimeMode: V2RuntimeMode;
+    traceDir: string;
+    headed: boolean;
+  };
   eval: {
     headless: boolean;
     warmup: boolean;
@@ -55,6 +62,7 @@ export interface RuntimeConfig {
 
 export function getRuntimeConfig(): RuntimeConfig {
   const provider = getConfiguredProvider();
+  const v2Config = loadV2RuntimeConfig(process.env);
   const geminiModel = requireEnvString('BROWSEGENT_GEMINI_MODEL');
   const cerebrasModel = requireEnvString('BROWSEGENT_CEREBRAS_MODEL');
   const ollamaModel = requireEnvString('BROWSEGENT_OLLAMA_MODEL');
@@ -97,6 +105,11 @@ export function getRuntimeConfig(): RuntimeConfig {
     },
     brain1: {
       interactionPipeline: getEnvBoolean('BROWSEGENT_BRAIN1_INTERACTION_PIPELINE', true),
+    },
+    v2: {
+      runtimeMode: v2Config.v2RuntimeMode,
+      traceDir: v2Config.traceDir,
+      headed: v2Config.headed,
     },
     eval: {
       headless: getEnvBoolean('EVAL_HEADLESS', true),

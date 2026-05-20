@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Rerender Replacement Fixture</title>
+  </head>
+  <body>
+    <main id="app">
+      <button id="save-button">Save</button>
+      <button id="cancel-button">Cancel</button>
+    </main>
+    <script>
+      window.replaceControls = () => {
+        document.getElementById('app').innerHTML = `
+          <button class="save-action">Save</button>
+          <button class="cancel-action">Cancel</button>
+        `;
+      };
+    </script>
+  </body>
+</html>

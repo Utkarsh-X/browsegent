@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Layout Shift Fixture</title>
+    <style>
+      body { font-family: sans-serif; margin: 32px; }
+      #spacer { height: 12px; transition: height 120ms linear; }
+      #spacer.expanded { height: 180px; }
+    </style>
+  </head>
+  <body>
+    <button id="shift">Shift layout</button>
+    <div id="spacer"></div>
+    <button id="stable">Stable target</button>
+    <script>
+      document.querySelector('#shift').addEventListener('click', () => {
+        document.querySelector('#spacer').classList.toggle('expanded');
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Random Rerender Fixture</title>
+    <style>
+      body { font-family: sans-serif; margin: 32px; }
+      #panel { padding: 16px; border: 1px solid #ccc; width: 360px; }
+    </style>
+  </head>
+  <body>
+    <button id="rerender">Rerender panel</button>
+    <section id="panel"></section>
+    <script>
+      let version = 1;
+      function render() {
+        document.querySelector('#panel').innerHTML =
+          '<p>Panel version ' + version + '</p><button data-version="' + version + '">Open panel</button>';
+      }
+      document.querySelector('#rerender').addEventListener('click', () => {
+        version += 1;
+        render();
+      });
+      render();
+    </script>
+  </body>
+</html>

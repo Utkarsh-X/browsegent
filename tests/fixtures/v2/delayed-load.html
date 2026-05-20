@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Delayed Load Fixture</title>
+    <style>
+      body { font-family: sans-serif; margin: 32px; }
+      #content { min-height: 80px; padding: 16px; border: 1px solid #ddd; }
+    </style>
+  </head>
+  <body>
+    <button id="load">Load delayed content</button>
+    <section id="content">Waiting for action.</section>
+    <script>
+      document.querySelector('#load').addEventListener('click', () => {
+        setTimeout(() => {
+          document.querySelector('#content').innerHTML = '<button id="late-action">Late action</button>';
+        }, 250);
+      });
+    </script>
+  </body>
+</html>

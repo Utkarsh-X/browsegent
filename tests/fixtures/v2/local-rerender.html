@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Local Rerender Fixture</title>
+    <style>
+      body { font-family: sans-serif; margin: 32px; }
+      section { border: 1px solid #ccc; padding: 16px; width: 320px; }
+      button { font-size: 16px; padding: 8px 12px; }
+    </style>
+  </head>
+  <body>
+    <section id="panel">
+      <button id="stable">Stable Control</button>
+      <button id="rerender">Rerender Local Panel</button>
+    </section>
+    <script>
+      document.querySelector('#rerender').addEventListener('click', () => {
+        document.querySelector('#panel').insertAdjacentHTML(
+          'beforeend',
+          '<button id="local-extra">Local Extra</button>',
+        );
+      });
+    </script>
+  </body>
+</html>

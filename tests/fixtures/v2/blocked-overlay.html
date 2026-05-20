@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Blocked Overlay Fixture</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 32px;
+    }
+
+    #blocked-target {
+      position: absolute;
+      left: 80px;
+      top: 80px;
+      width: 180px;
+      height: 48px;
+    }
+
+    #overlay {
+      position: absolute;
+      left: 60px;
+      top: 60px;
+      width: 240px;
+      height: 100px;
+      background: rgba(0, 0, 0, 0.2);
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <button id="blocked-target">Blocked target</button>
+  <div id="overlay" aria-label="Blocking overlay"></div>
+</body>
+</html>

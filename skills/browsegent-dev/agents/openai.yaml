@@ -1,0 +1,4 @@
+interface:
+  display_name: "BrowseGent Dev"
+  short_description: "BrowseGent v2 governance and runtime implementation guide"
+  default_prompt: "Use $browsegent-dev to implement the next BrowseGent v2 phase under governance, with tests and boundary review."

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Modal Transition Fixture</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 32px;
+    }
+
+    #modal {
+      display: none;
+      border: 1px solid #444;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    #modal[data-open="true"] {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Runtime fixture</h1>
+  <button id="open-modal">Open modal</button>
+  <label>
+    Name
+    <input id="name-input" type="text">
+  </label>
+
+  <section id="modal" aria-label="Dialog">
+  </section>
+
+  <script>
+    document.getElementById('open-modal').addEventListener('click', () => {
+      const modal = document.getElementById('modal');
+      modal.dataset.open = 'true';
+      modal.innerHTML = '<p>Modal content loaded</p><button id="close-modal">Close modal</button>';
+    });
+  </script>
+</body>
+</html>

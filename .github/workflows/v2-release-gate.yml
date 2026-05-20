@@ -1,0 +1,31 @@
+name: BrowseGent v2 Release Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  v2-release-gate:
+    runs-on: windows-latest
+    env:
+      BROWSEGENT_V2_HEADED: 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+
+      - name: Run v2 release gate
+        run: npm run check:v2:release

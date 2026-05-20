@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Virtualized List Fixture</title>
+    <style>
+      body { font-family: sans-serif; margin: 32px; }
+      .row { display: flex; gap: 12px; padding: 8px; border-bottom: 1px solid #ddd; }
+    </style>
+  </head>
+  <body>
+    <button id="shift-window">Shift window</button>
+    <section id="list" aria-label="Virtualized rows"></section>
+    <script>
+      let offset = 0;
+      function render() {
+        document.querySelector('#list').innerHTML = Array.from({ length: 6 }, (_, index) => {
+          const item = offset + index + 1;
+          return '<div class="row"><span>Item ' + item + '</span><button>Open</button></div>';
+        }).join('');
+      }
+      document.querySelector('#shift-window').addEventListener('click', () => {
+        offset += 3;
+        render();
+      });
+      render();
+    </script>
+  </body>
+</html>

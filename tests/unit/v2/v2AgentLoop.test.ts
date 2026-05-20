@@ -1,0 +1,307 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import { buildBrowserObservation } from '../../../src/v2/substrate/ObservationService';
+import type { BrowserObservation, TransitionEvidence, V2Ref, V2ToolResult } from '../../../src/v2';
+import type { PlannerInput, PlannerOutput } from '../../../src/v2/planner/types';
+import type { TraceArtifact, TraceManifest } from '../../../src/v2/trace/types';
+
+async function loadAgentLoopModule() {
+  try {
+    return await import('../../../src/v2/agent/V2AgentLoop');
+  } catch (error) {
+    assert.fail(`expected v2 agent loop module to exist: ${(error as Error).message}`);
+  }
+}
+
+function makeRef(overrides: Partial<V2Ref> = {}): V2Ref {
+  return {
+    refId: 'ref_submit',
+    generationId: 1,
+    targetId: 'target_submit',
+    selectorCandidates: ['#submit'],
+    role: 'button',
+    name: 'Submit',
+    text: 'Submit',
+    visibility: 'visible',
+    actionability: 'ready',
+    continuityConfidence: 1,
+    state: 'live',
+    ...overrides,
+  };
+}
+
+function makeObservation(id: string, overrides: Partial<BrowserObservation> = {}): BrowserObservation {
+  return buildBrowserObservation({
+    observationId: id,
+    sessionId: 'session_agent',
+    generationId: overrides.generationId ?? 1,
+    url: 'https://example.test/form',
+    title: 'Agent Fixture',
+    timestamp: Date.now(),
+    durationMs: 1,
+    refs: [makeRef()],
+    warnings: [],
+    ...overrides,
+  });
+}
+
+function makeEvidence(before = 'obs_before', after = 'obs_after'): TransitionEvidence {
+  return {
+    beforeObservationId: before,
+    afterObservationId: after,
+    transitionClass: 'structural_local',
+    strength: 'moderate',
+    generationChanged: false,
+    urlChanged: false,
+    refChanges: {
+      appeared: [],
+      disappeared: [],
+      weakened: [],
+      preserved: ['ref_submit'],
+    },
+    notes: [],
+  };
+}
+
+class FakeHarness {
+  openedUrl?: string;
+  closed = false;
+  observations: BrowserObservation[];
+  plannerInputs: Array<{ episodeId: string; input: unknown }> = [];
+  plannerOutputs: Array<{ episodeId: string; output: unknown }> = [];
+
+  constructor(observations = [makeObservation('obs_initial'), makeObservation('obs_after_action')]) {
+    this.observations = [...observations];
+  }
+
+  async open(url: string): Promise<BrowserObservation> {
+    this.openedUrl = url;
+    return this.observations[0];
+  }
+
+  async observe(): Promise<BrowserObservation> {
+    return this.observations[Math.min(1, this.observations.length - 1)];
+  }
+
+  async close(): Promise<void> {
+    this.closed = true;
+  }
+
+  async flushTrace(): Promise<TraceManifest> {
+    return {
+      runId: 'run_agent_loop',
+      runtimeMode: 'mvr',
+      startTime: 100,
+      steps: [],
+      artifacts: {
+        trace: { kind: 'trace', id: 'trace', path: 'logs/v2-runs/run_agent_loop/trace.json' },
+        observations: [],
+        transitions: [],
+        graph: [],
+        planner: [],
+        screenshots: [],
+      },
+    };
+  }
+
+  recordPlannerInput(episodeId: string, input: unknown): TraceArtifact {
+    this.plannerInputs.push({ episodeId, input });
+    return { kind: 'planner_input', id: 'planner-input', path: 'planner-input.json' };
+  }
+
+  recordPlannerOutput(episodeId: string, output: unknown): TraceArtifact {
+    this.plannerOutputs.push({ episodeId, output });
+    return { kind: 'planner_output', id: 'planner-output', path: 'planner-output.json' };
+  }
+
+  async click(refId: string): Promise<V2ToolResult> {
+    return { success: true, kind: 'click', targetRef: refId, traceStepId: 'fake_click' };
+  }
+
+  async type(refId: string, text: string): Promise<V2ToolResult<{ inputValue: string }>> {
+    return { success: true, kind: 'type', targetRef: refId, value: { inputValue: text }, traceStepId: 'fake_type' };
+  }
+
+  async get(refId: string): Promise<V2ToolResult<{ text: string; value?: string }>> {
+    return { success: true, kind: 'get', targetRef: refId, value: { text: 'Submit' }, traceStepId: 'fake_get' };
+  }
+
+  async inspectRegion(refId: string): Promise<V2ToolResult<{ refId: string; text: string; nearbyRefs: string[] }>> {
+    return { success: true, kind: 'inspect_region', targetRef: refId, value: { refId, text: 'Submit', nearbyRefs: [] }, traceStepId: 'fake_inspect' };
+  }
+
+  async searchPage(): Promise<V2ToolResult<{ matches: number; preview: string[] }>> {
+    return { success: true, kind: 'search_page', value: { matches: 1, preview: ['Submit'] }, traceStepId: 'fake_search' };
+  }
+
+  async scroll(direction: 'down' | 'up' = 'down'): Promise<V2ToolResult<{ direction: 'down' | 'up' }>> {
+    return { success: true, kind: 'scroll', value: { direction }, traceStepId: 'fake_scroll' };
+  }
+
+  async waitForState(): Promise<V2ToolResult<{ matched: boolean }>> {
+    return { success: true, kind: 'wait', value: { matched: true }, traceStepId: 'fake_wait' };
+  }
+}
+
+class FakePlanner {
+  readonly inputs: PlannerInput[] = [];
+  private readonly outputs: PlannerOutput[];
+
+  constructor(outputs: PlannerOutput[]) {
+    this.outputs = [...outputs];
+  }
+
+  async call(input: { plannerInput: PlannerInput; model?: string }) {
+    this.inputs.push(input.plannerInput);
+    const output = this.outputs.shift() ?? { escalate: 'dead_end', reason: 'no planner output' };
+    return {
+      output,
+      rawText: JSON.stringify(output),
+      inputTokens: 10,
+      outputTokens: 5,
+      durationMs: 7,
+    };
+  }
+}
+
+class FakeDispatcher {
+  readonly steps: PlannerOutput['plan'] = [];
+
+  async dispatch(step: NonNullable<PlannerOutput['plan']>[number]): Promise<V2ToolResult> {
+    this.steps?.push(step);
+    return {
+      success: true,
+      kind: step.tool,
+      targetRef: step.ref,
+      traceStepId: `tool_${this.steps?.length ?? 0}`,
+      evidence: makeEvidence(),
+    };
+  }
+}
+
+test('V2AgentLoop returns done output without executing tools', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([{ done: true, val: 'Visible answer' }]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read answer',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Visible answer');
+  assert.equal(result.metrics.plannerCalls, 1);
+  assert.equal(result.metrics.toolExecutions, 0);
+  assert.equal(harness.openedUrl, 'https://example.test/form');
+  assert.equal(harness.closed, true);
+});
+
+test('V2AgentLoop records planner artifacts for injected planner clients', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([{ done: true, val: 'Visible answer' }]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => new FakeDispatcher(),
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read answer',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(harness.plannerInputs.length, 1);
+  assert.equal(harness.plannerOutputs.length, 1);
+  assert.equal(harness.plannerOutputs[0].episodeId, harness.plannerInputs[0].episodeId);
+  assert.deepEqual((harness.plannerOutputs[0].output as { validation?: unknown }).validation, {
+    ok: true,
+    errors: [],
+  });
+});
+
+test('V2AgentLoop closes harness when opening the target fails', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  harness.open = async () => {
+    throw new Error('open failed');
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: new FakePlanner([]),
+    dispatcherFactory: () => new FakeDispatcher(),
+  });
+
+  await assert.rejects(
+    () => loop.run({
+      url: 'https://example.test/broken',
+      goal: 'Open broken target',
+      maxSteps: 1,
+    }),
+    /open failed/,
+  );
+  assert.equal(harness.closed, true);
+});
+
+test('V2AgentLoop executes planner plan and feeds runtime evidence into next planner input', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'Clicked' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Clicked');
+  assert.equal(result.metrics.plannerCalls, 2);
+  assert.equal(result.metrics.toolExecutions, 1);
+  assert.equal(dispatcher.steps?.[0].ref, 'ref_submit');
+  assert.equal(planner.inputs[1].lastResult?.kind, 'click');
+  assert.equal(planner.inputs[1].transition?.transitionClass, 'structural_local');
+});
+
+test('V2AgentLoop stops deterministically at maxSteps without semantic judgment', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'wait', timeout: 1 }], confidence: 'low' },
+    { plan: [{ tool: 'wait', timeout: 1 }], confidence: 'low' },
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => new FakeDispatcher(),
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Wait for change',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'v2_max_steps_exhausted');
+  assert.equal(result.metrics.plannerCalls, 2);
+  assert.equal(result.metrics.toolExecutions, 2);
+});

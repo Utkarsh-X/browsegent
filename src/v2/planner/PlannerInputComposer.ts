@@ -1,0 +1,213 @@
+import { serializeProjection } from '../brain1/serializeProjection';
+import type { TransitionEvidence, V2ToolResult } from '../runtime/types';
+import type { ContinuityGraphSnapshot } from '../graph/types';
+import { LineageCompressor } from './LineageCompressor';
+import type {
+  PlannerContinuitySummary,
+  PlannerDeadStateSummary,
+  PlannerFailureSummary,
+  PlannerInput,
+  PlannerInputComposerInput,
+  PlannerLastResultSummary,
+  PlannerTransitionSummary,
+  PlannerUncertainty,
+  PlannerUncertaintyLevel,
+} from './types';
+
+export class PlannerInputComposer {
+  private readonly lineageCompressor = new LineageCompressor();
+
+  compose(input: PlannerInputComposerInput): PlannerInput {
+    const current = serializeProjection(input.projection);
+
+    return {
+      version: 'v2.planner_input.v1',
+      episodeId: input.episodeId,
+      goal: input.goal,
+      current,
+      continuity: input.graphSnapshot ? summarizeContinuity(input.graphSnapshot) : undefined,
+      transition: input.transitionEvidence ? summarizeTransition(input.transitionEvidence) : undefined,
+      lastResult: input.lastResult ? summarizeLastResult(input.lastResult) : undefined,
+      failures: input.failureEvidence?.map(summarizeFailure),
+      deadState: input.deadStateEvidence ? summarizeDeadState(input.deadStateEvidence) : undefined,
+      uncertainty: buildUncertainty(input),
+      lineage: input.trace
+        ? this.lineageCompressor.compress(input.trace, { maxSteps: input.maxLineageSteps })
+        : undefined,
+    };
+  }
+}
+
+function summarizeContinuity(snapshot: ContinuityGraphSnapshot): PlannerContinuitySummary {
+  const latestTransition = snapshot.transitions[snapshot.transitions.length - 1];
+
+  return {
+    snapshotId: snapshot.snapshotId,
+    observationId: snapshot.observationId,
+    generationId: snapshot.generationId,
+    url: snapshot.url,
+    refCount: snapshot.stats.refCount,
+    presentRefCount: snapshot.stats.presentRefCount,
+    regionCount: snapshot.stats.regionCount,
+    transitionCount: snapshot.stats.transitionCount,
+    latestTransition: latestTransition
+      ? {
+          transitionId: latestTransition.transitionId,
+          transitionClass: latestTransition.transitionClass,
+          strength: latestTransition.strength,
+        }
+      : undefined,
+  };
+}
+
+function summarizeTransition(evidence: TransitionEvidence): PlannerTransitionSummary {
+  return {
+    beforeObservationId: evidence.beforeObservationId,
+    afterObservationId: evidence.afterObservationId,
+    transitionClass: evidence.transitionClass,
+    strength: evidence.strength,
+    generationChanged: evidence.generationChanged,
+    urlChanged: evidence.urlChanged,
+    refChangeCounts: {
+      appeared: evidence.refChanges.appeared.length,
+      disappeared: evidence.refChanges.disappeared.length,
+      weakened: evidence.refChanges.weakened.length,
+      preserved: evidence.refChanges.preserved.length,
+    },
+    notes: evidence.notes.slice(0, 8),
+  };
+}
+
+function summarizeLastResult(result: V2ToolResult): PlannerLastResultSummary {
+  return {
+    success: result.success,
+    kind: result.kind,
+    traceStepId: result.traceStepId,
+    targetRef: result.targetRef,
+    valuePreview: previewValue(result.value),
+    error: result.error
+      ? {
+          code: result.error.code,
+          retryable: result.error.retryable,
+        }
+      : undefined,
+    evidence: result.evidence
+      ? {
+          transitionClass: result.evidence.transitionClass,
+          strength: result.evidence.strength,
+        }
+      : undefined,
+  };
+}
+
+function summarizeFailure(failure: NonNullable<PlannerInputComposerInput['failureEvidence']>[number]): PlannerFailureSummary {
+  return {
+    failureId: failure.failureId,
+    kind: failure.kind,
+    category: failure.category,
+    severity: failure.severity,
+    persistence: failure.persistence,
+    retryable: failure.retryable,
+    observationId: failure.observationId,
+    targetRef: failure.targetRef,
+    signals: failure.signals.slice(0, 8),
+  };
+}
+
+function summarizeDeadState(deadState: NonNullable<PlannerInputComposerInput['deadStateEvidence']>): PlannerDeadStateSummary {
+  return {
+    deadState: true,
+    evidenceId: deadState.evidenceId,
+    observationId: deadState.observationId,
+    severity: deadState.severity,
+    reasons: deadState.reasons.slice(0, 8),
+    failureKinds: deadState.failureKinds.slice(0, 8),
+    signals: deadState.signals.slice(0, 8),
+  };
+}
+
+function buildUncertainty(input: PlannerInputComposerInput): PlannerUncertainty {
+  if (input.runtimeUncertainty) {
+    return {
+      level: input.runtimeUncertainty.level,
+      signals: input.runtimeUncertainty.signals.slice(0, 12),
+    };
+  }
+
+  const signals: string[] = [];
+
+  for (const warning of input.projection.warnings) {
+    signals.push(`runtime_warning:${warning.code}`);
+  }
+
+  const weakenedCount = input.transitionEvidence?.refChanges.weakened.length ?? 0;
+  if (weakenedCount > 0) {
+    signals.push(`weakened_refs:${weakenedCount}`);
+  }
+
+  if (input.transitionEvidence?.strength === 'none') {
+    signals.push('transition_strength:none');
+  }
+
+  if (input.transitionEvidence?.transitionClass === 'hard_reset') {
+    signals.push('transition_class:hard_reset');
+  }
+
+  if (input.lastResult?.error) {
+    signals.push(`last_error:${input.lastResult.error.code}`);
+  }
+
+  if (input.projection.stats.interactionCount === 0) {
+    signals.push('empty_interactions');
+  }
+
+  for (const failure of input.failureEvidence ?? []) {
+    signals.push(`failure:${failure.kind}`);
+  }
+
+  if (input.deadStateEvidence) {
+    signals.push('dead_state_evidence');
+  }
+
+  return {
+    level: chooseUncertaintyLevel(signals),
+    signals,
+  };
+}
+
+function chooseUncertaintyLevel(signals: string[]): PlannerUncertaintyLevel {
+  if (
+    signals.includes('transition_class:hard_reset')
+    || signals.includes('empty_interactions')
+    || signals.includes('dead_state_evidence')
+    || signals.includes('failure:environment_block')
+  ) {
+    return 'high';
+  }
+
+  if (signals.some(signal => signal.startsWith('last_error:stale_ref') || signal.startsWith('last_error:target_blocked'))) {
+    return 'high';
+  }
+
+  if (signals.length > 0) {
+    return 'medium';
+  }
+
+  return 'none';
+}
+
+function previewValue(value: unknown): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value === 'string') {
+    return value.replace(/\s+/g, ' ').trim().slice(0, 240);
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  return undefined;
+}
