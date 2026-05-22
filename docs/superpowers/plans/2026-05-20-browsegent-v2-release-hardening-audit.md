@@ -87,6 +87,36 @@ Observed artifact result:
 - Provider smoke writes a report and remains skipped unless explicitly enabled.
 - Live provider smoke produced a validated `done` output from the configured provider after network access was allowed.
 
+## 2026-05-23 MVR Navigation Addendum
+
+Fresh verification after adding the explicit v2 `navigate` runtime tool and local agent-smoke navigation scenario:
+
+```powershell
+node .\node_modules\tsx\dist\cli.cjs --test tests\unit\v2\agentSmokeRunner.test.ts
+node .\node_modules\tsx\dist\cli.cjs tests\eval\v2\run_agent_smoke.ts
+cmd /c npm run check:v2:release
+```
+
+Observed result:
+
+- Agent smoke runner unit tests passed: 3 pass, 0 fail.
+- Standalone agent smoke eval passed: 4 scenarios, 4 passed, traceCompleteCount 4, traceIncompleteCount 0.
+- v2 release gate passed.
+- Unit tests passed inside release gate: 194 pass, 0 fail.
+- v2 integration tests passed inside release gate: 19 pass, 0 fail.
+- Continuity stress eval passed inside release gate: 4 scenarios, 4 passed, 0 failed.
+- Agent smoke eval passed inside release gate: 4 scenarios, 4 passed, traceCompleteCount 4, traceIncompleteCount 0.
+- Provider smoke eval completed in default skipped mode with `failureReason="provider_smoke_not_enabled"`.
+- `git diff --check`, trailing whitespace scan, and unfinished marker scan passed.
+
+Navigation-specific evidence:
+
+- Planner schema accepts `navigate` only with a supported `http`, `https`, or `file` URL and rejects unsafe schemes.
+- Tool dispatch routes `navigate` to the v2 runtime and returns operational `missing_url` or `unsupported_url` failures for malformed steps.
+- `BrowseGentV2Harness.navigate()` records pre-navigation observation, bounded navigation, post-navigation observation, transition evidence, and trace lineage.
+- Unsafe navigation is rejected before browser mutation and records a failed trace step without an after-observation id.
+- The default local agent smoke catalog includes `fixture-navigate`, a scripted planner scenario that navigates from `static-controls.html` to `spa-route-transition.html`.
+
 ## Repository Integration Evidence
 
 Local integration branch:

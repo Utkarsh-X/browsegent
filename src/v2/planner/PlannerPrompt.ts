@@ -16,6 +16,7 @@ Valid tools:
 - click: requires ref
 - close: requires ref
 - type: requires ref and text
+- navigate: requires url
 - get: requires ref
 - inspect_region: requires ref
 - search_page: requires pattern

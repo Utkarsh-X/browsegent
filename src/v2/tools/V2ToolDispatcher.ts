@@ -1,4 +1,5 @@
 import type { PlannerOutputStep } from '../planner/types';
+import { isSupportedNavigationUrl } from '../runtime/navigationPolicy';
 import type { V2ToolError, V2ToolResult } from '../runtime/types';
 import type { V2ToolDispatchContext, V2ToolRuntime } from './types';
 
@@ -19,6 +20,14 @@ export class V2ToolDispatcher {
           return failure(step.tool, 'missing_text', 'Text is required for this v2 tool.', step.ref);
         }
         return this.runtime.type(step.ref, step.text);
+      case 'navigate':
+        if (!isNonEmptyString(step.url)) {
+          return failure(step.tool, 'missing_url', 'URL is required for this v2 tool.');
+        }
+        if (!isSupportedNavigationUrl(step.url)) {
+          return failure(step.tool, 'unsupported_url', 'Navigate URL uses an unsupported protocol.');
+        }
+        return this.runtime.navigate(step.url);
       case 'get':
         return this.dispatchRefTool(step, 'get', ref => this.runtime.get(ref));
       case 'inspect_region':

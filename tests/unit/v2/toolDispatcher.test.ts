@@ -63,6 +63,11 @@ class FakeToolRuntime {
     this.calls.push({ method: 'waitForState', args: [input] });
     return { success: true, kind: 'wait', value: { matched: true }, traceStepId: `trace_${this.calls.length}` };
   }
+
+  async navigate(url: string): Promise<V2ToolResult<{ url: string }>> {
+    this.calls.push({ method: 'navigate', args: [url] });
+    return { success: true, kind: 'navigate', value: { url }, traceStepId: `trace_${this.calls.length}` };
+  }
 }
 
 test('V2ToolDispatcher dispatches ref-first planner steps to runtime tools', async () => {
@@ -79,6 +84,7 @@ test('V2ToolDispatcher dispatches ref-first planner steps to runtime tools', asy
     { tool: 'search_page', pattern: 'Alpha' },
     { tool: 'scroll', direction: 'up' },
     { tool: 'wait', pattern: 'Ready', timeout: 250 },
+    { tool: 'navigate', url: 'https://example.test/next' },
   ];
 
   const results = [];
@@ -88,10 +94,11 @@ test('V2ToolDispatcher dispatches ref-first planner steps to runtime tools', asy
 
   assert.deepEqual(
     runtime.calls.map(call => call.method),
-    ['click', 'type', 'get', 'inspectRegion', 'searchPage', 'scroll', 'waitForState'],
+    ['click', 'type', 'get', 'inspectRegion', 'searchPage', 'scroll', 'waitForState', 'navigate'],
   );
   assert.deepEqual(runtime.calls[1].args, ['ref_input', 'Ada']);
   assert.deepEqual(runtime.calls[6].args, [{ pattern: 'Ready', timeout: 250 }]);
+  assert.deepEqual(runtime.calls[7].args, ['https://example.test/next']);
   assert.equal(results.every(result => result.success), true);
 });
 
@@ -111,9 +118,11 @@ test('V2ToolDispatcher returns operational failures for unsupported or malformed
   const runtime = new FakeToolRuntime();
   const dispatcher = new V2ToolDispatcher(runtime);
 
-  const unsupported = await dispatcher.dispatch({ tool: 'navigate' } as unknown as PlannerOutputStep, { goal: 'open page' });
+  const unsupported = await dispatcher.dispatch({ tool: 'unknown_tool' } as unknown as PlannerOutputStep, { goal: 'open page' });
   const missingRef = await dispatcher.dispatch({ tool: 'click' }, { goal: 'click button' });
   const missingText = await dispatcher.dispatch({ tool: 'type', ref: 'ref_input' }, { goal: 'fill input' });
+  const missingUrl = await dispatcher.dispatch({ tool: 'navigate' } as PlannerOutputStep, { goal: 'open page' });
+  const unsafeUrl = await dispatcher.dispatch({ tool: 'navigate', url: 'data:text/html,<script>alert(1)</script>' }, { goal: 'open page' });
 
   assert.equal(unsupported.success, false);
   assert.equal(unsupported.error?.code, 'unsupported_tool');
@@ -122,6 +131,10 @@ test('V2ToolDispatcher returns operational failures for unsupported or malformed
   assert.equal(missingRef.error?.code, 'missing_ref');
   assert.equal(missingText.success, false);
   assert.equal(missingText.error?.code, 'missing_text');
+  assert.equal(missingUrl.success, false);
+  assert.equal(missingUrl.error?.code, 'missing_url');
+  assert.equal(unsafeUrl.success, false);
+  assert.equal(unsafeUrl.error?.code, 'unsupported_url');
   assert.equal(runtime.calls.length, 0);
 });
 

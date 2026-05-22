@@ -1,4 +1,5 @@
 import { V2OperationalError } from '../runtime/errors';
+import { isSupportedNavigationUrl } from '../runtime/navigationPolicy';
 import { RefService } from '../runtime/RefService';
 import { StabilizationService } from '../runtime/StabilizationService';
 import { TransitionService } from '../runtime/TransitionService';
@@ -53,6 +54,49 @@ export class BrowseGentV2Harness {
 
   async type(refId: string, text: string): Promise<V2ToolResult<{ inputValue: string }>> {
     return this.executeMutation('type', refId, async (ref) => this.inputService.type(ref, text, this.session.currentPage()));
+  }
+
+  async navigate(url: string): Promise<V2ToolResult<{ url: string }>> {
+    const before = this.assertOpened();
+    const stepId = this.traceStore.recordActionStart({
+      kind: 'navigate',
+      beforeObservationId: before.observationId,
+      input: { url: compactText(url, 2_000) },
+    });
+
+    if (!isSupportedNavigationUrl(url)) {
+      const result = this.failureResult<{ url: string }>('navigate', undefined, stepId, {
+        code: 'unsupported_url',
+        message: 'Navigate URL uses an unsupported protocol.',
+        retryable: false,
+      });
+      this.traceStore.recordActionEnd(stepId, result);
+      return result;
+    }
+
+    try {
+      this.generationId += 1;
+      await this.session.open(url);
+      await this.stabilizationService.waitForSettledState(this.session.currentPage());
+      const after = await this.captureCurrentObservation();
+      const evidence = this.transitionService.compare(before, after);
+      const result: V2ToolResult<{ url: string }> = {
+        success: true,
+        kind: 'navigate',
+        value: { url },
+        evidence,
+        traceStepId: stepId,
+      };
+
+      this.traceStore.recordActionEnd(stepId, result, {
+        afterObservationId: after.observationId,
+      });
+      return result;
+    } catch (error) {
+      const result = this.failureResult<{ url: string }>('navigate', undefined, stepId, mapExecutionError(error));
+      this.traceStore.recordActionEnd(stepId, result);
+      return result;
+    }
   }
 
   async get(refId: string): Promise<V2ToolResult<{ text: string; value?: string }>> {

@@ -66,6 +66,7 @@ function makeEvidence(before = 'obs_before', after = 'obs_after'): TransitionEvi
 
 class FakeHarness {
   openedUrl?: string;
+  navigatedUrl?: string;
   closed = false;
   observations: BrowserObservation[];
   plannerInputs: Array<{ episodeId: string; input: unknown }> = [];
@@ -121,6 +122,17 @@ class FakeHarness {
 
   async type(refId: string, text: string): Promise<V2ToolResult<{ inputValue: string }>> {
     return { success: true, kind: 'type', targetRef: refId, value: { inputValue: text }, traceStepId: 'fake_type' };
+  }
+
+  async navigate(url: string): Promise<V2ToolResult<{ url: string }>> {
+    this.navigatedUrl = url;
+    return {
+      success: true,
+      kind: 'navigate',
+      value: { url },
+      evidence: makeEvidence('obs_initial', 'obs_after_action'),
+      traceStepId: 'fake_navigate',
+    };
   }
 
   async get(refId: string): Promise<V2ToolResult<{ text: string; value?: string }>> {
@@ -280,6 +292,31 @@ test('V2AgentLoop executes planner plan and feeds runtime evidence into next pla
   assert.equal(dispatcher.steps?.[0].ref, 'ref_submit');
   assert.equal(planner.inputs[1].lastResult?.kind, 'click');
   assert.equal(planner.inputs[1].transition?.transitionClass, 'structural_local');
+});
+
+test('V2AgentLoop routes planner navigate steps through the default tool dispatcher', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'navigate', url: 'https://example.test/next' }], confidence: 'high' },
+    { done: true, val: 'Navigated' },
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Open the next page',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Navigated');
+  assert.equal(harness.navigatedUrl, 'https://example.test/next');
+  assert.equal(result.metrics.toolExecutions, 1);
+  assert.equal(planner.inputs[1].lastResult?.kind, 'navigate');
 });
 
 test('V2AgentLoop stops deterministically at maxSteps without semantic judgment', async () => {

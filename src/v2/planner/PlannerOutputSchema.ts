@@ -6,10 +6,12 @@ import type {
   PlannerOutputTool,
   PlannerOutputValidationResult,
 } from './types';
+import { isSupportedNavigationUrl, NAVIGATION_URL_POLICY_MESSAGE } from '../runtime/navigationPolicy';
 
 const VALID_TOOLS = new Set<PlannerOutputTool>([
   'click',
   'type',
+  'navigate',
   'scroll',
   'wait',
   'get',
@@ -125,6 +127,14 @@ function validateRequiredFields(
 
   if (tool === 'type' && !isNonEmptyString(step.text)) {
     errors.push(`Step ${stepNumber} type requires "text"`);
+  }
+
+  if (tool === 'navigate' && !isNonEmptyString(step.url)) {
+    errors.push(`Step ${stepNumber} navigate requires "url"`);
+  }
+
+  if (tool === 'navigate' && isNonEmptyString(step.url) && !isSupportedNavigationUrl(step.url)) {
+    errors.push(`Step ${stepNumber} ${NAVIGATION_URL_POLICY_MESSAGE}`);
   }
 
   if (tool === 'select' && !isNonEmptyString(step.value)) {

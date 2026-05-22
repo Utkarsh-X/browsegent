@@ -131,6 +131,19 @@ test('runAgentSmoke fails claimed success when runtime trace steps failed', asyn
   assert.match(scenarioResults[0].traceFailureReason, /failed_runtime_steps/);
 });
 
+test('default agent smoke scenarios cover explicit navigation', async () => {
+  const { AGENT_SMOKE_SCENARIOS } = await import('../../eval/v2/agent_smoke_scenarios');
+
+  const navigateScenario = AGENT_SMOKE_SCENARIOS.find(scenario =>
+    scenario.plannerOutputs.some(output =>
+      output.plan?.some(step => step.tool === 'navigate'),
+    ),
+  );
+
+  assert.ok(navigateScenario, 'expected a default smoke scenario with a navigate planner step');
+  assert.equal(navigateScenario.expectedSuccess, true);
+});
+
 async function writeTrace(
   outputRoot: string,
   runId: string,

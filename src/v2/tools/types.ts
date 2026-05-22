@@ -8,6 +8,7 @@ export interface V2ToolDispatchContext {
 export interface V2ToolRuntime {
   click(refId: string): Promise<V2ToolResult>;
   type(refId: string, text: string): Promise<V2ToolResult>;
+  navigate(url: string): Promise<V2ToolResult<{ url: string }>>;
   get(refId: string): Promise<V2ToolResult<{ text: string; value?: string }>>;
   inspectRegion(refId: string): Promise<V2ToolResult<{ refId: string; text: string; nearbyRefs: string[] }>>;
   searchPage(pattern: string): Promise<V2ToolResult<{ matches: number; preview: string[] }>>;

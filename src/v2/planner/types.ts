@@ -9,6 +9,7 @@ import type { RuntimeUncertainty } from '../runtime/UncertaintySignals';
 export type PlannerOutputTool =
   | 'click'
   | 'type'
+  | 'navigate'
   | 'scroll'
   | 'wait'
   | 'get'
@@ -154,6 +155,7 @@ export interface PlannerOutputStep {
   ref?: string;
   text?: string;
   value?: string;
+  url?: string;
   direction?: 'down' | 'up';
   timeout?: number;
   pattern?: string;

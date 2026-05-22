@@ -18,13 +18,14 @@ test('PlannerOutputSchema accepts ref-first v2 action plans', () => {
     plan: [
       { tool: 'click', ref: 'ref_primary' },
       { tool: 'type', ref: 'ref_search', text: 'query' },
+      { tool: 'navigate', url: 'https://example.test/results' },
       { tool: 'search_page', pattern: 'query' },
     ],
     confidence: 'high',
   });
 
   assert.equal(result.ok, true);
-  assert.deepEqual(result.ok ? result.value.plan?.map(step => step.tool) : [], ['click', 'type', 'search_page']);
+  assert.deepEqual(result.ok ? result.value.plan?.map(step => step.tool) : [], ['click', 'type', 'navigate', 'search_page']);
 });
 
 test('PlannerOutputSchema rejects selector-based browser mechanics in v2 mode', () => {
@@ -54,12 +55,26 @@ test('PlannerOutputSchema rejects low-level browser commands and script payloads
   assert.match(result.ok ? '' : result.errors.join('\n'), /script fields are not valid in v2 planner output/);
 });
 
+test('PlannerOutputSchema rejects unsafe navigate URLs', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [
+      { tool: 'navigate', url: 'javascript:document.body.click()' },
+    ],
+    confidence: 'low',
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.ok ? '' : result.errors.join('\n'), /navigate URL must use http, https, or file/);
+});
+
 test('PlannerOutputSchema enforces required ref and text fields', () => {
   const schema = new PlannerOutputSchema();
   const result = schema.validate({
     plan: [
       { tool: 'click' },
       { tool: 'type', ref: 'ref_search' },
+      { tool: 'navigate' },
     ],
     confidence: 'medium',
   });
@@ -67,4 +82,5 @@ test('PlannerOutputSchema enforces required ref and text fields', () => {
   assert.equal(result.ok, false);
   assert.match(result.ok ? '' : result.errors.join('\n'), /click requires "ref"/);
   assert.match(result.ok ? '' : result.errors.join('\n'), /type requires "text"/);
+  assert.match(result.ok ? '' : result.errors.join('\n'), /navigate requires "url"/);
 });

@@ -211,3 +211,65 @@ test('BrowseGentV2Harness scroll and wait reobserve with operational evidence', 
     await harness.close();
   }
 });
+
+test('BrowseGentV2Harness navigate records a macro transition with before and after observations', async () => {
+  const traceDir = await freshTraceDir('navigate');
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_navigate',
+    traceDir,
+  });
+
+  try {
+    const before = await harness.open(fixtureUrl('static-controls.html'));
+
+    const result = await harness.navigate(fixtureUrl('modal-transition.html'));
+    const manifest = await harness.flushTrace();
+
+    assert.equal(result.success, true);
+    assert.equal(result.kind, 'navigate');
+    assert.equal(result.value?.url, fixtureUrl('modal-transition.html'));
+    assert.equal(result.evidence?.transitionClass, 'structural_macrostate');
+    assert.equal(result.evidence?.strength, 'strong');
+    assert.equal(result.evidence?.generationChanged, true);
+    assert.equal(result.evidence?.urlChanged, true);
+
+    const navigateStep = manifest.steps.find(step => step.kind === 'navigate');
+    assert.ok(navigateStep);
+    assert.equal(navigateStep.beforeObservationId, before.observationId);
+    assert.equal(navigateStep.afterObservationId, result.evidence?.afterObservationId);
+    assert.equal(manifest.artifacts.observations.length, 2);
+  } finally {
+    await harness.close();
+  }
+});
+
+test('BrowseGentV2Harness rejects unsafe navigate URLs without browser mutation', async () => {
+  const traceDir = await freshTraceDir('navigate_unsafe');
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_navigate_unsafe',
+    traceDir,
+  });
+
+  try {
+    const before = await harness.open(fixtureUrl('static-controls.html'));
+
+    const result = await harness.navigate('javascript:document.body.remove()');
+    const after = await harness.observe();
+    const manifest = await harness.flushTrace();
+
+    assert.equal(result.success, false);
+    assert.equal(result.kind, 'navigate');
+    assert.equal(result.error?.code, 'unsupported_url');
+    assert.equal(after.url, before.url);
+    assert.equal(after.generationId, before.generationId);
+
+    const navigateStep = manifest.steps.find(step => step.kind === 'navigate');
+    assert.ok(navigateStep);
+    assert.equal(navigateStep.status, 'failed');
+    assert.equal(navigateStep.afterObservationId, undefined);
+  } finally {
+    await harness.close();
+  }
+});
