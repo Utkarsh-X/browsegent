@@ -7,6 +7,10 @@ loadDotEnv();
 export type LlmProvider = 'gemini' | 'cerebras' | 'ollama' | 'openai';
 
 const DEFAULT_PROVIDER: LlmProvider = 'gemini';
+const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+const DEFAULT_CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
+const DEFAULT_OLLAMA_MODEL = 'qwen3.5:4b';
+const DEFAULT_OPENAI_MODEL = 'gpt-4o-mini';
 
 export interface LlmSelection {
   provider: LlmProvider;
@@ -63,10 +67,10 @@ export interface RuntimeConfig {
 export function getRuntimeConfig(): RuntimeConfig {
   const provider = getConfiguredProvider();
   const v2Config = loadV2RuntimeConfig(process.env);
-  const geminiModel = requireEnvString('BROWSEGENT_GEMINI_MODEL');
-  const cerebrasModel = requireEnvString('BROWSEGENT_CEREBRAS_MODEL');
-  const ollamaModel = requireEnvString('BROWSEGENT_OLLAMA_MODEL');
-  const openaiModel = requireEnvString('BROWSEGENT_OPENAI_MODEL');
+  const geminiModel = getEnvString('BROWSEGENT_GEMINI_MODEL', DEFAULT_GEMINI_MODEL);
+  const cerebrasModel = getEnvString('BROWSEGENT_CEREBRAS_MODEL', DEFAULT_CEREBRAS_MODEL);
+  const ollamaModel = getEnvString('BROWSEGENT_OLLAMA_MODEL', DEFAULT_OLLAMA_MODEL);
+  const openaiModel = getEnvString('BROWSEGENT_OPENAI_MODEL', DEFAULT_OPENAI_MODEL);
   const activeModel = getConfiguredModelForProvider(provider, {
     geminiModel,
     cerebrasModel,
@@ -137,13 +141,13 @@ export function getConfiguredModelForProvider(
 ): string {
   switch (provider) {
     case 'gemini':
-      return models.geminiModel ?? requireEnvString('BROWSEGENT_GEMINI_MODEL');
+      return models.geminiModel ?? getEnvString('BROWSEGENT_GEMINI_MODEL', DEFAULT_GEMINI_MODEL);
     case 'cerebras':
-      return models.cerebrasModel ?? requireEnvString('BROWSEGENT_CEREBRAS_MODEL');
+      return models.cerebrasModel ?? getEnvString('BROWSEGENT_CEREBRAS_MODEL', DEFAULT_CEREBRAS_MODEL);
     case 'ollama':
-      return models.ollamaModel ?? requireEnvString('BROWSEGENT_OLLAMA_MODEL');
+      return models.ollamaModel ?? getEnvString('BROWSEGENT_OLLAMA_MODEL', DEFAULT_OLLAMA_MODEL);
     case 'openai':
-      return models.openaiModel ?? requireEnvString('BROWSEGENT_OPENAI_MODEL');
+      return models.openaiModel ?? getEnvString('BROWSEGENT_OPENAI_MODEL', DEFAULT_OPENAI_MODEL);
   }
 }
 
@@ -234,12 +238,4 @@ function inferProviderFromModel(model: string): LlmProvider | null {
 function readEnv(name: string): string | undefined {
   const value = process.env[name];
   return value === undefined ? undefined : value.trim();
-}
-
-function requireEnvString(name: string): string {
-  const value = readEnv(name);
-  if (!value) {
-    throw new Error(`Environment variable ${name} must be set in .env.`);
-  }
-  return value;
 }

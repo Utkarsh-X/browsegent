@@ -1,10 +1,9 @@
 // Logger — structured logging with file + console output
 import * as fs from 'fs';
 import * as path from 'path';
-import { getRuntimeConfig } from '../config/runtime';
 
 function ensureLogDir(): void {
-  const logDir = getRuntimeConfig().logging.dir;
+  const logDir = getLogDir();
   if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir, { recursive: true });
   }
@@ -12,8 +11,13 @@ function ensureLogDir(): void {
 
 function appendJsonl(filename: string, data: object): void {
   ensureLogDir();
-  const filepath = path.join(getRuntimeConfig().logging.dir, filename);
+  const filepath = path.join(getLogDir(), filename);
   fs.appendFileSync(filepath, JSON.stringify(data) + '\n', 'utf8');
+}
+
+function getLogDir(): string {
+  const value = process.env.LOG_DIR?.trim();
+  return value || './logs';
 }
 
 export const logger = {

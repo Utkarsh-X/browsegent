@@ -101,3 +101,17 @@ test('runtime config exposes CDP click toggle', () => {
 
   assert.equal(runtime.executor.cdpClickEnabled, false);
 });
+
+test('runtime config uses model defaults when provider env is absent', () => {
+  delete process.env.BROWSEGENT_GEMINI_MODEL;
+  delete process.env.BROWSEGENT_CEREBRAS_MODEL;
+  delete process.env.BROWSEGENT_OLLAMA_MODEL;
+  delete process.env.BROWSEGENT_OPENAI_MODEL;
+
+  const runtime = getRuntimeConfig();
+
+  assert.equal(runtime.llm.geminiModel, 'gemini-3.1-flash-lite-preview');
+  assert.equal(runtime.llm.cerebrasModel, 'qwen-3-235b-a22b-instruct-2507');
+  assert.equal(runtime.llm.ollamaModel, 'qwen3.5:4b');
+  assert.equal(runtime.llm.openaiModel, 'gpt-4o-mini');
+});
