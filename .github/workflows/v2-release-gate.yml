@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - browsegent-v2-*
 
 jobs:
   v2-release-gate:
