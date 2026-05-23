@@ -4,7 +4,7 @@
 
 This audit records the current evidence after executing the Phase 16-20 release-hardening plan.
 
-It does not claim the entire BrowseGent v2 production objective is complete. It proves only the release-hardening milestone and identifies the remaining evidence gaps that still block a full production-readiness claim.
+It does not claim every future BrowseGent v2 production-hardening item is complete. It records the current MVR and release-hardening evidence, plus any remaining out-of-scope production follow-up.
 
 ## Source Requirements Checked
 
@@ -102,7 +102,7 @@ Observed result:
 - Agent smoke runner unit tests passed: 3 pass, 0 fail.
 - Standalone agent smoke eval passed: 4 scenarios, 4 passed, traceCompleteCount 4, traceIncompleteCount 0.
 - v2 release gate passed.
-- Unit tests passed inside release gate: 194 pass, 0 fail.
+- Unit tests passed inside release gate: 196 pass, 0 fail.
 - v2 integration tests passed inside release gate: 19 pass, 0 fail.
 - Continuity stress eval passed inside release gate: 4 scenarios, 4 passed, 0 failed.
 - Agent smoke eval passed inside release gate: 4 scenarios, 4 passed, traceCompleteCount 4, traceIncompleteCount 0.
@@ -117,12 +117,37 @@ Navigation-specific evidence:
 - Unsafe navigation is rejected before browser mutation and records a failed trace step without an after-observation id.
 - The default local agent smoke catalog includes `fixture-navigate`, a scripted planner scenario that navigates from `static-controls.html` to `spa-route-transition.html`.
 
+Additional release-gate independence verification after making the gate independent of local `.env` secrets:
+
+```powershell
+$root = (Resolve-Path .).Path; $envPath = Join-Path $root '.env'; $tmpPath = Join-Path $root '.env.codex-ci-check.tmp'; if ((Test-Path -LiteralPath $tmpPath)) { throw 'temporary .env path already exists' }; $exitCode = 0; try { if (Test-Path -LiteralPath $envPath) { Move-Item -LiteralPath $envPath -Destination $tmpPath }; cmd /c npm run check:v2:release; $exitCode = $LASTEXITCODE } finally { if (Test-Path -LiteralPath $tmpPath) { Move-Item -LiteralPath $tmpPath -Destination $envPath } }; exit $exitCode
+```
+
+Observed result:
+
+- v2 release gate passed with `.env` temporarily absent.
+- Unit tests passed inside release gate: 196 pass, 0 fail.
+- v2 integration tests passed inside release gate: 19 pass, 0 fail.
+- Continuity stress eval passed inside release gate: 4 scenarios, 4 passed, 0 failed.
+- Agent smoke eval passed inside release gate: 4 scenarios, 4 passed, traceCompleteCount 4, traceIncompleteCount 0.
+- Provider smoke eval completed in default skipped mode with `failureReason="provider_smoke_not_enabled"`.
+- Governance checks, `git diff --check`, trailing whitespace scan, and unfinished marker scan passed.
+
+Remote workflow verification:
+
+- Workflow: `BrowseGent v2 Release Gate`
+- Run id: `26308489357`
+- Head SHA: `36a420afc6f9825c1a410d91c3ef5f16c5b9bde9`
+- Status: completed
+- Conclusion: success
+- URL: `https://github.com/Utkarsh-X/browsegent/actions/runs/26308489357`
+
 ## Repository Integration Evidence
 
 Local integration branch:
 
 - Branch: `browsegent-v2-release-hardening`
-- Commit: `f1fdbf8 feat: harden BrowseGent v2 release path`
+- Current head: `36a420a fix: make release gate independent of local env`
 - Remote: `origin`
 - Pushed branch: `origin/browsegent-v2-release-hardening`
 - Pull request URL offered by GitHub: `https://github.com/Utkarsh-X/browsegent/pull/new/browsegent-v2-release-hardening`
@@ -131,27 +156,27 @@ Integration notes:
 
 - Repo-local skill files under `skills/browsegent-dev` and `skills/codex.md` are intentionally tracked even though `skills/` is ignored, because the v2 release gate scans them.
 - `logs/` remains ignored and is not part of the integration commit.
-- `gh` is not installed in this shell, so PR creation and remote GitHub Actions status cannot be proven through the local CLI.
+- Remote GitHub Actions status is proven for head `36a420afc6f9825c1a410d91c3ef5f16c5b9bde9`; pull request creation remains optional integration workflow outside the MVR runtime evidence.
 
 ## Requirement Verdicts
 
 | Requirement | Verdict | Evidence |
 |---|---|---|
-| Public agent mode is tested through `BrowseGent.run()` and `BrowseGent.extract()` without a live provider. | Proven | `tests/integration/v2/publicAgentMode.test.ts`, release gate integration result 17/17 passed |
-| Trace replay auditing is centralized and reused by eval runners. | Proven | `src/v2/trace/TraceReplayAuditor.ts`, `tests/eval/v2/run_agent_smoke.ts`, `tests/eval/v2/run_continuity_stress.ts`, unit tests 191/191 passed |
-| CI has an explicit v2 release gate workflow. | Proven locally | `.github/workflows/v2-release-gate.yml`, `scripts/check_v2_release_gate.ts`, release gate script tests 3/3 passed |
+| Public agent mode is tested through `BrowseGent.run()` and `BrowseGent.extract()` without a live provider. | Proven | `tests/integration/v2/publicAgentMode.test.ts`, release gate integration result 19/19 passed |
+| Trace replay auditing is centralized and reused by eval runners. | Proven | `src/v2/trace/TraceReplayAuditor.ts`, `tests/eval/v2/run_agent_smoke.ts`, `tests/eval/v2/run_continuity_stress.ts`, unit tests 196/196 passed |
+| CI has an explicit v2 release gate workflow. | Proven locally and remotely | `.github/workflows/v2-release-gate.yml`, `scripts/check_v2_release_gate.ts`, release gate script tests, GitHub Actions run `26308489357` success |
 | v2 browser-mode config semantics are documented and tested. | Proven | `src/v2/runtime/config.ts`, `docs/governance/RUNTIME_SAFETY_RULES.md`, `tests/unit/v2/runtimeConfigHardening.test.ts` |
 | Provider smoke exists as an opt-in gate. | Proven | `tests/eval/v2/run_provider_smoke.ts`, provider smoke runner tests 3/3 passed, release gate skip report written, live provider smoke `provider_smoke_1779296023964` passed |
-| Default offline gates pass without network. | Proven | `cmd /c npm run check:v2:release` exit code 0 |
+| Default offline gates pass without network or local `.env`. | Proven | no-`.env` `cmd /c npm run check:v2:release` exit code 0 |
 | No new runtime cognition leakage appears. | Proven by current static gate | `npm run check:v2:no-cognition` passed inside release gate |
-| v1 remains the default path. | Proven by integration coverage | `tests/integration/v2/v1Compatibility.test.ts`, release gate integration result 17/17 passed |
+| v1 remains the default path. | Proven by integration coverage | `tests/integration/v2/v1Compatibility.test.ts`, release gate integration result 19/19 passed |
 | Workflow files are covered by hygiene scans. | Proven | Release gate script test asserts `.github\workflows` in both scan command argument lists |
 
 ## Remaining Evidence Gaps
 
-- The GitHub Actions workflow exists locally but has not been observed running on GitHub Actions in this workspace state.
-- The release-hardening integration branch has been pushed, but no pull request has been created from this shell because `gh` is not installed and no GitHub connector is available in the current tool context.
-- Full production readiness should still be audited against any future requirements beyond the Phase 0-20 plans before marking the persistent thread goal complete.
+- No MVR runtime evidence gap remains in this audit.
+- Pull request creation is still optional repository workflow and is not required to prove the MVR runtime.
+- Full production readiness beyond the MVR and release-hardening scope should still be audited against future requirements before making broader production claims.
 
 ## Current Worktree State
 
@@ -165,4 +190,4 @@ Expected local state after integration:
 
 The Phase 16-20 release-hardening milestone is complete under offline local verification, and the integration branch has been pushed to the configured GitHub remote.
 
-The broader BrowseGent v2 production objective remains active because pull request creation and remote CI execution are not yet proven from current evidence.
+The BrowseGent v2 MVR runtime evidence is complete for the scoped release-hardening audit: local no-`.env` release gate passed and remote GitHub Actions passed for head `36a420afc6f9825c1a410d91c3ef5f16c5b9bde9`.
