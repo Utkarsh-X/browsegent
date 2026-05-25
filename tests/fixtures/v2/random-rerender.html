@@ -15,7 +15,7 @@
       let version = 1;
       function render() {
         document.querySelector('#panel').innerHTML =
-          '<p>Panel version ' + version + '</p><button data-version="' + version + '">Open panel</button>';
+          '<p>Panel version ' + version + '</p><button data-version="' + version + '" aria-label="Open panel version ' + version + '">Open panel</button>';
       }
       document.querySelector('#rerender').addEventListener('click', () => {
         version += 1;

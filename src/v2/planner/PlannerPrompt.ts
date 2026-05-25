@@ -23,6 +23,10 @@ Valid tools:
 - scroll: optional direction down or up
 - wait: optional pattern and timeout
 
+If lastResult from get, inspect_region, search_page, click, type, navigate has lastResult.valuePreview containing the requested answer or confirming the requested state/action, return done with that value. Do not repeat the same read or mutation after successful value evidence.
+
+If the goal asks you to report an operational failure, block, or unavailable action, and lastResult.error, failures, or deadState already describe that failure, return done with a concise report instead of escalating.
+
 Use refs from the planner input. Selectors are not valid v2 planner output.`;
 }
 

@@ -1,5 +1,7 @@
 import type { PlannerInput, PlannerOutput } from '../planner/types';
 import type { BrowserObservation } from '../runtime/types';
+import type { FailureEvidence } from '../runtime/FailureClassifier';
+import type { BrowserSessionOptions } from '../substrate/types';
 import type { TraceArtifact, TraceManifest } from '../trace/types';
 import type { V2ToolDispatchContext, V2ToolDispatcherLike, V2ToolRuntime } from '../tools/types';
 
@@ -42,6 +44,7 @@ export interface V2AgentHarnessRuntime extends V2ToolRuntime {
   flushTrace(): Promise<TraceManifest>;
   recordPlannerInput?(episodeId: string, input: unknown): TraceArtifact;
   recordPlannerOutput?(episodeId: string, output: unknown): TraceArtifact;
+  recordFailureEvidence?(failure: FailureEvidence): TraceArtifact;
 }
 
 export interface V2AgentLoopOptions {
@@ -51,6 +54,7 @@ export interface V2AgentLoopOptions {
   traceDir?: string;
   headed?: boolean;
   runId?: string;
+  viewport?: BrowserSessionOptions['viewport'];
 }
 
 export interface V2AgentToolDispatcherContext extends V2ToolDispatchContext {}

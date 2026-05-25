@@ -103,6 +103,56 @@ test('auditTraceReplay rejects failed runtime steps', async () => {
   assert.ok(result.errors.includes('failed_runtime_steps'));
 });
 
+test('auditTraceReplay accepts replayable failed runtime steps only when explicitly allowed', async () => {
+  const { auditTraceReplay } = await loadTraceReplayAuditor();
+  const tracePath = await writeTrace('replayable-failed-runtime-step', {
+    artifacts: {
+      trace: { kind: 'trace', id: 'trace', path: 'trace.json' },
+      observations: [
+        { kind: 'observation', id: 'obs_1', path: 'obs_1.json' },
+        { kind: 'observation', id: 'obs_2', path: 'obs_2.json' },
+      ],
+      planner: [
+        { kind: 'planner_input', id: 'episode_1-input', path: 'episode_1-input.json' },
+        { kind: 'planner_output', id: 'episode_1-output', path: 'episode_1-output.json' },
+      ],
+      transitions: [],
+      graph: [],
+      screenshots: [],
+    },
+    runtimeMode: 'agent',
+    steps: [{
+      kind: 'click',
+      status: 'failed',
+      afterObservationId: 'obs_2',
+      result: {
+        success: false,
+        error: { code: 'target_blocked', message: 'blocked', retryable: false },
+        evidence: {
+          beforeObservationId: 'obs_1',
+          afterObservationId: 'obs_2',
+          transitionClass: 'microstate',
+          strength: 'none',
+        },
+      },
+    }],
+  });
+
+  const strictResult = await auditTraceReplay({ tracePath, expectedPlannerCalls: 1, expectedToolExecutions: 1 });
+  const benchmarkResult = await auditTraceReplay({
+    tracePath,
+    expectedPlannerCalls: 1,
+    expectedToolExecutions: 1,
+    allowFailedRuntimeSteps: true,
+  });
+
+  assert.equal(strictResult.ok, false);
+  assert.ok(strictResult.errors.includes('failed_runtime_steps'));
+  assert.equal(benchmarkResult.ok, true);
+  assert.equal(benchmarkResult.failedStepCount, 1);
+  assert.deepEqual(benchmarkResult.errors, []);
+});
+
 test('auditTraceReplay rejects completed mutation without transition evidence', async () => {
   const { auditTraceReplay } = await loadTraceReplayAuditor();
   const tracePath = await writeTrace('missing-mutation-evidence', {
@@ -119,6 +169,35 @@ test('auditTraceReplay rejects completed mutation without transition evidence', 
     },
     runtimeMode: 'agent',
     steps: [{ kind: 'click', status: 'completed', result: { success: true } }],
+  });
+
+  const result = await auditTraceReplay({ tracePath, expectedPlannerCalls: 1, expectedToolExecutions: 1 });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.mutationWithoutEvidenceCount, 1);
+  assert.ok(result.errors.includes('missing_mutation_evidence'));
+});
+
+test('auditTraceReplay treats navigation as a mutation requiring transition evidence', async () => {
+  const { auditTraceReplay } = await loadTraceReplayAuditor();
+  const tracePath = await writeTrace('navigate-missing-mutation-evidence', {
+    artifacts: {
+      trace: { kind: 'trace', id: 'trace', path: 'trace.json' },
+      observations: [{ kind: 'observation', id: 'obs_1', path: 'obs_1.json' }],
+      planner: [
+        { kind: 'planner_input', id: 'episode_1-input', path: 'episode_1-input.json' },
+        { kind: 'planner_output', id: 'episode_1-output', path: 'episode_1-output.json' },
+      ],
+      transitions: [],
+      graph: [],
+      screenshots: [],
+    },
+    runtimeMode: 'agent',
+    steps: [{
+      kind: 'navigate',
+      status: 'completed',
+      result: { success: true, value: { url: 'https://example.test/next' } },
+    }],
   });
 
   const result = await auditTraceReplay({ tracePath, expectedPlannerCalls: 1, expectedToolExecutions: 1 });

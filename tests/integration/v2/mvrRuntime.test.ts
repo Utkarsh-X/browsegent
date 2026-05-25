@@ -35,6 +35,12 @@ test('BrowseGentV2Harness click opens a modal and records structural local evide
     assert.equal(result.success, true);
     assert.equal(result.kind, 'click');
     assert.equal(result.targetRef, openModal.refId);
+    assert.deepEqual(result.target, {
+      refId: openModal.refId,
+      role: 'button',
+      name: 'Open modal',
+      text: 'Open modal',
+    });
     assert.equal(result.evidence?.transitionClass, 'structural_local');
     assert.equal(result.evidence?.strength, 'moderate');
     assert.ok(result.evidence?.refChanges.appeared.length);
@@ -67,10 +73,11 @@ test('BrowseGentV2Harness type mutates an input and emits operational transition
 });
 
 test('BrowseGentV2Harness rejects an occluded click as target_blocked', async () => {
+  const traceDir = await freshTraceDir('blocked');
   const harness = new BrowseGentV2Harness({
     headed: false,
     runId: 'run_blocked',
-    traceDir: await freshTraceDir('blocked'),
+    traceDir,
   });
 
   try {
@@ -84,6 +91,19 @@ test('BrowseGentV2Harness rejects an occluded click as target_blocked', async ()
     assert.equal(result.error?.code, 'target_blocked');
     assert.equal(result.error?.retryable, false);
     assert.equal(result.targetRef, target.refId);
+    assert.equal(result.evidence?.beforeObservationId, observation.observationId);
+    assert.ok(result.evidence?.afterObservationId);
+
+    const manifest = await harness.flushTrace();
+    assert.equal(manifest.steps.length, 1);
+    assert.equal(manifest.steps[0].status, 'failed');
+    assert.equal(manifest.steps[0].afterObservationId, result.evidence?.afterObservationId);
+    assert.equal(manifest.artifacts.observations.length, 2);
+
+    const traceJson = JSON.parse(await readFile(path.join(traceDir, 'run_blocked', 'trace.json'), 'utf8'));
+    assert.equal(traceJson.steps[0].result.success, false);
+    assert.equal(traceJson.steps[0].result.error.code, 'target_blocked');
+    assert.equal(traceJson.steps[0].result.evidence.beforeObservationId, observation.observationId);
   } finally {
     await harness.close();
   }
@@ -177,6 +197,27 @@ test('BrowseGentV2Harness read-only tools expose bounded operational evidence an
     assert.equal(manifest.steps.length, 3);
     assert.deepEqual(manifest.steps.map(step => step.kind), ['get', 'inspect_region', 'search_page']);
     assert.equal(manifest.steps.every(step => step.status === 'completed'), true);
+  } finally {
+    await harness.close();
+  }
+});
+
+test('BrowseGentV2Harness get prefers accessible names over generic visible text', async () => {
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_get_accessible_name',
+    traceDir: await freshTraceDir('get_accessible_name'),
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('virtualized-list.html'));
+    const firstItem = observation.refs.find(ref => ref.name === 'Open Item 1');
+    assert.ok(firstItem);
+
+    const result = await harness.get(firstItem.refId);
+
+    assert.equal(result.success, true);
+    assert.equal(result.value?.text, 'Open Item 1');
   } finally {
     await harness.close();
   }

@@ -84,7 +84,7 @@ function summarizeLastResult(result: V2ToolResult): PlannerLastResultSummary {
     kind: result.kind,
     traceStepId: result.traceStepId,
     targetRef: result.targetRef,
-    valuePreview: previewValue(result.value),
+    valuePreview: previewResultEvidence(result),
     error: result.error
       ? {
           code: result.error.code,
@@ -209,5 +209,58 @@ function previewValue(value: unknown): string | undefined {
     return String(value);
   }
 
-  return undefined;
+  const objectPreview = previewObjectValue(value);
+  if (objectPreview) {
+    return objectPreview;
+  }
+
+  return compactPreview(JSON.stringify(value));
+}
+
+function previewResultEvidence(result: V2ToolResult): string | undefined {
+  const parts = [
+    previewValue(result.value),
+    previewToolTarget(result.target),
+  ].filter((part): part is string => typeof part === 'string' && part.length > 0);
+
+  return parts.length > 0 ? compactPreview(parts.join(' ')) : undefined;
+}
+
+function previewObjectValue(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const record = value as Record<string, unknown>;
+  const parts: string[] = [];
+
+  for (const key of ['value', 'text', 'inputValue', 'url'] as const) {
+    const part = record[key];
+    if (typeof part === 'string' && part.trim().length > 0) {
+      parts.push(part);
+    }
+  }
+
+  const preview = record.preview;
+  if (Array.isArray(preview)) {
+    parts.push(...preview.filter((part): part is string => typeof part === 'string' && part.trim().length > 0));
+  }
+
+  return parts.length > 0 ? compactPreview(parts.join(' ')) : undefined;
+}
+
+function previewToolTarget(target: V2ToolResult['target']): string | undefined {
+  if (!target) {
+    return undefined;
+  }
+
+  const parts = [target.name, target.text, target.role]
+    .filter((part): part is string => typeof part === 'string' && part.trim().length > 0);
+  const uniqueParts = parts.filter((part, index) => parts.findIndex(existing => existing.toLowerCase() === part.toLowerCase()) === index);
+
+  return uniqueParts.length > 0 ? compactPreview(uniqueParts.join(' ')) : undefined;
+}
+
+function compactPreview(value: string): string {
+  return value.replace(/\s+/g, ' ').trim().slice(0, 240);
 }

@@ -16,7 +16,7 @@
       function render() {
         document.querySelector('#list').innerHTML = Array.from({ length: 6 }, (_, index) => {
           const item = offset + index + 1;
-          return '<div class="row"><span>Item ' + item + '</span><button>Open</button></div>';
+          return '<div class="row"><span>Item ' + item + '</span><button aria-label="Open Item ' + item + '">Open</button></div>';
         }).join('');
       }
       document.querySelector('#shift-window').addEventListener('click', () => {

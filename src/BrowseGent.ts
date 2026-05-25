@@ -18,6 +18,8 @@ import { BrowseGentV2Harness } from './v2/harness/BrowseGentV2Harness';
 import { ProjectionService } from './v2/brain1/ProjectionService';
 import { ContinuityGraph } from './v2/graph/ContinuityGraph';
 import { PlannerInputComposer } from './v2/planner/PlannerInputComposer';
+import { BrowserAgentRunner } from './v2/public/BrowserAgentRunner';
+import type { BrowserAgentRunOptions, BrowserAgentRunResult } from './v2/public/types';
 import * as v2AgentLoopFactory from './v2/agent/createV2AgentLoop';
 
 export interface BrowseGentOptions {
@@ -104,7 +106,13 @@ export class BrowseGent {
     this.initialized = true;
   }
 
-  async run(url: string, goal: string): Promise<RunResult> {
+  async run(url: string, goal: string): Promise<RunResult>;
+  async run(task: string, options: BrowserAgentRunOptions): Promise<BrowserAgentRunResult>;
+  async run(first: string, second: string | BrowserAgentRunOptions): Promise<RunResult | BrowserAgentRunResult> {
+    if (typeof second !== 'string') {
+      return this._runTaskFirstAgent(first, second);
+    }
+
     const runtime = getRuntimeConfig();
     const adapter = V1CompatibilityAdapter.create<RunResult, ExtractResult>({
       runtimeMode: runtime.v2.runtimeMode,
@@ -116,7 +124,20 @@ export class BrowseGent {
       extractV2Agent: async input => this._extractV2Agent(input.url, input.instruction, input.schemaDescription, input.parseResult),
     });
 
-    return adapter.run({ url, goal });
+    return adapter.run({ url: first, goal: second });
+  }
+
+  private async _runTaskFirstAgent(task: string, options: BrowserAgentRunOptions): Promise<BrowserAgentRunResult> {
+    const runtime = getRuntimeConfig();
+    const model = resolveLlmSelection(options.model ?? this.opts.model).modelId;
+    const runner = new BrowserAgentRunner({
+      defaultMaxSteps: this.opts.maxSteps,
+      defaultModel: model,
+      defaultTraceDir: runtime.v2.traceDir,
+      runtimeHeaded: runtime.v2.headed,
+    });
+
+    return runner.run(task, options);
   }
 
   private async _runV1(url: string, goal: string): Promise<RunResult> {

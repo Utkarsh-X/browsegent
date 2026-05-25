@@ -3,12 +3,13 @@ import { isSupportedNavigationUrl } from '../runtime/navigationPolicy';
 import { RefService } from '../runtime/RefService';
 import { StabilizationService } from '../runtime/StabilizationService';
 import { TransitionService } from '../runtime/TransitionService';
-import type { BrowserObservation, V2Ref, V2ToolError, V2ToolResult } from '../runtime/types';
+import type { BrowserObservation, V2Ref, V2ToolError, V2ToolResult, V2ToolTargetSummary } from '../runtime/types';
 import { BrowserSession } from '../substrate/BrowserSession';
 import { InputService } from '../substrate/InputService';
 import { ObservationService } from '../substrate/ObservationService';
 import { TraceStore } from '../trace/TraceStore';
 import type { TraceArtifact, TraceManifest } from '../trace/types';
+import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { BrowseGentV2HarnessOptions } from './types';
 
 export class BrowseGentV2Harness {
@@ -101,7 +102,7 @@ export class BrowseGentV2Harness {
 
   async get(refId: string): Promise<V2ToolResult<{ text: string; value?: string }>> {
     return this.executeRefRead('get', refId, (ref) => ({
-      text: compactText(ref.text || ref.name || ''),
+      text: compactText(ref.name || ref.text || ''),
       value: ref.role === 'textbox' && ref.name ? compactText(ref.name) : undefined,
     }));
   }
@@ -242,6 +243,10 @@ export class BrowseGentV2Harness {
     return this.traceStore.recordPlannerOutput(episodeId, output);
   }
 
+  recordFailureEvidence(failure: FailureEvidence): TraceArtifact {
+    return this.traceStore.recordFailureEvidence(failure);
+  }
+
   async close(): Promise<void> {
     await this.session.close();
   }
@@ -274,6 +279,7 @@ export class BrowseGentV2Harness {
         success: true,
         kind,
         targetRef: refId,
+        target: summarizeToolTarget(resolution.ref),
         value: execution.value,
         evidence,
         traceStepId: stepId,
@@ -285,7 +291,16 @@ export class BrowseGentV2Harness {
       return result;
     } catch (error) {
       const result = this.failureResult<TValue>(kind, refId, stepId, mapExecutionError(error));
-      this.traceStore.recordActionEnd(stepId, result);
+      try {
+        await this.stabilizationService.waitForSettledState(this.session.currentPage());
+        const after = await this.captureCurrentObservation();
+        result.evidence = this.transitionService.compare(before, after);
+        this.traceStore.recordActionEnd(stepId, result, {
+          afterObservationId: after.observationId,
+        });
+      } catch {
+        this.traceStore.recordActionEnd(stepId, result);
+      }
       return result;
     }
   }
@@ -314,6 +329,7 @@ export class BrowseGentV2Harness {
         success: true,
         kind,
         targetRef: refId,
+        target: summarizeToolTarget(resolution.ref),
         value: read(resolution.ref, before),
         traceStepId: stepId,
       };
@@ -365,6 +381,28 @@ export class BrowseGentV2Harness {
 function compactText(text: string, maxLength = 500): string {
   const compacted = text.replace(/\s+/g, ' ').trim();
   return compacted.length > maxLength ? `${compacted.slice(0, maxLength - 3)}...` : compacted;
+}
+
+function summarizeToolTarget(ref: V2Ref): V2ToolTargetSummary {
+  const summary: V2ToolTargetSummary = {
+    refId: ref.refId,
+  };
+
+  assignIfPresent(summary, 'role', ref.role);
+  assignIfPresent(summary, 'name', ref.name);
+  assignIfPresent(summary, 'text', ref.text);
+  return summary;
+}
+
+function assignIfPresent<TKey extends 'role' | 'name' | 'text'>(
+  target: V2ToolTargetSummary,
+  key: TKey,
+  value: string | undefined,
+): void {
+  const compacted = value ? compactText(value, 240) : '';
+  if (compacted) {
+    target[key] = compacted;
+  }
 }
 
 function countLiteralMatches(text: string, pattern: string): number {

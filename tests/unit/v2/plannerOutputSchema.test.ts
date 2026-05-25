@@ -41,6 +41,51 @@ test('PlannerOutputSchema rejects selector-based browser mechanics in v2 mode', 
   assert.match(result.ok ? '' : result.errors.join('\n'), /selector fields are not valid in v2 planner output/);
 });
 
+test('PlannerOutputSchema normalizes legacy sel field only when it contains a known ref', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [
+      { tool: 'click', sel: 'ref_primary' },
+    ],
+    confidence: 'high',
+  }, { allowedRefs: ['ref_primary'] });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.ok ? result.value.plan : [], [
+    { tool: 'click', ref: 'ref_primary' },
+  ]);
+});
+
+test('PlannerOutputSchema normalizes ref-token selector aliases without accepting CSS selectors', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [
+      { tool: 'get', selector: 'v2ref_2' },
+    ],
+    confidence: 'high',
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.ok ? result.value.plan : [], [
+    { tool: 'get', ref: 'v2ref_2' },
+  ]);
+});
+
+test('PlannerOutputSchema maps projected region ids to representative refs for inspect_region', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [
+      { tool: 'inspect_region', sel: 'region_repeated_1' },
+    ],
+    confidence: 'high',
+  }, { regionRefs: { region_repeated_1: 'v2ref_4' } });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.ok ? result.value.plan : [], [
+    { tool: 'inspect_region', ref: 'v2ref_4' },
+  ]);
+});
+
 test('PlannerOutputSchema rejects low-level browser commands and script payloads', () => {
   const schema = new PlannerOutputSchema();
   const result = schema.validate({

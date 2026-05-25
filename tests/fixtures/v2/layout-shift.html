@@ -15,7 +15,11 @@
     <button id="stable">Stable target</button>
     <script>
       document.querySelector('#shift').addEventListener('click', () => {
-        document.querySelector('#spacer').classList.toggle('expanded');
+        const spacer = document.querySelector('#spacer');
+        spacer.classList.toggle('expanded');
+        document.querySelector('#shift').textContent = spacer.classList.contains('expanded')
+          ? 'Layout shifted'
+          : 'Shift layout';
       });
     </script>
   </body>

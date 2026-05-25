@@ -94,3 +94,12 @@ export type {
   V2AgentToolDispatcherContext,
   V2PlannerClientLike,
 } from './agent/types';
+export { BrowserAgentRunner } from './public/BrowserAgentRunner';
+export type {
+  BrowserAgentBrowserOptions,
+  BrowserAgentOutputMode,
+  BrowserAgentRunOptions,
+  BrowserAgentRunResult,
+  BrowserAgentTraceOptions,
+  BrowserAgentViewport,
+} from './public/types';

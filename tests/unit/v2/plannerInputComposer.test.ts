@@ -184,6 +184,49 @@ test('PlannerInputComposer includes transition summary and uncertainty signals',
   assert.ok(input.uncertainty.signals.includes('runtime_warning:low_confidence_ref'));
 });
 
+test('PlannerInputComposer previews object-valued tool results for replanning', () => {
+  const observation = makeObservation({ observationId: 'obs_value_preview' });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_value_preview',
+    goal: 'Report entered name',
+    projection,
+    lastResult: {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_name',
+      value: { text: 'Name', value: 'Ada Lovelace' },
+      traceStepId: 'step_get_name',
+    },
+  });
+
+  assert.equal(input.lastResult?.valuePreview, 'Ada Lovelace Name');
+});
+
+test('PlannerInputComposer previews successful mutation target facts for replanning', () => {
+  const observation = makeObservation({ observationId: 'obs_mutation_preview' });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_mutation_preview',
+    goal: 'Find and open the archive link',
+    projection,
+    lastResult: {
+      success: true,
+      kind: 'click',
+      targetRef: 'ref_archive',
+      target: {
+        refId: 'ref_archive',
+        role: 'link',
+        name: 'Archive link',
+        text: 'Archive link',
+      },
+      traceStepId: 'step_click_archive',
+    },
+  });
+
+  assert.equal(input.lastResult?.valuePreview, 'Archive link link');
+});
+
 test('LineageCompressor keeps bounded recent execution lineage without raw result payloads', () => {
   const manifest = makeTraceManifest([
     makeTraceStep('step_1', 'click', 'completed', 'ref_a'),

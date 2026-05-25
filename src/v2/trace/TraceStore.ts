@@ -3,12 +3,14 @@ import { join } from 'node:path';
 
 import { V2OperationalError } from '../runtime/errors';
 import type { BrowserObservation, TransitionEvidence, V2ToolResult } from '../runtime/types';
+import type { FailureEvidence } from '../runtime/FailureClassifier';
 import { createTransitionId, type ContinuityGraphSnapshot } from '../graph/types';
 import { cloneTraceJson, stringifyTraceJson, toTraceJsonValue } from './serialize';
 import type {
   TraceActionEndOptions,
   TraceActionStartInput,
   TraceArtifact,
+  TraceFailureRecord,
   TraceGraphRecord,
   TraceManifest,
   TraceObservationRecord,
@@ -27,6 +29,7 @@ export class TraceStore {
   private readonly transitions = new Map<string, TraceTransitionRecord>();
   private readonly graphSnapshots = new Map<string, TraceGraphRecord>();
   private readonly plannerArtifacts = new Map<string, TracePlannerRecord>();
+  private readonly failures = new Map<string, TraceFailureRecord>();
   private readonly steps: TraceStep[] = [];
 
   constructor(options: TraceStoreOptions) {
@@ -81,6 +84,18 @@ export class TraceStore {
     return artifact;
   }
 
+  recordFailureEvidence(failure: FailureEvidence): TraceArtifact {
+    const safeFailure = cloneTraceJson(failure);
+    const artifact = this.createArtifact('failure', failure.failureId, 'failures', `${failure.failureId}.json`);
+
+    this.failures.set(failure.failureId, {
+      artifact,
+      failure: safeFailure,
+    });
+
+    return artifact;
+  }
+
   recordActionStart(input: TraceActionStartInput): string {
     const stepId = `step_${this.steps.length + 1}`;
     const step: TraceStep = {
@@ -129,6 +144,7 @@ export class TraceStore {
       await mkdir(join(runRoot, 'transitions'), { recursive: true });
       await mkdir(join(runRoot, 'graph'), { recursive: true });
       await mkdir(join(runRoot, 'planner'), { recursive: true });
+      await mkdir(join(runRoot, 'failures'), { recursive: true });
       await mkdir(join(runRoot, 'screenshots'), { recursive: true });
 
       for (const record of this.observations.values()) {
@@ -142,6 +158,9 @@ export class TraceStore {
       }
       for (const record of this.plannerArtifacts.values()) {
         await writeFile(record.artifact.path, stringifyTraceJson(record.payload), 'utf8');
+      }
+      for (const record of this.failures.values()) {
+        await writeFile(record.artifact.path, stringifyTraceJson(record.failure), 'utf8');
       }
 
       await writeFile(manifest.artifacts.trace.path, stringifyTraceJson(manifest), 'utf8');
@@ -165,6 +184,7 @@ export class TraceStore {
         transitions: [...this.transitions.values()].map((record) => record.artifact),
         graph: [...this.graphSnapshots.values()].map((record) => record.artifact),
         planner: [...this.plannerArtifacts.values()].map((record) => record.artifact),
+        failures: [...this.failures.values()].map((record) => record.artifact),
         screenshots: [],
       },
     };

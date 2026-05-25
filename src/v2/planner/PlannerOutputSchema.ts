@@ -8,6 +8,11 @@ import type {
 } from './types';
 import { isSupportedNavigationUrl, NAVIGATION_URL_POLICY_MESSAGE } from '../runtime/navigationPolicy';
 
+export interface PlannerOutputValidationContext {
+  allowedRefs?: readonly string[];
+  regionRefs?: Readonly<Record<string, string>>;
+}
+
 const VALID_TOOLS = new Set<PlannerOutputTool>([
   'click',
   'type',
@@ -39,9 +44,10 @@ const FORBIDDEN_FIELDS = new Set([
   'playwright',
 ]);
 const FORBIDDEN_SCRIPT_FIELDS = new Set(['script', 'javascript', 'js']);
+const REF_ALIAS_FIELDS = new Set(['sel', 'selector']);
 
 export class PlannerOutputSchema {
-  validate(raw: unknown): PlannerOutputValidationResult {
+  validate(raw: unknown, context: PlannerOutputValidationContext = {}): PlannerOutputValidationResult {
     if (!isRecord(raw)) {
       return { ok: false, errors: ['Planner output must be an object'] };
     }
@@ -71,7 +77,16 @@ export class PlannerOutputSchema {
       if (raw.confidence === undefined) {
         errors.push('plan output requires "confidence"');
       }
-      validatePlanSteps(raw.plan as unknown[], errors);
+      const normalizedPlan = validatePlanSteps(raw.plan as unknown[], errors, context);
+      if (errors.length === 0) {
+        return {
+          ok: true,
+          value: {
+            ...raw,
+            plan: normalizedPlan,
+          } as PlannerOutput,
+        };
+      }
     }
 
     if (errors.length > 0) {
@@ -82,7 +97,12 @@ export class PlannerOutputSchema {
   }
 }
 
-function validatePlanSteps(steps: unknown[], errors: string[]): void {
+function validatePlanSteps(
+  steps: unknown[],
+  errors: string[],
+  context: PlannerOutputValidationContext,
+): PlannerOutputStep[] {
+  const normalizedSteps: PlannerOutputStep[] = [];
   for (let index = 0; index < steps.length; index += 1) {
     const step = steps[index];
     const stepNumber = index + 1;
@@ -92,20 +112,33 @@ function validatePlanSteps(steps: unknown[], errors: string[]): void {
       continue;
     }
 
-    validateForbiddenFields(step, stepNumber, errors);
+    const normalizedStep = normalizePlannerStep(step, context);
+    validateForbiddenFields(step, normalizedStep, stepNumber, errors);
 
-    if (typeof step.tool !== 'string' || !VALID_TOOLS.has(step.tool as PlannerOutputTool)) {
-      errors.push(`Step ${stepNumber} has unknown tool "${String(step.tool)}"`);
+    if (typeof normalizedStep.tool !== 'string' || !VALID_TOOLS.has(normalizedStep.tool as PlannerOutputTool)) {
+      errors.push(`Step ${stepNumber} has unknown tool "${String(normalizedStep.tool)}"`);
       continue;
     }
 
-    const tool = step.tool as PlannerOutputTool;
-    validateRequiredFields(tool, step as Partial<PlannerOutputStep>, stepNumber, errors);
+    const tool = normalizedStep.tool as PlannerOutputTool;
+    const candidateStep = normalizedStep as unknown as Partial<PlannerOutputStep>;
+    validateRequiredFields(tool, candidateStep, stepNumber, errors);
+    normalizedSteps.push(normalizedStep as unknown as PlannerOutputStep);
   }
+
+  return normalizedSteps;
 }
 
-function validateForbiddenFields(step: Record<string, unknown>, stepNumber: number, errors: string[]): void {
-  for (const field of Object.keys(step)) {
+function validateForbiddenFields(
+  originalStep: Record<string, unknown>,
+  normalizedStep: Record<string, unknown>,
+  stepNumber: number,
+  errors: string[],
+): void {
+  for (const field of Object.keys(originalStep)) {
+    if (REF_ALIAS_FIELDS.has(field) && !(field in normalizedStep) && normalizedStep.ref !== undefined) {
+      continue;
+    }
     if (FORBIDDEN_FIELDS.has(field)) {
       errors.push(`Step ${stepNumber} selector fields are not valid in v2 planner output`);
     }
@@ -113,6 +146,32 @@ function validateForbiddenFields(step: Record<string, unknown>, stepNumber: numb
       errors.push(`Step ${stepNumber} script fields are not valid in v2 planner output`);
     }
   }
+}
+
+function normalizePlannerStep(
+  step: Record<string, unknown>,
+  context: PlannerOutputValidationContext,
+): Record<string, unknown> {
+  const normalized: Record<string, unknown> = { ...step };
+  if (typeof normalized.ref === 'string') {
+    normalized.ref = normalizeTargetRef(normalized.ref, normalized.tool, context) ?? normalized.ref;
+  }
+
+  for (const field of REF_ALIAS_FIELDS) {
+    if (normalized.ref !== undefined) {
+      break;
+    }
+    const candidate = normalized[field];
+    if (typeof candidate !== 'string') {
+      continue;
+    }
+    const targetRef = normalizeTargetRef(candidate, normalized.tool, context);
+    if (targetRef !== undefined) {
+      normalized.ref = targetRef;
+      delete normalized[field];
+    }
+  }
+  return normalized;
 }
 
 function validateRequiredFields(
@@ -168,4 +227,26 @@ function isConfidence(value: unknown): value is PlannerConfidence {
 
 function isEscalation(value: unknown): value is PlannerEscalation {
   return value === 'user_needed' || value === 'captcha' || value === 'dead_end';
+}
+
+function isAllowedRef(value: string, context: PlannerOutputValidationContext): boolean {
+  return context.allowedRefs?.includes(value) === true;
+}
+
+function normalizeTargetRef(
+  value: string,
+  tool: unknown,
+  context: PlannerOutputValidationContext,
+): string | undefined {
+  if (tool === 'inspect_region' && context.regionRefs?.[value]) {
+    return context.regionRefs[value];
+  }
+  if (isAllowedRef(value, context) || isBrowseGentRefToken(value)) {
+    return value;
+  }
+  return undefined;
+}
+
+function isBrowseGentRefToken(value: string): boolean {
+  return /^v2ref_\d+$/.test(value);
 }

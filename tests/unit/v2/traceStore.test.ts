@@ -8,6 +8,7 @@ import { ContinuityGraph } from '../../../src/v2/graph/ContinuityGraph';
 import { TraceStore } from '../../../src/v2/trace/TraceStore';
 import { buildBrowserObservation } from '../../../src/v2/substrate/ObservationService';
 import type { BrowserObservation, V2Ref, V2ToolResult } from '../../../src/v2';
+import type { FailureEvidence } from '../../../src/v2/runtime/FailureClassifier';
 
 function makeRef(overrides: Partial<V2Ref> = {}): V2Ref {
   return {
@@ -192,4 +193,44 @@ test('TraceStore writes transition and graph replay artifacts passively', async 
 
   assert.equal(transitionJson.transitionClass, 'structural_local');
   assert.equal(graphJson.transitions[0].transitionId, 'transition_obs_t_before_obs_t_after');
+});
+
+test('TraceStore writes failure evidence as a replay artifact and manifest entry', async () => {
+  const traceDir = await freshTraceDir('failure_evidence');
+  const store = new TraceStore({
+    runId: 'run_trace_failure',
+    runtimeMode: 'agent',
+    traceDir,
+    startTime: 4444,
+  });
+  const failure: FailureEvidence = {
+    failureId: 'failure_target_blocked_obs_1',
+    kind: 'target_blocked',
+    category: 'target',
+    severity: 'warning',
+    persistence: 'persistent',
+    retryable: false,
+    message: 'Target ref center point is blocked by another element.',
+    source: 'v2_agent_loop',
+    observationId: 'obs_1',
+    targetRef: 'ref_submit',
+    signals: ['error:target_blocked'],
+  };
+
+  const artifact = store.recordFailureEvidence(failure);
+  const manifest = await store.flush();
+
+  assert.equal(artifact.kind, 'failure');
+  assert.equal(manifest.artifacts.failures?.length, 1);
+  assert.equal(manifest.artifacts.failures?.[0].id, failure.failureId);
+
+  const failureJson = JSON.parse(await readFile(
+    join(traceDir, 'run_trace_failure', 'failures', 'failure_target_blocked_obs_1.json'),
+    'utf8',
+  ));
+  const traceJson = JSON.parse(await readFile(join(traceDir, 'run_trace_failure', 'trace.json'), 'utf8'));
+
+  assert.equal(failureJson.kind, 'target_blocked');
+  assert.equal(failureJson.targetRef, 'ref_submit');
+  assert.equal(traceJson.artifacts.failures[0].kind, 'failure');
 });

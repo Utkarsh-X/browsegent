@@ -81,10 +81,18 @@ export interface V2ToolError {
   retryable: boolean;
 }
 
+export interface V2ToolTargetSummary {
+  refId: string;
+  role?: string;
+  name?: string;
+  text?: string;
+}
+
 export interface V2ToolResult<TValue = unknown> {
   success: boolean;
   kind: string;
   targetRef?: string;
+  target?: V2ToolTargetSummary;
   value?: TValue;
   error?: V2ToolError;
   evidence?: TransitionEvidence;

@@ -1,5 +1,6 @@
 import type { BrowserObservation, RuntimeWarning, TransitionEvidence, V2RuntimeMode, V2ToolResult } from '../runtime/types';
 import type { ContinuityGraphSnapshot } from '../graph/types';
+import type { FailureEvidence } from '../runtime/FailureClassifier';
 
 export type TraceArtifactKind =
   | 'trace'
@@ -7,6 +8,7 @@ export type TraceArtifactKind =
   | 'screenshot'
   | 'transition'
   | 'graph'
+  | 'failure'
   | 'planner_input'
   | 'planner_output';
 export type TraceStepStatus = 'started' | 'completed' | 'failed';
@@ -31,6 +33,7 @@ export interface TraceManifest {
     transitions: TraceArtifact[];
     graph: TraceArtifact[];
     planner: TraceArtifact[];
+    failures?: TraceArtifact[];
     screenshots: TraceArtifact[];
   };
 }
@@ -92,6 +95,11 @@ export interface TraceTransitionRecord {
 export interface TracePlannerRecord {
   artifact: TraceArtifact;
   payload: TraceJsonValue;
+}
+
+export interface TraceFailureRecord {
+  artifact: TraceArtifact;
+  failure: FailureEvidence;
 }
 
 export type TraceToolResult = V2ToolResult<TraceJsonValue>;

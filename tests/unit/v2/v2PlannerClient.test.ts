@@ -138,6 +138,63 @@ test('V2PlannerClient retries once with validation feedback after invalid select
   assert.match(providerUsers[1], /selector fields are not valid in v2 planner output/);
 });
 
+test('V2PlannerClient accepts legacy sel field only when it contains a known ref', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const providerUsers: string[] = [];
+  const client = new V2PlannerClient({
+    provider: async (_system, user) => {
+      providerUsers.push(user);
+      return {
+        text: '{"plan":[{"tool":"click","sel":"ref_submit"}],"confidence":"high"}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({ plannerInput: makePlannerInput('episode_sel_ref') });
+
+  assert.equal(result.output.plan?.[0].ref, 'ref_submit');
+  assert.equal('sel' in (result.output.plan?.[0] ?? {}), false);
+  assert.equal(providerUsers.length, 1);
+});
+
+test('V2PlannerClient accepts safe ref-token and region aliases from planner output', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const client = new V2PlannerClient({
+    provider: async () => ({
+      text: JSON.stringify({
+        plan: [
+          { tool: 'inspect_region', sel: 'region_repeated_1' },
+          { tool: 'get', selector: 'v2ref_2' },
+        ],
+        confidence: 'high',
+      }),
+      inputTokens: 8,
+      outputTokens: 4,
+    }),
+  });
+  const plannerInput = makePlannerInput('episode_safe_aliases');
+  plannerInput.current.interactions = [
+    { ...plannerInput.current.interactions[0], refId: 'v2ref_1', name: 'Open', text: 'Open' },
+    { ...plannerInput.current.interactions[0], refId: 'v2ref_2', name: 'Late action', text: 'Late action' },
+  ];
+  plannerInput.current.regions = [{
+    regionId: 'region_repeated_1',
+    kind: 'repeated_list',
+    label: 'Repeated button controls',
+    refIds: ['v2ref_1', 'v2ref_2'],
+    score: 100,
+  }];
+
+  const result = await client.call({ plannerInput });
+
+  assert.deepEqual(result.output.plan, [
+    { tool: 'inspect_region', ref: 'v2ref_1' },
+    { tool: 'get', ref: 'v2ref_2' },
+  ]);
+});
+
 test('V2PlannerClient fails deterministically after bounded validation retry is exhausted', async () => {
   const { V2PlannerClient, V2PlannerClientError } = await loadPlannerClientModule();
   const { traceDir, store } = await freshTraceStore('planner_client_invalid');
@@ -156,6 +213,9 @@ test('V2PlannerClient fails deterministically after bounded validation retry is 
       assert.ok(error instanceof V2PlannerClientError);
       assert.match(error.message, /Planner output invalid after retry/);
       assert.equal(error.attempts, 2);
+      assert.equal(error.inputTokens, 8);
+      assert.equal(error.outputTokens, 12);
+      assert.ok(error.durationMs >= 0);
       assert.ok(error.errors.some(message => message.includes('unknown tool')));
       return true;
     },
@@ -170,4 +230,34 @@ test('V2PlannerClient fails deterministically after bounded validation retry is 
   assert.equal(outputJson.validation.ok, false);
   assert.equal(outputJson.attempts, 2);
   assert.match(outputJson.rawText, /evaluate_js/);
+});
+
+test('V2PlannerClient records provider failures as planner replay artifacts', async () => {
+  const { V2PlannerClient, V2PlannerClientError } = await loadPlannerClientModule();
+  const { traceDir, store } = await freshTraceStore('planner_client_provider_error');
+  const client = new V2PlannerClient({
+    traceStore: store,
+    provider: async () => {
+      throw new Error('API_QUOTA_EXCEEDED: Gemini key hit rate limit.');
+    },
+  });
+
+  await assert.rejects(
+    () => client.call({ plannerInput: makePlannerInput('episode_provider_error') }),
+    (error: unknown) => {
+      assert.ok(error instanceof V2PlannerClientError);
+      assert.match(error.message, /API_QUOTA_EXCEEDED/);
+      assert.equal(error.attempts, 1);
+      return true;
+    },
+  );
+
+  await store.flush();
+  const outputJson = JSON.parse(await readFile(
+    join(traceDir, 'run_planner_client_provider_error', 'planner', 'episode_provider_error-output.json'),
+    'utf8',
+  ));
+
+  assert.equal(outputJson.validation.ok, false);
+  assert.deepEqual(outputJson.validation.errors, ['provider_error:API_QUOTA_EXCEEDED: Gemini key hit rate limit.']);
 });

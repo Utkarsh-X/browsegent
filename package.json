@@ -11,6 +11,7 @@
     "eval:custom": "tsx tests/eval/run_custom_benchmark.ts",
     "comparison": "tsx tests/eval/run_comparison.ts",
     "comparison:ab": "tsx tests/eval/run_progress_ab.ts",
+    "benchmark:v2": "tsx tests/benchmark/v2/run_benchmark.ts",
     "test:unit": "tsx --test tests/unit/**/*.test.ts",
     "check:v2:boundaries": "tsx scripts/check_v2_boundaries.ts",
     "check:v2:no-cognition": "tsx scripts/check_v2_no_cognition_leakage.ts",

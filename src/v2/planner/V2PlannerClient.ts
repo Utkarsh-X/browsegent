@@ -46,6 +46,9 @@ export class V2PlannerClientError extends Error {
     readonly errors: string[],
     readonly attempts: number,
     readonly rawText: string,
+    readonly inputTokens: number,
+    readonly outputTokens: number,
+    readonly durationMs: number,
   ) {
     super(message);
     this.name = 'V2PlannerClientError';
@@ -76,12 +79,38 @@ export class V2PlannerClient {
     this.traceStore?.recordPlannerInput(input.plannerInput.episodeId, input.plannerInput);
 
     for (let attempt = 1; attempt <= 2; attempt += 1) {
-      const providerResult = await this.provider(systemPrompt, userMessage, input.model);
+      let providerResult: V2PlannerProviderResult;
+      try {
+        providerResult = await this.provider(systemPrompt, userMessage, input.model);
+      } catch (error) {
+        const durationMs = Date.now() - startedAt;
+        const message = formatErrorMessage(error);
+        const errors = [`provider_error:${message}`];
+        this.recordPlannerOutput(input.plannerInput.episodeId, {
+          attempts: attempt,
+          rawText: lastRawText,
+          validation: { ok: false, errors },
+          metrics: {
+            inputTokens: totalInputTokens,
+            outputTokens: totalOutputTokens,
+            durationMs,
+          },
+        });
+        throw new V2PlannerClientError(
+          message,
+          errors,
+          attempt,
+          lastRawText,
+          totalInputTokens,
+          totalOutputTokens,
+          durationMs,
+        );
+      }
       totalInputTokens += providerResult.inputTokens;
       totalOutputTokens += providerResult.outputTokens;
       lastRawText = providerResult.text;
 
-      const validation = this.parseAndValidate(providerResult.text);
+      const validation = this.parseAndValidate(providerResult.text, input.plannerInput);
       if (validation.ok) {
         const durationMs = Date.now() - startedAt;
         const result: V2PlannerCallResult = {
@@ -130,16 +159,19 @@ export class V2PlannerClient {
       lastErrors,
       2,
       lastRawText,
+      totalInputTokens,
+      totalOutputTokens,
+      durationMs,
     );
   }
 
-  private parseAndValidate(rawText: string): { ok: true; output: PlannerOutput } | { ok: false; errors: string[] } {
+  private parseAndValidate(rawText: string, plannerInput: PlannerInput): { ok: true; output: PlannerOutput } | { ok: false; errors: string[] } {
     const parsed = robustJsonParse(rawText);
     if (!parsed) {
       return { ok: false, errors: ['Planner response did not contain a valid JSON object'] };
     }
 
-    const validation = this.schema.validate(parsed);
+    const validation = this.schema.validate(parsed, collectValidationContext(plannerInput));
     if (!validation.ok) {
       return { ok: false, errors: validation.errors };
     }
@@ -150,4 +182,28 @@ export class V2PlannerClient {
   private recordPlannerOutput(episodeId: string, payload: unknown): void {
     this.traceStore?.recordPlannerOutput(episodeId, payload);
   }
+}
+
+function collectValidationContext(input: PlannerInput): { allowedRefs: string[]; regionRefs: Record<string, string> } {
+  const refs = new Set<string>();
+  const regionRefs: Record<string, string> = {};
+  for (const item of [...input.current.interactions, ...input.current.readables, ...input.current.navigation]) {
+    refs.add(item.refId);
+  }
+  for (const region of input.current.regions) {
+    if (region.refIds[0]) {
+      regionRefs[region.regionId] = region.refIds[0];
+    }
+    for (const refId of region.refIds) {
+      refs.add(refId);
+    }
+  }
+  if (input.current.focus?.refId) {
+    refs.add(input.current.focus.refId);
+  }
+  return { allowedRefs: [...refs], regionRefs };
+}
+
+function formatErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

@@ -5,6 +5,7 @@ export interface TraceReplayAuditInput {
   expectedPlannerCalls?: number;
   expectedToolExecutions?: number;
   requireAgentMode?: boolean;
+  allowFailedRuntimeSteps?: boolean;
 }
 
 export interface TraceReplayAuditResult {
@@ -33,7 +34,7 @@ interface TraceReplayJson {
   }>;
 }
 
-const MUTATING_STEP_KINDS = new Set(['click', 'type', 'scroll', 'wait']);
+const MUTATING_STEP_KINDS = new Set(['click', 'type', 'navigate', 'scroll', 'wait']);
 
 export async function auditTraceReplay(input: TraceReplayAuditInput): Promise<TraceReplayAuditResult> {
   try {
@@ -74,7 +75,7 @@ export function auditTraceReplayJson(
     input.expectedToolExecutions !== undefined && runtimeSteps.length < input.expectedToolExecutions
       ? 'missing_runtime_steps'
       : undefined,
-    failedStepCount === 0 ? undefined : 'failed_runtime_steps',
+    failedStepCount === 0 || input.allowFailedRuntimeSteps ? undefined : 'failed_runtime_steps',
     mutationWithoutEvidenceCount === 0 ? undefined : 'missing_mutation_evidence',
   ].filter((error): error is string => typeof error === 'string');
 
