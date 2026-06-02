@@ -113,6 +113,22 @@ Refactoring is not allowed when it:
 - Creates abstractions for unimplemented future phases.
 - Makes tests broader but less precise.
 
+## Surgical Change Rule
+
+When editing existing code:
+
+- Touch only what the current task requires. Do not "improve" adjacent code, comments, or formatting.
+- Do not refactor things that are not broken or outside the current scope.
+- Match existing style, even if a different style would be preferred.
+- If unrelated dead code, technical debt, or style issues are noticed, mention them in the implementation summary. Do not fix them inline.
+
+When your changes create orphans:
+
+- Remove imports, variables, and functions that YOUR changes made unused.
+- Do not remove pre-existing dead code unless explicitly asked.
+
+The test: every changed line must trace directly to the current task or phase requirement.
+
 ## Completion Gate
 
 Do not move to the next phase until:

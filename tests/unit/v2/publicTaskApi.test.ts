@@ -16,7 +16,7 @@ function restoreEnv(): void {
 
 function seedEnv(): void {
   process.env.BROWSEGENT_LLM_PROVIDER = 'gemini';
-  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
   process.env.BROWSEGENT_V2_RUNTIME = 'agent';
   process.env.BROWSEGENT_V2_HEADED = 'false';
 }
@@ -84,7 +84,7 @@ test('BrowseGent.run supports task-first options without requiring init', async 
       url: 'https://example.test',
       goal: 'Read the visible answer',
       maxSteps: 5,
-      model: 'gemini/gemini-3.1-flash-lite-preview',
+      model: 'gemini/gemini-3.1-flash-lite',
     });
   } finally {
     factoryModule.v2AgentLoopFactory.create = originalFactory;

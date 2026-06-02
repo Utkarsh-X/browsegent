@@ -42,3 +42,16 @@ test('buildBrowserObservation produces deterministic stats and required shape', 
   assert.equal(observation.stats.visibleRefCount, 1);
   assert.equal(observation.stats.durationMs, 12);
 });
+
+test('resolveBackendNodeIds returns empty identities when CDP bridge is unavailable', async () => {
+  const { resolveBackendNodeIds } = await import('../../../src/v2/substrate/ObservationService');
+  const page = {
+    evaluate: async () => undefined,
+  };
+
+  const identities = await resolveBackendNodeIds(page as never, 3, async () => {
+    throw new Error('CDP unavailable');
+  });
+
+  assert.deepEqual(identities, [{}, {}, {}]);
+});

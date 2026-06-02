@@ -3,8 +3,12 @@ import assert from 'node:assert/strict';
 import { mkdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { chromium } from 'playwright';
 
+import { ProjectionService } from '../../../src/v2/brain1/ProjectionService';
 import { BrowseGentV2Harness } from '../../../src/v2/harness/BrowseGentV2Harness';
+import { PlannerWorkingSetSelector } from '../../../src/v2/planner/PlannerWorkingSetSelector';
+import { InputService } from '../../../src/v2/substrate/InputService';
 
 function fixtureUrl(name: string): string {
   return pathToFileURL(path.resolve('tests/fixtures/v2', name)).toString();
@@ -16,6 +20,117 @@ async function freshTraceDir(name: string): Promise<string> {
   await mkdir(root, { recursive: true });
   return root;
 }
+
+test('BrowseGentV2Harness observes searchable comboboxes as typeable action-lane refs', async () => {
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_search_combobox',
+    traceDir: await freshTraceDir('search_combobox'),
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('search-combobox.html'));
+    const search = observation.refs.find(ref => ref.name === 'Search place');
+    assert.ok(search);
+    assert.equal(search.tagName, 'input');
+    assert.equal(search.inputType, 'search');
+    assert.equal(search.ariaAutocomplete, 'list');
+    assert.equal(search.capabilities?.typeable, true);
+
+    const projection = new ProjectionService().project(observation);
+    const selection = new PlannerWorkingSetSelector().select({
+      goal: 'Search for Paris',
+      projection,
+    });
+
+    assert.ok(selection.workingSet.actionSurface.typeableRefs.includes(search.refId));
+  } finally {
+    await harness.close();
+  }
+});
+
+test('BrowseGentV2Harness captures substrate-only backend node ids for visible controls when CDP is available', async () => {
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_backend_identity',
+    traceDir: await freshTraceDir('backend_identity'),
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('static-controls.html'));
+    const visibleControls = observation.refs.filter(ref => ref.visibility === 'visible');
+
+    assert.ok(visibleControls.length > 0);
+    assert.ok(visibleControls.some(ref => typeof ref.backendNodeId === 'number'));
+  } finally {
+    await harness.close();
+  }
+});
+
+test('BrowseGentV2Harness clicks the visible semantic match instead of a hidden first selector match', async () => {
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_hidden_first_resolution',
+    traceDir: await freshTraceDir('hidden_first_resolution'),
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('ambiguous-buttons.html'));
+    const search = observation.refs.find(ref => ref.name === 'Search' && ref.visibility === 'visible');
+    assert.ok(search);
+    assert.equal(search.selectorCandidates[0], 'button.button');
+
+    const result = await harness.click(search.refId);
+    const searchResult = await harness.searchPage('searched');
+
+    assert.equal(result.success, true);
+    assert.equal(searchResult.value?.matches, 1);
+  } finally {
+    await harness.close();
+  }
+});
+
+test('InputService rejects equivalent visible selector matches as ambiguous', async () => {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+
+  try {
+    await page.setContent(`
+      <!doctype html>
+      <html>
+        <body>
+          <button class="button">Search</button>
+          <button class="button">Search</button>
+        </body>
+      </html>
+    `);
+
+    await assert.rejects(
+      () => new InputService().click({
+        refId: 'ref_ambiguous_search',
+        generationId: 1,
+        targetId: 'target_ambiguous_search',
+        selectorCandidates: ['button.button'],
+        role: 'button',
+        tagName: 'button',
+        name: 'Search',
+        text: 'Search',
+        visibility: 'visible',
+        actionability: 'ready',
+        continuityConfidence: 1,
+        state: 'live',
+        capabilities: { clickable: true, typeable: false, selectable: false, readable: true },
+      }, page),
+      (error: unknown) => {
+        assert.ok(error instanceof Error);
+        assert.equal((error as { code?: string }).code, 'ambiguous_ref_resolution');
+        return true;
+      },
+    );
+  } finally {
+    await browser.close();
+  }
+});
 
 test('BrowseGentV2Harness click opens a modal and records structural local evidence', async () => {
   const traceDir = await freshTraceDir('modal');
@@ -67,6 +182,32 @@ test('BrowseGentV2Harness type mutates an input and emits operational transition
     assert.equal(result.kind, 'type');
     assert.deepEqual(result.value, { inputValue: 'Ada Lovelace' });
     assert.ok(['weak', 'moderate'].includes(result.evidence?.strength ?? ''));
+  } finally {
+    await harness.close();
+  }
+});
+
+test('BrowseGentV2Harness press submits the focused control through normal keyboard semantics', async () => {
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_keyboard_submit',
+    traceDir: await freshTraceDir('keyboard_submit'),
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('keyboard-submit.html'));
+    const query = observation.refs.find(ref => ref.name === 'Search query');
+    assert.ok(query);
+
+    const typeResult = await harness.type(query.refId, 'alpha');
+    const pressResult = await harness.press('Enter');
+    const searchResult = await harness.searchPage('submitted:alpha');
+
+    assert.equal(typeResult.success, true);
+    assert.equal(pressResult.success, true);
+    assert.equal(pressResult.kind, 'press');
+    assert.deepEqual(pressResult.value, { key: 'Enter' });
+    assert.equal(searchResult.value?.matches, 1);
   } finally {
     await harness.close();
   }

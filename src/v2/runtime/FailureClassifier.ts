@@ -141,10 +141,18 @@ function toFailureKind(code: string | undefined): FailureEvidenceKind {
     case 'target_hidden':
     case 'target_disabled':
     case 'target_blocked':
+    case 'target_not_editable':
+    case 'target_not_clickable':
+    case 'target_not_selectable':
     case 'stale_ref':
+    case 'ambiguous_ref_resolution':
+    case 'unselected_ref':
     case 'low_confidence_ref':
+    case 'element_detached':
     case 'timeout':
     case 'navigation_interrupted':
+    case 'navigation_blocked':
+    case 'captcha_or_access_block':
     case 'trace_write_failed':
       return code;
     default:
@@ -173,17 +181,25 @@ function categoryFor(kind: FailureEvidenceKind): FailureEvidenceCategory {
     case 'target_hidden':
     case 'target_disabled':
     case 'target_blocked':
+    case 'target_not_editable':
+    case 'target_not_clickable':
+    case 'target_not_selectable':
+    case 'ambiguous_ref_resolution':
       return 'target';
     case 'stale_ref':
+    case 'unselected_ref':
     case 'low_confidence_ref':
+    case 'element_detached':
       return 'continuity';
     case 'timeout':
       return 'timing';
     case 'navigation_interrupted':
+    case 'navigation_blocked':
       return 'navigation';
     case 'empty_projection':
       return 'projection';
     case 'environment_block':
+    case 'captcha_or_access_block':
       return 'environment';
     default:
       return 'unknown';
@@ -191,7 +207,7 @@ function categoryFor(kind: FailureEvidenceKind): FailureEvidenceCategory {
 }
 
 function severityFor(kind: FailureEvidenceKind): FailureEvidence['severity'] {
-  if (kind === 'environment_block' || kind === 'empty_projection') return 'critical';
+  if (kind === 'environment_block' || kind === 'captcha_or_access_block' || kind === 'empty_projection') return 'critical';
   if (kind === 'timeout' || kind === 'navigation_interrupted') return 'warning';
   return 'warning';
 }
@@ -202,8 +218,15 @@ function persistenceFor(kind: FailureEvidenceKind, retryable: boolean): FailureE
     kind === 'target_hidden'
     || kind === 'target_disabled'
     || kind === 'target_blocked'
+    || kind === 'target_not_editable'
+    || kind === 'target_not_clickable'
+    || kind === 'target_not_selectable'
+    || kind === 'ambiguous_ref_resolution'
+    || kind === 'unselected_ref'
+    || kind === 'element_detached'
     || kind === 'empty_projection'
     || kind === 'environment_block'
+    || kind === 'captcha_or_access_block'
   ) {
     return 'persistent';
   }
@@ -218,14 +241,30 @@ function messageFor(kind: FailureEvidenceKind): string {
       return 'Target ref is disabled at execution time.';
     case 'target_blocked':
       return 'Target ref center point is blocked by another element.';
+    case 'target_not_editable':
+      return 'Target ref is not editable for text entry.';
+    case 'target_not_clickable':
+      return 'Target ref is not clickable at execution time.';
+    case 'target_not_selectable':
+      return 'Target ref is not selectable at execution time.';
+    case 'ambiguous_ref_resolution':
+      return 'Target ref resolved to multiple equivalent live elements.';
     case 'stale_ref':
       return 'Target ref is absent from the current observation.';
+    case 'unselected_ref':
+      return 'Target ref was not selected into the planner working set.';
     case 'low_confidence_ref':
       return 'Target ref continuity confidence is below execution threshold.';
+    case 'element_detached':
+      return 'Target element detached before execution completed.';
     case 'timeout':
       return 'Runtime action exceeded its bounded wait.';
     case 'navigation_interrupted':
       return 'Navigation was interrupted before bounded settle completed.';
+    case 'navigation_blocked':
+      return 'Navigation was blocked by runtime policy or browser state.';
+    case 'captcha_or_access_block':
+      return 'Captcha or access-block evidence prevented reliable execution.';
     case 'target_not_found':
       return 'Target ref was not found in the current runtime state.';
     default:

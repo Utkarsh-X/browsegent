@@ -70,6 +70,7 @@ function inferFailureType(
   validation: BenchmarkValidationResult,
   trace: BenchmarkTraceScore,
 ): ScoredBenchmarkResult['failureType'] {
+  if (result.failureReason?.match(/API_BUDGET_EXCEEDED|budget_exceeded|input budget/i)) return 'budget_exceeded';
   if (result.failureReason?.match(/API_QUOTA_EXCEEDED|rate limit|rate_limited|429|RESOURCE_EXHAUSTED/i)) return 'rate_limited';
   if (result.failureReason?.match(/planner_escalated:captcha|captcha|verification required/i)) return 'environment_block';
   if (result.failureReason?.match(/planner_client_error|Planner output invalid|planner/i)) return 'planning_error';

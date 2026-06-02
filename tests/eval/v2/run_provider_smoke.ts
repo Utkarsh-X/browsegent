@@ -158,8 +158,8 @@ function buildFixturePlannerInput(fixtureUrl: string): PlannerInput {
         navigationCount: 0,
         regionCount: 0,
       },
-      interactions: [
-        {
+      refs: {
+        v2ref_1: {
           refId: 'v2ref_1',
           kind: 'button',
           role: 'button',
@@ -171,7 +171,7 @@ function buildFixturePlannerInput(fixtureUrl: string): PlannerInput {
           confidence: 1,
           score: 10,
         },
-        {
+        v2ref_2: {
           refId: 'v2ref_2',
           kind: 'input',
           role: 'textbox',
@@ -182,33 +182,9 @@ function buildFixturePlannerInput(fixtureUrl: string): PlannerInput {
           confidence: 1,
           score: 8,
         },
-      ],
-      readables: [
-        {
-          refId: 'v2ref_1',
-          kind: 'button',
-          role: 'button',
-          name: 'Submit form',
-          text: 'Submit form',
-          visibility: 'visible',
-          actionability: 'ready',
-          state: 'live',
-          confidence: 1,
-          score: 10,
-        },
-        {
-          refId: 'v2ref_2',
-          kind: 'input',
-          role: 'textbox',
-          name: 'Search docs',
-          text: 'Search docs',
-          visibility: 'visible',
-          actionability: 'ready',
-          state: 'live',
-          confidence: 1,
-          score: 8,
-        },
-      ],
+      },
+      interactions: [{ refId: 'v2ref_1', rank: 1 }, { refId: 'v2ref_2', rank: 2 }],
+      readables: [{ refId: 'v2ref_1', rank: 1 }, { refId: 'v2ref_2', rank: 2 }],
       navigation: [],
       regions: [],
       warnings: [],

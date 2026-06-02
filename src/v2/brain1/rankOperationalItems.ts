@@ -1,13 +1,19 @@
 import type { V2Ref } from '../runtime/types';
+import { deriveRefCapabilities } from '../runtime/refCapabilities';
 import type { ProjectionItem, ProjectionItemKind } from './projectionTypes';
 
 export function toProjectionItem(ref: V2Ref): ProjectionItem {
+  const capabilities = ref.capabilities ?? deriveRefCapabilities(ref);
   return {
     refId: ref.refId,
-    kind: inferProjectionKind(ref),
+    kind: inferProjectionKind(ref, capabilities),
     role: ref.role,
     name: ref.name,
     text: ref.text,
+    tagName: ref.tagName,
+    inputType: ref.inputType,
+    editableKind: ref.editableKind,
+    capabilities,
     visibility: ref.visibility,
     actionability: ref.actionability,
     state: ref.state,
@@ -42,18 +48,18 @@ function scoreRef(ref: V2Ref): number {
   return score;
 }
 
-function inferProjectionKind(ref: V2Ref): ProjectionItemKind {
+function inferProjectionKind(ref: V2Ref, capabilities = ref.capabilities ?? deriveRefCapabilities(ref)): ProjectionItemKind {
   const role = ref.role?.toLowerCase();
+  const tagName = ref.tagName?.toLowerCase();
+  const inputType = ref.inputType?.toLowerCase() ?? '';
   if (role === 'link') return 'link';
   if (role === 'button' || role === 'tab' || role === 'menuitem') return 'button';
-  if (role === 'combobox') return 'select';
+  if (tagName === 'a') return 'link';
+  if (tagName === 'button') return 'button';
+  if (tagName === 'input' && ['button', 'submit', 'reset', 'image'].includes(inputType)) return 'button';
+  if (capabilities.typeable) return ref.editableKind === 'contenteditable' ? 'editable' : 'input';
+  if (capabilities.selectable) return 'select';
   if (role === 'textbox' || role === 'searchbox') return 'input';
-
-  const selectorText = ref.selectorCandidates.join(' ').toLowerCase();
-  if (selectorText.includes('contenteditable')) return 'editable';
-  if (selectorText.includes('<select') || selectorText.includes('select')) return 'select';
-  if (selectorText.includes('input') || selectorText.includes('textarea')) return 'input';
-  if (selectorText.includes('href=')) return 'link';
 
   return 'generic';
 }

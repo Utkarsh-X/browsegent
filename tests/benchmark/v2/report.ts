@@ -1,4 +1,11 @@
-import type { BenchmarkPartition, BenchmarkPartitionSummary, BenchmarkReport, ScoredBenchmarkResult } from './types';
+import type {
+  BenchmarkDiagnosticsSummary,
+  BenchmarkPartition,
+  BenchmarkPartitionSummary,
+  BenchmarkReport,
+  BenchmarkRunMetadata,
+  ScoredBenchmarkResult,
+} from './types';
 
 export interface BuildBenchmarkReportInput {
   runId: string;
@@ -6,6 +13,7 @@ export interface BuildBenchmarkReportInput {
   startedAt: string;
   completedAt: string;
   model?: string;
+  runMetadata?: BenchmarkRunMetadata;
   results: ScoredBenchmarkResult[];
 }
 
@@ -20,6 +28,7 @@ export function buildBenchmarkReport(input: BuildBenchmarkReportInput): Benchmar
     startedAt: input.startedAt,
     completedAt: input.completedAt,
     model: input.model,
+    runMetadata: input.runMetadata,
     summary: {
       totalRuns,
       passedRuns,
@@ -34,6 +43,7 @@ export function buildBenchmarkReport(input: BuildBenchmarkReportInput): Benchmar
         dev: summarizePartition(input.results, 'dev'),
         holdout: summarizePartition(input.results, 'holdout'),
       },
+      diagnostics: summarizeDiagnostics(input.results),
     },
     results: input.results,
   };
@@ -75,4 +85,32 @@ function summarizePartition(
     passRate: ratio(passedRuns, totalRuns),
     traceCompleteRate: ratio(traceCompleteRuns, totalRuns),
   };
+}
+
+function summarizeDiagnostics(results: ScoredBenchmarkResult[]): BenchmarkDiagnosticsSummary {
+  return {
+    maxTraceBytes: max(results.map(result => result.diagnostics?.payloads.traceBytes ?? 0)),
+    maxPlannerInputBytes: max(results.map(result => result.diagnostics?.payloads.plannerInputs.maxBytes ?? 0)),
+    maxProjectionBytes: max(results.map(result => result.diagnostics?.payloads.plannerInputSections.current.maxBytes ?? 0)),
+    maxReadableProjectionBytes: max(results.map(result => result.diagnostics?.payloads.plannerInputSections.currentReadables.maxBytes ?? 0)),
+    maxInteractionProjectionBytes: max(results.map(result => result.diagnostics?.payloads.plannerInputSections.currentInteractions.maxBytes ?? 0)),
+    maxObservationBytes: max(results.map(result => result.diagnostics?.payloads.observations.maxBytes ?? 0)),
+    totalFailedSteps: sum(results.map(result => result.diagnostics?.actions.failedStepCount ?? 0)),
+    totalRepeatedActions: sum(results.map(result => result.diagnostics?.actions.repeatedActionCount ?? 0)),
+    totalInvalidActions: sum(results.map(result => result.diagnostics?.actions.invalidActionCount ?? 0)),
+    maxProjectionMultiSectionRefs: max(results.map(result => result.diagnostics?.projectionOverlap.maxMultiSectionRefCount ?? 0)),
+    maxProjectionInteractionReadableOverlap: max(results.map(result => result.diagnostics?.projectionOverlap.maxInteractionReadableOverlap ?? 0)),
+    maxWorkingSetObservedRefs: max(results.map(result => result.diagnostics?.workingSet.maxObservedRefs ?? 0)),
+    maxWorkingSetSelectedRefs: max(results.map(result => result.diagnostics?.workingSet.maxSelectedRefs ?? 0)),
+    maxWorkingSetDroppedRefs: max(results.map(result => result.diagnostics?.workingSet.maxDroppedRefs ?? 0)),
+    warningCount: sum(results.map(result => result.diagnostics?.warnings.length ?? 0)),
+  };
+}
+
+function max(values: number[]): number {
+  return values.reduce((current, value) => Math.max(current, value), 0);
+}
+
+function sum(values: number[]): number {
+  return values.reduce((total, value) => total + value, 0);
 }

@@ -20,7 +20,7 @@ function restoreEnv(): void {
 
 function seedRequiredEnv(): void {
   process.env.BROWSEGENT_LLM_PROVIDER = 'gemini';
-  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
   process.env.BROWSEGENT_CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
   process.env.BROWSEGENT_OLLAMA_MODEL = 'qwen3.5:4b';
   process.env.BROWSEGENT_OPENAI_MODEL = 'gpt-4o-mini';

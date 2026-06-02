@@ -68,6 +68,11 @@ class FakeToolRuntime {
     this.calls.push({ method: 'navigate', args: [url] });
     return { success: true, kind: 'navigate', value: { url }, traceStepId: `trace_${this.calls.length}` };
   }
+
+  async press(key: 'Enter' | 'Escape' | 'Tab' | 'ArrowDown' | 'ArrowUp'): Promise<V2ToolResult<{ key: typeof key }>> {
+    this.calls.push({ method: 'press', args: [key] });
+    return { success: true, kind: 'press', value: { key }, traceStepId: `trace_${this.calls.length}` };
+  }
 }
 
 test('V2ToolDispatcher dispatches ref-first planner steps to runtime tools', async () => {
@@ -84,6 +89,7 @@ test('V2ToolDispatcher dispatches ref-first planner steps to runtime tools', asy
     { tool: 'search_page', pattern: 'Alpha' },
     { tool: 'scroll', direction: 'up' },
     { tool: 'wait', pattern: 'Ready', timeout: 250 },
+    { tool: 'press', key: 'Enter' },
     { tool: 'navigate', url: 'https://example.test/next' },
   ];
 
@@ -94,11 +100,12 @@ test('V2ToolDispatcher dispatches ref-first planner steps to runtime tools', asy
 
   assert.deepEqual(
     runtime.calls.map(call => call.method),
-    ['click', 'type', 'get', 'inspectRegion', 'searchPage', 'scroll', 'waitForState', 'navigate'],
+    ['click', 'type', 'get', 'inspectRegion', 'searchPage', 'scroll', 'waitForState', 'press', 'navigate'],
   );
   assert.deepEqual(runtime.calls[1].args, ['ref_input', 'Ada']);
   assert.deepEqual(runtime.calls[6].args, [{ pattern: 'Ready', timeout: 250 }]);
-  assert.deepEqual(runtime.calls[7].args, ['https://example.test/next']);
+  assert.deepEqual(runtime.calls[7].args, ['Enter']);
+  assert.deepEqual(runtime.calls[8].args, ['https://example.test/next']);
   assert.equal(results.every(result => result.success), true);
 });
 
@@ -123,6 +130,7 @@ test('V2ToolDispatcher returns operational failures for unsupported or malformed
   const missingText = await dispatcher.dispatch({ tool: 'type', ref: 'ref_input' }, { goal: 'fill input' });
   const missingUrl = await dispatcher.dispatch({ tool: 'navigate' } as PlannerOutputStep, { goal: 'open page' });
   const unsafeUrl = await dispatcher.dispatch({ tool: 'navigate', url: 'data:text/html,<script>alert(1)</script>' }, { goal: 'open page' });
+  const invalidPress = await dispatcher.dispatch({ tool: 'press', key: 'Control+L' } as unknown as PlannerOutputStep, { goal: 'submit form' });
 
   assert.equal(unsupported.success, false);
   assert.equal(unsupported.error?.code, 'unsupported_tool');
@@ -135,6 +143,8 @@ test('V2ToolDispatcher returns operational failures for unsupported or malformed
   assert.equal(missingUrl.error?.code, 'missing_url');
   assert.equal(unsafeUrl.success, false);
   assert.equal(unsafeUrl.error?.code, 'unsupported_url');
+  assert.equal(invalidPress.success, false);
+  assert.equal(invalidPress.error?.code, 'invalid_key');
   assert.equal(runtime.calls.length, 0);
 });
 

@@ -1,7 +1,8 @@
-import { serializeProjection } from '../brain1/serializeProjection';
 import type { TransitionEvidence, V2ToolResult } from '../runtime/types';
 import type { ContinuityGraphSnapshot } from '../graph/types';
 import { LineageCompressor } from './LineageCompressor';
+import { PlannerWorkingSetSelector } from './PlannerWorkingSetSelector';
+import { RecoveryStateBuilder } from '../runtime/RecoveryState';
 import type {
   PlannerContinuitySummary,
   PlannerDeadStateSummary,
@@ -16,20 +17,38 @@ import type {
 
 export class PlannerInputComposer {
   private readonly lineageCompressor = new LineageCompressor();
+  private readonly workingSetSelector = new PlannerWorkingSetSelector();
+  private readonly recoveryStateBuilder = new RecoveryStateBuilder();
 
   compose(input: PlannerInputComposerInput): PlannerInput {
-    const current = serializeProjection(input.projection);
+    const workingSetSelection = this.workingSetSelector.select({
+      goal: input.goal,
+      projection: input.projection,
+      graphSnapshot: input.graphSnapshot,
+      transitionEvidence: input.transitionEvidence,
+      lastResult: input.lastResult,
+      failureEvidence: input.failureEvidence,
+    });
+    const current = workingSetSelection.current;
+    const recovery = this.recoveryStateBuilder.build({
+      lastResult: input.lastResult,
+      failures: input.failureEvidence,
+      uncertaintySignals: input.runtimeUncertainty?.signals,
+    });
 
     return {
-      version: 'v2.planner_input.v1',
+      version: 'v2.planner_input.v2',
       episodeId: input.episodeId,
       goal: input.goal,
       current,
+      workingSet: workingSetSelection.workingSet,
+      workingSetDiagnostics: workingSetSelection.diagnostics,
       continuity: input.graphSnapshot ? summarizeContinuity(input.graphSnapshot) : undefined,
       transition: input.transitionEvidence ? summarizeTransition(input.transitionEvidence) : undefined,
       lastResult: input.lastResult ? summarizeLastResult(input.lastResult) : undefined,
       failures: input.failureEvidence?.map(summarizeFailure),
       deadState: input.deadStateEvidence ? summarizeDeadState(input.deadStateEvidence) : undefined,
+      recovery,
       uncertainty: buildUncertainty(input),
       lineage: input.trace
         ? this.lineageCompressor.compress(input.trace, { maxSteps: input.maxLineageSteps })

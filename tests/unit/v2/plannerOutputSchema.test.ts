@@ -18,6 +18,7 @@ test('PlannerOutputSchema accepts ref-first v2 action plans', () => {
     plan: [
       { tool: 'click', ref: 'ref_primary' },
       { tool: 'type', ref: 'ref_search', text: 'query' },
+      { tool: 'press', key: 'Enter' },
       { tool: 'navigate', url: 'https://example.test/results' },
       { tool: 'search_page', pattern: 'query' },
     ],
@@ -25,7 +26,7 @@ test('PlannerOutputSchema accepts ref-first v2 action plans', () => {
   });
 
   assert.equal(result.ok, true);
-  assert.deepEqual(result.ok ? result.value.plan?.map(step => step.tool) : [], ['click', 'type', 'navigate', 'search_page']);
+  assert.deepEqual(result.ok ? result.value.plan?.map(step => step.tool) : [], ['click', 'type', 'press', 'navigate', 'search_page']);
 });
 
 test('PlannerOutputSchema rejects selector-based browser mechanics in v2 mode', () => {
@@ -128,4 +129,25 @@ test('PlannerOutputSchema enforces required ref and text fields', () => {
   assert.match(result.ok ? '' : result.errors.join('\n'), /click requires "ref"/);
   assert.match(result.ok ? '' : result.errors.join('\n'), /type requires "text"/);
   assert.match(result.ok ? '' : result.errors.join('\n'), /navigate requires "url"/);
+});
+
+test('PlannerOutputSchema accepts bounded press tool keys', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [{ tool: 'press', key: 'Enter' }],
+    confidence: 'high',
+  });
+
+  assert.equal(result.ok, true);
+});
+
+test('PlannerOutputSchema rejects unsupported press keys', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [{ tool: 'press', key: 'Control+L' }],
+    confidence: 'high',
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.ok ? '' : result.errors.join('\n'), /press key/);
 });

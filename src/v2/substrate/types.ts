@@ -1,6 +1,6 @@
 import type { Page } from 'playwright';
 
-import type { ActionabilityState, Rect, RuntimeWarning, V2Ref, VisibilityState } from '../runtime/types';
+import type { ActionabilityState, EditableKind, Rect, RuntimeWarning, V2Ref, VisibilityState } from '../runtime/types';
 
 export interface BrowserSessionOptions {
   headed?: boolean;
@@ -30,8 +30,15 @@ export interface BuildObservationInput {
 
 export interface CapturedElement {
   targetId: string;
+  frameId?: string;
   selectorCandidates: string[];
   tagName: string;
+  inputType?: string;
+  editableKind?: EditableKind;
+  ariaAutocomplete?: string;
+  ariaHasPopup?: string;
+  isContentEditable?: boolean;
+  nthRoleName?: number;
   role?: string;
   name?: string;
   text?: string;

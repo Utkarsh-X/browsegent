@@ -1,4 +1,5 @@
 import type { PlannerOutputStep } from '../planner/types';
+import type { PlannerPressKey } from '../planner/types';
 import type { V2ToolResult } from '../runtime/types';
 
 export interface V2ToolDispatchContext {
@@ -14,6 +15,7 @@ export interface V2ToolRuntime {
   searchPage(pattern: string): Promise<V2ToolResult<{ matches: number; preview: string[] }>>;
   scroll(direction?: 'down' | 'up'): Promise<V2ToolResult<{ direction: 'down' | 'up' }>>;
   waitForState(input: { pattern?: string; timeout?: number }): Promise<V2ToolResult<{ matched: boolean }>>;
+  press(key: PlannerPressKey): Promise<V2ToolResult<{ key: PlannerPressKey }>>;
 }
 
 export interface V2ToolDispatcherLike {

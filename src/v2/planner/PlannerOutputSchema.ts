@@ -7,10 +7,12 @@ import type {
   PlannerOutputValidationResult,
 } from './types';
 import { isSupportedNavigationUrl, NAVIGATION_URL_POLICY_MESSAGE } from '../runtime/navigationPolicy';
+import type { PlannerActionSurface } from './workingSetTypes';
 
 export interface PlannerOutputValidationContext {
   allowedRefs?: readonly string[];
   regionRefs?: Readonly<Record<string, string>>;
+  actionSurface?: PlannerActionSurface;
 }
 
 const VALID_TOOLS = new Set<PlannerOutputTool>([
@@ -19,6 +21,7 @@ const VALID_TOOLS = new Set<PlannerOutputTool>([
   'navigate',
   'scroll',
   'wait',
+  'press',
   'get',
   'close',
   'select',
@@ -29,6 +32,7 @@ const VALID_TOOLS = new Set<PlannerOutputTool>([
 ]);
 const VALID_CONFIDENCE = new Set<PlannerConfidence>(['high', 'medium', 'low']);
 const VALID_ESCALATION = new Set<PlannerEscalation>(['user_needed', 'captcha', 'dead_end']);
+const VALID_PRESS_KEYS = new Set(['Enter', 'Escape', 'Tab', 'ArrowDown', 'ArrowUp']);
 const REF_REQUIRED_TOOLS = new Set<PlannerOutputTool>(['click', 'type', 'get', 'close', 'select', 'inspect_region']);
 const FORBIDDEN_FIELDS = new Set([
   'sel',
@@ -122,7 +126,7 @@ function validatePlanSteps(
 
     const tool = normalizedStep.tool as PlannerOutputTool;
     const candidateStep = normalizedStep as unknown as Partial<PlannerOutputStep>;
-    validateRequiredFields(tool, candidateStep, stepNumber, errors);
+    validateRequiredFields(tool, candidateStep, stepNumber, errors, context);
     normalizedSteps.push(normalizedStep as unknown as PlannerOutputStep);
   }
 
@@ -179,14 +183,26 @@ function validateRequiredFields(
   step: Partial<PlannerOutputStep>,
   stepNumber: number,
   errors: string[],
+  context: PlannerOutputValidationContext,
 ): void {
   if (REF_REQUIRED_TOOLS.has(tool) && !isNonEmptyString(step.ref)) {
     errors.push(`Step ${stepNumber} ${tool} requires "ref"`);
   }
 
+  if (
+    REF_REQUIRED_TOOLS.has(tool)
+    && isNonEmptyString(step.ref)
+    && context.allowedRefs !== undefined
+    && !isAllowedRef(step.ref, context)
+  ) {
+    errors.push(`Step ${stepNumber} ref "${step.ref}" is not present in selected planner refs`);
+  }
+
   if (tool === 'type' && !isNonEmptyString(step.text)) {
     errors.push(`Step ${stepNumber} type requires "text"`);
   }
+
+  validateActionCompatibility(tool, step, stepNumber, errors, context);
 
   if (tool === 'navigate' && !isNonEmptyString(step.url)) {
     errors.push(`Step ${stepNumber} navigate requires "url"`);
@@ -202,6 +218,10 @@ function validateRequiredFields(
 
   if (tool === 'search_page' && !isNonEmptyString(step.pattern)) {
     errors.push(`Step ${stepNumber} search_page requires "pattern"`);
+  }
+
+  if (tool === 'press' && !VALID_PRESS_KEYS.has(String(step.key))) {
+    errors.push(`Step ${stepNumber} press key must be Enter, Escape, Tab, ArrowDown, or ArrowUp`);
   }
 
   if (step.direction !== undefined && step.direction !== 'down' && step.direction !== 'up') {
@@ -231,6 +251,32 @@ function isEscalation(value: unknown): value is PlannerEscalation {
 
 function isAllowedRef(value: string, context: PlannerOutputValidationContext): boolean {
   return context.allowedRefs?.includes(value) === true;
+}
+
+function validateActionCompatibility(
+  tool: PlannerOutputTool,
+  step: Partial<PlannerOutputStep>,
+  stepNumber: number,
+  errors: string[],
+  context: PlannerOutputValidationContext,
+): void {
+  const ref = step.ref;
+  const surface = context.actionSurface;
+  if (!surface || !isNonEmptyString(ref) || surface.ambiguousRefs.includes(ref)) {
+    return;
+  }
+
+  if ((tool === 'click' || tool === 'close') && !surface.clickableRefs.includes(ref)) {
+    errors.push(`Step ${stepNumber} ref "${ref}" is not compatible with tool "${tool}"`);
+  }
+
+  if (tool === 'type' && !surface.typeableRefs.includes(ref)) {
+    errors.push(`Step ${stepNumber} ref "${ref}" is not compatible with tool "type"`);
+  }
+
+  if (tool === 'select' && !surface.selectableRefs.includes(ref)) {
+    errors.push(`Step ${stepNumber} ref "${ref}" is not compatible with tool "select"`);
+  }
 }
 
 function normalizeTargetRef(

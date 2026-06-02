@@ -3,9 +3,10 @@ import { ContinuityGraph } from '../graph/ContinuityGraph';
 import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
 import { PlannerInputComposer } from '../planner/PlannerInputComposer';
 import { V2PlannerClient } from '../planner/V2PlannerClient';
+import type { PlannerOutput } from '../planner/types';
 import { DeadStateDetector, type DeadStateEvidence } from '../runtime/DeadStateDetector';
 import { FailureClassifier, type FailureEvidence } from '../runtime/FailureClassifier';
-import type { TransitionEvidence, V2ToolResult } from '../runtime/types';
+import type { BrowserObservation, TransitionEvidence, V2ToolResult } from '../runtime/types';
 import { UncertaintySignals, type RuntimeUncertainty } from '../runtime/UncertaintySignals';
 import { V2ToolDispatcher } from '../tools/V2ToolDispatcher';
 import type {
@@ -31,6 +32,7 @@ export class V2AgentLoop {
     const dispatcher = this.options.dispatcherFactory?.(harness) ?? new V2ToolDispatcher(harness);
     const graph = new ContinuityGraph();
     const maxSteps = Math.max(1, input.maxSteps);
+    const progressMemory = new ActionProgressMemory();
     const metrics = {
       plannerCalls: 0,
       inputTokens: 0,
@@ -75,6 +77,15 @@ export class V2AgentLoop {
           metrics.inputTokens += plannerMetrics.inputTokens;
           metrics.outputTokens += plannerMetrics.outputTokens;
           metrics.plannerDurationMs += plannerMetrics.durationMs;
+          if (isPlannerInvalidOutputError(error)) {
+            return await this.complete(harness, {
+              success: false,
+              value: '',
+              failureReason: 'planner_invalid_output_dead_end',
+              steps: metrics.plannerCalls,
+              metrics,
+            });
+          }
           return await this.complete(harness, {
             success: false,
             value: '',
@@ -129,7 +140,8 @@ export class V2AgentLoop {
           });
         }
 
-        for (const plannedStep of plan) {
+        for (let planIndex = 0; planIndex < plan.length; planIndex += 1) {
+          const plannedStep = plan[planIndex];
           lastResult = await dispatcher.dispatch(plannedStep, { goal: input.goal });
           metrics.toolExecutions += 1;
           transitionEvidence = lastResult.evidence;
@@ -139,6 +151,7 @@ export class V2AgentLoop {
             graphSnapshot = graph.applyTransition(transitionEvidence);
           }
           lastSuccessfulEvidenceValue = successfulToolEvidencePreview(lastResult) ?? lastSuccessfulEvidenceValue;
+          const progressSignals = progressMemory.record(lastResult);
 
           if (!lastResult.success) {
             const currentProjection = this.projectionService.project(observation, graphSnapshot);
@@ -173,7 +186,22 @@ export class V2AgentLoop {
             break;
           }
 
-          if (shouldInterruptMiniPlan(lastResult)) {
+          runtimeUncertainty = undefined;
+          if (progressSignals.length > 0) {
+            const currentProjection = this.projectionService.project(observation, graphSnapshot);
+            runtimeUncertainty = this.uncertaintySignals.fromRuntimeState({
+              projection: currentProjection,
+              transitionEvidence,
+              graphSnapshot,
+              failures: failureEvidence,
+              deadStateEvidence,
+              extraSignals: progressSignals,
+            });
+          }
+
+          const nextStep = plan[planIndex + 1];
+          // observation is the fresh post-action observation. Use it to validate queued refs.
+          if (!shouldContinueMiniPlan({ lastResult, nextStep, freshObservation: observation })) {
             break;
           }
         }
@@ -181,8 +209,9 @@ export class V2AgentLoop {
 
       if (lastSuccessfulEvidenceValue) {
         return await this.complete(harness, {
-          success: true,
+          success: false,
           value: lastSuccessfulEvidenceValue,
+          failureReason: 'v2_max_steps_exhausted',
           steps: metrics.plannerCalls,
           metrics,
         });
@@ -265,16 +294,165 @@ function readPlannerErrorMetrics(error: unknown): { inputTokens: number; outputT
   };
 }
 
+function isPlannerInvalidOutputError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const candidate = error as { code?: unknown; message?: unknown; name?: unknown };
+  if (candidate.code === 'PLANNER_INVALID_OUTPUT') {
+    return true;
+  }
+
+  if (candidate.name === 'PlannerInvalidOutputError') {
+    return true;
+  }
+
+  return typeof candidate.message === 'string'
+    && candidate.message.includes('Planner output invalid after retry');
+}
+
 function numberOrZero(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
-const MINI_PLAN_INTERRUPT_KINDS = new Set(['click', 'type', 'navigate', 'scroll', 'wait']);
 const READ_TOOL_KINDS = new Set(['get', 'inspect_region', 'search_page']);
-const MUTATION_EVIDENCE_KINDS = new Set(['click', 'type', 'navigate']);
+const MUTATION_EVIDENCE_KINDS = new Set(['click', 'type', 'press', 'navigate']);
+const PROGRESS_HISTORY_LIMIT = 8;
+const REPEAT_SIGNAL_THRESHOLD = 2;
 
-function shouldInterruptMiniPlan(result: V2ToolResult): boolean {
-  return result.success && result.evidence !== undefined && MINI_PLAN_INTERRUPT_KINDS.has(result.kind);
+interface ActionProgressEntry {
+  kind: string;
+  targetKey: string;
+  valueKey?: string;
+  noProgressMutation: boolean;
+}
+
+class ActionProgressMemory {
+  private readonly entries: ActionProgressEntry[] = [];
+
+  record(result: V2ToolResult): string[] {
+    const entry = progressEntryForResult(result);
+    if (!entry) {
+      return [];
+    }
+
+    this.entries.push(entry);
+    if (this.entries.length > PROGRESS_HISTORY_LIMIT) {
+      this.entries.shift();
+    }
+
+    const signals: string[] = [];
+
+    if (entry.noProgressMutation) {
+      const count = this.entries.filter(existing =>
+        existing.noProgressMutation
+        && existing.kind === entry.kind
+        && existing.targetKey === entry.targetKey,
+      ).length;
+      if (count >= REPEAT_SIGNAL_THRESHOLD) {
+        signals.push(`repeated_no_progress_transition:${entry.kind}:${entry.targetKey}:${count}`);
+      }
+    }
+
+    if (entry.valueKey) {
+      const count = this.entries.filter(existing =>
+        existing.kind === entry.kind
+        && existing.targetKey === entry.targetKey
+        && existing.valueKey === entry.valueKey,
+      ).length;
+      if (count >= REPEAT_SIGNAL_THRESHOLD) {
+        signals.push(`repeated_value_preview:${entry.kind}:${entry.targetKey}:${count}`);
+      }
+    }
+
+    return signals;
+  }
+}
+
+function progressEntryForResult(result: V2ToolResult): ActionProgressEntry | undefined {
+  if (!result.success) {
+    return undefined;
+  }
+
+  const kind = normalizeSignalToken(result.kind);
+  const targetKey = normalizeSignalToken(result.targetRef ?? result.target?.refId ?? 'global');
+  const noProgressMutation = MUTATION_EVIDENCE_KINDS.has(result.kind)
+    && result.evidence?.transitionClass === 'microstate'
+    && result.evidence.strength === 'none';
+  const valuePreview = READ_TOOL_KINDS.has(result.kind) ? previewResultValue(result.value) : undefined;
+
+  if (!noProgressMutation && !valuePreview) {
+    return undefined;
+  }
+
+  return {
+    kind,
+    targetKey,
+    valueKey: valuePreview ? normalizeProgressValue(valuePreview) : undefined,
+    noProgressMutation,
+  };
+}
+
+function normalizeSignalToken(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_.-]+/g, '_').slice(0, 80) || 'unknown';
+}
+
+function normalizeProgressValue(value: string): string {
+  return value.toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 240);
+}
+
+function shouldContinueMiniPlan(input: {
+  lastResult: V2ToolResult;
+  nextStep: NonNullable<PlannerOutput['plan']>[number] | undefined;
+  freshObservation: BrowserObservation;
+}): boolean {
+  if (!input.lastResult.success || !input.nextStep) {
+    return false;
+  }
+  const nextStep = input.nextStep;
+
+  if (input.lastResult.evidence?.urlChanged || input.lastResult.evidence?.generationChanged) {
+    return false;
+  }
+
+  if (input.lastResult.evidence?.transitionClass === 'structural_macrostate') {
+    return false;
+  }
+
+  if (
+    nextStep.ref
+    && !input.freshObservation.refs.some(ref => ref.refId === nextStep.ref && ref.state === 'live')
+  ) {
+    return false;
+  }
+
+  if (input.lastResult.kind === 'navigate') {
+    return false;
+  }
+
+  if (
+    input.lastResult.kind === 'click'
+    && input.lastResult.evidence
+    && input.lastResult.evidence.strength !== 'none'
+  ) {
+    return false;
+  }
+
+  if (
+    input.lastResult.kind === 'press'
+    && input.lastResult.evidence
+    && input.lastResult.evidence.strength !== 'none'
+  ) {
+    return false;
+  }
+
+  return input.lastResult.kind === 'type'
+    || input.lastResult.kind === 'get'
+    || input.lastResult.kind === 'search_page'
+    || input.lastResult.kind === 'inspect_region'
+    || input.lastResult.kind === 'wait'
+    || input.lastResult.kind === 'scroll';
 }
 
 function successfulToolEvidencePreview(result: V2ToolResult): string | undefined {

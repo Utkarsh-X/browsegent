@@ -1,12 +1,13 @@
 import { robustJsonParse } from '../../agent/parser';
-import { callProvider } from '../../providers';
+import { callProvider, type ProviderCallOptions } from '../../providers';
 import type { TraceStore } from '../trace/TraceStore';
-import { PlannerOutputSchema } from './PlannerOutputSchema';
+import { PlannerOutputSchema, type PlannerOutputValidationContext } from './PlannerOutputSchema';
 import {
   buildV2PlannerSystemPrompt,
   buildV2PlannerUserMessage,
   buildV2PlannerValidationFeedback,
 } from './PlannerPrompt';
+import { buildV2PlannerResponseSchema } from './V2PlannerResponseSchema';
 import type { PlannerInput, PlannerOutput } from './types';
 
 export interface V2PlannerProviderResult {
@@ -19,6 +20,7 @@ export type V2PlannerProvider = (
   system: string,
   user: string,
   model?: string,
+  options?: ProviderCallOptions,
 ) => Promise<V2PlannerProviderResult>;
 
 export interface V2PlannerClientOptions {
@@ -81,7 +83,9 @@ export class V2PlannerClient {
     for (let attempt = 1; attempt <= 2; attempt += 1) {
       let providerResult: V2PlannerProviderResult;
       try {
-        providerResult = await this.provider(systemPrompt, userMessage, input.model);
+        providerResult = await this.provider(systemPrompt, userMessage, input.model, {
+          responseSchema: buildV2PlannerResponseSchema(),
+        });
       } catch (error) {
         const durationMs = Date.now() - startedAt;
         const message = formatErrorMessage(error);
@@ -184,24 +188,31 @@ export class V2PlannerClient {
   }
 }
 
-function collectValidationContext(input: PlannerInput): { allowedRefs: string[]; regionRefs: Record<string, string> } {
+function collectValidationContext(input: PlannerInput): PlannerOutputValidationContext {
   const refs = new Set<string>();
   const regionRefs: Record<string, string> = {};
+  const currentRefs = new Set(Object.keys(input.current.refs ?? {}));
+  for (const refId of Object.keys(input.current.refs ?? {})) {
+    refs.add(refId);
+  }
   for (const item of [...input.current.interactions, ...input.current.readables, ...input.current.navigation]) {
-    refs.add(item.refId);
+    if (currentRefs.has(item.refId)) {
+      refs.add(item.refId);
+    }
   }
   for (const region of input.current.regions) {
-    if (region.refIds[0]) {
-      regionRefs[region.regionId] = region.refIds[0];
+    const selectedRegionRefs = region.refIds.filter(refId => currentRefs.has(refId));
+    if (selectedRegionRefs[0]) {
+      regionRefs[region.regionId] = selectedRegionRefs[0];
     }
-    for (const refId of region.refIds) {
+    for (const refId of selectedRegionRefs) {
       refs.add(refId);
     }
   }
-  if (input.current.focus?.refId) {
+  if (input.current.focus?.refId && currentRefs.has(input.current.focus.refId)) {
     refs.add(input.current.focus.refId);
   }
-  return { allowedRefs: [...refs], regionRefs };
+  return { allowedRefs: [...refs], regionRefs, actionSurface: input.workingSet?.actionSurface };
 }
 
 function formatErrorMessage(error: unknown): string {

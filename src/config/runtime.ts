@@ -7,7 +7,7 @@ loadDotEnv();
 export type LlmProvider = 'gemini' | 'cerebras' | 'ollama' | 'openai';
 
 const DEFAULT_PROVIDER: LlmProvider = 'gemini';
-const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
 const DEFAULT_CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
 const DEFAULT_OLLAMA_MODEL = 'qwen3.5:4b';
 const DEFAULT_OPENAI_MODEL = 'gpt-4o-mini';

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { buildBrowserObservation } from '../../../src/v2/substrate/ObservationService';
 import type { BrowserObservation, TransitionEvidence, V2Ref, V2ToolResult } from '../../../src/v2';
 import type { FailureEvidence } from '../../../src/v2/runtime/FailureClassifier';
-import type { PlannerInput, PlannerOutput } from '../../../src/v2/planner/types';
+import type { PlannerInput, PlannerOutput, PlannerPressKey } from '../../../src/v2/planner/types';
 import type { TraceArtifact, TraceManifest } from '../../../src/v2/trace/types';
 
 async function loadAgentLoopModule() {
@@ -53,6 +53,24 @@ function makeEvidence(before = 'obs_before', after = 'obs_after'): TransitionEvi
     afterObservationId: after,
     transitionClass: 'structural_local',
     strength: 'moderate',
+    generationChanged: false,
+    urlChanged: false,
+    refChanges: {
+      appeared: [],
+      disappeared: [],
+      weakened: [],
+      preserved: ['ref_submit'],
+    },
+    notes: [],
+  };
+}
+
+function makeNoProgressEvidence(before = 'obs_before', after = 'obs_after'): TransitionEvidence {
+  return {
+    beforeObservationId: before,
+    afterObservationId: after,
+    transitionClass: 'microstate',
+    strength: 'none',
     generationChanged: false,
     urlChanged: false,
     refChanges: {
@@ -134,6 +152,10 @@ class FakeHarness {
     return { success: true, kind: 'type', targetRef: refId, value: { inputValue: text }, traceStepId: 'fake_type' };
   }
 
+  async press(key: PlannerPressKey): Promise<V2ToolResult<{ key: PlannerPressKey }>> {
+    return { success: true, kind: 'press', value: { key }, traceStepId: 'fake_press' };
+  }
+
   async navigate(url: string): Promise<V2ToolResult<{ url: string }>> {
     this.navigatedUrl = url;
     return {
@@ -189,10 +211,15 @@ class FakePlanner {
 
 class FakeDispatcher {
   readonly steps: PlannerOutput['plan'] = [];
+  readonly results: V2ToolResult[] = [];
   nextResult?: V2ToolResult;
 
   async dispatch(step: NonNullable<PlannerOutput['plan']>[number]): Promise<V2ToolResult> {
     this.steps?.push(step);
+    const queuedResult = this.results.shift();
+    if (queuedResult) {
+      return queuedResult;
+    }
     if (this.nextResult) {
       return this.nextResult;
     }
@@ -281,7 +308,7 @@ test('V2AgentLoop closes harness when opening the target fails', async () => {
   assert.equal(harness.closed, true);
 });
 
-test('V2AgentLoop returns planner client failures with flushed trace evidence', async () => {
+test('V2AgentLoop returns non-validation planner client failures with flushed trace evidence', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const harness = new FakeHarness();
   const loop = new V2AgentLoop({
@@ -289,7 +316,7 @@ test('V2AgentLoop returns planner client failures with flushed trace evidence', 
     plannerClient: {
       call: async () => {
         throw Object.assign(
-          new Error('Planner output invalid after retry: Step 1 click requires "ref"'),
+          new Error('API_QUOTA_EXCEEDED: Gemini key hit rate limit.'),
           { inputTokens: 8, outputTokens: 12, durationMs: 20 },
         );
       },
@@ -305,12 +332,80 @@ test('V2AgentLoop returns planner client failures with flushed trace evidence', 
 
   assert.equal(result.success, false);
   assert.match(result.failureReason ?? '', /planner_client_error/);
-  assert.match(result.failureReason ?? '', /click requires "ref"/);
+  assert.match(result.failureReason ?? '', /API_QUOTA_EXCEEDED/);
   assert.equal(result.metrics.plannerCalls, 1);
   assert.equal(result.metrics.inputTokens, 8);
   assert.equal(result.metrics.outputTokens, 12);
   assert.equal(result.metrics.plannerDurationMs, 20);
   assert.equal(result.tracePath, 'logs/v2-runs/run_agent_loop/trace.json');
+  assert.equal(harness.flushCount, 1);
+  assert.equal(harness.closed, true);
+});
+
+test('V2AgentLoop does not classify provider errors with errors arrays as invalid planner output', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: {
+      call: async () => {
+        throw Object.assign(new Error('fetch failed'), {
+          errors: ['network socket closed'],
+          inputTokens: 11,
+          outputTokens: 0,
+          durationMs: 19,
+        });
+      },
+    },
+    dispatcherFactory: () => new FakeDispatcher(),
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'planner_client_error:fetch failed');
+  assert.equal(result.metrics.inputTokens, 11);
+  assert.equal(result.metrics.outputTokens, 0);
+  assert.equal(result.metrics.plannerDurationMs, 19);
+});
+
+test('V2AgentLoop stops invalid planner output as controlled dead end', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: {
+      call: async () => {
+        throw Object.assign(
+          new Error('Planner output invalid after retry: Step 1 click requires "ref"'),
+          {
+            errors: ['Step 1 click requires "ref"'],
+            inputTokens: 8,
+            outputTokens: 12,
+            durationMs: 20,
+          },
+        );
+      },
+    },
+    dispatcherFactory: () => new FakeDispatcher(),
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'planner_invalid_output_dead_end');
+  assert.equal(result.metrics.plannerCalls, 1);
+  assert.equal(result.metrics.inputTokens, 8);
+  assert.equal(result.metrics.outputTokens, 12);
+  assert.equal(result.metrics.plannerDurationMs, 20);
   assert.equal(harness.flushCount, 1);
   assert.equal(harness.closed, true);
 });
@@ -375,6 +470,91 @@ test('V2AgentLoop interrupts a mini-plan after a mutating transition before exec
   assert.equal(result.metrics.toolExecutions, 1);
 });
 
+test('V2AgentLoop continues safe mini-plan after type when the next ref is live in the fresh observation', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    {
+      plan: [
+        { tool: 'type', ref: 'ref_submit', text: 'Ada' },
+        { tool: 'click', ref: 'ref_submit' },
+      ],
+      confidence: 'high',
+    },
+    { done: true, val: 'Submitted' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    {
+      success: true,
+      kind: 'type',
+      targetRef: 'ref_submit',
+      value: { inputValue: 'Ada' },
+      evidence: makeNoProgressEvidence(),
+      traceStepId: 'tool_type',
+    },
+    {
+      success: true,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      traceStepId: 'tool_click',
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Enter name and submit',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.deepEqual(dispatcher.steps?.map(step => step.tool), ['type', 'click']);
+  assert.equal(result.metrics.toolExecutions, 2);
+});
+
+test('V2AgentLoop stops queued mini-plan step when the next ref is stale after re-observe', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const staleObservation = makeObservation('obs_after_stale', { refs: [] });
+  const planner = new FakePlanner([
+    {
+      plan: [
+        { tool: 'type', ref: 'ref_submit', text: 'Ada' },
+        { tool: 'click', ref: 'ref_submit' },
+      ],
+      confidence: 'high',
+    },
+    { escalate: 'dead_end', reason: 'next ref stale' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'type',
+    targetRef: 'ref_submit',
+    value: { inputValue: 'Ada' },
+    evidence: makeNoProgressEvidence(),
+    traceStepId: 'tool_type',
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness([makeObservation('obs_initial'), staleObservation]),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Enter name and submit',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'planner_escalated:dead_end');
+  assert.deepEqual(dispatcher.steps?.map(step => step.tool), ['type']);
+});
+
 test('V2AgentLoop feeds failed runtime evidence into the next planner input', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([
@@ -418,6 +598,107 @@ test('V2AgentLoop feeds failed runtime evidence into the next planner input', as
   assert.ok(planner.inputs[1].uncertainty.signals.includes('failure:target_blocked'));
   assert.equal(planner.inputs[1].deadState?.deadState, true);
   assert.ok(planner.inputs[1].deadState?.reasons.includes('high_uncertainty'));
+});
+
+test('V2AgentLoop feeds repeated no-progress mutation evidence into the next planner input', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'Changed strategy' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    evidence: makeNoProgressEvidence(),
+    traceStepId: 'tool_no_progress_click',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs.length, 3);
+  assert.equal(planner.inputs[2].uncertainty.level, 'medium');
+  assert.ok(planner.inputs[2].uncertainty.signals.includes('repeated_no_progress_transition:click:ref_submit:2'));
+});
+
+test('V2AgentLoop feeds repeated identical read evidence into the next planner input', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'Same visible answer' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'get',
+    targetRef: 'ref_submit',
+    value: { text: 'Same visible answer' },
+    traceStepId: 'tool_repeated_get',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read answer',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs.length, 3);
+  assert.equal(planner.inputs[2].uncertainty.level, 'medium');
+  assert.ok(planner.inputs[2].uncertainty.signals.includes('repeated_value_preview:get:ref_submit:2'));
+});
+
+test('V2AgentLoop does not emit no-progress signals for repeated mutations with real transition evidence', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'Progressed' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    evidence: makeEvidence(),
+    traceStepId: 'tool_progress_click',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs.length, 3);
+  assert.equal(
+    planner.inputs[2].uncertainty.signals.some(signal => signal.startsWith('repeated_')),
+    false,
+  );
 });
 
 test('V2AgentLoop routes planner navigate steps through the default tool dispatcher', async () => {
@@ -469,7 +750,7 @@ test('V2AgentLoop stops deterministically at maxSteps without semantic judgment'
   assert.equal(result.metrics.toolExecutions, 2);
 });
 
-test('V2AgentLoop returns last successful read evidence when max steps exhaust after reads', async () => {
+test('V2AgentLoop fails max-step exhaustion while preserving last read evidence', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([
     { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
@@ -495,14 +776,14 @@ test('V2AgentLoop returns last successful read evidence when max steps exhaust a
     maxSteps: 2,
   });
 
-  assert.equal(result.success, true);
+  assert.equal(result.success, false);
   assert.equal(result.value, 'Observed answer');
-  assert.equal(result.failureReason, undefined);
+  assert.equal(result.failureReason, 'v2_max_steps_exhausted');
   assert.equal(result.metrics.plannerCalls, 2);
   assert.equal(result.metrics.toolExecutions, 2);
 });
 
-test('V2AgentLoop returns last successful mutation evidence when max steps exhaust after observable progress', async () => {
+test('V2AgentLoop fails max-step exhaustion while preserving last mutation evidence', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([
     { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
@@ -534,9 +815,9 @@ test('V2AgentLoop returns last successful mutation evidence when max steps exhau
     maxSteps: 2,
   });
 
-  assert.equal(result.success, true);
+  assert.equal(result.success, false);
   assert.equal(result.value, 'Open modal button');
-  assert.equal(result.failureReason, undefined);
+  assert.equal(result.failureReason, 'v2_max_steps_exhausted');
   assert.equal(result.metrics.plannerCalls, 2);
   assert.equal(result.metrics.toolExecutions, 2);
 });

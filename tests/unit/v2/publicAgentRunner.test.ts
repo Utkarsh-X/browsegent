@@ -31,7 +31,7 @@ test('BrowserAgentRunner maps task-first input into a v2 agent loop run', async 
   const calls: unknown[] = [];
   const runner = new BrowserAgentRunner({
     defaultMaxSteps: 6,
-    defaultModel: 'gemini/gemini-3.1-flash-lite-preview',
+    defaultModel: 'gemini/gemini-3.1-flash-lite',
     defaultTraceDir: 'logs/v2-runs',
     runtimeHeaded: false,
     loopFactory: input => {
@@ -48,7 +48,7 @@ test('BrowserAgentRunner maps task-first input into a v2 agent loop run', async 
   const result = await runner.run('Find the first price', {
     url: 'https://example.test/products',
     maxSteps: 3,
-    model: 'gemini/gemini-3.1-flash-lite-preview',
+    model: 'gemini/gemini-3.1-flash-lite',
     browser: { headless: true, viewport: { width: 1000, height: 700 } },
     trace: { dir: 'logs/bench', runId: 'public_api_unit' },
   });
@@ -67,7 +67,7 @@ test('BrowserAgentRunner maps task-first input into a v2 agent loop run', async 
     url: 'https://example.test/products',
     goal: 'Find the first price',
     maxSteps: 3,
-    model: 'gemini/gemini-3.1-flash-lite-preview',
+    model: 'gemini/gemini-3.1-flash-lite',
   });
 });
 
@@ -75,7 +75,7 @@ test('BrowserAgentRunner reports unsupported browser options as warnings', async
   const { BrowserAgentRunner } = await import('../../../src/v2');
   const runner = new BrowserAgentRunner({
     defaultMaxSteps: 4,
-    defaultModel: 'gemini/gemini-3.1-flash-lite-preview',
+    defaultModel: 'gemini/gemini-3.1-flash-lite',
     defaultTraceDir: 'logs/v2-runs',
     runtimeHeaded: false,
     loopFactory: () => ({
@@ -99,7 +99,7 @@ test('BrowserAgentRunner parses JSON output mode and fails honestly on invalid J
   const { BrowserAgentRunner } = await import('../../../src/v2');
   const runner = new BrowserAgentRunner({
     defaultMaxSteps: 4,
-    defaultModel: 'gemini/gemini-3.1-flash-lite-preview',
+    defaultModel: 'gemini/gemini-3.1-flash-lite',
     defaultTraceDir: 'logs/v2-runs',
     runtimeHeaded: false,
     loopFactory: () => ({
@@ -117,7 +117,7 @@ test('BrowserAgentRunner parses JSON output mode and fails honestly on invalid J
 
   const failingRunner = new BrowserAgentRunner({
     defaultMaxSteps: 4,
-    defaultModel: 'gemini/gemini-3.1-flash-lite-preview',
+    defaultModel: 'gemini/gemini-3.1-flash-lite',
     defaultTraceDir: 'logs/v2-runs',
     runtimeHeaded: false,
     loopFactory: () => ({

@@ -7,6 +7,7 @@ export type BenchmarkFailureType =
   | 'planning_error'
   | 'environment_block'
   | 'validation_error'
+  | 'budget_exceeded'
   | 'rate_limited'
   | 'trace_error'
   | 'runtime_crash'
@@ -38,7 +39,10 @@ export interface BenchmarkAdapterRunOptions {
   maxSteps?: number;
   traceDir: string;
   headed: boolean;
+  requestMinIntervalMs?: number;
 }
+
+export type BenchmarkEvidenceMode = 'browsegent_trace' | 'external_artifact';
 
 export interface BenchmarkAdapterResult {
   adapterId: string;
@@ -47,6 +51,7 @@ export interface BenchmarkAdapterResult {
   success: boolean;
   value: string;
   tracePath?: string;
+  artifactPath?: string;
   failureReason?: string;
   failureType?: BenchmarkFailureType;
   metrics: {
@@ -56,10 +61,12 @@ export interface BenchmarkAdapterResult {
     inputTokens?: number;
     outputTokens?: number;
   };
+  diagnostics?: BenchmarkDiagnostics;
 }
 
 export interface BenchmarkAdapter {
   adapterId: string;
+  traceMode?: BenchmarkEvidenceMode;
   run(task: BenchmarkTask, options: BenchmarkAdapterRunOptions): Promise<BenchmarkAdapterResult>;
 }
 
@@ -95,6 +102,7 @@ export interface BenchmarkReport {
   startedAt: string;
   completedAt: string;
   model?: string;
+  runMetadata?: BenchmarkRunMetadata;
   summary: {
     totalRuns: number;
     passedRuns: number;
@@ -106,6 +114,110 @@ export interface BenchmarkReport {
     avgDurationMs: number;
     failureTypes: Record<string, number>;
     partitions: Record<BenchmarkPartition, BenchmarkPartitionSummary>;
+    diagnostics?: BenchmarkDiagnosticsSummary;
   };
   results: ScoredBenchmarkResult[];
+}
+
+export interface BenchmarkPayloadSizeSummary {
+  count: number;
+  totalBytes: number;
+  maxBytes: number;
+}
+
+export interface BenchmarkPayloadDiagnostics {
+  traceBytes: number;
+  observations: BenchmarkPayloadSizeSummary;
+  plannerInputs: BenchmarkPayloadSizeSummary;
+  plannerInputSections: BenchmarkPlannerInputSectionDiagnostics;
+  plannerOutputs: BenchmarkPayloadSizeSummary;
+  failures: BenchmarkPayloadSizeSummary;
+}
+
+export interface BenchmarkPlannerInputSectionDiagnostics {
+  goal: BenchmarkPayloadSizeSummary;
+  current: BenchmarkPayloadSizeSummary;
+  currentInteractions: BenchmarkPayloadSizeSummary;
+  currentReadables: BenchmarkPayloadSizeSummary;
+  currentNavigation: BenchmarkPayloadSizeSummary;
+  currentRegions: BenchmarkPayloadSizeSummary;
+  continuity: BenchmarkPayloadSizeSummary;
+  transition: BenchmarkPayloadSizeSummary;
+  lineage: BenchmarkPayloadSizeSummary;
+  failures: BenchmarkPayloadSizeSummary;
+  deadState: BenchmarkPayloadSizeSummary;
+  uncertainty: BenchmarkPayloadSizeSummary;
+}
+
+export interface BenchmarkActionDiagnostics {
+  stepCount: number;
+  failedStepCount: number;
+  repeatedActionCount: number;
+  invalidActionCount: number;
+}
+
+export interface BenchmarkDiagnostics {
+  payloads: BenchmarkPayloadDiagnostics;
+  actions: BenchmarkActionDiagnostics;
+  projectionOverlap: BenchmarkProjectionOverlapDiagnostics;
+  workingSet: BenchmarkWorkingSetDiagnostics;
+  warnings: string[];
+}
+
+export interface BenchmarkProjectionOverlapDiagnostics {
+  maxMultiSectionRefCount: number;
+  maxInteractionReadableOverlap: number;
+  maxInteractionNavigationOverlap: number;
+  maxReadableNavigationOverlap: number;
+}
+
+export interface BenchmarkWorkingSetDiagnostics {
+  maxObservedRefs: number;
+  maxSelectedRefs: number;
+  maxDroppedRefs: number;
+  selectedByReason: Record<string, number>;
+  droppedByReason: Record<string, number>;
+}
+
+export interface BenchmarkDiagnosticsSummary {
+  maxTraceBytes: number;
+  maxPlannerInputBytes: number;
+  maxProjectionBytes: number;
+  maxReadableProjectionBytes: number;
+  maxInteractionProjectionBytes: number;
+  maxObservationBytes: number;
+  totalFailedSteps: number;
+  totalRepeatedActions: number;
+  totalInvalidActions: number;
+  maxProjectionMultiSectionRefs: number;
+  maxProjectionInteractionReadableOverlap: number;
+  maxWorkingSetObservedRefs: number;
+  maxWorkingSetSelectedRefs: number;
+  maxWorkingSetDroppedRefs: number;
+  warningCount: number;
+}
+
+export interface BenchmarkRunMetadata {
+  geminiKeyPool?: {
+    keyCount: number;
+    configuredKeyCount?: number;
+    uniqueKeyCount?: number;
+    duplicateKeyCount?: number;
+    keyIndex?: number;
+    selectedEnvName?: string;
+    assignmentMode?: 'per_run' | 'per_task_attempt';
+    assignments?: BenchmarkGeminiKeyAssignment[];
+  };
+  rateLimit?: {
+    mode: 'disabled' | 'paced';
+    requestRpm?: number;
+    minIntervalMs: number;
+  };
+}
+
+export interface BenchmarkGeminiKeyAssignment {
+  taskId: string;
+  attempt: number;
+  keyIndex: number;
+  selectedEnvName: string;
 }

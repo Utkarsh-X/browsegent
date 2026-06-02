@@ -1,6 +1,7 @@
 node_modules/
 dist/
 logs/
+browser-use-config/
 .env
 *.secrets.*
 configs/secrets*
@@ -12,4 +13,5 @@ extension/.chrome_profile*/
 coverage/
 browser-use-docs(inspiration-only)/
 skills/
+skills-lock.json
 discussion/

@@ -11,6 +11,9 @@ export function createRefFingerprint(ref: V2Ref): RefFingerprint {
     normalize(ref.role ?? ''),
     normalize(ref.name ?? ''),
     normalize(ref.text ?? ''),
+    normalize(ref.tagName ?? ''),
+    normalize(ref.inputType ?? ''),
+    normalize(ref.editableKind ?? ''),
   ].join('|'));
 }
 
@@ -21,6 +24,9 @@ export function createSoftRefFingerprint(ref: V2Ref): RefFingerprint {
     normalize(ref.name ?? ''),
     normalize(ref.text ?? ''),
     normalize(ref.actionability),
+    normalize(ref.tagName ?? ''),
+    normalize(ref.inputType ?? ''),
+    normalize(ref.editableKind ?? ''),
   ].join('|'));
 }
 

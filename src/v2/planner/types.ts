@@ -5,6 +5,8 @@ import type { TraceManifest } from '../trace/types';
 import type { DeadStateEvidence } from '../runtime/DeadStateDetector';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { RuntimeUncertainty } from '../runtime/UncertaintySignals';
+import type { PlannerRecoveryState } from '../runtime/RecoveryState';
+import type { PlannerWorkingSet, PlannerWorkingSetDiagnostics } from './workingSetTypes';
 
 export type PlannerOutputTool =
   | 'click'
@@ -12,6 +14,7 @@ export type PlannerOutputTool =
   | 'navigate'
   | 'scroll'
   | 'wait'
+  | 'press'
   | 'get'
   | 'close'
   | 'select'
@@ -22,7 +25,9 @@ export type PlannerOutputTool =
 
 export type PlannerConfidence = 'high' | 'medium' | 'low';
 export type PlannerEscalation = 'user_needed' | 'captcha' | 'dead_end';
+export type PlannerPressKey = 'Enter' | 'Escape' | 'Tab' | 'ArrowDown' | 'ArrowUp';
 export type PlannerUncertaintyLevel = 'none' | 'low' | 'medium' | 'high';
+export type PlannerInputVersion = 'v2.planner_input.v1' | 'v2.planner_input.v2';
 
 export interface PlannerInputComposerInput {
   episodeId: string;
@@ -39,15 +44,18 @@ export interface PlannerInputComposerInput {
 }
 
 export interface PlannerInput {
-  version: 'v2.planner_input.v1';
+  version: PlannerInputVersion;
   episodeId: string;
   goal: string;
   current: SerializedProjection;
+  workingSet?: PlannerWorkingSet;
+  workingSetDiagnostics?: PlannerWorkingSetDiagnostics;
   continuity?: PlannerContinuitySummary;
   transition?: PlannerTransitionSummary;
   lastResult?: PlannerLastResultSummary;
   failures?: PlannerFailureSummary[];
   deadState?: PlannerDeadStateSummary;
+  recovery?: PlannerRecoveryState;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
 }
@@ -159,6 +167,7 @@ export interface PlannerOutputStep {
   direction?: 'down' | 'up';
   timeout?: number;
   pattern?: string;
+  key?: PlannerPressKey;
 }
 
 export interface PlannerOutput {

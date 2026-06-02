@@ -4,8 +4,10 @@ import { RefService } from '../runtime/RefService';
 import { StabilizationService } from '../runtime/StabilizationService';
 import { TransitionService } from '../runtime/TransitionService';
 import type { BrowserObservation, V2Ref, V2ToolError, V2ToolResult, V2ToolTargetSummary } from '../runtime/types';
+import type { PlannerPressKey } from '../planner/types';
 import { BrowserSession } from '../substrate/BrowserSession';
 import { InputService } from '../substrate/InputService';
+import { KeyboardService } from '../substrate/KeyboardService';
 import { ObservationService } from '../substrate/ObservationService';
 import { TraceStore } from '../trace/TraceStore';
 import type { TraceArtifact, TraceManifest } from '../trace/types';
@@ -17,6 +19,7 @@ export class BrowseGentV2Harness {
   private readonly observer = new ObservationService();
   private readonly refService = new RefService();
   private readonly inputService = new InputService();
+  private readonly keyboardService = new KeyboardService();
   private readonly stabilizationService = new StabilizationService();
   private readonly transitionService = new TransitionService();
   private readonly traceStore: TraceStore;
@@ -55,6 +58,47 @@ export class BrowseGentV2Harness {
 
   async type(refId: string, text: string): Promise<V2ToolResult<{ inputValue: string }>> {
     return this.executeMutation('type', refId, async (ref) => this.inputService.type(ref, text, this.session.currentPage()));
+  }
+
+  async press(key: PlannerPressKey): Promise<V2ToolResult<{ key: PlannerPressKey }>> {
+    const before = this.assertOpened();
+    const stepId = this.traceStore.recordActionStart({
+      kind: 'press',
+      beforeObservationId: before.observationId,
+      input: { key },
+    });
+
+    try {
+      const execution = await this.keyboardService.press(key, this.session.currentPage());
+      await this.stabilizationService.waitForSettledState(this.session.currentPage());
+      const after = await this.captureCurrentObservation();
+      const evidence = this.transitionService.compare(before, after);
+      const result: V2ToolResult<{ key: PlannerPressKey }> = {
+        success: true,
+        kind: 'press',
+        value: execution.value,
+        evidence,
+        traceStepId: stepId,
+      };
+
+      this.traceStore.recordActionEnd(stepId, result, {
+        afterObservationId: after.observationId,
+      });
+      return result;
+    } catch (error) {
+      const result = this.failureResult<{ key: PlannerPressKey }>('press', undefined, stepId, mapExecutionError(error));
+      try {
+        await this.stabilizationService.waitForSettledState(this.session.currentPage());
+        const after = await this.captureCurrentObservation();
+        result.evidence = this.transitionService.compare(before, after);
+        this.traceStore.recordActionEnd(stepId, result, {
+          afterObservationId: after.observationId,
+        });
+      } catch {
+        this.traceStore.recordActionEnd(stepId, result);
+      }
+      return result;
+    }
   }
 
   async navigate(url: string): Promise<V2ToolResult<{ url: string }>> {

@@ -10,6 +10,7 @@ export interface RuntimeUncertaintyInput {
   graphSnapshot?: ContinuityGraphSnapshot;
   failures?: FailureEvidence[];
   deadStateEvidence?: DeadStateEvidence;
+  extraSignals?: string[];
 }
 
 export interface RuntimeUncertainty {
@@ -49,6 +50,10 @@ function collectSignals(input: RuntimeUncertaintyInput): string[] {
     signals.push(`weakened_refs:${input.transitionEvidence.refChanges.weakened.length}`);
   }
 
+  if (input.transitionEvidence?.strength === 'none') {
+    signals.push('transition_strength:none');
+  }
+
   if (input.transitionEvidence?.transitionClass === 'hard_reset') {
     signals.push('transition_class:hard_reset');
   }
@@ -63,6 +68,10 @@ function collectSignals(input: RuntimeUncertaintyInput): string[] {
 
   if (input.deadStateEvidence) {
     signals.push('dead_state_evidence');
+  }
+
+  for (const signal of input.extraSignals ?? []) {
+    signals.push(signal);
   }
 
   return Array.from(new Set(signals));
@@ -84,6 +93,8 @@ function chooseLevel(signals: string[]): RuntimeUncertainty['level'] {
       signal.startsWith('failure:')
       || signal.startsWith('low_confidence_ref:')
       || signal.startsWith('weakened_refs:')
+      || signal.startsWith('repeated_no_progress_transition:')
+      || signal.startsWith('repeated_value_preview:')
       || signal === 'transition_class:hard_reset',
     )
   ) {

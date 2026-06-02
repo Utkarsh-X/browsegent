@@ -111,3 +111,27 @@ test('FailureClassifier preserves retryability for timeout evidence', () => {
   assert.equal(evidence.persistence, 'transient');
   assert.equal(evidence.retryable, true);
 });
+
+test('FailureClassifier maps ambiguous ref resolution to persistent target evidence', () => {
+  const result: V2ToolResult = {
+    success: false,
+    kind: 'click',
+    targetRef: 'ref_search',
+    error: {
+      code: 'ambiguous_ref_resolution',
+      message: 'Ref resolved to multiple equivalent candidates.',
+      retryable: false,
+    },
+    traceStepId: 'step_ambiguous',
+  };
+
+  const evidence = new FailureClassifier().classify(result, {
+    observationId: 'obs_ambiguous',
+  });
+
+  assert.equal(evidence.kind, 'ambiguous_ref_resolution');
+  assert.equal(evidence.category, 'target');
+  assert.equal(evidence.persistence, 'persistent');
+  assert.equal(evidence.retryable, false);
+  assert.equal(evidence.targetRef, 'ref_search');
+});

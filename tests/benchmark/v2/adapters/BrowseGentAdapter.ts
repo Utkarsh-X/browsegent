@@ -10,6 +10,7 @@ export interface BrowseGentBenchmarkAdapterOptions {
 
 export class BrowseGentBenchmarkAdapter implements BenchmarkAdapter {
   readonly adapterId = 'browsegent';
+  readonly traceMode = 'browsegent_trace';
 
   constructor(private readonly options: BrowseGentBenchmarkAdapterOptions = {}) {}
 

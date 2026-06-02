@@ -15,7 +15,7 @@ This proves build, unit tests, governance checks, integration tests, continuity 
 Run:
 
 ```powershell
-npm run benchmark:v2 -- gemini/gemini-3.1-flash-lite-preview --partition all --repeat 1
+npm run benchmark:v2 -- gemini/gemini-3.1-flash-lite --partition all --repeat 1
 ```
 
 Provider-backed runs read model and keys from local environment or `.env`. Do not put keys in commands, reports, docs, or committed files.
@@ -23,8 +23,8 @@ Provider-backed runs read model and keys from local environment or `.env`. Do no
 Use partitions to avoid overfitting:
 
 ```powershell
-npm run benchmark:v2 -- gemini/gemini-3.1-flash-lite-preview --partition dev --repeat 1
-npm run benchmark:v2 -- gemini/gemini-3.1-flash-lite-preview --partition holdout --repeat 1
+npm run benchmark:v2 -- gemini/gemini-3.1-flash-lite --partition dev --repeat 1
+npm run benchmark:v2 -- gemini/gemini-3.1-flash-lite --partition holdout --repeat 1
 ```
 
 ## Output

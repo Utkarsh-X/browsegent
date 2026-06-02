@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Keyboard submit fixture</title>
+  </head>
+  <body>
+    <main>
+      <h1>Keyboard submit</h1>
+      <form id="search-form">
+        <label for="query">Search query</label>
+        <input id="query" name="query" type="search" autocomplete="off">
+        <button type="submit">Submit search</button>
+      </form>
+      <p id="result" aria-live="polite">waiting</p>
+    </main>
+    <script>
+      document.getElementById('search-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const value = document.getElementById('query').value;
+        document.getElementById('result').textContent = `submitted:${value}`;
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Ambiguous Buttons</title>
+    <style>
+      .hidden {
+        display: none;
+      }
+
+      .button {
+        padding: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="button hidden">Search</button>
+    <button class="button">Search</button>
+    <button class="button">Cancel</button>
+    <p id="status">idle</p>
+    <script>
+      document.querySelectorAll('button.button')[1].addEventListener('click', () => {
+        document.getElementById('status').textContent = 'searched';
+      });
+    </script>
+  </body>
+</html>

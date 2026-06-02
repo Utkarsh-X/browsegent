@@ -42,3 +42,45 @@ test('createSoftRefFingerprint groups equivalent controls without selector depen
 
   assert.equal(first, second);
 });
+
+test('createSoftRefFingerprint distinguishes text inputs from submit buttons with same label', () => {
+  const textInput = makeRef({
+    role: 'textbox',
+    name: 'Search',
+    text: 'Search',
+    tagName: 'input',
+    inputType: 'search',
+    editableKind: 'search',
+  });
+  const submitButton = makeRef({
+    role: 'button',
+    name: 'Search',
+    text: 'Search',
+    tagName: 'input',
+    inputType: 'submit',
+    editableKind: 'none',
+  });
+
+  assert.notEqual(createSoftRefFingerprint(textInput), createSoftRefFingerprint(submitButton));
+});
+
+test('createSoftRefFingerprint includes DOM input facts for same-role controls', () => {
+  const searchInput = makeRef({
+    role: 'textbox',
+    name: 'Search',
+    text: 'Search',
+    tagName: 'input',
+    inputType: 'search',
+    editableKind: 'search',
+  });
+  const textInput = makeRef({
+    role: 'textbox',
+    name: 'Search',
+    text: 'Search',
+    tagName: 'input',
+    inputType: 'text',
+    editableKind: 'text',
+  });
+
+  assert.notEqual(createSoftRefFingerprint(searchInput), createSoftRefFingerprint(textInput));
+});

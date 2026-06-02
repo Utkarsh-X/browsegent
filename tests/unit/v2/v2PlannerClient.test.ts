@@ -4,6 +4,7 @@ import { mkdir, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { TraceStore } from '../../../src/v2/trace/TraceStore';
+import { buildV2PlannerSystemPrompt } from '../../../src/v2/planner/PlannerPrompt';
 import type { PlannerInput } from '../../../src/v2/planner/types';
 
 async function loadPlannerClientModule() {
@@ -27,8 +28,8 @@ function makePlannerInput(episodeId = 'episode_client'): PlannerInput {
         url: 'https://example.test/form',
         title: 'Form',
       },
-      interactions: [
-        {
+      refs: {
+        ref_submit: {
           refId: 'ref_submit',
           kind: 'button',
           role: 'button',
@@ -40,7 +41,8 @@ function makePlannerInput(episodeId = 'episode_client'): PlannerInput {
           confidence: 1,
           score: 10,
         },
-      ],
+      },
+      interactions: [{ refId: 'ref_submit', rank: 1 }],
       readables: [],
       navigation: [],
       regions: [],
@@ -113,6 +115,206 @@ test('V2PlannerClient accepts validated ref-first planner output and records rep
   assert.equal(outputJson.output.plan[0].ref, 'ref_submit');
 });
 
+test('V2PlannerClient passes the V2 planner response schema to provider', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const providerCalls: Array<{ options?: { responseSchema?: unknown } }> = [];
+  const client = new V2PlannerClient({
+    provider: async (_system, _user, _model, options) => {
+      providerCalls.push({ options });
+      return {
+        text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  await client.call({ plannerInput: makePlannerInput('episode_v2_schema') });
+
+  assert.ok(providerCalls[0].options?.responseSchema);
+  assert.doesNotMatch(JSON.stringify(providerCalls[0].options?.responseSchema), /"sel"|"selector"/);
+});
+
+test('V2PlannerClient accepts refs from canonical current refs when views contain no full item facts', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_canonical_refs');
+
+  (plannerInput.current as unknown as {
+    refs: Record<string, unknown>;
+    interactions: Array<{ refId: string; rank: number }>;
+    readables: Array<{ refId: string; rank: number }>;
+    navigation: Array<{ refId: string; rank: number }>;
+    focus?: undefined;
+  }).refs = {
+    ref_submit: {
+      refId: 'ref_submit',
+      kind: 'button',
+      role: 'button',
+      name: 'Submit',
+      visibility: 'visible',
+      actionability: 'ready',
+      state: 'live',
+      confidence: 1,
+      score: 10,
+    },
+  };
+  (plannerInput.current as unknown as { interactions: Array<{ refId: string; rank: number }> }).interactions = [
+  ];
+  (plannerInput.current as unknown as { readables: Array<{ refId: string; rank: number }> }).readables = [];
+  (plannerInput.current as unknown as { navigation: Array<{ refId: string; rank: number }> }).navigation = [];
+  plannerInput.current.focus = undefined;
+
+  const client = new V2PlannerClient({
+    provider: async () => ({
+      text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+      inputTokens: 5,
+      outputTokens: 3,
+    }),
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.equal(result.output.plan?.[0].ref, 'ref_submit');
+});
+
+test('buildV2PlannerSystemPrompt describes canonical refs and lightweight projection views', () => {
+  const prompt = buildV2PlannerSystemPrompt();
+
+  assert.match(prompt, /current\.refs contains selected ref facts only/);
+  assert.match(prompt, /workingSet explains why selected refs were included/);
+  assert.match(prompt, /bounded views over selected refs/);
+});
+
+test('V2PlannerClient validation accepts refs selected through working set current refs only', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_working_set_refs');
+  plannerInput.version = 'v2.planner_input.v2';
+  plannerInput.current.refs = {
+    ref_visible: {
+      refId: 'ref_visible',
+      kind: 'button',
+      role: 'button',
+      name: 'Visible action',
+      visibility: 'visible',
+      actionability: 'ready',
+      state: 'live',
+      confidence: 1,
+      score: 100,
+    },
+  };
+  plannerInput.current.interactions = [{ refId: 'ref_visible', rank: 1 }];
+  plannerInput.current.readables = [];
+  plannerInput.current.navigation = [];
+
+  const client = new V2PlannerClient({
+    provider: async () => ({
+      text: JSON.stringify({ plan: [{ tool: 'click', ref: 'ref_hidden_omitted' }], confidence: 'high' }),
+      inputTokens: 1,
+      outputTokens: 1,
+    }),
+  });
+
+  await assert.rejects(
+    () => client.call({ plannerInput }),
+    /ref_hidden_omitted/,
+  );
+});
+
+test('V2PlannerClient rejects high-confidence type actions against known non-typeable refs', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_wrong_lane');
+  plannerInput.version = 'v2.planner_input.v2';
+  plannerInput.workingSet = {
+    mode: 'act',
+    modeReason: 'test',
+    primaryRefs: [],
+    secondaryRefs: [],
+    readableEvidence: [],
+    navigationRefs: [],
+    actionSurface: {
+      clickableRefs: ['ref_submit'],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+    changedRefs: {
+      appearedCount: 0,
+      weakenedCount: 0,
+      preservedCount: 0,
+      topRefs: [],
+      omittedCount: 0,
+    },
+    failedRefs: [],
+    regionSummaries: [],
+    omitted: {
+      observedRefCount: 1,
+      selectedRefCount: 1,
+      droppedRefCount: 0,
+      droppedByReason: {},
+    },
+  };
+  const client = new V2PlannerClient({
+    provider: async () => ({
+      text: '{"plan":[{"tool":"type","ref":"ref_submit","text":"hello"}],"confidence":"high"}',
+      inputTokens: 1,
+      outputTokens: 1,
+    }),
+  });
+
+  await assert.rejects(
+    () => client.call({ plannerInput }),
+    /not compatible with tool "type"/,
+  );
+});
+
+test('V2PlannerClient allows ambiguous refs through action compatibility validation', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_ambiguous_lane');
+  plannerInput.version = 'v2.planner_input.v2';
+  plannerInput.workingSet = {
+    mode: 'act',
+    modeReason: 'test',
+    primaryRefs: [],
+    secondaryRefs: [],
+    readableEvidence: [],
+    navigationRefs: [],
+    actionSurface: {
+      clickableRefs: [],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: [],
+      ambiguousRefs: ['ref_submit'],
+    },
+    changedRefs: {
+      appearedCount: 0,
+      weakenedCount: 0,
+      preservedCount: 0,
+      topRefs: [],
+      omittedCount: 0,
+    },
+    failedRefs: [],
+    regionSummaries: [],
+    omitted: {
+      observedRefCount: 1,
+      selectedRefCount: 1,
+      droppedRefCount: 0,
+      droppedByReason: {},
+    },
+  };
+  const client = new V2PlannerClient({
+    provider: async () => ({
+      text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"medium"}',
+      inputTokens: 1,
+      outputTokens: 1,
+    }),
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.equal(result.output.plan?.[0].ref, 'ref_submit');
+});
+
 test('V2PlannerClient retries once with validation feedback after invalid selector output', async () => {
   const { V2PlannerClient } = await loadPlannerClientModule();
   const providerUsers: string[] = [];
@@ -175,10 +377,21 @@ test('V2PlannerClient accepts safe ref-token and region aliases from planner out
     }),
   });
   const plannerInput = makePlannerInput('episode_safe_aliases');
-  plannerInput.current.interactions = [
-    { ...plannerInput.current.interactions[0], refId: 'v2ref_1', name: 'Open', text: 'Open' },
-    { ...plannerInput.current.interactions[0], refId: 'v2ref_2', name: 'Late action', text: 'Late action' },
-  ];
+  plannerInput.current.refs = {
+    v2ref_1: {
+      ...plannerInput.current.refs.ref_submit,
+      refId: 'v2ref_1',
+      name: 'Open',
+      text: undefined,
+    },
+    v2ref_2: {
+      ...plannerInput.current.refs.ref_submit,
+      refId: 'v2ref_2',
+      name: 'Late action',
+      text: undefined,
+    },
+  };
+  plannerInput.current.interactions = [{ refId: 'v2ref_1', rank: 1 }, { refId: 'v2ref_2', rank: 2 }];
   plannerInput.current.regions = [{
     regionId: 'region_repeated_1',
     kind: 'repeated_list',

@@ -101,6 +101,61 @@ test('serializeProjection excludes backend node ids and selector candidates', ()
   assert.doesNotMatch(json, /#secret/);
 });
 
+test('serializeProjection removes duplicate item text without losing the accessible name', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_duplicate',
+      name: 'Open account settings',
+      text: 'Open   account\nsettings',
+    }),
+    makeRef({
+      refId: 'ref_distinct',
+      name: 'Plan',
+      text: 'Plan Pro includes advanced usage details',
+    }),
+  ]));
+
+  const serialized = serializeProjection(projection);
+  const duplicate = serialized.refs.ref_duplicate;
+  const distinct = serialized.refs.ref_distinct;
+
+  assert.equal(duplicate?.name, 'Open account settings');
+  assert.equal(duplicate?.text, undefined);
+  assert.equal(distinct?.name, 'Plan');
+  assert.equal(distinct?.text, 'Plan Pro includes advanced usage details');
+});
+
+test('serializeProjection stores full ref facts once and emits lightweight ranked views', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_shared',
+      role: 'link',
+      name: 'Docs',
+      text: 'Docs',
+    }),
+    makeRef({
+      refId: 'ref_button',
+      role: 'button',
+      name: 'Submit',
+      text: 'Submit form',
+    }),
+  ]));
+
+  const serialized = serializeProjection(projection);
+
+  assert.deepEqual(Object.keys(serialized.refs).sort(), ['ref_button', 'ref_shared']);
+  assert.equal(serialized.refs.ref_shared.name, 'Docs');
+  assert.equal(serialized.refs.ref_shared.text, undefined);
+  assert.equal(serialized.refs.ref_button.name, 'Submit');
+  assert.equal(serialized.refs.ref_button.text, 'Submit form');
+  assert.deepEqual(serialized.interactions.find(item => item.refId === 'ref_shared'), { refId: 'ref_shared', rank: 2 });
+  assert.deepEqual(serialized.readables.find(item => item.refId === 'ref_shared'), { refId: 'ref_shared', rank: 2 });
+  assert.deepEqual(serialized.navigation.find(item => item.refId === 'ref_shared'), { refId: 'ref_shared', rank: 1 });
+  assert.equal('name' in serialized.interactions[0], false);
+  assert.equal('text' in serialized.readables[0], false);
+  assert.equal('role' in serialized.navigation[0], false);
+});
+
 test('ProjectionService accepts graph context without interpreting transition history', () => {
   const graphSnapshot: ContinuityGraphSnapshot = {
     snapshotId: 'graph_projection_0',

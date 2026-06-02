@@ -28,7 +28,7 @@ function report(results: ScoredBenchmarkResult[]): BenchmarkReport {
     adapterId: 'browsegent',
     startedAt: '2026-05-25T00:00:00.000Z',
     completedAt: '2026-05-25T00:01:00.000Z',
-    model: 'gemini/gemini-3.1-flash-lite-preview',
+    model: 'gemini/gemini-3.1-flash-lite',
     summary: {
       totalRuns: results.length,
       passedRuns: results.filter(candidate => candidate.passed).length,
@@ -58,7 +58,7 @@ test('buildMvrReadinessReport marks a 20+ task trace-complete high-pass run as r
 
   assert.equal(readiness.status, 'ready');
   assert.equal(readiness.sourceRunId, 'benchmark_ready');
-  assert.equal(readiness.model, 'gemini/gemini-3.1-flash-lite-preview');
+  assert.equal(readiness.model, 'gemini/gemini-3.1-flash-lite');
   assert.equal(readiness.checks.every(check => check.passed), true);
 });
 

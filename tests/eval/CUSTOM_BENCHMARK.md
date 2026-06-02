@@ -21,13 +21,13 @@ npm run eval:custom -- --source bu-bench --count 20 --seed 13 --list
 Run a sampled BU subset:
 
 ```powershell
-npm run eval:custom -- gemini/gemini-3.1-flash-lite-preview --source bu-bench --count 10 --seed 13
+npm run eval:custom -- gemini/gemini-3.1-flash-lite --source bu-bench --count 10 --seed 13
 ```
 
 Run one specific BU task from full set:
 
 ```powershell
-npm run eval:custom -- gemini/gemini-3.1-flash-lite-preview --source bu-bench --count 100 --task bu_<task_id>
+npm run eval:custom -- gemini/gemini-3.1-flash-lite --source bu-bench --count 100 --task bu_<task_id>
 ```
 
 Use stronger retry/backoff for provider/network instability:

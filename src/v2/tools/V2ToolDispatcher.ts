@@ -1,4 +1,4 @@
-import type { PlannerOutputStep } from '../planner/types';
+import type { PlannerOutputStep, PlannerPressKey } from '../planner/types';
 import { isSupportedNavigationUrl } from '../runtime/navigationPolicy';
 import type { V2ToolError, V2ToolResult } from '../runtime/types';
 import type { V2ToolDispatchContext, V2ToolRuntime } from './types';
@@ -41,6 +41,11 @@ export class V2ToolDispatcher {
         return this.runtime.scroll(step.direction);
       case 'wait':
         return this.runtime.waitForState({ pattern: step.pattern, timeout: step.timeout });
+      case 'press':
+        if (!isValidPressKey(step.key)) {
+          return failure(step.tool, 'invalid_key', 'Press key must be Enter, Escape, Tab, ArrowDown, or ArrowUp.');
+        }
+        return this.runtime.press(step.key);
       default:
         return failure(String((step as { tool?: unknown }).tool ?? 'unknown'), 'unsupported_tool', 'Unsupported v2 runtime tool.');
     }
@@ -77,4 +82,12 @@ function failure(kind: string, code: string, message: string, targetRef?: string
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isValidPressKey(value: unknown): value is PlannerPressKey {
+  return value === 'Enter'
+    || value === 'Escape'
+    || value === 'Tab'
+    || value === 'ArrowDown'
+    || value === 'ArrowUp';
 }

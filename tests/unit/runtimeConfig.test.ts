@@ -22,7 +22,7 @@ test.afterEach(() => {
 
 test('resolveLlmSelection uses explicit provider configuration from env', () => {
   process.env.BROWSEGENT_LLM_PROVIDER = 'gemini';
-  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
   process.env.BROWSEGENT_CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
   process.env.BROWSEGENT_OLLAMA_MODEL = 'qwen3.5:4b';
   process.env.BROWSEGENT_OPENAI_MODEL = 'gpt-4o-mini';
@@ -30,13 +30,13 @@ test('resolveLlmSelection uses explicit provider configuration from env', () => 
   const selection = resolveLlmSelection();
 
   assert.equal(selection.provider, 'gemini');
-  assert.equal(selection.model, 'gemini-3.1-flash-lite-preview');
-  assert.equal(selection.modelId, 'gemini/gemini-3.1-flash-lite-preview');
+  assert.equal(selection.model, 'gemini-3.1-flash-lite');
+  assert.equal(selection.modelId, 'gemini/gemini-3.1-flash-lite');
 });
 
 test('resolveLlmSelection supports explicit prefixed overrides without mutating env state', () => {
   process.env.BROWSEGENT_LLM_PROVIDER = 'gemini';
-  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
   process.env.BROWSEGENT_CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
   process.env.BROWSEGENT_OLLAMA_MODEL = 'qwen3.5:4b';
   process.env.BROWSEGENT_OPENAI_MODEL = 'gpt-4o-mini';
@@ -46,12 +46,12 @@ test('resolveLlmSelection supports explicit prefixed overrides without mutating 
   assert.equal(selection.provider, 'cerebras');
   assert.equal(selection.model, 'qwen-3-235b-a22b-instruct-2507');
   assert.equal(getConfiguredProvider(), 'gemini');
-  assert.equal(getConfiguredModelForProvider('gemini'), 'gemini-3.1-flash-lite-preview');
+  assert.equal(getConfiguredModelForProvider('gemini'), 'gemini-3.1-flash-lite');
 });
 
 test('runtime config exposes progress guard enforcement toggle', () => {
   process.env.BROWSEGENT_LLM_PROVIDER = 'gemini';
-  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
   process.env.BROWSEGENT_CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
   process.env.BROWSEGENT_OLLAMA_MODEL = 'qwen3.5:4b';
   process.env.BROWSEGENT_OPENAI_MODEL = 'gpt-4o-mini';
@@ -65,7 +65,7 @@ test('runtime config exposes progress guard enforcement toggle', () => {
 
 test('runtime config exposes target utility guard enforcement toggle', () => {
   process.env.BROWSEGENT_LLM_PROVIDER = 'gemini';
-  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
   process.env.BROWSEGENT_CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
   process.env.BROWSEGENT_OLLAMA_MODEL = 'qwen3.5:4b';
   process.env.BROWSEGENT_OPENAI_MODEL = 'gpt-4o-mini';
@@ -78,7 +78,7 @@ test('runtime config exposes target utility guard enforcement toggle', () => {
 
 test('runtime config exposes Brain1 interaction pipeline toggle', () => {
   process.env.BROWSEGENT_LLM_PROVIDER = 'gemini';
-  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
   process.env.BROWSEGENT_CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
   process.env.BROWSEGENT_OLLAMA_MODEL = 'qwen3.5:4b';
   process.env.BROWSEGENT_OPENAI_MODEL = 'gpt-4o-mini';
@@ -91,7 +91,7 @@ test('runtime config exposes Brain1 interaction pipeline toggle', () => {
 
 test('runtime config exposes CDP click toggle', () => {
   process.env.BROWSEGENT_LLM_PROVIDER = 'gemini';
-  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+  process.env.BROWSEGENT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
   process.env.BROWSEGENT_CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
   process.env.BROWSEGENT_OLLAMA_MODEL = 'qwen3.5:4b';
   process.env.BROWSEGENT_OPENAI_MODEL = 'gpt-4o-mini';
@@ -110,7 +110,7 @@ test('runtime config uses model defaults when provider env is absent', () => {
 
   const runtime = getRuntimeConfig();
 
-  assert.equal(runtime.llm.geminiModel, 'gemini-3.1-flash-lite-preview');
+  assert.equal(runtime.llm.geminiModel, 'gemini-3.1-flash-lite');
   assert.equal(runtime.llm.cerebrasModel, 'qwen-3-235b-a22b-instruct-2507');
   assert.equal(runtime.llm.ollamaModel, 'qwen3.5:4b');
   assert.equal(runtime.llm.openaiModel, 'gpt-4o-mini');

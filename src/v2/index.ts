@@ -63,6 +63,19 @@ export {
   buildV2PlannerUserMessage,
   buildV2PlannerValidationFeedback,
 } from './planner/PlannerPrompt';
+export { PlannerWorkingSetSelector } from './planner/PlannerWorkingSetSelector';
+export type {
+  PlannerWorkingSet,
+  PlannerWorkingSetDiagnostics,
+  PlannerWorkingSetEvidence,
+  PlannerWorkingSetOptions,
+  PlannerWorkingSetRef,
+  PlannerWorkingSetRegionSummary,
+  PlannerWorkingSetSelection,
+  WorkingSetDropReason,
+  WorkingSetIncludeReason,
+  WorkingSetMode,
+} from './planner/workingSetTypes';
 export type {
   CompressedLineage,
   CompressedLineageStep,
@@ -74,6 +87,7 @@ export type {
   PlannerFailureSummary,
   PlannerInput,
   PlannerInputComposerInput,
+  PlannerInputVersion,
   PlannerLastResultSummary,
   PlannerOutput,
   PlannerOutputStep,

@@ -1,5 +1,11 @@
+import type { Page } from 'playwright';
+
 import type { BrowserObservation, V2Ref } from '../runtime/types';
+import { deriveRefCapabilities } from '../runtime/refCapabilities';
+import { CdpBridge } from './CdpBridge';
 import type { BuildObservationInput, CapturedElement, ObservationCaptureInput } from './types';
+
+const MAX_CDP_IDENTITY_ELEMENTS = 150;
 
 export class ObservationService {
   private observationCounter = 0;
@@ -12,14 +18,25 @@ export class ObservationService {
       input.page.evaluate<CapturedElement[]>(COLLECT_INTERACTIVE_ELEMENTS_SCRIPT),
     ]);
 
+    const identities = await resolveBackendNodeIds(input.page, captured.length);
     const refs = captured.map((candidate, index): V2Ref => ({
       refId: `ref_${input.generationId}_${index + 1}`,
       generationId: input.generationId,
       targetId: candidate.targetId,
+      backendNodeId: identities[index]?.backendNodeId,
+      frameId: identities[index]?.frameId ?? candidate.frameId,
       selectorCandidates: candidate.selectorCandidates,
       role: candidate.role,
       name: candidate.name,
       text: candidate.text,
+      tagName: candidate.tagName,
+      inputType: candidate.inputType,
+      editableKind: candidate.editableKind,
+      ariaAutocomplete: candidate.ariaAutocomplete,
+      ariaHasPopup: candidate.ariaHasPopup,
+      isContentEditable: candidate.isContentEditable,
+      nthRoleName: candidate.nthRoleName,
+      capabilities: deriveRefCapabilities(candidate),
       box: candidate.box,
       visibility: candidate.visibility,
       actionability: candidate.actionability,
@@ -59,6 +76,92 @@ export function buildBrowserObservation(input: BuildObservationInput): BrowserOb
       durationMs: input.durationMs,
     },
   };
+}
+
+export async function resolveBackendNodeIds(
+  page: Page,
+  count: number,
+  createBridge: (page: Page) => Promise<CdpBridge> = CdpBridge.create,
+): Promise<Array<{ backendNodeId?: number; frameId?: string }>> {
+  const identities = Array.from({ length: count }, () => ({} as { backendNodeId?: number; frameId?: string }));
+  let bridge: CdpBridge | undefined;
+
+  try {
+    bridge = await createBridge(page).catch(() => undefined);
+    if (!bridge) {
+      return identities;
+    }
+
+    const documentResult = await bridge.send<{ root?: { nodeId?: number } }>('DOM.getDocument', { depth: 0 });
+    const rootNodeId = documentResult.root?.nodeId;
+    if (typeof rootNodeId !== 'number') {
+      return identities;
+    }
+
+    const queryResult = await bridge.send<{ nodeIds?: number[] }>('DOM.querySelectorAll', {
+      nodeId: rootNodeId,
+      selector: '[data-browsegent-v2-marker]',
+    });
+    const nodeIds = (queryResult.nodeIds ?? []).slice(0, MAX_CDP_IDENTITY_ELEMENTS);
+
+    for (const nodeId of nodeIds) {
+      try {
+        const described = await bridge.send<{
+          node?: {
+            backendNodeId?: number;
+            frameId?: string;
+            attributes?: string[];
+          };
+        }>('DOM.describeNode', { nodeId, depth: 0 });
+        const marker = readAttribute(described.node?.attributes, 'data-browsegent-v2-marker');
+        const index = markerIndex(marker);
+        if (index >= 0 && index < identities.length) {
+          identities[index] = {
+            backendNodeId: described.node?.backendNodeId,
+            frameId: described.node?.frameId,
+          };
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    return identities;
+  } finally {
+    await cleanupBackendMarkers(page);
+    await bridge?.dispose().catch(() => undefined);
+  }
+}
+
+function readAttribute(attributes: string[] | undefined, name: string): string | undefined {
+  if (!attributes) {
+    return undefined;
+  }
+
+  for (let index = 0; index < attributes.length; index += 2) {
+    if (attributes[index] === name) {
+      return attributes[index + 1];
+    }
+  }
+  return undefined;
+}
+
+function markerIndex(marker: string | undefined): number {
+  const value = marker?.split('-').pop();
+  const index = Number(value);
+  return Number.isInteger(index) ? index : -1;
+}
+
+async function cleanupBackendMarkers(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const store = window as unknown as { __browsegentV2MarkedElements?: Element[] };
+    for (const element of Array.from(store.__browsegentV2MarkedElements ?? [])) {
+      if (element instanceof Element) {
+        element.removeAttribute('data-browsegent-v2-marker');
+      }
+    }
+    delete store.__browsegentV2MarkedElements;
+  }).catch(() => undefined);
 }
 
 const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
@@ -114,6 +217,21 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
       case 'button':
         return 'button';
       case 'input':
+        switch (String(element.getAttribute('type') || 'text').toLowerCase()) {
+          case 'button':
+          case 'submit':
+          case 'reset':
+          case 'image':
+            return 'button';
+          case 'checkbox':
+            return 'checkbox';
+          case 'radio':
+            return 'radio';
+          case 'search':
+            return 'searchbox';
+          default:
+            return 'textbox';
+        }
       case 'textarea':
         return 'textbox';
       case 'select':
@@ -125,10 +243,10 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
 
   function accessibleName(element) {
     const direct =
+      ariaLabelledByText(element) ||
       element.getAttribute('aria-label') ||
       element.getAttribute('placeholder') ||
-      element.getAttribute('title') ||
-      element.getAttribute('name');
+      element.getAttribute('title');
 
     if (direct) {
       return normalizedText(direct);
@@ -138,7 +256,38 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
       return normalizedText(element.value);
     }
 
+    if (
+      (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement)
+      && element.labels
+      && element.labels.length > 0
+    ) {
+      const labelText = Array.from(element.labels).map(label => normalizedText(label.textContent || '')).filter(Boolean).join(' ');
+      if (labelText) {
+        return labelText;
+      }
+    }
+
+    const formName = element.getAttribute('name');
+    if (formName) {
+      return normalizedText(formName);
+    }
+
     return normalizedText(element.textContent || '') || undefined;
+  }
+
+  function ariaLabelledByText(element) {
+    const labelledBy = element.getAttribute('aria-labelledby');
+    if (!labelledBy) {
+      return undefined;
+    }
+
+    const text = labelledBy
+      .split(/\s+/)
+      .map(id => document.getElementById(id)?.textContent || '')
+      .map(normalizedText)
+      .filter(Boolean)
+      .join(' ');
+    return text || undefined;
   }
 
   function buildSelectorCandidates(element) {
@@ -217,12 +366,38 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
 
   walk(document);
 
+  const roleNameCounts = new Map();
+  const markedElements = [];
+  const markerPrefix = 'browsegent-v2-' + Math.random().toString(36).slice(2);
+
   return elements
     .filter(isInteractiveElement)
     .map((element, index) => {
+      const marker = markerPrefix + '-' + index;
+      element.setAttribute('data-browsegent-v2-marker', marker);
+      markedElements.push(element);
+      window.__browsegentV2MarkedElements = markedElements;
+      const tagName = element.tagName.toLowerCase();
+      const inputType = tagName === 'input' ? String(element.getAttribute('type') || 'text').toLowerCase() : undefined;
+      const isContentEditable = element.getAttribute('contenteditable') === 'true' || element.isContentEditable === true;
+      const ariaAutocomplete = element.getAttribute('aria-autocomplete') || undefined;
+      const ariaHasPopup = element.getAttribute('aria-haspopup') || undefined;
+      const editableKind = isContentEditable
+        ? 'contenteditable'
+        : tagName === 'textarea'
+          ? 'text'
+          : tagName === 'input' && inputType === 'search'
+            ? 'search'
+            : tagName === 'input' && ['text', 'email', 'url', 'tel', 'number', 'password'].includes(inputType)
+              ? 'text'
+              : 'none';
       const selectorCandidates = buildSelectorCandidates(element);
       const name = accessibleName(element);
       const text = normalizedText(element.textContent || '');
+      const role = explicitOrNativeRole(element);
+      const roleNameKey = (role || 'generic') + '|' + (name || text || '');
+      const nthRoleName = (roleNameCounts.get(roleNameKey) || 0) + 1;
+      roleNameCounts.set(roleNameKey, nthRoleName);
       const visibility = computeVisibility(element);
       const actionability = computeActionability(element, visibility);
       const rect = element.getBoundingClientRect();
@@ -233,8 +408,14 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
       return {
         targetId: 'target_' + hashString((selectorCandidates[0] || element.tagName) + '|' + (name || '') + '|' + text + '|' + index),
         selectorCandidates,
-        tagName: element.tagName.toLowerCase(),
-        role: explicitOrNativeRole(element),
+        tagName,
+        inputType,
+        editableKind,
+        ariaAutocomplete,
+        ariaHasPopup,
+        isContentEditable,
+        nthRoleName,
+        role,
         name,
         text: text || undefined,
         box,

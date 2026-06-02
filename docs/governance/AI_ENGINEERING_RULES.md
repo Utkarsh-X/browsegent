@@ -117,6 +117,37 @@ AI agents should communicate:
 
 They should not provide broad reassurance, hype, or success claims without evidence.
 
+## Assumption Surfacing Rule
+
+Before implementing any change, an AI agent must:
+
+- State its assumptions explicitly. If uncertain about scope, intent, or expected behavior, ask before proceeding.
+- If multiple valid interpretations of a requirement exist, present them. Do not pick silently.
+- If a simpler approach exists than the one implied, say so. Push back when warranted.
+- If something is unclear, stop. Name what is confusing. Ask.
+
+Suppressing confusion to appear capable is a governance failure.
+
+## Verifiable Goal Rule
+
+AI agents must transform vague task descriptions into verifiable success criteria before implementation.
+
+Examples:
+
+- "Add validation" → "Write tests for invalid inputs, then make them pass."
+- "Fix the bug" → "Write a test that reproduces it, then make it pass."
+- "Refactor X" → "Ensure tests pass before and after. Boundary ownership unchanged."
+
+For multi-step tasks, state a brief plan with verification checkpoints:
+
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let an agent loop independently. Weak criteria ("make it work") require constant clarification and risk architectural drift.
+
 ## Stop Conditions
 
 Stop and reassess when:

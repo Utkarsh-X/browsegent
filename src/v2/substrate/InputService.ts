@@ -2,6 +2,7 @@ import type { Locator, Page } from 'playwright';
 
 import { V2OperationalError } from '../runtime/errors';
 import type { V2Ref } from '../runtime/types';
+import { RefResolver } from './RefResolver';
 
 export interface InputExecutionResult<TValue = unknown> {
   kind: 'click' | 'type';
@@ -9,9 +10,12 @@ export interface InputExecutionResult<TValue = unknown> {
 }
 
 export class InputService {
+  private readonly resolver = new RefResolver();
+
   async click(ref: V2Ref, page: Page): Promise<InputExecutionResult> {
     this.assertExecutable(ref);
-    const locator = await this.locatorForRef(ref, page);
+    this.assertActionCompatible(ref, 'click');
+    const { locator } = await this.resolver.resolve(ref, page);
     await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
 
     if (await this.isCenterPointBlocked(locator)) {
@@ -29,7 +33,8 @@ export class InputService {
 
   async type(ref: V2Ref, text: string, page: Page): Promise<InputExecutionResult<{ inputValue: string }>> {
     this.assertExecutable(ref);
-    const locator = await this.locatorForRef(ref, page);
+    this.assertActionCompatible(ref, 'type');
+    const { locator } = await this.resolver.resolve(ref, page);
     await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
 
     try {
@@ -65,19 +70,14 @@ export class InputService {
     }
   }
 
-  private async locatorForRef(ref: V2Ref, page: Page): Promise<Locator> {
-    for (const selector of ref.selectorCandidates) {
-      try {
-        const locator = page.locator(selector).first();
-        if (await locator.count() > 0) {
-          return locator;
-        }
-      } catch {
-        continue;
-      }
+  private assertActionCompatible(ref: V2Ref, action: 'click' | 'type'): void {
+    if (action === 'click' && ref.capabilities?.clickable === false) {
+      throw new V2OperationalError('target_not_clickable', 'Target is not a clickable control.', { retryable: false });
     }
 
-    throw new V2OperationalError('stale_ref', `Ref "${ref.refId}" no longer resolves to a target.`, { retryable: false });
+    if (action === 'type' && ref.capabilities?.typeable === false) {
+      throw new V2OperationalError('target_not_editable', 'Target is not a typeable control.', { retryable: false });
+    }
   }
 
   private async isCenterPointBlocked(locator: Locator): Promise<boolean> {
@@ -99,10 +99,6 @@ function mapPlaywrightError(error: unknown, action: 'click' | 'type'): V2Operati
   const message = error instanceof Error ? error.message : String(error);
   const lowered = message.toLowerCase();
 
-  if (lowered.includes('timeout')) {
-    return new V2OperationalError('timeout', `${action} timed out before the target became stable.`, { retryable: true });
-  }
-
   if (lowered.includes('not visible') || lowered.includes('hidden')) {
     return new V2OperationalError('target_hidden', `Target was not visible during ${action}.`, { retryable: false });
   }
@@ -113,6 +109,38 @@ function mapPlaywrightError(error: unknown, action: 'click' | 'type'): V2Operati
 
   if (lowered.includes('intercepts pointer events') || lowered.includes('not receive pointer events')) {
     return new V2OperationalError('target_blocked', `Target was blocked during ${action}.`, { retryable: false });
+  }
+
+  if (lowered.includes('element is detached') || lowered.includes('element was detached')) {
+    return new V2OperationalError('element_detached', `Target detached during ${action}.`, { retryable: false });
+  }
+
+  if (
+    action === 'type'
+    && (
+      lowered.includes('not an <input>')
+      || lowered.includes('not an input')
+      || lowered.includes('not editable')
+      || lowered.includes('is not editable')
+      || lowered.includes('does not have a role allowing')
+    )
+  ) {
+    return new V2OperationalError('target_not_editable', `Target was not editable during ${action}.`, { retryable: false });
+  }
+
+  if (
+    action === 'click'
+    && (
+      lowered.includes('not clickable')
+      || lowered.includes('not enabled')
+      || lowered.includes('not attached')
+    )
+  ) {
+    return new V2OperationalError('target_not_clickable', `Target was not clickable during ${action}.`, { retryable: false });
+  }
+
+  if (lowered.includes('timeout')) {
+    return new V2OperationalError('timeout', `${action} timed out before the target became stable.`, { retryable: true });
   }
 
   return new V2OperationalError('timeout', `${action} failed before completion: ${message}`, { retryable: true });

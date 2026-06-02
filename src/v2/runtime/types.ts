@@ -4,6 +4,7 @@ export type VisibilityState = 'visible' | 'offscreen' | 'hidden' | 'unknown';
 export type ActionabilityState = 'ready' | 'disabled' | 'blocked' | 'unknown';
 export type TransitionStrength = 'none' | 'weak' | 'moderate' | 'strong' | 'negative';
 export type TransitionClass = 'microstate' | 'structural_local' | 'structural_macrostate' | 'hard_reset';
+export type EditableKind = 'none' | 'text' | 'search' | 'contenteditable';
 
 export interface V2RuntimeConfig {
   v2RuntimeMode: V2RuntimeMode;
@@ -18,6 +19,13 @@ export interface Rect {
   height: number;
 }
 
+export interface V2RefCapabilities {
+  clickable: boolean;
+  typeable: boolean;
+  selectable: boolean;
+  readable: boolean;
+}
+
 export interface V2Ref {
   refId: string;
   generationId: number;
@@ -28,6 +36,14 @@ export interface V2Ref {
   role?: string;
   name?: string;
   text?: string;
+  tagName?: string;
+  inputType?: string;
+  editableKind?: EditableKind;
+  ariaAutocomplete?: string;
+  ariaHasPopup?: string;
+  isContentEditable?: boolean;
+  nthRoleName?: number;
+  capabilities?: V2RefCapabilities;
   regionId?: string;
   box?: Rect;
   visibility: VisibilityState;

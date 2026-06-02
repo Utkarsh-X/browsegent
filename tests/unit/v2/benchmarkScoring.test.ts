@@ -81,6 +81,21 @@ test('scoreBenchmarkResult classifies provider quota failures separately from pl
   assert.equal(scored.failureType, 'rate_limited');
 });
 
+test('scoreBenchmarkResult classifies provider budget guard failures separately from quota failures', () => {
+  const scored = scoreBenchmarkResult(task, {
+    adapterId: 'browsegent',
+    taskId: task.taskId,
+    attempt: 1,
+    success: false,
+    value: '',
+    failureReason: 'planner_client_error:API_BUDGET_EXCEEDED: gemini prompt estimate exceeded configured input budget.',
+    metrics: { plannerCalls: 1, toolExecutions: 0, durationMs: 25 },
+  }, { ok: false, errors: ['missing_planner_output_artifacts'] });
+
+  assert.equal(scored.passed, false);
+  assert.equal(scored.failureType, 'budget_exceeded');
+});
+
 test('scoreBenchmarkResult passes expected environment-block failures when trace is complete', () => {
   const expectedBlockTask: BenchmarkTask = {
     ...task,

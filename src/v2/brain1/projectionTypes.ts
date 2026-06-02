@@ -1,4 +1,11 @@
-import type { ActionabilityState, RefState, RuntimeWarning, VisibilityState } from '../runtime/types';
+import type {
+  ActionabilityState,
+  EditableKind,
+  RefState,
+  RuntimeWarning,
+  V2RefCapabilities,
+  VisibilityState,
+} from '../runtime/types';
 
 export type ProjectionItemKind = 'link' | 'button' | 'input' | 'select' | 'editable' | 'generic';
 export type ProjectionRegionKind = 'repeated_list' | 'form' | 'navigation' | 'content';
@@ -9,6 +16,10 @@ export interface ProjectionItem {
   role?: string;
   name?: string;
   text?: string;
+  tagName?: string;
+  inputType?: string;
+  editableKind?: EditableKind;
+  capabilities?: V2RefCapabilities;
   visibility: VisibilityState;
   actionability: ActionabilityState;
   state: RefState;
@@ -59,6 +70,7 @@ export interface SerializedProjection {
     title: string;
   };
   focus?: ProjectionFocus;
+  refs: Record<string, SerializedProjectionRef>;
   interactions: SerializedProjectionItem[];
   readables: SerializedProjectionItem[];
   navigation: SerializedProjectionItem[];
@@ -67,7 +79,7 @@ export interface SerializedProjection {
   stats: OperationalProjection['stats'];
 }
 
-export interface SerializedProjectionItem {
+export interface SerializedProjectionRef {
   refId: string;
   kind: ProjectionItemKind;
   role?: string;
@@ -79,4 +91,9 @@ export interface SerializedProjectionItem {
   confidence: number;
   score: number;
   regionId?: string;
+}
+
+export interface SerializedProjectionItem {
+  refId: string;
+  rank: number;
 }

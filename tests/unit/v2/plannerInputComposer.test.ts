@@ -153,6 +153,43 @@ test('PlannerInputComposer excludes raw graph topology, CDP ids, and selector ca
   assert.doesNotMatch(json, /transitions":\[/);
 });
 
+test('PlannerInputComposer emits canonical refs with lightweight ranked projection views', () => {
+  const observation = makeObservation({
+    observationId: 'obs_canonical_projection',
+    refs: [
+      makeRef({
+        refId: 'ref_link',
+        targetId: 'target_link',
+        selectorCandidates: ['a[href="/docs"]'],
+        role: 'link',
+        name: 'Docs',
+        text: 'Docs',
+      }),
+      makeRef({
+        refId: 'ref_button',
+        targetId: 'target_button',
+        selectorCandidates: ['#submit'],
+        role: 'button',
+        name: 'Submit',
+        text: 'Submit form',
+      }),
+    ],
+  });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_canonical_projection',
+    goal: 'Open docs',
+    projection,
+  });
+
+  assert.equal(input.current.refs.ref_link.name, 'Docs');
+  assert.equal(input.current.refs.ref_link.text, undefined);
+  assert.deepEqual(input.current.navigation, [{ refId: 'ref_link', rank: 1 }]);
+  assert.equal('name' in input.current.interactions[0], false);
+  assert.equal('text' in input.current.readables[0], false);
+  assert.equal('role' in input.current.navigation[0], false);
+});
+
 test('PlannerInputComposer includes transition summary and uncertainty signals', () => {
   const { after, evidence, graph } = makeTransition();
   const projection = new ProjectionService().project(after, graph.snapshot());
@@ -227,6 +264,35 @@ test('PlannerInputComposer previews successful mutation target facts for replann
   assert.equal(input.lastResult?.valuePreview, 'Archive link link');
 });
 
+test('PlannerInputComposer includes compact recovery state from runtime signals', () => {
+  const observation = makeObservation({ observationId: 'obs_recovery_state' });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_recovery_state',
+    goal: 'Search for docs',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_primary',
+      error: {
+        code: 'target_not_editable',
+        message: 'Target was not editable.',
+        retryable: false,
+      },
+      traceStepId: 'step_type_wrong_target',
+    },
+    runtimeUncertainty: {
+      level: 'medium',
+      signals: ['failure:target_not_editable'],
+    },
+  });
+
+  assert.equal(input.recovery?.state, 'wrong_target_type');
+  assert.equal(input.recovery?.blockedAction?.ref, 'ref_primary');
+  assert.ok(input.recovery?.nextMechanisms.includes('choose_typeable_ref'));
+});
+
 test('LineageCompressor keeps bounded recent execution lineage without raw result payloads', () => {
   const manifest = makeTraceManifest([
     makeTraceStep('step_1', 'click', 'completed', 'ref_a'),
@@ -285,6 +351,47 @@ test('TraceStore writes planner input and output replay artifacts passively', as
 
   assert.equal(inputJson.episodeId, 'episode_trace');
   assert.equal(outputJson.plan[0].ref, 'ref_primary');
+});
+
+test('PlannerInputComposer emits bounded working set instead of full projection refs', () => {
+  const refs = Array.from({ length: 80 }, (_, index) => makeRef({
+    refId: `ref_hidden_${index}`,
+    targetId: `target_hidden_${index}`,
+    role: undefined,
+    name: undefined,
+    text: undefined,
+    visibility: 'hidden',
+    actionability: 'blocked',
+  }));
+  refs.push(makeRef({
+    refId: 'ref_search',
+    targetId: 'target_search',
+    role: 'textbox',
+    name: 'Search',
+    text: 'Search',
+    visibility: 'visible',
+    actionability: 'ready',
+  }));
+
+  const projection = new ProjectionService().project(makeObservation({
+    observationId: 'obs_bounded_working_set',
+    refs,
+  }));
+
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_bounded_working_set',
+    goal: 'Search for docs',
+    projection,
+  });
+
+  assert.equal(input.version, 'v2.planner_input.v2');
+  assert.ok(input.workingSet);
+  assert.ok(input.workingSetDiagnostics);
+  assert.equal(Object.keys(input.current.refs).includes('ref_search'), true);
+  assert.equal(Object.keys(input.current.refs).some(refId => refId.startsWith('ref_hidden_')), false);
+  assert.equal(input.workingSetDiagnostics.observedRefCount, 81);
+  assert.equal(input.workingSetDiagnostics.selectedRefCount, 1);
+  assert.ok((input.workingSetDiagnostics.droppedByReason.hidden_low_value ?? 0) >= 80);
 });
 
 function makeTraceStep(

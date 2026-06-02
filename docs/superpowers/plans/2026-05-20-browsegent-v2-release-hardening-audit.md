@@ -142,12 +142,44 @@ Remote workflow verification:
 - Conclusion: success
 - URL: `https://github.com/Utkarsh-X/browsegent/actions/runs/26308489357`
 
+## 2026-05-23 Failure Evidence and Replay Hardening Addendum
+
+Fresh verification after wiring failed runtime tool results into planner evidence, persisting failure evidence as trace artifacts, and treating `navigate` as a mutating action in trace replay audits:
+
+```powershell
+node .\node_modules\tsx\dist\cli.cjs --test tests\unit\v2\v2AgentLoop.test.ts
+node .\node_modules\tsx\dist\cli.cjs --test tests\unit\v2\traceStore.test.ts
+node .\node_modules\tsx\dist\cli.cjs --test tests\unit\v2\traceReplayAuditor.test.ts
+$root = (Resolve-Path .).Path; $envPath = Join-Path $root '.env'; $tmpPath = Join-Path $root '.env.codex-ci-check.tmp'; if ((Test-Path -LiteralPath $tmpPath)) { throw 'temporary .env path already exists' }; $exitCode = 0; try { if (Test-Path -LiteralPath $envPath) { Move-Item -LiteralPath $envPath -Destination $tmpPath }; cmd /c npm run check:v2:release; $exitCode = $LASTEXITCODE } finally { if (Test-Path -LiteralPath $tmpPath) { Move-Item -LiteralPath $tmpPath -Destination $envPath } }; exit $exitCode
+```
+
+Observed result:
+
+- v2 agent loop unit tests passed: 7 pass, 0 fail.
+- TraceStore unit tests passed: 4 pass, 0 fail.
+- Trace replay auditor unit tests passed: 5 pass, 0 fail.
+- v2 release gate passed with `.env` temporarily absent.
+- Unit tests passed inside release gate: 199 pass, 0 fail.
+- v2 integration tests passed inside release gate: 19 pass, 0 fail.
+- Continuity stress eval passed inside release gate: 4 scenarios, 4 passed, 0 failed.
+- Agent smoke eval passed inside release gate: 4 scenarios, 4 passed, traceCompleteCount 4, traceIncompleteCount 0.
+- Provider smoke eval completed in default skipped mode with `failureReason="provider_smoke_not_enabled"`.
+- Governance checks, `git diff --check`, trailing whitespace scan, and unfinished marker scan passed.
+
+Failure-evidence and replay-specific evidence:
+
+- `V2AgentLoop` classifies failed tool results into bounded operational failure evidence.
+- The next planner episode receives structured `failures`, `uncertainty`, and `deadState` summaries without runtime strategy or semantic recovery.
+- `BrowseGentV2Harness` exposes passive failure-evidence recording to the agent loop.
+- `TraceStore` persists failure evidence under `logs/v2-runs/<runId>/failures/<failureId>.json` and lists it in `trace.json`.
+- `TraceReplayAuditor` rejects completed `navigate` steps that lack post-observation transition evidence, matching navigation's mutating runtime status.
+
 ## Repository Integration Evidence
 
 Local integration branch:
 
 - Branch: `browsegent-v2-release-hardening`
-- Current head: `36a420a fix: make release gate independent of local env`
+- Current committed head: `2985a97 docs: refresh v2 mvr release evidence`
 - Remote: `origin`
 - Pushed branch: `origin/browsegent-v2-release-hardening`
 - Pull request URL offered by GitHub: `https://github.com/Utkarsh-X/browsegent/pull/new/browsegent-v2-release-hardening`
@@ -163,7 +195,8 @@ Integration notes:
 | Requirement | Verdict | Evidence |
 |---|---|---|
 | Public agent mode is tested through `BrowseGent.run()` and `BrowseGent.extract()` without a live provider. | Proven | `tests/integration/v2/publicAgentMode.test.ts`, release gate integration result 19/19 passed |
-| Trace replay auditing is centralized and reused by eval runners. | Proven | `src/v2/trace/TraceReplayAuditor.ts`, `tests/eval/v2/run_agent_smoke.ts`, `tests/eval/v2/run_continuity_stress.ts`, unit tests 196/196 passed |
+| Trace replay auditing is centralized and reused by eval runners. | Proven | `src/v2/trace/TraceReplayAuditor.ts`, `tests/eval/v2/run_agent_smoke.ts`, `tests/eval/v2/run_continuity_stress.ts`, unit tests 199/199 passed |
+| Failure evidence is planner-visible and replayable. | Proven | `src/v2/agent/V2AgentLoop.ts`, `src/v2/trace/TraceStore.ts`, `tests/unit/v2/v2AgentLoop.test.ts`, `tests/unit/v2/traceStore.test.ts`, no-`.env` release gate 199/199 passed |
 | CI has an explicit v2 release gate workflow. | Proven locally and remotely | `.github/workflows/v2-release-gate.yml`, `scripts/check_v2_release_gate.ts`, release gate script tests, GitHub Actions run `26308489357` success |
 | v2 browser-mode config semantics are documented and tested. | Proven | `src/v2/runtime/config.ts`, `docs/governance/RUNTIME_SAFETY_RULES.md`, `tests/unit/v2/runtimeConfigHardening.test.ts` |
 | Provider smoke exists as an opt-in gate. | Proven | `tests/eval/v2/run_provider_smoke.ts`, provider smoke runner tests 3/3 passed, release gate skip report written, live provider smoke `provider_smoke_1779296023964` passed |
@@ -180,14 +213,15 @@ Integration notes:
 
 ## Current Worktree State
 
-Expected local state after integration:
+Current local state after latest MVR hardening:
 
 - Current branch: `browsegent-v2-release-hardening`
-- Working tree: clean except ignored `logs/`
+- Working tree: contains uncommitted MVR hardening changes for agent-loop failure evidence, replay failure artifacts, navigation replay auditing, and this refreshed audit record.
+- Ignored `logs/` contain release-gate, stress, smoke, and trace artifacts from verification runs.
 - Tracked integration includes `.github/workflows/v2-release-gate.yml`, governance docs, refined architecture docs, implementation plans, v2 source, v2 tests/evals/fixtures, release-gate scripts, and repo-local skills.
 
 ## Audit Conclusion
 
 The Phase 16-20 release-hardening milestone is complete under offline local verification, and the integration branch has been pushed to the configured GitHub remote.
 
-The BrowseGent v2 MVR runtime evidence is complete for the scoped release-hardening audit: local no-`.env` release gate passed and remote GitHub Actions passed for head `36a420afc6f9825c1a410d91c3ef5f16c5b9bde9`.
+The BrowseGent v2 MVR runtime evidence is complete for the scoped release-hardening audit: local no-`.env` release gate passed on the current worktree with 199 unit tests, 19 v2 integration tests, continuity stress, agent smoke, provider-smoke skip, governance checks, and hygiene scans; remote GitHub Actions previously passed for committed head `36a420afc6f9825c1a410d91c3ef5f16c5b9bde9`.

@@ -102,8 +102,8 @@ function makePlannerInput(): PlannerInput {
         navigationCount: 0,
         regionCount: 0,
       },
-      interactions: [
-        {
+      refs: {
+        v2ref_1: {
           refId: 'v2ref_1',
           kind: 'button',
           role: 'button',
@@ -115,21 +115,9 @@ function makePlannerInput(): PlannerInput {
           confidence: 1,
           score: 10,
         },
-      ],
-      readables: [
-        {
-          refId: 'v2ref_1',
-          kind: 'button',
-          role: 'button',
-          name: 'Submit form',
-          text: 'Submit form',
-          visibility: 'visible',
-          actionability: 'ready',
-          state: 'live',
-          confidence: 1,
-          score: 10,
-        },
-      ],
+      },
+      interactions: [{ refId: 'v2ref_1', rank: 1 }],
+      readables: [{ refId: 'v2ref_1', rank: 1 }],
       navigation: [],
       regions: [],
       warnings: [],

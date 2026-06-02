@@ -4,10 +4,18 @@ export const V2_OPERATIONAL_ERROR_CODES = [
   'target_hidden',
   'target_disabled',
   'target_blocked',
+  'target_not_editable',
+  'target_not_clickable',
+  'target_not_selectable',
   'stale_ref',
+  'ambiguous_ref_resolution',
+  'unselected_ref',
   'low_confidence_ref',
+  'element_detached',
   'timeout',
   'navigation_interrupted',
+  'navigation_blocked',
+  'captcha_or_access_block',
   'trace_write_failed',
 ] as const;
 
