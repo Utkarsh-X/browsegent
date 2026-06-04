@@ -474,3 +474,91 @@ test('V2PlannerClient records provider failures as planner replay artifacts', as
   assert.equal(outputJson.validation.ok, false);
   assert.deepEqual(outputJson.validation.errors, ['provider_error:API_QUOTA_EXCEEDED: Gemini key hit rate limit.']);
 });
+
+test('V2PlannerClient includes action-compatible ref alternatives in retry feedback for type-on-non-typeable', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_compat_guidance');
+  plannerInput.current.refs = {
+    ref_button: {
+      refId: 'ref_button',
+      kind: 'button',
+      role: 'button',
+      name: 'Submit',
+      text: 'Submit',
+      visibility: 'visible',
+      actionability: 'ready',
+      state: 'live',
+      confidence: 1,
+      score: 10,
+    },
+    ref_input: {
+      refId: 'ref_input',
+      kind: 'input',
+      role: 'textbox',
+      name: 'Search',
+      text: '',
+      visibility: 'visible',
+      actionability: 'ready',
+      state: 'live',
+      confidence: 1,
+      score: 10,
+    },
+  };
+  plannerInput.current.interactions = [
+    { refId: 'ref_button', rank: 1 },
+    { refId: 'ref_input', rank: 2 },
+  ];
+  plannerInput.workingSet = {
+    mode: 'act',
+    modeReason: 'test',
+    primaryRefs: [],
+    secondaryRefs: [],
+    readableEvidence: [],
+    navigationRefs: [],
+    actionSurface: {
+      clickableRefs: ['ref_button'],
+      typeableRefs: ['ref_input'],
+      selectableRefs: [],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+    changedRefs: {
+      appearedCount: 0,
+      weakenedCount: 0,
+      preservedCount: 0,
+      topRefs: [],
+      omittedCount: 0,
+    },
+    failedRefs: [],
+    regionSummaries: [],
+    omitted: {
+      observedRefCount: 2,
+      selectedRefCount: 2,
+      droppedRefCount: 0,
+      droppedByReason: {},
+    },
+  };
+
+  const providerUsers: string[] = [];
+  const responses = [
+    '{"plan":[{"tool":"type","ref":"ref_button","text":"hello"}],"confidence":"high"}',
+    '{"plan":[{"tool":"type","ref":"ref_input","text":"hello"}],"confidence":"high"}',
+  ];
+  const client = new V2PlannerClient({
+    provider: async (_system, user) => {
+      providerUsers.push(user);
+      return {
+        text: responses.shift() ?? '{}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.equal(result.output.plan?.[0].ref, 'ref_input');
+  assert.equal(providerUsers.length, 2);
+  assert.match(providerUsers[1], /not compatible with tool "type"/);
+  assert.match(providerUsers[1], /ref_input/);
+});

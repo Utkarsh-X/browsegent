@@ -142,7 +142,12 @@ export class V2PlannerClient {
 
       lastErrors = validation.errors;
       if (attempt === 1) {
-        userMessage = `${baseUserMessage}\n\n${buildV2PlannerValidationFeedback(lastErrors)}`;
+        const guidance = buildActionCompatibilityGuidance(
+          lastErrors,
+          collectValidationContext(input.plannerInput),
+        );
+        const feedbackSuffix = guidance ? `\nChoose a compatible ref:\n${guidance}` : '';
+        userMessage = `${baseUserMessage}\n\n${buildV2PlannerValidationFeedback(lastErrors)}${feedbackSuffix}`;
       }
     }
 
@@ -186,6 +191,34 @@ export class V2PlannerClient {
   private recordPlannerOutput(episodeId: string, payload: unknown): void {
     this.traceStore?.recordPlannerOutput(episodeId, payload);
   }
+}
+
+function buildActionCompatibilityGuidance(
+  errors: string[],
+  context: PlannerOutputValidationContext,
+): string | undefined {
+  const surface = context.actionSurface;
+  if (!surface) return undefined;
+
+  const lines: string[] = [];
+  for (const error of errors) {
+    const typeMatch = error.match(/ref "([^"]+)" is not compatible with tool "type"/);
+    if (typeMatch && surface.typeableRefs.length > 0) {
+      lines.push(`Typeable refs available: ${surface.typeableRefs.slice(0, 5).join(', ')}`);
+    }
+
+    const clickMatch = error.match(/ref "([^"]+)" is not compatible with tool "(click|close)"/);
+    if (clickMatch && surface.clickableRefs.length > 0) {
+      lines.push(`Clickable refs available: ${surface.clickableRefs.slice(0, 5).join(', ')}`);
+    }
+
+    const selectMatch = error.match(/ref "([^"]+)" is not compatible with tool "select"/);
+    if (selectMatch && surface.selectableRefs.length > 0) {
+      lines.push(`Selectable refs available: ${surface.selectableRefs.slice(0, 5).join(', ')}`);
+    }
+  }
+
+  return lines.length > 0 ? [...new Set(lines)].join('\n') : undefined;
 }
 
 function collectValidationContext(input: PlannerInput): PlannerOutputValidationContext {
