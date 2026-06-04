@@ -26,6 +26,7 @@ export interface ProjectionItem {
   continuityConfidence: number;
   score: number;
   regionId?: string;
+  selectOptions?: string[];
 }
 
 export interface ProjectionRegion {
@@ -91,6 +92,7 @@ export interface SerializedProjectionRef {
   confidence: number;
   score: number;
   regionId?: string;
+  selectOptions?: string[];
 }
 
 export interface SerializedProjectionItem {

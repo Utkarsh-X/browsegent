@@ -199,3 +199,31 @@ test('ProjectionService accepts graph context without interpreting transition hi
   assert.equal(projection.focus?.refId, 'ref_ready');
   assert.doesNotMatch(serialized, /transition_before_after/);
 });
+
+test('serializeProjection includes bounded native select option labels for selected refs', () => {
+  const observation = makeObservation([
+    makeRef({
+      refId: 'ref_sort',
+      role: 'combobox',
+      tagName: 'select',
+      name: 'Sort order',
+      selectorCandidates: ['#sort-select'],
+      capabilities: { clickable: true, typeable: false, selectable: true, readable: true },
+      selectOptions: [
+        'Choose sort',
+        'Announcement date (newest first)',
+        'Announcement date (oldest first)',
+        'Relevance',
+      ],
+    }),
+  ]);
+  const projection = new ProjectionService().project(observation);
+  const serialized = serializeProjection(projection);
+
+  assert.deepEqual(serialized.refs.ref_sort.selectOptions, [
+    'Choose sort',
+    'Announcement date (newest first)',
+    'Announcement date (oldest first)',
+    'Relevance',
+  ]);
+});

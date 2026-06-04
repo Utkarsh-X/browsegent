@@ -60,6 +60,10 @@ export class BrowseGentV2Harness {
     return this.executeMutation('type', refId, async (ref) => this.inputService.type(ref, text, this.session.currentPage()));
   }
 
+  async select(refId: string, value: string): Promise<V2ToolResult<{ value: string; selectedText: string }>> {
+    return this.executeMutation('select', refId, async (ref) => this.inputService.select(ref, value, this.session.currentPage()));
+  }
+
   async press(key: PlannerPressKey): Promise<V2ToolResult<{ key: PlannerPressKey }>> {
     const before = this.assertOpened();
     const stepId = this.traceStore.recordActionStart({
@@ -296,7 +300,7 @@ export class BrowseGentV2Harness {
   }
 
   private async executeMutation<TValue>(
-    kind: 'click' | 'type',
+    kind: 'click' | 'type' | 'select',
     refId: string,
     run: (ref: NonNullable<ReturnType<RefService['resolve']>['ref']>) => Promise<{ value?: TValue }>,
   ): Promise<V2ToolResult<TValue>> {

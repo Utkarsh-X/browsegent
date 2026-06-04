@@ -44,7 +44,7 @@ function serializeView(items: ProjectionItem[]): SerializedProjectionItem[] {
 }
 
 function serializeRef(item: ProjectionItem): SerializedProjectionRef {
-  return {
+  const ref: SerializedProjectionRef = {
     refId: item.refId,
     kind: item.kind,
     role: item.role,
@@ -57,6 +57,12 @@ function serializeRef(item: ProjectionItem): SerializedProjectionRef {
     score: item.score,
     regionId: item.regionId,
   };
+
+  if (item.selectOptions?.length) {
+    ref.selectOptions = item.selectOptions.slice(0, 20);
+  }
+
+  return ref;
 }
 
 function textDistinctFromName(text: string | undefined, name: string | undefined): boolean {

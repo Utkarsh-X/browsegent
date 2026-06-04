@@ -19,6 +19,7 @@ export function toProjectionItem(ref: V2Ref): ProjectionItem {
     state: ref.state,
     continuityConfidence: ref.continuityConfidence,
     score: scoreRef(ref),
+    selectOptions: ref.selectOptions,
   };
 }
 

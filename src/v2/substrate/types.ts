@@ -45,4 +45,5 @@ export interface CapturedElement {
   box?: Rect;
   visibility: VisibilityState;
   actionability: ActionabilityState;
+  selectOptions?: string[];
 }

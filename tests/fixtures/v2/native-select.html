@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Native select fixture</title>
+  </head>
+  <body>
+    <main>
+      <h1>Native select</h1>
+      <label for="sort-select">Sort order</label>
+      <select id="sort-select" name="sort">
+        <option value="">Choose sort</option>
+        <option value="newest">Announcement date (newest first)</option>
+        <option value="oldest">Announcement date (oldest first)</option>
+        <option value="relevance">Relevance</option>
+      </select>
+      <p id="result" aria-live="polite">selected:none</p>
+    </main>
+    <script>
+      document.getElementById('sort-select').addEventListener('change', (event) => {
+        const selected = event.target.selectedOptions[0]?.textContent || '';
+        document.getElementById('result').textContent = `selected:${selected}`;
+      });
+    </script>
+  </body>
+</html>

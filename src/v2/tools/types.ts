@@ -16,6 +16,7 @@ export interface V2ToolRuntime {
   scroll(direction?: 'down' | 'up'): Promise<V2ToolResult<{ direction: 'down' | 'up' }>>;
   waitForState(input: { pattern?: string; timeout?: number }): Promise<V2ToolResult<{ matched: boolean }>>;
   press(key: PlannerPressKey): Promise<V2ToolResult<{ key: PlannerPressKey }>>;
+  select(refId: string, value: string): Promise<V2ToolResult<{ value: string }>>;
 }
 
 export interface V2ToolDispatcherLike {

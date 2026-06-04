@@ -73,6 +73,11 @@ class FakeToolRuntime {
     this.calls.push({ method: 'press', args: [key] });
     return { success: true, kind: 'press', value: { key }, traceStepId: `trace_${this.calls.length}` };
   }
+
+  async select(refId: string, value: string): Promise<V2ToolResult<{ value: string }>> {
+    this.calls.push({ method: 'select', args: [refId, value] });
+    return { success: true, kind: 'select', targetRef: refId, value: { value }, traceStepId: 'fake_select' };
+  }
 }
 
 test('V2ToolDispatcher dispatches ref-first planner steps to runtime tools', async () => {
@@ -91,6 +96,7 @@ test('V2ToolDispatcher dispatches ref-first planner steps to runtime tools', asy
     { tool: 'wait', pattern: 'Ready', timeout: 250 },
     { tool: 'press', key: 'Enter' },
     { tool: 'navigate', url: 'https://example.test/next' },
+    { tool: 'select', ref: 'v2ref_1', value: 'Announcement date (newest first)' },
   ];
 
   const results = [];
@@ -100,12 +106,13 @@ test('V2ToolDispatcher dispatches ref-first planner steps to runtime tools', asy
 
   assert.deepEqual(
     runtime.calls.map(call => call.method),
-    ['click', 'type', 'get', 'inspectRegion', 'searchPage', 'scroll', 'waitForState', 'press', 'navigate'],
+    ['click', 'type', 'get', 'inspectRegion', 'searchPage', 'scroll', 'waitForState', 'press', 'navigate', 'select'],
   );
   assert.deepEqual(runtime.calls[1].args, ['ref_input', 'Ada']);
   assert.deepEqual(runtime.calls[6].args, [{ pattern: 'Ready', timeout: 250 }]);
   assert.deepEqual(runtime.calls[7].args, ['Enter']);
   assert.deepEqual(runtime.calls[8].args, ['https://example.test/next']);
+  assert.deepEqual(runtime.calls[9].args, ['v2ref_1', 'Announcement date (newest first)']);
   assert.equal(results.every(result => result.success), true);
 });
 
@@ -145,6 +152,11 @@ test('V2ToolDispatcher returns operational failures for unsupported or malformed
   assert.equal(unsafeUrl.error?.code, 'unsupported_url');
   assert.equal(invalidPress.success, false);
   assert.equal(invalidPress.error?.code, 'invalid_key');
+
+  const missingValue = await dispatcher.dispatch({ tool: 'select', ref: 'v2ref_1' }, { goal: 'Sort results' });
+  assert.equal(missingValue.success, false);
+  assert.equal(missingValue.error?.code, 'missing_value');
+
   assert.equal(runtime.calls.length, 0);
 });
 

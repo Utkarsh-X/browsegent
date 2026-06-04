@@ -37,6 +37,7 @@ export class ObservationService {
       isContentEditable: candidate.isContentEditable,
       nthRoleName: candidate.nthRoleName,
       capabilities: deriveRefCapabilities(candidate),
+      selectOptions: candidate.selectOptions,
       box: candidate.box,
       visibility: candidate.visibility,
       actionability: candidate.actionability,
@@ -205,6 +206,17 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
       hash = Math.imul(hash, 16777619);
     }
     return (hash >>> 0).toString(36);
+  }
+
+  function selectOptions(element) {
+    if (!(element instanceof HTMLSelectElement)) {
+      return undefined;
+    }
+
+    return Array.from(element.options)
+      .map(option => normalizedText(option.textContent || option.label || option.value || ''))
+      .filter(Boolean)
+      .slice(0, 20);
   }
 
   function explicitOrNativeRole(element) {
@@ -421,6 +433,7 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
         box,
         visibility,
         actionability,
+        selectOptions: selectOptions(element),
       };
     });
 })()

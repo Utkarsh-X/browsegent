@@ -18,6 +18,7 @@ Valid tools:
 - type: requires ref and text
 - navigate: requires url
 - press: requires key Enter, Escape, Tab, ArrowDown, or ArrowUp
+- select: requires ref and exact visible option value
 - get: requires ref
 - inspect_region: requires ref
 - search_page: requires pattern
@@ -27,6 +28,8 @@ Valid tools:
 Planner input shape: current.refs contains selected ref facts only. workingSet explains why selected refs were included, what was omitted, and which compact evidence is currently available. interactions, readables, navigation, and regions are bounded views over selected refs, not the full page.
 
 workingSet.actionSurface lists refs compatible with click/type/select/read operations. Prefer tool-compatible refs. Ambiguous refs may be tried only when evidence supports them, but do not use a known incompatible ref for a tool.
+
+Use select only for refs listed as selectable in workingSet.actionSurface. Use exact visible option labels from current.refs[ref].selectOptions when present. If option labels are missing or uncertain, inspect the region or read the page before selecting.
 
 Do not assume omitted refs are unavailable. If the selected working set is insufficient, use get, inspect_region, search_page, scroll, wait, or navigation actions to gather more evidence. Prefer targeted expansion over repeating the same failed action.
 

@@ -68,3 +68,10 @@ test('buildV2PlannerUserMessage serializes planner input compactly', () => {
   assert.match(message, /^Planner input JSON:\n\{/);
   assert.doesNotMatch(message, /\n  "/);
 });
+
+test('buildV2PlannerSystemPrompt describes bounded native select use', () => {
+  const prompt = buildV2PlannerSystemPrompt();
+
+  assert.match(prompt, /select: requires ref and exact visible option value/i);
+  assert.match(prompt, /Use select only for refs listed as selectable/i);
+});

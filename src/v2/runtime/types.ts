@@ -44,6 +44,7 @@ export interface V2Ref {
   isContentEditable?: boolean;
   nthRoleName?: number;
   capabilities?: V2RefCapabilities;
+  selectOptions?: string[];
   regionId?: string;
   box?: Rect;
   visibility: VisibilityState;

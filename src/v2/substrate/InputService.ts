@@ -5,7 +5,7 @@ import type { V2Ref } from '../runtime/types';
 import { RefResolver } from './RefResolver';
 
 export interface InputExecutionResult<TValue = unknown> {
-  kind: 'click' | 'type';
+  kind: 'click' | 'type' | 'select';
   value?: TValue;
 }
 
@@ -56,6 +56,38 @@ export class InputService {
     };
   }
 
+  async select(ref: V2Ref, value: string, page: Page): Promise<InputExecutionResult<{ value: string; selectedText: string }>> {
+    this.assertExecutable(ref);
+    this.assertActionCompatible(ref, 'select');
+    const { locator } = await this.resolver.resolve(ref, page);
+    await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
+
+    const isNativeSelect = await locator.evaluate((element) => element instanceof HTMLSelectElement);
+    if (!isNativeSelect) {
+      throw new V2OperationalError('target_not_selectable', 'Target is not a native select control.', { retryable: false });
+    }
+
+    try {
+      await locator.selectOption({ label: value }, { timeout: 1_500 });
+    } catch (error) {
+      throw mapPlaywrightError(error, 'select');
+    }
+
+    const selected = await locator.evaluate((element) => {
+      const select = element as HTMLSelectElement;
+      const selectedOption = select.selectedOptions[0];
+      return {
+        value: select.value,
+        selectedText: selectedOption?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+      };
+    });
+
+    return {
+      kind: 'select',
+      value: selected,
+    };
+  }
+
   private assertExecutable(ref: V2Ref): void {
     if (ref.visibility === 'hidden') {
       throw new V2OperationalError('target_hidden', 'Target is hidden and cannot be executed.', { retryable: false });
@@ -70,13 +102,17 @@ export class InputService {
     }
   }
 
-  private assertActionCompatible(ref: V2Ref, action: 'click' | 'type'): void {
+  private assertActionCompatible(ref: V2Ref, action: 'click' | 'type' | 'select'): void {
     if (action === 'click' && ref.capabilities?.clickable === false) {
       throw new V2OperationalError('target_not_clickable', 'Target is not a clickable control.', { retryable: false });
     }
 
     if (action === 'type' && ref.capabilities?.typeable === false) {
       throw new V2OperationalError('target_not_editable', 'Target is not a typeable control.', { retryable: false });
+    }
+
+    if (action === 'select' && ref.capabilities?.selectable === false) {
+      throw new V2OperationalError('target_not_selectable', 'Target is not a selectable control.', { retryable: false });
     }
   }
 
@@ -95,7 +131,7 @@ export class InputService {
   }
 }
 
-function mapPlaywrightError(error: unknown, action: 'click' | 'type'): V2OperationalError {
+function mapPlaywrightError(error: unknown, action: 'click' | 'type' | 'select'): V2OperationalError {
   const message = error instanceof Error ? error.message : String(error);
   const lowered = message.toLowerCase();
 
@@ -137,6 +173,17 @@ function mapPlaywrightError(error: unknown, action: 'click' | 'type'): V2Operati
     )
   ) {
     return new V2OperationalError('target_not_clickable', `Target was not clickable during ${action}.`, { retryable: false });
+  }
+
+  if (
+    action === 'select'
+    && (
+      lowered.includes('not a <select>')
+      || lowered.includes('did not find some options')
+      || lowered.includes('option')
+    )
+  ) {
+    return new V2OperationalError('target_not_selectable', `Target could not select the requested option during ${action}.`, { retryable: false });
   }
 
   if (lowered.includes('timeout')) {

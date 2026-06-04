@@ -152,6 +152,11 @@ class FakeHarness {
     return { success: true, kind: 'type', targetRef: refId, value: { inputValue: text }, traceStepId: 'fake_type' };
   }
 
+  async select(refId: string, value: string): Promise<V2ToolResult<{ value: string }>> {
+    return { success: true, kind: 'select', targetRef: refId, value: { value }, traceStepId: 'fake_select' };
+  }
+
+
   async press(key: PlannerPressKey): Promise<V2ToolResult<{ key: PlannerPressKey }>> {
     return { success: true, kind: 'press', value: { key }, traceStepId: 'fake_press' };
   }

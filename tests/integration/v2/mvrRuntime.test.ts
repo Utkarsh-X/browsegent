@@ -455,3 +455,60 @@ test('BrowseGentV2Harness rejects unsafe navigate URLs without browser mutation'
     await harness.close();
   }
 });
+
+test('BrowseGentV2Harness observes native select option labels as bounded operational facts', async () => {
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_native_select_options',
+    traceDir: await freshTraceDir('native_select_options'),
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('native-select.html'));
+    const select = observation.refs.find(ref => ref.name === 'Sort order');
+
+    assert.ok(select);
+    assert.equal(select.tagName, 'select');
+    assert.equal(select.capabilities?.selectable, true);
+    assert.deepEqual(select.selectOptions, [
+      'Choose sort',
+      'Announcement date (newest first)',
+      'Announcement date (oldest first)',
+      'Relevance',
+    ]);
+  } finally {
+    await harness.close();
+  }
+});
+
+test('BrowseGentV2Harness selects a native option and records transition evidence', async () => {
+  const traceDir = await freshTraceDir('native_select_execute');
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_native_select_execute',
+    traceDir,
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('native-select.html'));
+    const select = observation.refs.find(ref => ref.name === 'Sort order');
+    assert.ok(select);
+
+    const result = await harness.select(select.refId, 'Announcement date (newest first)');
+    const searchResult = await harness.searchPage('selected:Announcement date (newest first)');
+    const manifest = await harness.flushTrace();
+
+    assert.equal(result.success, true);
+    assert.equal(result.kind, 'select');
+    assert.equal(result.targetRef, select.refId);
+    assert.deepEqual(result.value, {
+      value: 'newest',
+      selectedText: 'Announcement date (newest first)',
+    });
+    assert.ok(result.evidence?.afterObservationId);
+    assert.equal(searchResult.value?.matches, 1);
+    assert.ok(manifest.steps.find(step => step.kind === 'select')?.afterObservationId);
+  } finally {
+    await harness.close();
+  }
+});

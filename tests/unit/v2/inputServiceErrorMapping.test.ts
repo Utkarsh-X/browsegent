@@ -94,3 +94,28 @@ test('InputService keeps pointer interception classified as target_blocked', asy
     },
   );
 });
+
+test('InputService maps select on non-selectable refs to target_not_selectable', async () => {
+  const service = new InputService();
+  await assert.rejects(
+    () => service.select({
+      refId: 'ref_text',
+      generationId: 1,
+      targetId: 'target_text',
+      selectorCandidates: ['#text'],
+      role: 'textbox',
+      tagName: 'input',
+      inputType: 'text',
+      name: 'Query',
+      visibility: 'visible',
+      actionability: 'ready',
+      continuityConfidence: 1,
+      state: 'live',
+      capabilities: { clickable: false, typeable: true, selectable: false, readable: true },
+    } as V2Ref, 'Newest', {} as never),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'target_not_selectable');
+      return true;
+    },
+  );
+});

@@ -46,6 +46,14 @@ export class V2ToolDispatcher {
           return failure(step.tool, 'invalid_key', 'Press key must be Enter, Escape, Tab, ArrowDown, or ArrowUp.');
         }
         return this.runtime.press(step.key);
+      case 'select':
+        if (!isNonEmptyString(step.ref)) {
+          return failure(step.tool, 'missing_ref', 'Ref is required for this v2 tool.', step.ref);
+        }
+        if (!isNonEmptyString(step.value)) {
+          return failure(step.tool, 'missing_value', 'Value is required for this v2 tool.', step.ref);
+        }
+        return this.runtime.select(step.ref, step.value);
       default:
         return failure(String((step as { tool?: unknown }).tool ?? 'unknown'), 'unsupported_tool', 'Unsupported v2 runtime tool.');
     }
