@@ -60,6 +60,9 @@ export function auditTraceReplayJson(
     if (!MUTATING_STEP_KINDS.has(step.kind ?? '')) {
       return false;
     }
+    if (input.allowFailedRuntimeSteps && step.status !== 'completed') {
+      return false;
+    }
     return !step.afterObservationId || !hasEvidence(step.result);
   }).length;
   const errors = [
