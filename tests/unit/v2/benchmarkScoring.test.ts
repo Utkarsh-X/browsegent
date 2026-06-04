@@ -116,3 +116,33 @@ test('scoreBenchmarkResult passes expected environment-block failures when trace
   assert.equal(scored.passed, true);
   assert.equal(scored.failureType, 'environment_block');
 });
+
+test('scoreBenchmarkResult enriches failure reason with trace error details when trace fails', () => {
+  const scored = scoreBenchmarkResult(task, {
+    adapterId: 'browsegent',
+    taskId: task.taskId,
+    attempt: 1,
+    success: false,
+    value: 'useful answer',
+    failureReason: 'v2_max_steps_exhausted',
+    metrics: { plannerCalls: 3, toolExecutions: 5, durationMs: 100 },
+  }, { ok: false, errors: ['missing_mutation_evidence'] });
+
+  assert.equal(scored.failureType, 'trace_error');
+  assert.match(scored.failureReason ?? '', /v2_max_steps_exhausted/);
+  assert.match(scored.failureReason ?? '', /missing_mutation_evidence/);
+});
+
+test('scoreBenchmarkResult does not enrich failure reason when trace passes', () => {
+  const scored = scoreBenchmarkResult(task, {
+    adapterId: 'browsegent',
+    taskId: task.taskId,
+    attempt: 1,
+    success: false,
+    value: '',
+    failureReason: 'planner_no_action',
+    metrics: { plannerCalls: 1, toolExecutions: 0, durationMs: 10 },
+  }, { ok: true, errors: [] });
+
+  assert.equal(scored.failureReason, 'planner_no_action');
+});

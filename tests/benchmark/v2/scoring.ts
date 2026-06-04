@@ -26,6 +26,7 @@ export function scoreBenchmarkResult(
     validation,
     trace,
     failureType,
+    failureReason: enrichFailureReason(result.failureReason, failureType, trace),
   };
 }
 
@@ -80,4 +81,19 @@ function inferFailureType(
   if (result.failureReason?.match(/captcha|access denied/i)) return 'environment_block';
   if (!result.success) return 'unknown';
   return undefined;
+}
+
+function enrichFailureReason(
+  original: string | undefined,
+  failureType: ScoredBenchmarkResult['failureType'],
+  trace: BenchmarkTraceScore,
+): string | undefined {
+  if (failureType !== 'trace_error' || trace.errors.length === 0) {
+    return original;
+  }
+  const traceDetail = `trace_error:${trace.errors.join(',')}`;
+  if (original && original.length > 0) {
+    return `${original}|${traceDetail}`;
+  }
+  return traceDetail;
 }
