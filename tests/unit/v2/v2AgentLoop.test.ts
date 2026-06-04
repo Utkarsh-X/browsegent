@@ -784,7 +784,7 @@ test('V2AgentLoop fails max-step exhaustion while preserving last read evidence'
   assert.equal(result.success, false);
   assert.equal(result.value, 'Observed answer');
   assert.equal(result.failureReason, 'v2_max_steps_exhausted');
-  assert.equal(result.metrics.plannerCalls, 2);
+  assert.equal(result.metrics.plannerCalls, 3);
   assert.equal(result.metrics.toolExecutions, 2);
 });
 
@@ -823,6 +823,71 @@ test('V2AgentLoop fails max-step exhaustion while preserving last mutation evide
   assert.equal(result.success, false);
   assert.equal(result.value, 'Open modal button');
   assert.equal(result.failureReason, 'v2_max_steps_exhausted');
-  assert.equal(result.metrics.plannerCalls, 2);
+  assert.equal(result.metrics.plannerCalls, 3);
   assert.equal(result.metrics.toolExecutions, 2);
+});
+
+test('V2AgentLoop attempts finalization when useful evidence exists at max steps', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'Observed answer' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'get',
+    targetRef: 'ref_submit',
+    value: { text: 'Observed answer' },
+    traceStepId: 'tool_get',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read answer',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Observed answer');
+  assert.equal(planner.inputs.length, 3);
+});
+
+test('V2AgentLoop falls through to max_steps_exhausted when finalization planner refuses to finish', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'scroll' }], confidence: 'low' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'get',
+    targetRef: 'ref_submit',
+    value: { text: 'Observed answer' },
+    traceStepId: 'tool_get',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read answer',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.value, 'Observed answer');
+  assert.equal(result.failureReason, 'v2_max_steps_exhausted');
+  assert.equal(planner.inputs.length, 3);
 });

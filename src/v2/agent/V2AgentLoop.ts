@@ -1,5 +1,6 @@
 import { ProjectionService } from '../brain1/ProjectionService';
 import { ContinuityGraph } from '../graph/ContinuityGraph';
+import type { ContinuityGraphSnapshot } from '../graph/types';
 import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
 import { PlannerInputComposer } from '../planner/PlannerInputComposer';
 import { V2PlannerClient } from '../planner/V2PlannerClient';
@@ -208,6 +209,12 @@ export class V2AgentLoop {
       }
 
       if (lastSuccessfulEvidenceValue) {
+        const finalizationResult = await this.attemptFinalization(
+          harness, plannerClient, observation, graphSnapshot,
+          input.goal, lastSuccessfulEvidenceValue, metrics,
+        );
+        if (finalizationResult) return finalizationResult;
+
         return await this.complete(harness, {
           success: false,
           value: lastSuccessfulEvidenceValue,
@@ -270,6 +277,55 @@ export class V2AgentLoop {
       ...result,
       tracePath: manifest.artifacts.trace.path,
     };
+  }
+
+  private async attemptFinalization(
+    harness: V2AgentHarnessRuntime,
+    plannerClient: V2PlannerClientLike,
+    observation: BrowserObservation,
+    graphSnapshot: ContinuityGraphSnapshot | undefined,
+    goal: string,
+    evidenceValue: string,
+    metrics: { plannerCalls: number; inputTokens: number; outputTokens: number; plannerDurationMs: number; toolExecutions: number },
+  ): Promise<V2AgentLoopResult | undefined> {
+    const projection = this.projectionService.project(observation, graphSnapshot);
+    const finalizationInput = this.plannerInputComposer.compose({
+      episodeId: `episode_finalization_${observation.observationId}`,
+      goal: `${goal}\n\nEvidence collected: "${evidenceValue}". If this answers the goal, return done with the answer. Otherwise escalate with reason.`,
+      projection,
+      graphSnapshot,
+    });
+    harness.recordPlannerInput?.(finalizationInput.episodeId, finalizationInput);
+    metrics.plannerCalls += 1;
+    try {
+      const result = await plannerClient.call({ plannerInput: finalizationInput });
+      harness.recordPlannerOutput?.(finalizationInput.episodeId, {
+        attempts: 1,
+        rawText: result.rawText,
+        validation: { ok: true, errors: [] },
+        output: result.output,
+        metrics: {
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
+          durationMs: result.durationMs,
+        },
+      });
+      metrics.inputTokens += result.inputTokens;
+      metrics.outputTokens += result.outputTokens;
+      metrics.plannerDurationMs += result.durationMs;
+
+      if (result.output.done === true) {
+        return await this.complete(harness, {
+          success: true,
+          value: result.output.val ?? evidenceValue,
+          steps: metrics.plannerCalls,
+          metrics,
+        });
+      }
+    } catch {
+      // Finalization planner call failed — fall through to max_steps_exhausted
+    }
+    return undefined;
   }
 }
 
