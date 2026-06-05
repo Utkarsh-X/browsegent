@@ -151,3 +151,182 @@ test('PlannerOutputSchema rejects unsupported press keys', () => {
   assert.equal(result.ok, false);
   assert.match(result.ok ? '' : result.errors.join('\n'), /press key/);
 });
+
+test('PlannerOutputSchema rejects clicking readable-only refs', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [{ tool: 'click', ref: 'ref_answer' }],
+    confidence: 'high',
+  }, {
+    allowedRefs: ['ref_answer'],
+    actionSurface: {
+      clickableRefs: [],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: ['ref_answer'],
+      ambiguousRefs: [],
+    },
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /not compatible with tool "click"/);
+});
+
+test('PlannerOutputSchema rejects action plans in finalization mode', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [{ tool: 'click', ref: 'ref_more' }],
+    confidence: 'low',
+  }, {
+    mode: 'finalization',
+    allowedRefs: ['ref_more'],
+    actionSurface: {
+      clickableRefs: ['ref_more'],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /Finalization mode cannot return plan/);
+});
+
+test('PlannerOutputSchema accepts done in finalization mode', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    done: true,
+    val: '11.2',
+  }, { mode: 'finalization' });
+
+  assert.equal(result.ok, true);
+});
+
+test('PlannerOutputSchema accepts valid select step with value field', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [{ tool: 'select', ref: 'ref_sort', value: 'Announcement date (newest first)' }],
+    confidence: 'high',
+  }, {
+    allowedRefs: ['ref_sort'],
+    actionSurface: {
+      clickableRefs: [],
+      typeableRefs: [],
+      selectableRefs: ['ref_sort'],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.value?.plan?.[0]?.value, 'Announcement date (newest first)');
+});
+
+test('PlannerOutputSchema normalizes option alias to value for select steps', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [{ tool: 'select', ref: 'ref_sort', option: 'Newest' }],
+    confidence: 'high',
+  }, {
+    allowedRefs: ['ref_sort'],
+    actionSurface: {
+      clickableRefs: [],
+      typeableRefs: [],
+      selectableRefs: ['ref_sort'],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.value?.plan?.[0]?.value, 'Newest');
+});
+
+test('PlannerOutputSchema does not normalize option alias for non-select tools', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [{ tool: 'click', ref: 'ref_button', option: 'Something' }],
+    confidence: 'high',
+  }, {
+    allowedRefs: ['ref_button'],
+    actionSurface: {
+      clickableRefs: ['ref_button'],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.value?.plan?.[0]?.value, undefined);
+});
+
+test('PlannerOutputSchema recovers val to value for select steps as defense-in-depth', () => {
+  const schema = new PlannerOutputSchema();
+  // Simulates what happens if parser.normalize() re-maps value→val inside plan steps
+  const result = schema.validate({
+    plan: [{ tool: 'select', ref: 'ref_sort', val: 'Newest' }],
+    confidence: 'high',
+  }, {
+    allowedRefs: ['ref_sort'],
+    actionSurface: {
+      clickableRefs: [],
+      typeableRefs: [],
+      selectableRefs: ['ref_sort'],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.value?.plan?.[0]?.value, 'Newest');
+});
+
+test('PlannerOutputSchema can validate only first action compatibility for queued multi-step plans', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [
+      { tool: 'click', ref: 'ref_search_button' },
+      { tool: 'type', ref: 'ref_search_button', text: 'climate change data visualization' },
+      { tool: 'press', ref: 'ref_search_button', key: 'Enter' },
+    ],
+    confidence: 'high',
+  }, {
+    allowedRefs: ['ref_search_button'],
+    actionCompatibilityScope: 'first_step',
+    actionSurface: {
+      clickableRefs: ['ref_search_button'],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: ['ref_search_button'],
+      ambiguousRefs: [],
+    },
+  });
+
+  assert.equal(result.ok, true);
+});
+
+test('PlannerOutputSchema still rejects incompatible first step in first-step compatibility mode', () => {
+  const schema = new PlannerOutputSchema();
+  const result = schema.validate({
+    plan: [
+      { tool: 'type', ref: 'ref_search_button', text: 'climate change data visualization' },
+    ],
+    confidence: 'high',
+  }, {
+    allowedRefs: ['ref_search_button'],
+    actionCompatibilityScope: 'first_step',
+    actionSurface: {
+      clickableRefs: ['ref_search_button'],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: ['ref_search_button'],
+      ambiguousRefs: [],
+    },
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /not compatible with tool "type"/);
+});

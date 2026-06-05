@@ -175,6 +175,14 @@ const FIELD_MAP: Record<string, string> = {
   status: 'confidence',
 };
 
+// Plan step fields: 'value' is NOT mapped to 'val' because inside plan steps
+// 'value' means the select dropdown value, not the final answer.
+const STEP_FIELD_MAP: Record<string, string> = {
+  action: 'tool', command: 'tool',
+  selector: 'sel', target: 'sel', element: 'sel',
+  query: 'text', input: 'text',
+};
+
 export function normalize(obj: unknown): Record<string, unknown> | null {
   // Unwrap array-wrapped single object: [{...}] → {...}
   if (Array.isArray(obj) && obj.length === 1 && typeof obj[0] === 'object' && obj[0] !== null) {
@@ -194,13 +202,13 @@ export function normalize(obj: unknown): Record<string, unknown> | null {
     }
   }
 
-  // Normalize plan step field names
+  // Normalize plan step field names (using step-specific map)
   if (Array.isArray(normalized['plan'])) {
     normalized['plan'] = (normalized['plan'] as Record<string, unknown>[]).map(step => {
       if (typeof step !== 'object' || step === null) return step;
       const s: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(step)) {
-        const nk = FIELD_MAP[k.toLowerCase()] ?? k;
+        const nk = STEP_FIELD_MAP[k.toLowerCase()] ?? k;
         s[nk] = v;
       }
       return s;

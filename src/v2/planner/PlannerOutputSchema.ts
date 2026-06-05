@@ -13,6 +13,8 @@ export interface PlannerOutputValidationContext {
   allowedRefs?: readonly string[];
   regionRefs?: Readonly<Record<string, string>>;
   actionSurface?: PlannerActionSurface;
+  mode?: 'normal' | 'finalization';
+  actionCompatibilityScope?: 'all_steps' | 'first_step';
 }
 
 const VALID_TOOLS = new Set<PlannerOutputTool>([
@@ -75,6 +77,10 @@ export class PlannerOutputSchema {
 
     if (raw.escalate !== undefined && !isEscalation(raw.escalate)) {
       errors.push('"escalate" must be user_needed, captcha, or dead_end');
+    }
+
+    if (context.mode === 'finalization' && hasPlan) {
+      errors.push('Finalization mode cannot return plan');
     }
 
     if (hasPlan) {
@@ -175,6 +181,21 @@ function normalizePlannerStep(
       delete normalized[field];
     }
   }
+
+  // Normalize 'option' → 'value' for select steps only
+  if (normalized.tool === 'select' && normalized.value === undefined && typeof normalized.option === 'string') {
+    normalized.value = normalized.option;
+    delete normalized.option;
+  }
+
+  // Defense-in-depth: recover 'val' → 'value' for select steps.
+  // The parser's normalize() maps top-level 'value' → 'val' for done responses,
+  // but plan step 'value' (select dropdown) must NOT be mapped. If it was, recover here.
+  if (normalized.tool === 'select' && normalized.value === undefined && typeof normalized.val === 'string') {
+    normalized.value = normalized.val;
+    delete normalized.val;
+  }
+
   return normalized;
 }
 
@@ -260,6 +281,10 @@ function validateActionCompatibility(
   errors: string[],
   context: PlannerOutputValidationContext,
 ): void {
+  if (context.actionCompatibilityScope === 'first_step' && stepNumber > 1) {
+    return;
+  }
+
   const ref = step.ref;
   const surface = context.actionSurface;
   if (!surface || !isNonEmptyString(ref) || surface.ambiguousRefs.includes(ref)) {
