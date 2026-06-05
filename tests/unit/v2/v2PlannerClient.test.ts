@@ -246,6 +246,7 @@ test('V2PlannerClient rejects high-confidence type actions against known non-typ
       omittedCount: 0,
     },
     failedRefs: [],
+    quarantinedActions: [],
     regionSummaries: [],
     omitted: {
       observedRefCount: 1,
@@ -294,6 +295,7 @@ test('V2PlannerClient allows ambiguous refs through action compatibility validat
       omittedCount: 0,
     },
     failedRefs: [],
+    quarantinedActions: [],
     regionSummaries: [],
     omitted: {
       observedRefCount: 1,
@@ -530,6 +532,7 @@ test('V2PlannerClient includes action-compatible ref alternatives in retry feedb
       omittedCount: 0,
     },
     failedRefs: [],
+    quarantinedActions: [],
     regionSummaries: [],
     omitted: {
       observedRefCount: 2,
@@ -561,4 +564,78 @@ test('V2PlannerClient includes action-compatible ref alternatives in retry feedb
   assert.equal(providerUsers.length, 2);
   assert.match(providerUsers[1], /not compatible with tool "type"/);
   assert.match(providerUsers[1], /ref_input/);
+});
+
+test('V2PlannerClient accepts queued launcher plan when first step is compatible', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_launcher_plan');
+  plannerInput.version = 'v2.planner_input.v2';
+  plannerInput.current.refs = {
+    ref_search_button: {
+      refId: 'ref_search_button',
+      kind: 'button',
+      role: 'button',
+      name: 'Search or jump to...',
+      text: 'Search or jump to...',
+      visibility: 'visible',
+      actionability: 'ready',
+      state: 'live',
+      confidence: 1,
+      score: 10,
+    },
+  };
+  plannerInput.current.interactions = [{ refId: 'ref_search_button', rank: 1 }];
+  plannerInput.current.readables = [];
+  plannerInput.current.navigation = [];
+  plannerInput.workingSet = {
+    mode: 'act',
+    modeReason: 'test',
+    primaryRefs: [],
+    secondaryRefs: [],
+    readableEvidence: [],
+    navigationRefs: [],
+    actionSurface: {
+      clickableRefs: ['ref_search_button'],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+    changedRefs: {
+      appearedCount: 0,
+      weakenedCount: 0,
+      preservedCount: 0,
+      topRefs: [],
+      omittedCount: 0,
+    },
+    failedRefs: [],
+    quarantinedActions: [],
+    regionSummaries: [],
+    omitted: {
+      observedRefCount: 1,
+      selectedRefCount: 1,
+      droppedRefCount: 0,
+      droppedByReason: {},
+    },
+  };
+  const client = new V2PlannerClient({
+    provider: async () => ({
+      text: JSON.stringify({
+        plan: [
+          { tool: 'click', ref: 'ref_search_button' },
+          { tool: 'type', ref: 'ref_search_button', text: 'climate change data visualization' },
+          { tool: 'press', ref: 'ref_search_button', key: 'Enter' },
+        ],
+        confidence: 'high',
+      }),
+      inputTokens: 5,
+      outputTokens: 3,
+    }),
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.equal(result.output.plan?.[0].tool, 'click');
+  assert.equal(result.output.plan?.[1].tool, 'type');
+  assert.equal(result.output.plan?.[2].tool, 'press');
 });

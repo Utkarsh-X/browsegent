@@ -32,6 +32,7 @@ export interface V2PlannerClientOptions {
 export interface V2PlannerCallInput {
   plannerInput: PlannerInput;
   model?: string;
+  mode?: 'normal' | 'finalization';
 }
 
 export interface V2PlannerCallResult {
@@ -114,7 +115,7 @@ export class V2PlannerClient {
       totalOutputTokens += providerResult.outputTokens;
       lastRawText = providerResult.text;
 
-      const validation = this.parseAndValidate(providerResult.text, input.plannerInput);
+      const validation = this.parseAndValidate(providerResult.text, input);
       if (validation.ok) {
         const durationMs = Date.now() - startedAt;
         const result: V2PlannerCallResult = {
@@ -174,13 +175,18 @@ export class V2PlannerClient {
     );
   }
 
-  private parseAndValidate(rawText: string, plannerInput: PlannerInput): { ok: true; output: PlannerOutput } | { ok: false; errors: string[] } {
+  private parseAndValidate(rawText: string, input: V2PlannerCallInput): { ok: true; output: PlannerOutput } | { ok: false; errors: string[] } {
     const parsed = robustJsonParse(rawText);
     if (!parsed) {
       return { ok: false, errors: ['Planner response did not contain a valid JSON object'] };
     }
 
-    const validation = this.schema.validate(parsed, collectValidationContext(plannerInput));
+    const validationContext = {
+      ...collectValidationContext(input.plannerInput),
+      mode: input.mode,
+      actionCompatibilityScope: input.mode === 'finalization' ? 'all_steps' as const : 'first_step' as const,
+    };
+    const validation = this.schema.validate(parsed, validationContext);
     if (!validation.ok) {
       return { ok: false, errors: validation.errors };
     }
