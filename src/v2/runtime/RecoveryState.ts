@@ -79,7 +79,16 @@ function buildWrongTargetRecovery(
   signals: string[],
 ): PlannerRecoveryState | undefined {
   const code = lastResult?.error?.code;
-  if (code !== 'target_not_editable' && code !== 'target_not_clickable') {
+  const WRONG_TARGET_CODES = new Set([
+    'target_not_editable',
+    'target_not_clickable',
+    'target_blocked',
+    'ambiguous_ref_resolution',
+    'low_confidence_ref',
+    'unselected_ref',
+  ]);
+
+  if (!code || !WRONG_TARGET_CODES.has(code)) {
     return undefined;
   }
 
@@ -90,11 +99,22 @@ function buildWrongTargetRecovery(
       tool: lastResult?.kind ?? 'unknown',
       ref: lastResult?.targetRef,
     },
-    nextMechanisms: code === 'target_not_editable'
-      ? ['choose_typeable_ref', 'click_launcher_then_type', 'expand_or_reobserve']
-      : ['choose_clickable_ref', 'expand_or_reobserve'],
+    nextMechanisms: mechanismsForErrorCode(code),
     signals,
   };
+}
+
+function mechanismsForErrorCode(code: string): string[] {
+  if (code === 'target_not_editable') {
+    return ['choose_typeable_ref', 'click_launcher_then_type', 'expand_or_reobserve'];
+  }
+  if (code === 'target_not_clickable' || code === 'target_blocked' || code === 'low_confidence_ref') {
+    return ['avoid_repeating_blocked_action', 'choose_alternative_ref', 'use_readable_evidence_if_goal_is_answerable', 'expand_or_reobserve'];
+  }
+  if (code === 'ambiguous_ref_resolution') {
+    return ['choose_less_ambiguous_ref', 'inspect_region_or_scope', 'use_current_focus_or_overlay', 'expand_or_reobserve'];
+  }
+  return ['choose_alternative_ref', 'expand_or_reobserve'];
 }
 
 function collectRecoverySignals(input: RecoveryStateBuilderInput): string[] {

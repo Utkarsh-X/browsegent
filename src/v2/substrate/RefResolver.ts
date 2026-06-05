@@ -50,15 +50,24 @@ export class RefResolver {
 
     const sorted = [...candidates.values()].sort((left, right) => right.score - left.score);
     if (sorted.length === 0) {
-      throw new V2OperationalError('stale_ref', `Ref "${ref.refId}" no longer resolves to a verified target.`, { retryable: false });
+      throw new V2OperationalError('stale_ref', `Ref "${ref.refId}" no longer resolves to a verified target.`, {
+        retryable: false,
+        diagnostics: { candidateCount: 0, reason: 'no_verified_candidates', selectorCount: ref.selectorCandidates.length },
+      });
     }
 
     if (sorted.length > 1 && sorted[0].score === sorted[1].score) {
-      throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" resolved to multiple equivalent candidates.`, { retryable: false });
+      throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" resolved to multiple equivalent candidates.`, {
+        retryable: false,
+        diagnostics: { candidateCount: sorted.length, reason: 'tied_candidates', topScore: sorted[0].score },
+      });
     }
 
     if (overflowed && sorted[0].score < 140) {
-      throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" matched too many weak selector candidates.`, { retryable: false });
+      throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" matched too many weak selector candidates.`, {
+        retryable: false,
+        diagnostics: { candidateCount: sorted.length, reason: 'overflow_weak_selectors', topScore: sorted[0].score },
+      });
     }
 
     return {

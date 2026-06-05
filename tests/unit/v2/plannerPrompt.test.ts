@@ -75,3 +75,14 @@ test('buildV2PlannerSystemPrompt describes bounded native select use', () => {
   assert.match(prompt, /select: requires ref and exact visible option value/i);
   assert.match(prompt, /Use select only for refs listed as selectable/i);
 });
+
+test('buildV2PlannerSystemPrompt includes strong failed-ref recovery invariant', () => {
+  const prompt = buildV2PlannerSystemPrompt();
+  assert.match(prompt, /Failed refs are evidence first/i);
+  assert.match(prompt, /same ref\/tool pair/i);
+});
+
+test('buildV2PlannerSystemPrompt describes finalization constraints', () => {
+  const prompt = buildV2PlannerSystemPrompt();
+  assert.match(prompt, /In finalization mode, plans are invalid/i);
+});

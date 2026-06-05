@@ -50,3 +50,33 @@ test('RecoveryStateBuilder returns undefined when no recovery signal is present'
 
   assert.equal(recovery, undefined);
 });
+
+test('RecoveryStateBuilder blocks persistent target failure as same action pair', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_bad',
+      error: { code: 'target_blocked', message: 'Blocked.', retryable: false },
+      traceStepId: 'step_bad',
+    },
+    failures: [{
+      failureId: 'failure_target_blocked_ref_bad',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'Target blocked.',
+      source: 'test',
+      targetRef: 'ref_bad',
+      signals: ['error:target_blocked'],
+    }],
+  });
+
+  assert.equal(recovery?.state, 'wrong_target_type');
+  assert.equal(recovery?.blockedAction?.tool, 'click');
+  assert.equal(recovery?.blockedAction?.ref, 'ref_bad');
+  assert.ok(recovery?.nextMechanisms.includes('choose_alternative_ref'));
+  assert.ok(recovery?.nextMechanisms.includes('use_readable_evidence_if_goal_is_answerable'));
+});

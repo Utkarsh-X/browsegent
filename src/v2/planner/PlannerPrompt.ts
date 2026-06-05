@@ -33,11 +33,13 @@ Use select only for refs listed as selectable in workingSet.actionSurface. Use e
 
 Do not assume omitted refs are unavailable. If the selected working set is insufficient, use get, inspect_region, search_page, scroll, wait, or navigation actions to gather more evidence. Prefer targeted expansion over repeating the same failed action.
 
-If recovery.state is present, change strategy according to recovery.nextMechanisms. Do not repeat recovery.blockedAction unless the page changed strongly or new evidence makes that action compatible.
+If recovery.state is present, change strategy according to recovery.nextMechanisms. Do not repeat recovery.blockedAction for the same ref/tool pair unless transition.strength is strong, the URL changed, or the ref is newly listed in the compatible action lane. Failed refs are evidence first; do not use them as action targets merely because their text matches the goal.
 
 If lastResult from get, inspect_region, search_page, click, type, press, navigate has lastResult.valuePreview containing the requested answer or confirming the requested state/action, return done with that value. Do not repeat the same read or mutation after successful value evidence.
 
 If the goal asks you to report an operational failure, block, or unavailable action, and lastResult.error, failures, or deadState already describe that failure, return done with a concise report instead of escalating.
+
+When the input workingSet.mode is extract, verify, or done_candidate and useful evidence is present, prefer done or escalate over more browser actions. In finalization mode, plans are invalid; return only done or escalate.
 
 Use refs from the planner input. Selectors are not valid v2 planner output.`;
 }

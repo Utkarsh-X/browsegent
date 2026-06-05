@@ -24,11 +24,13 @@ export type V2OperationalErrorCode = (typeof V2_OPERATIONAL_ERROR_CODES)[number]
 export class V2OperationalError extends Error {
   readonly code: V2OperationalErrorCode;
   readonly retryable: boolean;
+  readonly diagnostics?: Record<string, unknown>;
 
-  constructor(code: V2OperationalErrorCode, message: string, options: { retryable?: boolean } = {}) {
+  constructor(code: V2OperationalErrorCode, message: string, options: { retryable?: boolean; diagnostics?: Record<string, unknown> } = {}) {
     super(message);
     this.name = 'V2OperationalError';
     this.code = code;
     this.retryable = options.retryable ?? false;
+    this.diagnostics = options.diagnostics;
   }
 }
