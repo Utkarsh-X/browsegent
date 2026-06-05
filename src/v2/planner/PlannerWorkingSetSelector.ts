@@ -8,6 +8,7 @@ import type { ContinuityGraphSnapshot } from '../graph/types';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { TransitionEvidence, V2ToolResult } from '../runtime/types';
 import type {
+  PlannerQuarantinedAction,
   PlannerWorkingSetDiagnostics,
   PlannerWorkingSetEvidence,
   PlannerWorkingSetOptions,
@@ -36,6 +37,7 @@ export interface PlannerWorkingSetSelectorInput {
   transitionEvidence?: TransitionEvidence;
   lastResult?: V2ToolResult;
   failureEvidence?: FailureEvidence[];
+  uncertaintySignals?: readonly string[];
 }
 
 interface Candidate {
@@ -66,7 +68,8 @@ export class PlannerWorkingSetSelector {
     const primary = selected.slice(0, this.options.maxPrimaryRefs);
     const secondary = selected.slice(this.options.maxPrimaryRefs, this.options.maxPrimaryRefs + this.options.maxSecondaryRefs);
     const readableEvidence = buildReadableEvidence(input.projection, selectedSet, this.options);
-    const actionSurface = buildActionSurface(input.projection, selectedSet);
+    const quarantinedActions = buildQuarantinedActions(input);
+    const actionSurface = buildActionSurface(input.projection, selectedSet, quarantinedActions);
     const navigationRefs = input.projection.navigation
       .filter(item => selectedSet.has(item.refId))
       .slice(0, this.options.maxNavigationRefs)
@@ -94,6 +97,7 @@ export class PlannerWorkingSetSelector {
         failedRefs: selected
           .filter(candidate => candidate.reasons.has('last_failure'))
           .map(candidate => toWorkingSetRef(candidate.item, candidate.reasons, candidate.score)),
+        quarantinedActions,
         regionSummaries,
         omitted: {
           observedRefCount: input.projection.stats.interactionCount,
@@ -184,7 +188,6 @@ function scoreCandidate(
   }
   if (evidence.failedRefs.has(item.refId)) {
     reasons.add('last_failure');
-    score += 80;
   }
   const lowValueReason = classifyLowValue(item);
   const dropReason = evidence.failedRefs.has(item.refId) || evidence.changedRefs.has(item.refId)
@@ -274,9 +277,73 @@ function buildRegionSummaries(
     .slice(0, maxRegionSummaries);
 }
 
+function buildQuarantinedActions(input: PlannerWorkingSetSelectorInput): PlannerQuarantinedAction[] {
+  const actions: PlannerQuarantinedAction[] = [];
+  const lastTool = input.lastResult?.kind;
+  const lastRef = input.lastResult?.targetRef;
+
+  for (const failure of input.failureEvidence ?? []) {
+    if (!failure.targetRef) continue;
+    if (failure.retryable !== false || failure.persistence !== 'persistent') continue;
+    if (failure.targetRef !== lastRef) continue;
+    actions.push({
+      refId: failure.targetRef,
+      tool: lastTool ?? 'unknown',
+      failureKind: failure.kind,
+      retryable: failure.retryable,
+      persistence: failure.persistence,
+    });
+  }
+
+  actions.push(...quarantinedActionsFromUncertainty(input.uncertaintySignals));
+
+  return uniqueQuarantinedActions(actions);
+}
+
+function quarantinedActionsFromUncertainty(signals: readonly string[] | undefined): PlannerQuarantinedAction[] {
+  const actions: PlannerQuarantinedAction[] = [];
+  for (const signal of signals ?? []) {
+    const match = signal.match(/^repeated_no_progress_transition:([^:]+):([^:]+):(\d+)$/);
+    if (!match) continue;
+    const [, tool, refId, countText] = match;
+    const count = Number.parseInt(countText, 10);
+    if (!Number.isFinite(count) || count < 3) continue;
+    actions.push({
+      refId,
+      tool,
+      failureKind: 'no_progress_loop',
+      retryable: false,
+      persistence: 'persistent',
+    });
+  }
+  return actions;
+}
+
+function uniqueQuarantinedActions(actions: PlannerQuarantinedAction[]): PlannerQuarantinedAction[] {
+  const seen = new Set<string>();
+  const unique: PlannerQuarantinedAction[] = [];
+  for (const action of actions) {
+    const key = `${action.tool}:${action.refId}:${action.failureKind}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(action);
+  }
+  return unique;
+}
+
+function isQuarantinedForTool(refId: string, tool: 'click' | 'type' | 'select', quarantinedActions: PlannerQuarantinedAction[]): boolean {
+  return quarantinedActions.some(action =>
+    action.refId === refId
+    && (action.tool === tool || (action.tool === 'close' && tool === 'click'))
+    && action.retryable === false
+    && action.persistence === 'persistent'
+  );
+}
+
 function buildActionSurface(
   projection: OperationalProjection,
   selectedSet: Set<string>,
+  quarantinedActions: PlannerQuarantinedAction[],
 ): {
   clickableRefs: string[];
   typeableRefs: string[];
@@ -300,16 +367,21 @@ function buildActionSurface(
     if (!isExecutableCandidate(item)) {
       continue;
     }
-    if (isClickableCandidate(item)) {
+    if (isClickableCandidate(item) && !isQuarantinedForTool(item.refId, 'click', quarantinedActions)) {
       clickableRefs.push(item.refId);
     }
-    if (isTypeableCandidate(item)) {
+    if (isTypeableCandidate(item) && !isQuarantinedForTool(item.refId, 'type', quarantinedActions)) {
       typeableRefs.push(item.refId);
     }
-    if (isSelectableCandidate(item)) {
+    if (isSelectableCandidate(item) && !isQuarantinedForTool(item.refId, 'select', quarantinedActions)) {
       selectableRefs.push(item.refId);
     }
-    if (!isClickableCandidate(item) && !isTypeableCandidate(item) && !isSelectableCandidate(item)) {
+    if (
+      hasInteractiveSignal(item)
+      && !isClickableCandidate(item)
+      && !isTypeableCandidate(item)
+      && !isSelectableCandidate(item)
+    ) {
       ambiguousRefs.push(item.refId);
     }
   }
@@ -443,6 +515,27 @@ function changedRefPriority(
   if (evidence.appearedRefs.has(refId)) return 5;
   if (evidence.weakenedRefs.has(refId)) return 6;
   return 99;
+}
+
+function hasInteractiveSignal(item: ProjectionItem): boolean {
+  const role = item.role?.toLowerCase();
+  return Boolean(
+    item.capabilities?.clickable
+    || item.capabilities?.typeable
+    || item.capabilities?.selectable
+    || role === 'button'
+    || role === 'link'
+    || role === 'textbox'
+    || role === 'searchbox'
+    || role === 'combobox'
+    || role === 'menuitem'
+    || role === 'option'
+    || item.kind === 'button'
+    || item.kind === 'link'
+    || item.kind === 'input'
+    || item.kind === 'select'
+    || item.kind === 'editable'
+  );
 }
 
 function isExecutableCandidate(item: ProjectionItem): boolean {

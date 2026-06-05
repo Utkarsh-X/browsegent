@@ -365,7 +365,7 @@ test('PlannerWorkingSetSelector emits action-compatible ref lanes', () => {
   assert.ok(!selection.workingSet.actionSurface.typeableRefs.includes('ref_button'));
   assert.ok(selection.workingSet.actionSurface.selectableRefs.includes('ref_combo'));
   assert.ok(selection.workingSet.actionSurface.readableRefs.includes('ref_generic'));
-  assert.ok(selection.workingSet.actionSurface.ambiguousRefs.includes('ref_generic'));
+  assert.equal(selection.workingSet.actionSurface.ambiguousRefs.includes('ref_generic'), false);
 });
 
 test('PlannerWorkingSetSelector builds action lanes from explicit capabilities over role guesses', () => {
@@ -406,4 +406,126 @@ test('PlannerWorkingSetSelector builds action lanes from explicit capabilities o
   assert.ok(selection.workingSet.actionSurface.clickableRefs.includes('ref_submit_input'));
   assert.ok(!selection.workingSet.actionSurface.typeableRefs.includes('ref_submit_input'));
   assert.ok(!selection.workingSet.actionSurface.typeableRefs.includes('ref_false_textbox'));
+});
+
+test('PlannerWorkingSetSelector preserves failed refs as evidence without keeping same-tool target clickable', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_search', role: 'textbox', name: 'Search', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_bad_button', role: 'button', name: 'Search', visibility: 'visible', actionability: 'ready' }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 4, maxSecondaryRefs: 4 }).select({
+    goal: 'Search for climate data',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_bad_button',
+      error: { code: 'target_blocked', message: 'Target center point is blocked.', retryable: false },
+      traceStepId: 'step_click_bad_button',
+    },
+    failureEvidence: [{
+      failureId: 'failure_target_blocked_ref_bad_button',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'Target ref center point is blocked by another element.',
+      source: 'test',
+      observationId: 'obs_working_set',
+      targetRef: 'ref_bad_button',
+      signals: ['error:target_blocked'],
+    }],
+  });
+
+  assert.ok(selection.workingSet.failedRefs.some(ref => ref.refId === 'ref_bad_button'));
+  assert.equal(selection.current.refs.ref_bad_button?.name, 'Search');
+  assert.equal(selection.workingSet.actionSurface.clickableRefs.includes('ref_bad_button'), false);
+  assert.ok(selection.workingSet.actionSurface.typeableRefs.includes('ref_search'));
+});
+
+test('PlannerWorkingSetSelector does not quarantine retryable transient failures', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_submit', role: 'button', name: 'Submit', visibility: 'visible', actionability: 'ready' }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 4, maxSecondaryRefs: 4 }).select({
+    goal: 'Submit the form',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      error: { code: 'timeout', message: 'Target was unstable.', retryable: true },
+      traceStepId: 'step_click_submit',
+    },
+    failureEvidence: [{
+      failureId: 'failure_timeout_ref_submit',
+      kind: 'timeout',
+      category: 'timing',
+      severity: 'warning',
+      persistence: 'transient',
+      retryable: true,
+      message: 'Timed out waiting for target.',
+      source: 'test',
+      observationId: 'obs_working_set',
+      targetRef: 'ref_submit',
+      signals: ['error:timeout'],
+    }],
+  });
+
+  assert.ok(selection.workingSet.failedRefs.some(ref => ref.refId === 'ref_submit'));
+  assert.ok(selection.workingSet.actionSurface.clickableRefs.includes('ref_submit'));
+});
+
+test('PlannerWorkingSetSelector exposes readable generic refs as evidence without action compatibility', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_answer_row',
+      role: 'row',
+      name: 'Castle Mountains National Monument Barstow California',
+      text: 'Castle Mountains National Monument Barstow California',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+    makeRef({
+      refId: 'ref_open',
+      role: 'link',
+      name: 'Castle Mountains National Monument',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 4, maxSecondaryRefs: 4 }).select({
+    goal: 'Find where Castle Mountains National Monument is located',
+    projection,
+  });
+
+  assert.ok(selection.workingSet.readableEvidence.some(evidence => evidence.refId === 'ref_answer_row'));
+  assert.equal(selection.workingSet.actionSurface.clickableRefs.includes('ref_answer_row'), false);
+  assert.ok(selection.workingSet.actionSurface.clickableRefs.includes('ref_open'));
+});
+
+test('PlannerWorkingSetSelector quarantines repeated no-progress action from matching action lane', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_compute', role: 'button', name: 'Compute', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_input', role: 'textbox', name: 'Expression', visibility: 'visible', actionability: 'ready' }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 4, maxSecondaryRefs: 4 }).select({
+    goal: 'Calculate derivative',
+    projection,
+    uncertaintySignals: ['repeated_no_progress_transition:click:ref_compute:3'],
+  });
+
+  assert.equal(selection.workingSet.actionSurface.clickableRefs.includes('ref_compute'), false);
+  assert.equal(selection.current.refs.ref_compute?.name, 'Compute');
+  assert.ok(selection.workingSet.actionSurface.typeableRefs.includes('ref_input'));
+  assert.ok(selection.workingSet.quarantinedActions.some(action =>
+    action.refId === 'ref_compute'
+    && action.tool === 'click'
+    && action.failureKind === 'no_progress_loop'
+  ));
 });

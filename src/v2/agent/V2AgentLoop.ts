@@ -1,4 +1,5 @@
 import { ProjectionService } from '../brain1/ProjectionService';
+import { buildFinalizationEvidence } from './FinalizationEvidence';
 import { ContinuityGraph } from '../graph/ContinuityGraph';
 import type { ContinuityGraphSnapshot } from '../graph/types';
 import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
@@ -124,7 +125,7 @@ export class V2AgentLoop {
           return await this.complete(harness, {
             success: false,
             value: '',
-            failureReason: `planner_escalated:${plannerResult.output.escalate}`,
+            failureReason: formatPlannerEscalation(plannerResult.output.escalate, plannerResult.output.reason),
             steps: metrics.plannerCalls,
             metrics,
           });
@@ -289,16 +290,21 @@ export class V2AgentLoop {
     metrics: { plannerCalls: number; inputTokens: number; outputTokens: number; plannerDurationMs: number; toolExecutions: number },
   ): Promise<V2AgentLoopResult | undefined> {
     const projection = this.projectionService.project(observation, graphSnapshot);
+    const finalizationEvidence = buildFinalizationEvidence({
+      goal,
+      projection,
+      lastSuccessfulEvidenceValue: evidenceValue,
+    });
     const finalizationInput = this.plannerInputComposer.compose({
       episodeId: `episode_finalization_${observation.observationId}`,
-      goal: `${goal}\n\nEvidence collected: "${evidenceValue}". If this answers the goal, return done with the answer. Otherwise escalate with reason.`,
+      goal: `${goal}\n\nFinalization evidence:\n${finalizationEvidence}\n\nReturn done with the best answer if the evidence answers the goal. Otherwise escalate with a concise reason. Do not return a plan.`,
       projection,
       graphSnapshot,
     });
     harness.recordPlannerInput?.(finalizationInput.episodeId, finalizationInput);
     metrics.plannerCalls += 1;
     try {
-      const result = await plannerClient.call({ plannerInput: finalizationInput });
+      const result = await plannerClient.call({ plannerInput: finalizationInput, mode: 'finalization' });
       harness.recordPlannerOutput?.(finalizationInput.episodeId, {
         attempts: 1,
         rawText: result.rawText,
@@ -335,6 +341,11 @@ function appendBoundedFailure(existing: FailureEvidence[], next: FailureEvidence
 
 function formatErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function formatPlannerEscalation(kind: string, reason: string | undefined): string {
+  const compactReason = reason?.replace(/\s+/g, ' ').trim();
+  return compactReason ? `planner_escalated:${kind}:${compactReason}` : `planner_escalated:${kind}`;
 }
 
 function readPlannerErrorMetrics(error: unknown): { inputTokens: number; outputTokens: number; durationMs: number } {
@@ -426,6 +437,35 @@ class ActionProgressMemory {
   }
 }
 
+function isNoProgressMutation(result: V2ToolResult): boolean {
+  if (!MUTATION_EVIDENCE_KINDS.has(result.kind) || !result.evidence) {
+    return false;
+  }
+
+  const evidence = result.evidence;
+  if (evidence.urlChanged || evidence.generationChanged) {
+    return false;
+  }
+
+  if (evidence.strength === 'strong' || evidence.strength === 'negative') {
+    return false;
+  }
+
+  if (previewResultValue(result.value)) {
+    return false;
+  }
+
+  if (evidence.transitionClass === 'microstate' && evidence.strength === 'none') {
+    return true;
+  }
+
+  if (evidence.transitionClass === 'structural_local') {
+    return true;
+  }
+
+  return false;
+}
+
 function progressEntryForResult(result: V2ToolResult): ActionProgressEntry | undefined {
   if (!result.success) {
     return undefined;
@@ -433,9 +473,7 @@ function progressEntryForResult(result: V2ToolResult): ActionProgressEntry | und
 
   const kind = normalizeSignalToken(result.kind);
   const targetKey = normalizeSignalToken(result.targetRef ?? result.target?.refId ?? 'global');
-  const noProgressMutation = MUTATION_EVIDENCE_KINDS.has(result.kind)
-    && result.evidence?.transitionClass === 'microstate'
-    && result.evidence.strength === 'none';
+  const noProgressMutation = isNoProgressMutation(result);
   const valuePreview = READ_TOOL_KINDS.has(result.kind) ? previewResultValue(result.value) : undefined;
 
   if (!noProgressMutation && !valuePreview) {
@@ -449,6 +487,7 @@ function progressEntryForResult(result: V2ToolResult): ActionProgressEntry | und
     noProgressMutation,
   };
 }
+
 
 function normalizeSignalToken(value: string): string {
   return value.replace(/[^a-zA-Z0-9_.-]+/g, '_').slice(0, 80) || 'unknown';

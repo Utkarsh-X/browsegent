@@ -455,3 +455,47 @@ async function freshTraceDir(name: string): Promise<string> {
   await mkdir(root, { recursive: true });
   return root;
 }
+
+test('PlannerInputComposer passes repeated no-progress uncertainty into working set quarantine', () => {
+  const observation = makeObservation({
+    observationId: 'obs_no_progress_quarantine',
+    refs: [
+      makeRef({
+        refId: 'ref_compute',
+        targetId: 'target_compute',
+        selectorCandidates: ['#compute'],
+        role: 'button',
+        name: 'Compute',
+        text: 'Compute',
+      }),
+      makeRef({
+        refId: 'ref_input',
+        targetId: 'target_input',
+        selectorCandidates: ['#input'],
+        role: 'textbox',
+        name: 'Expression',
+        text: 'Expression',
+      }),
+    ],
+  });
+  const projection = new ProjectionService().project(observation);
+
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_no_progress_quarantine',
+    goal: 'Calculate derivative',
+    projection,
+    runtimeUncertainty: {
+      level: 'medium',
+      signals: ['repeated_no_progress_transition:click:ref_compute:3'],
+    },
+  });
+
+  assert.ok(input.workingSet);
+  assert.ok(input.workingSet.quarantinedActions.some(action =>
+    action.refId === 'ref_compute'
+    && action.tool === 'click'
+    && action.failureKind === 'no_progress_loop'
+  ));
+  assert.equal(input.workingSet.actionSurface.clickableRefs.includes('ref_compute'), false);
+  assert.ok(input.workingSet.actionSurface.typeableRefs.includes('ref_input'));
+});

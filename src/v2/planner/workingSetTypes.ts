@@ -88,6 +88,14 @@ export interface PlannerChangedRefsSummary {
   omittedCount: number;
 }
 
+export interface PlannerQuarantinedAction {
+  refId: string;
+  tool: string;
+  failureKind: string;
+  retryable: boolean;
+  persistence: 'transient' | 'persistent' | 'unknown';
+}
+
 export interface PlannerWorkingSet {
   mode: WorkingSetMode;
   modeReason: string;
@@ -98,6 +106,7 @@ export interface PlannerWorkingSet {
   actionSurface: PlannerActionSurface;
   changedRefs: PlannerChangedRefsSummary;
   failedRefs: PlannerWorkingSetRef[];
+  quarantinedActions: PlannerQuarantinedAction[];
   regionSummaries: PlannerWorkingSetRegionSummary[];
   omitted: PlannerWorkingSetOmittedSummary;
 }

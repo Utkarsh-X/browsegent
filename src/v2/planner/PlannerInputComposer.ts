@@ -28,6 +28,7 @@ export class PlannerInputComposer {
       transitionEvidence: input.transitionEvidence,
       lastResult: input.lastResult,
       failureEvidence: input.failureEvidence,
+      uncertaintySignals: input.runtimeUncertainty?.signals,
     });
     const current = workingSetSelection.current;
     const recovery = this.recoveryStateBuilder.build({
