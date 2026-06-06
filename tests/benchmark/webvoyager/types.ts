@@ -32,17 +32,49 @@ export interface WebVoyagerBenchmarkTask extends BenchmarkTask {
   };
 }
 
+export type WebVoyagerReferenceMatchType = 'exact' | 'semantic_subset' | 'partial' | 'mismatch' | 'missing_reference';
+
+export type WebVoyagerEnvironmentStatus = 'normal' | 'environment_block' | 'impossible_task';
+
+export type WebVoyagerManualVerdict = 'pass' | 'partial' | 'fail' | 'environment_block' | 'impossible';
+
+export interface WebVoyagerManualAuditEntry {
+  taskId: string;
+  verdict: WebVoyagerManualVerdict;
+  reason: string;
+  reviewer?: string;
+}
+
+export interface WebVoyagerManualAuditFile {
+  runId?: string;
+  entries: WebVoyagerManualAuditEntry[];
+}
+
 export interface WebVoyagerVerdict {
   taskId: string;
+  internalPassed: boolean;
   rawAutoScore: number;
   strictScore: number;
+  manualCorrectedScore: number;
+  partialCredit: number;
+  environmentAdjustedEligible: boolean;
+  environmentStatus: WebVoyagerEnvironmentStatus;
+  referenceMatchType: WebVoyagerReferenceMatchType;
   needsManualReview: boolean;
+  manualVerdict?: WebVoyagerManualVerdict;
   reasons: string[];
 }
 
 export interface WebVoyagerEvaluationSummary {
   totalRuns: number;
+  internalPassRate: number;
   rawAutoScore: number;
   strictScore: number;
+  manualCorrectedScore: number;
+  partialCreditRate: number;
+  environmentAdjustedStrictScore: number;
+  environmentAdjustedManualScore: number;
   manualReviewCount: number;
+  environmentBlockedCount: number;
+  impossibleTaskCount: number;
 }

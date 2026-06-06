@@ -5,6 +5,7 @@ import { createBenchmarkAdapter, readBenchmarkAdapterId } from '../v2/adapter_fa
 import { runBenchmark, type RunBenchmarkOptions } from '../v2/run_benchmark';
 import type { BenchmarkAdapter, BenchmarkReport, BenchmarkTraceScore } from '../v2/types';
 import { evaluateWebVoyagerResult, summarizeWebVoyagerEvaluation } from './evaluator';
+import { loadWebVoyagerManualAudit } from './manual_audit';
 import { loadWebVoyagerSource } from './source_loader';
 import { resolveWebVoyagerTaskIds, selectWebVoyagerLiteTasks, toBenchmarkTasks, type WebVoyagerTaskSlice } from './task_selection';
 import type { WebVoyagerBenchmarkTask, WebVoyagerVerdict } from './types';
@@ -23,6 +24,7 @@ export interface RunWebVoyagerLiteOptions {
   geminiKeyIndex?: number;
   headed?: boolean;
   traceAudit?: RunBenchmarkOptions['traceAudit'];
+  manualAuditPath?: string;
 }
 
 export interface WebVoyagerLiteRunResult {
@@ -60,7 +62,12 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
   });
 
   const byTaskId = new Map(tasks.map(task => [task.taskId, task]));
-  const verdicts = benchmark.results.map(result => evaluateWebVoyagerResult(byTaskId.get(result.taskId)!, result));
+  const manualAudit = await loadWebVoyagerManualAudit(options.manualAuditPath);
+  const verdicts = benchmark.results.map(result => evaluateWebVoyagerResult(
+    byTaskId.get(result.taskId)!,
+    result,
+    manualAudit.get(result.taskId),
+  ));
   const evaluation = {
     summary: summarizeWebVoyagerEvaluation(verdicts),
     verdicts,
@@ -79,16 +86,26 @@ export function renderWebVoyagerEvaluationMarkdown(evaluation: WebVoyagerLiteRun
     '# WebVoyager-lite Evaluation',
     '',
     `Runs: ${evaluation.summary.totalRuns}`,
-    `Raw auto score: ${(evaluation.summary.rawAutoScore * 100).toFixed(1)}%`,
+    `Internal pass rate: ${(evaluation.summary.internalPassRate * 100).toFixed(1)}%`,
     `Strict score: ${(evaluation.summary.strictScore * 100).toFixed(1)}%`,
+    `Manual-corrected score: ${(evaluation.summary.manualCorrectedScore * 100).toFixed(1)}%`,
+    `Partial-credit score: ${(evaluation.summary.partialCreditRate * 100).toFixed(1)}%`,
+    `Environment-adjusted strict score: ${(evaluation.summary.environmentAdjustedStrictScore * 100).toFixed(1)}%`,
+    `Environment-adjusted manual score: ${(evaluation.summary.environmentAdjustedManualScore * 100).toFixed(1)}%`,
     `Manual review count: ${evaluation.summary.manualReviewCount}`,
+    `Environment blocked count: ${evaluation.summary.environmentBlockedCount}`,
+    `Impossible task count: ${evaluation.summary.impossibleTaskCount}`,
     '',
-    '| Task | Raw | Strict | Manual Review | Reasons |',
-    '| --- | ---: | ---: | --- | --- |',
+    '| Task | Internal | Strict | Manual | Partial | Env | Ref Match | Review | Reasons |',
+    '| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |',
     ...evaluation.verdicts.map(verdict => [
       verdict.taskId,
-      verdict.rawAutoScore,
+      verdict.internalPassed ? 1 : 0,
       verdict.strictScore,
+      verdict.manualCorrectedScore,
+      verdict.partialCredit,
+      verdict.environmentStatus,
+      verdict.referenceMatchType,
       verdict.needsManualReview ? 'yes' : 'no',
       verdict.reasons.join(', ') || 'none',
     ].join(' | ').replace(/^/, '| ').replace(/$/, ' |')),
@@ -122,6 +139,7 @@ function readCliOptions(): RunWebVoyagerLiteOptions {
   const taskIdsArg = readFlag('--task-ids');
   const taskIds = taskIdsArg ? taskIdsArg.split(',') : undefined;
   const taskSlice = readTaskSliceArg();
+  const manualAuditPath = readFlag('--manual-audit');
 
   return {
     sourceRoot,
@@ -133,6 +151,7 @@ function readCliOptions(): RunWebVoyagerLiteOptions {
     requestMinIntervalMs: requestMinIntervalArg ? Number(requestMinIntervalArg) : undefined,
     taskIds,
     taskSlice,
+    manualAuditPath,
   };
 }
 
