@@ -7,6 +7,7 @@ import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { RuntimeUncertainty } from '../runtime/UncertaintySignals';
 import type { PlannerRecoveryState } from '../runtime/RecoveryState';
 import type { PlannerWorkingSet, PlannerWorkingSetDiagnostics } from './workingSetTypes';
+import type { ProjectionSizeDiagnostics } from './ProjectionSizeDiagnostics';
 
 export type PlannerOutputTool =
   | 'click'
@@ -58,6 +59,7 @@ export interface PlannerInput {
   recovery?: PlannerRecoveryState;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
+  sizeDiagnostics?: ProjectionSizeDiagnostics;
 }
 
 export interface PlannerContinuitySummary {

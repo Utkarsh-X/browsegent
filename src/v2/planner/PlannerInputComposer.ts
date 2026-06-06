@@ -1,6 +1,7 @@
 import type { TransitionEvidence, V2ToolResult } from '../runtime/types';
 import type { ContinuityGraphSnapshot } from '../graph/types';
 import { LineageCompressor } from './LineageCompressor';
+import { measureProjectionSize } from './ProjectionSizeDiagnostics';
 import { PlannerWorkingSetSelector } from './PlannerWorkingSetSelector';
 import { RecoveryStateBuilder } from '../runtime/RecoveryState';
 import type {
@@ -37,7 +38,7 @@ export class PlannerInputComposer {
       uncertaintySignals: input.runtimeUncertainty?.signals,
     });
 
-    return {
+    const plannerInput: PlannerInput = {
       version: 'v2.planner_input.v2',
       episodeId: input.episodeId,
       goal: input.goal,
@@ -55,6 +56,14 @@ export class PlannerInputComposer {
         ? this.lineageCompressor.compress(input.trace, { maxSteps: input.maxLineageSteps })
         : undefined,
     };
+
+    plannerInput.sizeDiagnostics = measureProjectionSize({
+      current: plannerInput.current,
+      workingSet: plannerInput.workingSet,
+      plannerInput,
+    });
+
+    return plannerInput;
   }
 }
 
