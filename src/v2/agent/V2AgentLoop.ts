@@ -1,3 +1,4 @@
+import { inferAnswerContract, validateAnswerAgainstContract } from './AnswerContract';
 import { ProjectionService } from '../brain1/ProjectionService';
 import { buildFinalizationEvidence } from './FinalizationEvidence';
 import { ContinuityGraph } from '../graph/ContinuityGraph';
@@ -113,9 +114,20 @@ export class V2AgentLoop {
         metrics.plannerDurationMs += plannerResult.durationMs;
 
         if (plannerResult.output.done === true) {
+          const value = plannerResult.output.val ?? '';
+          const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(input.goal));
+          if (!answerValidation.ok) {
+            return await this.complete(harness, {
+              success: false,
+              value,
+              failureReason: `answer_contract_failed:${answerValidation.reasons.join('|')}`,
+              steps: metrics.plannerCalls,
+              metrics,
+            });
+          }
           return await this.complete(harness, {
             success: true,
-            value: plannerResult.output.val ?? '',
+            value,
             steps: metrics.plannerCalls,
             metrics,
           });
@@ -321,9 +333,20 @@ export class V2AgentLoop {
       metrics.plannerDurationMs += result.durationMs;
 
       if (result.output.done === true) {
+        const value = result.output.val ?? evidenceValue;
+        const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(goal));
+        if (!answerValidation.ok) {
+          return await this.complete(harness, {
+            success: false,
+            value,
+            failureReason: `answer_contract_failed:${answerValidation.reasons.join('|')}`,
+            steps: metrics.plannerCalls,
+            metrics,
+          });
+        }
         return await this.complete(harness, {
           success: true,
-          value: result.output.val ?? evidenceValue,
+          value,
           steps: metrics.plannerCalls,
           metrics,
         });

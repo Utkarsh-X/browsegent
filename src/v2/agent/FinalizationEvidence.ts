@@ -1,4 +1,5 @@
 import type { OperationalProjection, ProjectionItem } from '../brain1/projectionTypes';
+import { inferAnswerContract } from './AnswerContract';
 
 export interface FinalizationEvidenceInput {
   goal: string;
@@ -17,6 +18,9 @@ export function buildFinalizationEvidence(input: FinalizationEvidenceInput): str
     sections.push(`Last successful evidence: ${compactText(input.lastSuccessfulEvidenceValue, maxTextLength)}`);
   }
 
+  const contract = inferAnswerContract(input.goal);
+  sections.push(`Answer contract: ${contract.kind}; ${contract.reason}; nonUrlText=${contract.requiresNonUrlText}; rankingEvidence=${contract.requiresRankingEvidence}`);
+
   const readableItems = input.projection.readables
     .filter(item => item.visibility === 'visible')
     .filter(item => Boolean(item.name?.trim() || item.text?.trim()))
@@ -27,6 +31,19 @@ export function buildFinalizationEvidence(input: FinalizationEvidenceInput): str
     sections.push([
       'Readable evidence:',
       ...readableItems.map(item => `- ${item.refId}: ${compactText([item.name, item.text].filter(Boolean).join(' '), maxTextLength)}`),
+    ].join('\n'));
+  }
+
+  const answerCandidates = readableItems
+    .map(item => compactText([item.name, item.text].filter(Boolean).join(' '), maxTextLength))
+    .filter(text => text.length > 0)
+    .filter((text, index, all) => all.findIndex(existing => existing.toLowerCase() === text.toLowerCase()) === index)
+    .slice(0, 8);
+
+  if (answerCandidates.length > 0) {
+    sections.push([
+      'Answer candidates:',
+      ...answerCandidates.map((text, index) => `- candidate_${index + 1}: ${text}`),
     ].join('\n'));
   }
 

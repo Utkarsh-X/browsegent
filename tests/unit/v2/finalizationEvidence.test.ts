@@ -62,3 +62,45 @@ test('buildFinalizationEvidence includes last value and compact readable evidenc
   assert.match(evidence, /Readable evidence:/);
   assert.match(evidence, /Derivative is 11\.2/);
 });
+
+test('buildFinalizationEvidence includes answer contract and bounded candidates', () => {
+  const projection = makeProjection();
+  // Override readables to test candidate extraction
+  projection.readables = [
+    {
+      refId: 'r1',
+      kind: 'generic',
+      role: 'text',
+      name: 'resource-watch/resource-watch',
+      text: '1.2k stars climate data platform',
+      visibility: 'visible',
+      actionability: 'ready',
+      state: 'live',
+      score: 100,
+      continuityConfidence: 1,
+    },
+    {
+      refId: 'r2',
+      kind: 'generic',
+      role: 'text',
+      name: 'akshaysonvane/Climate-Change-Data-Analytics',
+      text: '20 stars visualization',
+      visibility: 'visible',
+      actionability: 'ready',
+      state: 'live',
+      score: 50,
+      continuityConfidence: 1,
+    },
+  ];
+
+  const evidence = buildFinalizationEvidence({
+    goal: 'Find the repository with the most stars for climate change data visualization',
+    projection,
+    lastSuccessfulEvidenceValue: 'GitHub search results',
+  });
+
+  assert.match(evidence, /Answer contract: ranked_entity/);
+  assert.match(evidence, /candidate_1/);
+  assert.match(evidence, /resource-watch\/resource-watch/);
+});
+

@@ -252,7 +252,7 @@ test('V2AgentLoop returns done output without executing tools', async () => {
 
   const result = await loop.run({
     url: 'https://example.test/form',
-    goal: 'Read answer',
+    goal: 'Read the visible text',
     maxSteps: 3,
   });
 
@@ -276,7 +276,7 @@ test('V2AgentLoop records planner artifacts for injected planner clients', async
 
   const result = await loop.run({
     url: 'https://example.test/form',
-    goal: 'Read answer',
+    goal: 'Read the visible text',
     maxSteps: 3,
   });
 
@@ -512,7 +512,7 @@ test('V2AgentLoop continues safe mini-plan after type when the next ref is live 
 
   const result = await loop.run({
     url: 'https://example.test/form',
-    goal: 'Enter name and submit',
+    goal: 'Fill in the field and submit',
     maxSteps: 2,
   });
 
@@ -661,7 +661,7 @@ test('V2AgentLoop feeds repeated identical read evidence into the next planner i
 
   const result = await loop.run({
     url: 'https://example.test/form',
-    goal: 'Read answer',
+    goal: 'Read the visible text',
     maxSteps: 3,
   });
 
@@ -864,7 +864,7 @@ test('V2AgentLoop attempts finalization when useful evidence exists at max steps
 
   const result = await loop.run({
     url: 'https://example.test/form',
-    goal: 'Read answer',
+    goal: 'Read the visible text',
     maxSteps: 2,
   });
 
@@ -945,7 +945,7 @@ test('V2AgentLoop emits repeated no-progress signal for same-ref structural_loca
 
   const result = await loop.run({
     url: 'https://example.test/calculator',
-    goal: 'Compute result',
+    goal: 'Trigger the calculation',
     maxSteps: 3,
   });
 
