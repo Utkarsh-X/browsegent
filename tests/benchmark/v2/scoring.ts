@@ -12,7 +12,14 @@ export function scoreBenchmarkResult(
   trace: BenchmarkTraceScore,
 ): ScoredBenchmarkResult {
   const validation = validateValue(task, result.value);
-  const failureType = result.failureType ?? inferFailureType(result, validation, trace);
+  let failureType = result.failureType ?? inferFailureType(result, validation, trace);
+  if (
+    failureType === 'runtime_crash'
+    && !result.tracePath
+    && result.metrics.toolExecutions === 0
+  ) {
+    failureType = 'runtime_startup_failure';
+  }
   const expectedFailurePassed = task.expectedFailureType !== undefined
     && !result.success
     && failureType === task.expectedFailureType
@@ -75,6 +82,7 @@ function inferFailureType(
   if (result.failureReason?.match(/API_QUOTA_EXCEEDED|rate limit|rate_limited|429|RESOURCE_EXHAUSTED/i)) return 'rate_limited';
   if (result.failureReason?.match(/planner_escalated:captcha|captcha|verification required/i)) return 'environment_block';
   if (result.failureReason?.match(/planner_client_error|Planner output invalid|planner/i)) return 'planning_error';
+  if (result.failureReason?.match(/page\.goto.*[Tt]imeout/i) && result.metrics.toolExecutions === 0) return 'runtime_startup_failure';
   if (!trace.ok) return 'trace_error';
   if (!validation.passed) return 'validation_error';
   if (result.failureReason?.match(/blocked|hidden|disabled|stale|target/i)) return 'action_error';

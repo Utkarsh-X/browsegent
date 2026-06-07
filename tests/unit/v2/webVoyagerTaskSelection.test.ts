@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   WEBVOYAGER_LITE_TASK_IDS,
   WEBVOYAGER_MVR_5_TASK_IDS,
+  WEBVOYAGER_MVR_5_STABLE_TASK_IDS,
   resolveWebVoyagerTaskIds,
   selectWebVoyagerLiteTasks,
   toBenchmarkTasks,
@@ -27,6 +28,17 @@ test('WEBVOYAGER_MVR_5_TASK_IDS contains the fixed representative next-run slice
   ]);
   assert.deepEqual(resolveWebVoyagerTaskIds('mvr5'), WEBVOYAGER_MVR_5_TASK_IDS);
   assert.deepEqual(resolveWebVoyagerTaskIds('balanced30'), WEBVOYAGER_LITE_TASK_IDS);
+});
+
+test('resolveWebVoyagerTaskIds supports mvr5-stable', () => {
+  assert.deepEqual(resolveWebVoyagerTaskIds('mvr5-stable'), [
+    'Cambridge Dictionary--0',
+    'ArXiv--0',
+    'GitHub--0',
+    'Google Map--10',
+    'Wolfram Alpha--0',
+  ]);
+  assert.deepEqual(WEBVOYAGER_MVR_5_STABLE_TASK_IDS, resolveWebVoyagerTaskIds('mvr5-stable'));
 });
 
 test('selectWebVoyagerLiteTasks fails loudly when planned ids are missing', () => {

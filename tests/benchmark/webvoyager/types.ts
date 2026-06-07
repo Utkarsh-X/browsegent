@@ -32,7 +32,7 @@ export interface WebVoyagerBenchmarkTask extends BenchmarkTask {
   };
 }
 
-export type WebVoyagerReferenceMatchType = 'exact' | 'semantic_subset' | 'partial' | 'mismatch' | 'missing_reference';
+export type WebVoyagerReferenceMatchType = 'exact' | 'semantic_subset' | 'partial' | 'mismatch' | 'missing_reference' | 'not_applicable';
 
 export type WebVoyagerEnvironmentStatus = 'normal' | 'environment_block' | 'impossible_task';
 
@@ -77,4 +77,38 @@ export interface WebVoyagerEvaluationSummary {
   manualReviewCount: number;
   environmentBlockedCount: number;
   impossibleTaskCount: number;
+}
+
+export type WebVoyagerTaskStatus =
+  | 'valid'
+  | 'impossible'
+  | 'date_normalized'
+  | 'environment_block_risk'
+  | 'ambiguous';
+
+export type WebVoyagerBenchmarkSlice = 'mvr5' | 'mvr5-stable' | 'balanced30';
+
+export interface WebVoyagerTaskRegistryEntry {
+  id: string;
+  status: WebVoyagerTaskStatus;
+  source: 'browser_use_eval' | 'browsegent' | 'manual_review';
+  reason: string;
+}
+
+export interface WebVoyagerTaskArtifactSummary {
+  taskId: string;
+  webVoyagerId: string;
+  webName: string;
+  goal: string;
+  url: string;
+  referenceAnswer?: unknown;
+  finalAnswer: string;
+  adapterPassed: boolean;
+  failureType?: string;
+  failureReason?: string;
+  tracePath?: string;
+  artifactPath?: string;
+  plannerCalls: number;
+  toolExecutions: number;
+  durationMs: number;
 }

@@ -11,6 +11,7 @@ export type BenchmarkFailureType =
   | 'rate_limited'
   | 'trace_error'
   | 'runtime_crash'
+  | 'runtime_startup_failure'
   | 'unknown';
 
 export interface BenchmarkValidationSpec {

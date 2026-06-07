@@ -17,14 +17,23 @@ export function evaluateWebVoyagerResult(
   const reference = task.webVoyager.referenceAnswer;
   const internalPassed = result.passed === true;
   const environmentStatus = classifyEnvironmentStatus(result, manualAudit);
-  const referenceMatchType = reference ? classifyReferenceMatch(result.value, reference.answer) : 'missing_reference';
+  const referenceMatchType = environmentStatus === 'normal'
+    ? (reference ? classifyReferenceMatch(result.value, reference.answer) : 'missing_reference')
+    : 'not_applicable';
 
   if (!internalPassed) reasons.push('benchmark_result_failed');
-  if (!reference) reasons.push('missing_reference');
-  if (reference && referenceMatchType === 'mismatch') reasons.push('reference_mismatch');
+  if (environmentStatus === 'normal' && !reference) reasons.push('missing_reference');
+  if (environmentStatus === 'normal' && reference && referenceMatchType === 'mismatch') reasons.push('reference_mismatch');
+  if (environmentStatus !== 'normal') reasons.push(environmentStatus);
   if (manualAudit) reasons.push(`manual_${manualAudit.verdict}`);
 
-  const strictScore = internalPassed && referenceMatchType !== 'mismatch' && referenceMatchType !== 'missing_reference' ? 1 : 0;
+  const strictScore = environmentStatus === 'normal'
+    && internalPassed
+    && referenceMatchType !== 'mismatch'
+    && referenceMatchType !== 'missing_reference'
+    && referenceMatchType !== 'not_applicable'
+    ? 1
+    : 0;
   const manualCorrectedScore = scoreManual(manualAudit, strictScore);
   const partialCredit = scorePartial(manualAudit, strictScore, referenceMatchType);
 
@@ -38,7 +47,7 @@ export function evaluateWebVoyagerResult(
     environmentAdjustedEligible: environmentStatus === 'normal',
     environmentStatus,
     referenceMatchType,
-    needsManualReview: !manualAudit && (!reference || referenceMatchType === 'mismatch' || referenceMatchType === 'partial'),
+    needsManualReview: !manualAudit && (!reference || referenceMatchType === 'mismatch' || referenceMatchType === 'partial' || environmentStatus !== 'normal'),
     manualVerdict: manualAudit?.verdict,
     reasons,
   };

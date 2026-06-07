@@ -1,52 +1,17 @@
 import { normalizeWebVoyagerTaskDate } from './date_normalizer';
-import type { WebVoyagerBenchmarkTask, WebVoyagerReferenceAnswer, WebVoyagerSourceTask } from './types';
+import { assertStableSliceContainsNoImpossibleTasks, WEBVOYAGER_STABLE_SLICES } from './task_registry';
+import type { WebVoyagerBenchmarkSlice, WebVoyagerBenchmarkTask, WebVoyagerReferenceAnswer, WebVoyagerSourceTask } from './types';
 
-export const WEBVOYAGER_LITE_TASK_IDS = [
-  'Allrecipes--3',
-  'Allrecipes--10',
-  'Amazon--0',
-  'Amazon--10',
-  'Apple--0',
-  'Apple--10',
-  'ArXiv--0',
-  'ArXiv--10',
-  'BBC News--0',
-  'BBC News--10',
-  'Booking--0',
-  'Booking--10',
-  'Cambridge Dictionary--0',
-  'Cambridge Dictionary--10',
-  'Coursera--0',
-  'Coursera--10',
-  'ESPN--0',
-  'ESPN--10',
-  'GitHub--0',
-  'GitHub--10',
-  'Google Flights--0',
-  'Google Flights--10',
-  'Google Map--0',
-  'Google Map--10',
-  'Google Search--0',
-  'Google Search--10',
-  'Huggingface--0',
-  'Huggingface--10',
-  'Wolfram Alpha--0',
-  'Wolfram Alpha--10',
-] as const;
-
-export const WEBVOYAGER_MVR_5_TASK_IDS = [
-  'Allrecipes--3',
-  'ArXiv--0',
-  'GitHub--0',
-  'Google Map--10',
-  'Wolfram Alpha--0',
-] as const;
-
-export type WebVoyagerTaskSlice = 'balanced30' | 'mvr5';
+export type WebVoyagerTaskSlice = WebVoyagerBenchmarkSlice;
 
 export function resolveWebVoyagerTaskIds(slice: WebVoyagerTaskSlice = 'balanced30'): readonly string[] {
-  return slice === 'mvr5' ? WEBVOYAGER_MVR_5_TASK_IDS : WEBVOYAGER_LITE_TASK_IDS;
+  assertStableSliceContainsNoImpossibleTasks(slice);
+  return WEBVOYAGER_STABLE_SLICES[slice];
 }
+
+export const WEBVOYAGER_LITE_TASK_IDS = WEBVOYAGER_STABLE_SLICES.balanced30;
+export const WEBVOYAGER_MVR_5_TASK_IDS = WEBVOYAGER_STABLE_SLICES.mvr5;
+export const WEBVOYAGER_MVR_5_STABLE_TASK_IDS = WEBVOYAGER_STABLE_SLICES['mvr5-stable'];
 
 export function selectWebVoyagerLiteTasks(
   sourceTasks: WebVoyagerSourceTask[],

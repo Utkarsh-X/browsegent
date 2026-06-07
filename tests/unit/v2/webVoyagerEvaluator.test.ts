@@ -6,6 +6,7 @@ import type { WebVoyagerBenchmarkTask, WebVoyagerEvaluationSummary } from '../..
 import type { ScoredBenchmarkResult } from '../../benchmark/v2/types';
 import { parseWebVoyagerManualAudit } from '../../benchmark/webvoyager/manual_audit';
 import { summarizeWebVoyagerRepeats } from '../../benchmark/webvoyager/repeat_summary';
+import { isWebVoyagerJudgeResult } from '../../benchmark/webvoyager/judge_types';
 
 test('evaluateWebVoyagerResult gives strict success only when benchmark passed and reference matches', () => {
   const verdict = evaluateWebVoyagerResult(task('GitHub--0', '42 stars'), result({
@@ -45,9 +46,10 @@ test('evaluateWebVoyagerResult flags environment-blocked failed runs for manual 
   assert.equal(verdict.rawAutoScore, 0);
   assert.equal(verdict.strictScore, 0);
   assert.equal(verdict.environmentStatus, 'environment_block');
+  assert.equal(verdict.referenceMatchType, 'not_applicable');
   assert.equal(verdict.environmentAdjustedEligible, false);
   assert.equal(verdict.needsManualReview, true);
-  assert.deepEqual(verdict.reasons, ['benchmark_result_failed', 'reference_mismatch']);
+  assert.deepEqual(verdict.reasons, ['benchmark_result_failed', 'environment_block']);
 });
 
 test('summarizeWebVoyagerEvaluation aggregates strict score and manual review count', () => {
@@ -118,6 +120,39 @@ test('summarizeWebVoyagerRepeats reports mean and standard deviation', () => {
   assert.equal(summary.runs, 2);
   assert.equal(summary.strictMean, 0.4);
   assert.ok(summary.strictStdDev > 0);
+});
+
+test('environment-block task does not produce normal reference mismatch', () => {
+  const verdict = evaluateWebVoyagerResult(task('GitHub--0', '42 stars'), result({
+    passed: false,
+    value: '',
+    failureType: 'environment_block',
+  }));
+
+  assert.equal(verdict.environmentStatus, 'environment_block');
+  assert.equal(verdict.referenceMatchType, 'not_applicable');
+  assert.equal(verdict.environmentAdjustedEligible, false);
+  assert.equal(verdict.reasons.includes('reference_mismatch'), false);
+});
+
+test('isWebVoyagerJudgeResult validates optional judge schema', () => {
+  assert.equal(isWebVoyagerJudgeResult({
+    verdict: 'unknown',
+    confidence: 'low',
+    failureReason: 'insufficient screenshot evidence',
+    impossibleTask: false,
+    reachedCaptcha: false,
+    referenceMatchType: 'not_applicable',
+  }), true);
+
+  assert.equal(isWebVoyagerJudgeResult({
+    verdict: 'success',
+    confidence: 'low',
+    failureReason: '',
+    impossibleTask: false,
+    reachedCaptcha: false,
+    referenceMatchType: 'exact',
+  }), false);
 });
 
 function task(id: string, answer: string | undefined): WebVoyagerBenchmarkTask {

@@ -146,3 +146,18 @@ test('scoreBenchmarkResult does not enrich failure reason when trace passes', ()
 
   assert.equal(scored.failureReason, 'planner_no_action');
 });
+
+test('scoreBenchmarkResult classifies startup crash without trace separately', () => {
+  const scored = scoreBenchmarkResult(task, {
+    adapterId: 'browsegent',
+    taskId: task.taskId,
+    attempt: 1,
+    success: false,
+    value: '',
+    failureType: 'runtime_crash',
+    failureReason: 'page.goto timeout before trace creation',
+    metrics: { plannerCalls: 0, toolExecutions: 0, durationMs: 30000 },
+  }, { ok: false, errors: ['missing_trace_path'] });
+
+  assert.equal(scored.failureType, 'runtime_startup_failure');
+});

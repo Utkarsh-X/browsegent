@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { createBenchmarkAdapter, readBenchmarkAdapterId } from '../v2/adapter_factory';
 import { runBenchmark, type RunBenchmarkOptions } from '../v2/run_benchmark';
 import type { BenchmarkAdapter, BenchmarkReport, BenchmarkTraceScore } from '../v2/types';
+import { buildWebVoyagerTaskArtifactSummary } from './artifacts';
 import { evaluateWebVoyagerResult, summarizeWebVoyagerEvaluation } from './evaluator';
 import { loadWebVoyagerManualAudit } from './manual_audit';
 import { loadWebVoyagerSource } from './source_loader';
@@ -77,6 +78,9 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
   await mkdir(runRoot, { recursive: true });
   await writeFile(join(runRoot, 'webvoyager_evaluation.json'), `${JSON.stringify(evaluation, null, 2)}\n`, 'utf8');
   await writeFile(join(runRoot, 'webvoyager_evaluation.md'), renderWebVoyagerEvaluationMarkdown(evaluation), 'utf8');
+
+  const artifactSummaries = benchmark.results.map(result => buildWebVoyagerTaskArtifactSummary(byTaskId.get(result.taskId)!, result));
+  await writeFile(join(runRoot, 'webvoyager_artifacts.json'), `${JSON.stringify(artifactSummaries, null, 2)}\n`, 'utf8');
 
   return { benchmark, evaluation };
 }
@@ -168,10 +172,10 @@ function readFlag(name: string): string | undefined {
 
 function readTaskSliceArg(): WebVoyagerTaskSlice | undefined {
   const value = readFlag('--slice');
-  if (value === undefined || value === 'balanced30' || value === 'mvr5') {
+  if (value === undefined || value === 'balanced30' || value === 'mvr5' || value === 'mvr5-stable') {
     return value;
   }
-  throw new Error(`Unsupported WebVoyager slice "${value}". Use balanced30 or mvr5.`);
+  throw new Error(`Unsupported WebVoyager slice "${value}". Use balanced30, mvr5, or mvr5-stable.`);
 }
 
 function isFlagValue(args: string[], value: string): boolean {
