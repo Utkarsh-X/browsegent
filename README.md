@@ -1,238 +1,163 @@
 # BrowseGent
 
-> A research-grade browser automation agent with dual-brain DOM perception, CDP identity-backed targeting, and a fully instrumented evaluation harness.
+> **BrowseGent** is a research-grade browser automation agent featuring dual-perception DOM engines, CDP identity-backed targeting, and a fully instrumented evaluation harness. 
 
-![Eval Suite](https://github.com/Utkarsh-X/browsegent/actions/workflows/eval.yml/badge.svg)
-
----
-
-## Overview
-
-BrowseGent is a TypeScript browser automation agent that observes a page, asks an LLM for a bounded action plan, executes through deterministic browser adapters, and re-observes until it can answer the task. Its main difference from a plain Playwright AI wrapper is the dual-brain perception layer: Brain1 builds a typed, scored DOM graph with stable hashes and CDP `backendNodeId` identities, while Brain2 attributes DOM mutations to clicks, fetches, and XHRs. The agent uses CDP identity-backed clicks with stable-hash recovery before falling back to DOM clicks, and its behavior is measured by a 30-task eval harness with persisted reports.
-
-## Demo
-
-No demo GIF is committed yet. To record one:
-
-```bash
-npm run demo
-```
-
-The demo script runs `flipkart_pagination` in headful mode so a screen recorder can capture multi-step pagination and price extraction. To convert a recording to GIF:
-
-```bash
-ffmpeg -i demo.mp4 -vf "fps=10,scale=1280:-1" demo.gif
-```
+[![Build and Eval Suite](https://github.com/Utkarsh-X/browsegent/actions/workflows/eval.yml/badge.svg)](https://github.com/Utkarsh-X/browsegent/actions/workflows/eval.yml)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
 ---
 
-## Architecture
+## 🌟 Overview
 
-### Brain1 - DOM Perception Layer
+BrowseGent represents a major departure from brittle "wrapper agents" that rely on the LLM to write CSS/XPath selectors or recover from rendering loops. 
 
-Brain1 is implemented by the Chrome extension content script in `extension/content.ts` and coordinated by `src/brain1/service.ts`. The content script runs in the page world, walks the DOM including open shadow roots, and classifies output nodes as `trigger`, `input`, `data`, or `table_cell`.
+Instead, BrowseGent separates **semantic planning** (what to do next) from **runtime execution stability** (resolving elements, verifying visibility, and managing DOM settlement). 
 
-Each node carries three scores: `selectorScore`, `interactionScore`, and `actionabilityScore`. Confidence is derived as `high`, `medium`, or `low`. Stable hashes use FNV-1a over a signature shaped like `tag|role|nameLike|attrSignature|classSignature|ancestorPath|ordinal`, making recovery less dependent on brittle CSS selectors.
+It features two architectural variants within the same repository:
+1. **BrowseGent v1 (Dual-Brain Perception)**: Utilizes a custom Chrome extension perception layer. `Brain1` builds a typed, FNV-1a hashed DOM graph, and `Brain2` intercepts and attributes DOM mutations to clicks, fetches, and XHRs.
+2. **BrowseGent v2 (Operational Identity Substrate)**: A headless/headed runtime utilizing the Chrome DevTools Protocol (CDP) to track stable reference IDs (`V2Ref`) across transitions, score multiple selector candidates semantically, and automatically quarantine broken targets without planner intervention.
 
-The output is capped at 240 nodes with per-type caps of 40 inputs, 60 triggers, 110 data nodes, and 30 table cells. Brain1 then enriches up to 8 medium/low confidence candidates through page inspection, performs up to 2 targeted region rescans, and resolves CDP `backendNodeId` values for up to 12 top-priority nodes via `DOM.describeNode`.
-
-### Brain2 - Mutation Attribution Layer
-
-Brain2 is also injected from `extension/content.ts`. It installs a `MutationObserver` for `childList`, `subtree`, `attributes`, and `characterData`, and wraps `fetch` plus `XMLHttpRequest` before requests fire. Pending click, scroll, timer, fetch, and XHR causes are matched to later mutations inside a calibrated RTT window.
-
-Noise filters suppress analytics, ad, tracking, menu, nav, header, footer, page-init, and small-text churn. Deltas expose causal chains shaped as `initiator -> transport -> url/confidence`, and the extension exposes `window.__browsegent_brain2.getDeltas()` and `clearDeltas()` for the agent loop.
-
-### Agent Loop
-
-| Phase | What Happens | Deterministic vs LLM |
-|-------|--------------|----------------------|
-| beforeStep | Sync Brain2 deltas into graph | Deterministic |
-| Loop guards | Utility checks, stagnation detection, fingerprint comparison | Deterministic |
-| Serialize | Graph -> compact JSON context | Deterministic |
-| LLM call | Plan generation, up to 5 actions | LLM |
-| Parse + validate | `robustJsonParse` -> `validatePlan` -> retry | Deterministic |
-| Execute | Per-action execution with progress assessment | Deterministic |
-| afterAct | Brain1 rescan, clear Brain2 deltas | Deterministic |
-
-### CDP Click Path
-
-Path A, identity-backed: `backendNodeId` -> `DOM.scrollIntoViewIfNeeded` -> `DOM.getBoxModel` plus `DOM.getContentQuads` -> centroid computation -> occlusion check with `elementFromPoint` -> `Input.dispatchMouseEvent` for move, press, and release. If the target is stale, BrowseGent re-resolves by selector and stable hash before retrying.
-
-Path B, DOM fallback: `querySelector` -> `scrollIntoView` -> `el.click()`.
-
-### Loop Detection and Safety
-
-The target utility guard currently exposes 11 block reasons:
-
-| Reason | Purpose |
-|--------|---------|
-| `low_confidence_target` | Blocks weak targets with no strong candidate evidence. |
-| `read_before_click` | Forces read-only discovery before ambiguous extraction clicks. |
-| `same_page_anchor` | Avoids low-value anchor jumps on extraction tasks. |
-| `outbound_with_answer_available` | Prevents leaving a page that already has strong goal data. |
-| `pagination_churn` | Requires answer-evidence reads after pagination. |
-| `pagination_answer_observed` | Stops extra pagination once answer evidence exists. |
-| `read_after_interaction_churn` | Stops repeated interactions with no reads. |
-| `read_after_submit_transition` | Forces reads after submit-like transitions. |
-| `submit_control_recovery` | Stops retyping after a failed submit-like control. |
-| `weak_interaction_repeat` | Stops repeated weak clicks after form entry. |
-| `stale_read_selector` | Blocks stale or brittle read selectors. |
-
-The agent also tracks action and graph fingerprints to detect repetition and stagnation. If Brain2 reports 3 or more new deltas during an active plan, the loop aborts the stale plan and asks the LLM to replan from the updated graph.
+> [!IMPORTANT]
+> For a deep dive into the BrowseGent v2 runtime substrate, fingerprints, and stabilization layers, please read the **[ARCHITECTURE.md](file:///d:/BrowseGent/ARCHITECTURE.md)**.
 
 ---
 
-## Evaluation
+## 🚀 Key Features
 
-### Results
-
-Latest core report: `logs/eval_runs/1776832390956_core_r1_gemini_gemini_3_1_flash_lite_preview/report.json`, timestamp `2026-04-22T04:45:56.848Z`.
-
-| Metric | Value |
-|--------|-------|
-| Core suite pass rate | 9/10 (90%) |
-| Total eval runs logged | 60 |
-| Avg LLM calls per task | 2.1 |
-| Avg cost per 10-task run | $0.00789375 on Gemini Flash Lite |
-| Eval suite size | 30 tasks (10 core + 20 extended) |
-
-### Task Breakdown, Latest Core Run
-
-| Task | Result | LLM Calls | Notes |
-|------|--------|-----------|-------|
-| wikipedia_featured | FAIL | 1 | Perception error; returned `Nihilism`, too short for the featured-article validation. |
-| hacker_news_top | PASS | 1 | Static DOM. |
-| bbc_headline | PASS | 1 | News homepage heading extraction. |
-| flipkart_pagination | PASS | 3 | Multi-page navigation and price extraction. |
-| amazon_global | PASS | 10 | Dense product grid. |
-| github_repo_stars | PASS | 1 | Repository metadata extraction. |
-| reddit_technology | PASS | 1 | Anti-bot social page. |
-| theverge_cloudflare | PASS | 1 | Cloudflare-protected homepage. |
-| vercel_docs | PASS | 1 | SPA documentation page. |
-| producthunt_today | PASS | 1 | Dynamic content extraction. |
-
-### Known Limitations
-
-- Wikipedia failure: Brain1 can snapshot sidebar or adjacent content over the intended featured-article region.
-- `getEventListeners` can return `null` under `--headless=new`, so listener enrichment is opportunistic.
-- Cross-origin iframes are not supported by the CDP identity click path; `unsupported_frame` blocks or falls back depending on context.
-- Shadow DOM selectors fall back to the host selector, with a lower selector score.
-- Extended adversarial tasks such as Indeed, NYT, and Reuters have historically failed because of CAPTCHAs, paywalls, consent walls, or bot controls.
+- **Operational Identity (`V2Ref`)**: Target references survive React rerenders, dynamic ClassName obfuscation, and page updates by utilizing a combination of hard/soft fingerprints and multi-candidate scoring.
+- **Strict Boundary Separation**: Code check guards enforce that the runtime substrate has no semantic or cognitive leakage from the planner layer.
+- **Deterministic Action Executions**: Center-point collision checks and pointer-intercept checking run before clicking, preventing click failures.
+- **Trace Replay & Auditing**: Every run records observations, planner requests, transitions, and failures. The replay auditor verifies runs deterministically.
+- **Rich LLM Provider Support**: Native integrations with Google Gemini, OpenAI, Cerebras, and local Ollama endpoints.
 
 ---
 
-## Supported LLM Providers
-
-| Provider | Mode | Notes |
-|----------|------|-------|
-| Gemini | Cloud REST | JSON schema mode, retry/backoff, default provider. |
-| OpenAI | Cloud REST | Chat completions with `json_object` response format. |
-| Cerebras | OpenAI-compatible SDK | 3 retries. |
-| Ollama | Local REST | Uses `/v1/chat/completions` on the configured Ollama base URL. |
-
----
-
-## Installation
-
-Prerequisites: Node.js 20 or newer and a Chromium-compatible browser. Playwright installs Chromium for eval runs.
-
-```bash
-npm install
-cp .env.example .env
-npm run extension:build
-npm run eval -- --task hacker_news_top
-```
-
-Fill at least one cloud provider API key in `.env`, or configure Ollama with a local model and set `BROWSEGENT_LLM_PROVIDER=ollama`.
-
----
-
-## Running Evaluations
-
-```bash
-# Core suite, 10 tasks
-npm run eval
-
-# Extended suite, 20 tasks
-npm run eval -- --suite extended
-
-# All 30 tasks
-npm run eval -- --suite all
-
-# Specific task
-npm run eval -- --task wikipedia_featured
-
-# Custom model
-npm run eval -- gemini/gemini-3.1-flash-lite-preview
-
-# With repeats
-npm run eval -- --suite core --repeat 3
-```
-
-Reports are saved under `logs/eval_runs/` as `report.json` and `debug.jsonl`.
-
----
-
-## Project Structure
+## 📂 Project Structure
 
 ```text
 browsegent/
-|-- src/
-|   |-- brain1/
-|   |-- brain2/
-|   |-- agent/
-|   |-- adapters/
-|   |-- executor/
-|   |-- graph/
-|   |-- config/
-|   |-- logger/
-|   |-- providers/
-|   `-- stealth/
-|-- extension/
-|-- tests/
-|   |-- eval/
-|   `-- unit/
-|-- scripts/
-|-- logs/              # gitignored eval outputs
-|-- _archive/          # moved legacy code
-|-- .env.example
-|-- .gitignore
-|-- package.json
-|-- tsconfig.json
-`-- README.md
+├── src/
+│   ├── v2/                  # BrowseGent v2 Runtime, Substrate, Planner, and Trace Store
+│   │   ├── agent/           # V2AgentLoop orchestrator & AnswerContract validation
+│   │   ├── substrate/       # BrowserSession, CDPBridge, InputService, and ObservationService
+│   │   ├── runtime/         # RefService, Stabilization, and Transition classification
+│   │   ├── planner/         # PlannerWorkingSetSelector, InputComposer, and validation schemas
+│   │   ├── graph/           # ContinuityGraph topology tracker
+│   │   └── trace/           # TraceStore logging and TraceReplayAuditor
+│   ├── brain1/              # Legacy Perception Layer Service (v1)
+│   ├── brain2/              # Legacy Mutation Attribution Service (v1)
+│   ├── agent/               # Legacy Agent Loop & Guards (v1)
+│   ├── adapters/            # Legacy Browser page adapters (v1)
+│   ├── config/              # Shared configuration schemas
+│   ├── providers/           # LLM API callers
+│   └── stealth/             # Anti-fingerprinting stealth configurations
+├── extension/               # Chrome Content Script and build scripts for Brain1/Brain2 (v1)
+├── scripts/                 # Boundary checking and project validation utilities
+├── tests/
+│   ├── unit/                # TS Unit tests (tested via node runtime)
+│   ├── eval/                # Legacy 30-task evaluation benchmark
+│   └── benchmark/v2/        # New v2 benchmark and report comparison tools
+├── package.json             # Commands, scripts, and dependencies
+└── ARCHITECTURE.md          # BrowseGent v2 technical specification
 ```
 
 ---
 
-## Roadmap
+## 🛠️ Installation & Setup
 
-- Improve extended adversarial suite reliability.
-- Add cross-origin iframe support for identity-backed targeting.
-- Improve direct Shadow DOM targeting beyond host-selector fallback.
-- Add structured benchmarking against browser-use and Stagehand baselines.
-- Add a Web UI or API server.
-- Add a Docker container for reproducible eval runs.
+### Prerequisites
+- **Node.js**: Version 20 or newer.
+- **Chromium Browser**: Playwright will download Chromium automatically during configuration.
+
+### Setup Steps
+1. Clone the repository and install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Copy the environment template file:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Configure your API keys in the `.env` file:
+   ```env
+   # Set your preferred provider (gemini, openai, cerebras, or ollama)
+   BROWSEGENT_LLM_PROVIDER=gemini
+   GEMINI_API_KEY=your_gemini_key_here
+   OPENAI_API_KEY=your_openai_key_here
+   ```
+
+4. Build the extension bundle (required if running the legacy v1 agent):
+   ```bash
+   npm run extension:build
+   ```
 
 ---
 
-## Research Context
+## 🏎️ Developer Commands
 
-BrowseGent is a research project rather than a production automation product. The architecture deliberately keeps the LLM responsible for high-level plan generation while deterministic code handles perception, validation, execution, identity recovery, and loop safety. The implementation favors CDP identities over pure Playwright locators and stable hashes over fragile CSS selectors because the main research question is whether browser agents become more reliable when perception and action identity are explicitly modeled.
+### 1. Build and Compile checks
+Verify typescript compiles without emitting files:
+```bash
+npm run build
+```
+
+### 2. Run Architectural Boundary Checks
+BrowseGent v2 enforces strict boundaries to prevent planner logic from leaking into execution substrates. Run the automated checks:
+```bash
+# Check boundaries, no-cognition leakages, and release gates
+npm run check:v2
+```
+
+### 3. Run Unit Tests
+Run standard Node.js unit tests on the v2 runtime components:
+```bash
+npm run test:unit
+```
+
+### 4. Run BrowseGent v2 Benchmarks
+To run the automated v2 evaluation benchmarks and inspect metrics:
+```bash
+# Execute the v2 benchmark runner
+npm run benchmark:v2
+
+# Compare reports after multiple benchmark runs
+npm run benchmark:v2:compare
+```
+
+### 5. Run Legacy Evaluations (v1)
+BrowseGent comes with a 30-task evaluation suite (10 Core + 20 Extended tasks) to assess performance:
+```bash
+# Run the core 10-task evaluation
+npm run eval
+
+# Run a specific task (e.g., hacker_news_top)
+npm run eval -- --task hacker_news_top
+
+# Run all 30 benchmark tasks
+npm run eval -- --suite all
+```
 
 ---
 
-## Running CI
+## 🤖 Supported LLM Providers
 
-The eval workflow runs on pushes and pull requests to `main` or `master`, and can also be launched manually with `workflow_dispatch`. To enable cloud evals on a fork:
-
-1. Go to repository Settings -> Secrets and variables -> Actions.
-2. Add `GEMINI_API_KEY` as a repository secret.
-3. Run the workflow or push to the default branch.
-
-The README badge points to `Utkarsh-X/browsegent` and will become live after the first workflow run.
+| Provider | Integration Type | Features |
+| :--- | :--- | :--- |
+| **Gemini** | Cloud REST | Default provider. Leverages native JSON schema validation and retry/backoff. |
+| **OpenAI** | Cloud REST | Utilizes OpenAI Chat Completions with structured outputs. |
+| **Cerebras** | Cloud SDK | High-speed inference with automatic execution retries. |
+| **Ollama** | Local REST | Allows offline operation using local models. |
 
 ---
 
-## License
+## 🔬 Research Context
 
-ISC, matching `package.json`.
+BrowseGent is a research project designed to explore browser agent reliability. Rather than building a commercial scraping wrapper, this architecture aims to prove that **browser agents become significantly more reliable when perception, action identity, and DOM stabilization are modeled explicitly** in a deterministic runtime substrate.
+
+---
+
+## 📄 License
+
+This project is open-source under the **ISC License**. See the `package.json` file for details.
