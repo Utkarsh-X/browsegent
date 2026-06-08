@@ -20,7 +20,6 @@ export class BrowseGentBenchmarkAdapter implements BenchmarkAdapter {
       maxSteps: options.maxSteps ?? task.maxSteps ?? 8,
       warmup: false,
     });
-
     try {
       const result = await client.run(task.goal, {
         url: task.url,
@@ -29,6 +28,7 @@ export class BrowseGentBenchmarkAdapter implements BenchmarkAdapter {
         browser: { headless: !options.headed },
         trace: { dir: options.traceDir, runId: `${options.runId}_${task.taskId}_a${options.attempt}` },
         output: 'text',
+        ...(options.plannerMode !== undefined ? { plannerMode: options.plannerMode } : {}),
       });
 
       return {

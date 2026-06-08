@@ -135,3 +135,33 @@ test('FailureClassifier maps ambiguous ref resolution to persistent target evide
   assert.equal(evidence.retryable, false);
   assert.equal(evidence.targetRef, 'ref_search');
 });
+
+test('FailureClassifier preserves structured runtime diagnostics', () => {
+  const result: V2ToolResult = {
+    success: false,
+    kind: 'click',
+    targetRef: 'ref_search',
+    error: {
+      code: 'ambiguous_ref_resolution',
+      message: 'Ref resolved to multiple equivalent candidates.',
+      retryable: false,
+      diagnostics: {
+        reason: 'tied_candidates',
+        candidateCount: 2,
+        topScore: 135,
+      },
+    },
+    traceStepId: 'step_ambiguous',
+  };
+
+  const evidence = new FailureClassifier().classify(result, {
+    observationId: 'obs_ambiguous',
+  });
+
+  assert.equal(evidence.kind, 'ambiguous_ref_resolution');
+  assert.deepEqual(evidence.diagnostics, {
+    reason: 'tied_candidates',
+    candidateCount: 2,
+    topScore: 135,
+  });
+});

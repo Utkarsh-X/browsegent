@@ -15,6 +15,8 @@ export interface BenchmarkComparisonRow {
   totalRuns: number;
   passRate: number;
   strictScore: number;
+  manualCorrectedScore?: number;
+  partialCreditRate?: number;
   rawAutoScore?: number;
   manualReviewCount?: number;
   scoringMode: 'local_validation' | 'webvoyager_strict';
@@ -32,6 +34,8 @@ export interface WebVoyagerEvaluationSummary {
   rawAutoScore: number;
   strictScore: number;
   manualReviewCount: number;
+  manualCorrectedScore?: number;
+  partialCreditRate?: number;
 }
 
 export interface BenchmarkComparisonDiagnostics {
@@ -68,6 +72,8 @@ export function buildBenchmarkComparison(
         totalRuns: report.summary.totalRuns,
         passRate: report.summary.passRate,
         strictScore: webVoyagerSummary?.strictScore ?? report.summary.passRate,
+        manualCorrectedScore: webVoyagerSummary?.manualCorrectedScore ?? 0,
+        partialCreditRate: webVoyagerSummary?.partialCreditRate ?? 0,
         rawAutoScore: webVoyagerSummary?.rawAutoScore,
         manualReviewCount: webVoyagerSummary?.manualReviewCount,
         scoringMode: webVoyagerSummary ? 'webvoyager_strict' : 'local_validation',
@@ -102,8 +108,8 @@ export function renderBenchmarkComparisonMarkdown(comparison: BenchmarkCompariso
     '',
     `Generated: ${comparison.generatedAt}`,
     '',
-    '| Adapter | Run | Runs | Adapter Pass | Strict Score | Scoring | Manual Review | Trace/Artifact | Avg Duration | Tokens | Max Planner Input | Max Projection | Max Observation | Working Set | Multi-section Refs | Repeated/Invalid | Failure Types |',
-    '| --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |',
+    '| Adapter | Run | Runs | Harness Pass | Strict Score | Manual Corrected | Partial Credit | Scoring | Trace/Artifact | Avg Duration | Tokens | Max Planner Input | Max Projection | Max Observation | Working Set | Multi-section Refs | Repeated/Invalid | Failure Types |',
+    '| --- | --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |',
   ];
 
   for (const report of comparison.reports) {
@@ -113,8 +119,9 @@ export function renderBenchmarkComparisonMarkdown(comparison: BenchmarkCompariso
       String(report.totalRuns),
       percent(report.passRate),
       percent(report.strictScore),
+      percent(report.manualCorrectedScore ?? 0),
+      percent(report.partialCreditRate ?? 0),
       report.scoringMode,
-      String(report.manualReviewCount ?? 0),
       percent(report.traceArtifactCompleteRate),
       `${Math.round(report.avgDurationMs)}ms`,
       `${report.totalInputTokens}/${report.totalOutputTokens}`,
@@ -182,6 +189,8 @@ async function readAdjacentWebVoyagerSummary(reportPath: string): Promise<WebVoy
       rawAutoScore: summary.rawAutoScore,
       strictScore: summary.strictScore,
       manualReviewCount: summary.manualReviewCount,
+      manualCorrectedScore: summary.manualCorrectedScore,
+      partialCreditRate: summary.partialCreditRate,
     };
   } catch {
     return undefined;

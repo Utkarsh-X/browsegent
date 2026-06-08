@@ -96,6 +96,7 @@ export interface V2ToolError {
   code: string;
   message: string;
   retryable: boolean;
+  diagnostics?: Record<string, unknown>;
 }
 
 export interface V2ToolTargetSummary {

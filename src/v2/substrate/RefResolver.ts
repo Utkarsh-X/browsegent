@@ -8,12 +8,14 @@ const MAX_CANDIDATES_PER_SELECTOR = 5;
 export interface ResolvedRefTarget {
   locator: Locator;
   resolution: 'unique_selector' | 'semantic_selector';
+  diagnostics?: Record<string, unknown>;
 }
 
 interface ScoredCandidate {
   locator: Locator;
   score: number;
   identityKey: string;
+  diagnostics?: Record<string, unknown>;
 }
 
 export class RefResolver {
@@ -52,32 +54,65 @@ export class RefResolver {
     if (sorted.length === 0) {
       throw new V2OperationalError('stale_ref', `Ref "${ref.refId}" no longer resolves to a verified target.`, {
         retryable: false,
-        diagnostics: { candidateCount: 0, reason: 'no_verified_candidates', selectorCount: ref.selectorCandidates.length },
+        diagnostics: {
+          candidateCount: 0,
+          reason: 'no_verified_candidates',
+          selectorCount: ref.selectorCandidates.length,
+          topCandidates: sorted.slice(0, 5).map(candidate => ({
+            score: candidate.score,
+            identityKey: candidate.identityKey,
+            diagnostics: candidate.diagnostics,
+          })),
+        },
       });
     }
 
     if (sorted.length > 1 && sorted[0].score === sorted[1].score) {
       throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" resolved to multiple equivalent candidates.`, {
         retryable: false,
-        diagnostics: { candidateCount: sorted.length, reason: 'tied_candidates', topScore: sorted[0].score },
+        diagnostics: {
+          candidateCount: sorted.length,
+          reason: 'tied_candidates',
+          topScore: sorted[0].score,
+          topCandidates: sorted.slice(0, 5).map(candidate => ({
+            score: candidate.score,
+            identityKey: candidate.identityKey,
+            diagnostics: candidate.diagnostics,
+          })),
+        },
       });
     }
 
     if (overflowed && sorted[0].score < 140) {
       throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" matched too many weak selector candidates.`, {
         retryable: false,
-        diagnostics: { candidateCount: sorted.length, reason: 'overflow_weak_selectors', topScore: sorted[0].score },
+        diagnostics: {
+          candidateCount: sorted.length,
+          reason: 'overflow_weak_selectors',
+          topScore: sorted[0].score,
+          topCandidates: sorted.slice(0, 5).map(candidate => ({
+            score: candidate.score,
+            identityKey: candidate.identityKey,
+            diagnostics: candidate.diagnostics,
+          })),
+        },
       });
     }
 
     return {
       locator: sorted[0].locator,
       resolution: sorted[0].score >= 140 ? 'semantic_selector' : 'unique_selector',
+      diagnostics: {
+        reason: 'resolved_unique_top_candidate',
+        candidateCount: sorted.length,
+        topScore: sorted[0].score,
+        topIdentityKey: sorted[0].identityKey,
+      },
     };
   }
 }
 
-async function scoreCandidate(locator: Locator, ref: V2Ref): Promise<{ score: number; identityKey: string }> {
+async function scoreCandidate(locator: Locator, ref: V2Ref): Promise<{ score: number; identityKey: string; diagnostics?: Record<string, unknown> }> {
   return locator.evaluate((element, expected) => {
     const style = window.getComputedStyle(element);
     const rect = element.getBoundingClientRect();
@@ -119,7 +154,16 @@ async function scoreCandidate(locator: Locator, ref: V2Ref): Promise<{ score: nu
     if (name && (ariaLabel === name || text === name)) score += 30;
     if (expectedText && text === expectedText) score += 20;
 
-    return { score, identityKey };
+    return {
+      score,
+      identityKey,
+      diagnostics: {
+        tagName,
+        role,
+        nameMatched: Boolean(name && (ariaLabel === name || text === name)),
+        textMatched: Boolean(expectedText && text === expectedText),
+      },
+    };
 
     function nativeRole(target: Element): string {
       const targetTagName = target.tagName.toLowerCase();
@@ -144,5 +188,6 @@ async function scoreCandidate(locator: Locator, ref: V2Ref): Promise<{ score: nu
     role: ref.role,
     name: ref.name,
     text: ref.text,
+    nthRoleName: ref.nthRoleName,
   });
 }

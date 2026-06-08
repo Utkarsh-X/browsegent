@@ -51,6 +51,7 @@ export interface RunBenchmarkOptions {
     expectedPlannerCalls: number,
     expectedToolExecutions: number,
   ) => Promise<BenchmarkTraceScore>;
+  plannerMode?: 'current' | 'compact_enforced';
 }
 
 export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<BenchmarkReport> {
@@ -115,6 +116,7 @@ export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<B
           traceDir,
           headed: options.headed ?? false,
           requestMinIntervalMs: rateLimit.mode === 'paced' ? rateLimit.minIntervalMs : undefined,
+          plannerMode: options.plannerMode,
         });
         const trace = options.traceAudit
           ? await options.traceAudit(
@@ -268,6 +270,14 @@ function readCliOptions(): RunBenchmarkOptions {
   const requestRpmArg = readFlag('--request-rpm');
   const requestMinIntervalArg = readFlag('--request-min-interval-ms');
   const partitionArg = readPartitionArg();
+  const plannerModeArg = readFlag('--planner-mode');
+  let plannerMode: 'current' | 'compact_enforced' = 'current';
+  if (plannerModeArg === 'current' || plannerModeArg === 'compact_enforced') {
+    plannerMode = plannerModeArg;
+  } else if (plannerModeArg !== undefined) {
+    throw new Error(`Unsupported --planner-mode "${plannerModeArg}". Use current or compact_enforced.`);
+  }
+
   return {
     adapter: createBenchmarkAdapter(adapterId, { env: process.env }),
     model,
@@ -277,6 +287,7 @@ function readCliOptions(): RunBenchmarkOptions {
     requestRpm: requestRpmArg ? Number(requestRpmArg) : undefined,
     requestMinIntervalMs: requestMinIntervalArg ? Number(requestMinIntervalArg) : undefined,
     partition: partitionArg,
+    plannerMode,
   };
 }
 

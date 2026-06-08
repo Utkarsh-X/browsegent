@@ -29,7 +29,9 @@ export class TraceStore {
   private readonly transitions = new Map<string, TraceTransitionRecord>();
   private readonly graphSnapshots = new Map<string, TraceGraphRecord>();
   private readonly plannerArtifacts = new Map<string, TracePlannerRecord>();
+  private readonly compactPlannerViews = new Map<string, TracePlannerRecord>();
   private readonly failures = new Map<string, TraceFailureRecord>();
+  private readonly refResolutionAudits = new Map<string, TracePlannerRecord>();
   private readonly steps: TraceStep[] = [];
 
   constructor(options: TraceStoreOptions) {
@@ -55,8 +57,31 @@ export class TraceStore {
     return this.recordPlannerArtifact('planner_input', `${episodeId}-input`, input, 'planner', `${episodeId}-input.json`);
   }
 
+  recordCompactPlannerInput(episodeId: string, input: unknown): TraceArtifact {
+    return this.recordPlannerArtifact('compact_planner_input', `${episodeId}-compact-input`, input, 'planner', `${episodeId}-compact-input.json`);
+  }
+
   recordPlannerOutput(episodeId: string, output: unknown): TraceArtifact {
     return this.recordPlannerArtifact('planner_output', `${episodeId}-output`, output, 'planner', `${episodeId}-output.json`);
+  }
+
+  recordCompactPlannerView(episodeId: string, payload: unknown): TraceArtifact {
+    const id = `${episodeId}-compact`;
+    const artifact = this.createArtifact('planner_compact_view', id, 'compact-planner', `${id}.json`);
+    this.compactPlannerViews.set(id, {
+      artifact,
+      payload: toTraceJsonValue(payload),
+    });
+    return artifact;
+  }
+
+  recordRefResolutionAudit(auditId: string, payload: unknown): TraceArtifact {
+    const artifact = this.createArtifact('ref_resolution_audit', auditId, 'ref-resolution', `${auditId}.json`);
+    this.refResolutionAudits.set(auditId, {
+      artifact,
+      payload: toTraceJsonValue(payload),
+    });
+    return artifact;
   }
 
   recordTransition(evidence: TransitionEvidence): TraceArtifact {
@@ -144,8 +169,10 @@ export class TraceStore {
       await mkdir(join(runRoot, 'transitions'), { recursive: true });
       await mkdir(join(runRoot, 'graph'), { recursive: true });
       await mkdir(join(runRoot, 'planner'), { recursive: true });
+      await mkdir(join(runRoot, 'compact-planner'), { recursive: true });
       await mkdir(join(runRoot, 'failures'), { recursive: true });
       await mkdir(join(runRoot, 'screenshots'), { recursive: true });
+      await mkdir(join(runRoot, 'ref-resolution'), { recursive: true });
 
       for (const record of this.observations.values()) {
         await writeFile(record.artifact.path, stringifyTraceJson(record.observation), 'utf8');
@@ -159,8 +186,14 @@ export class TraceStore {
       for (const record of this.plannerArtifacts.values()) {
         await writeFile(record.artifact.path, stringifyTraceJson(record.payload), 'utf8');
       }
+      for (const record of this.compactPlannerViews.values()) {
+        await writeFile(record.artifact.path, stringifyTraceJson(record.payload), 'utf8');
+      }
       for (const record of this.failures.values()) {
         await writeFile(record.artifact.path, stringifyTraceJson(record.failure), 'utf8');
+      }
+      for (const record of this.refResolutionAudits.values()) {
+        await writeFile(record.artifact.path, stringifyTraceJson(record.payload), 'utf8');
       }
 
       await writeFile(manifest.artifacts.trace.path, stringifyTraceJson(manifest), 'utf8');
@@ -186,6 +219,8 @@ export class TraceStore {
         planner: [...this.plannerArtifacts.values()].map((record) => record.artifact),
         failures: [...this.failures.values()].map((record) => record.artifact),
         screenshots: [],
+        compactPlannerViews: [...this.compactPlannerViews.values()].map((record) => record.artifact),
+        refResolutionAudits: [...this.refResolutionAudits.values()].map((record) => record.artifact),
       },
     };
   }
@@ -203,7 +238,7 @@ export class TraceStore {
   }
 
   private recordPlannerArtifact(
-    kind: 'planner_input' | 'planner_output',
+    kind: 'planner_input' | 'compact_planner_input' | 'planner_output',
     id: string,
     payload: unknown,
     ...pathParts: string[]

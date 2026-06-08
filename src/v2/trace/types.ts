@@ -10,7 +10,10 @@ export type TraceArtifactKind =
   | 'graph'
   | 'failure'
   | 'planner_input'
-  | 'planner_output';
+  | 'compact_planner_input'
+  | 'planner_output'
+  | 'planner_compact_view'
+  | 'ref_resolution_audit';
 export type TraceStepStatus = 'started' | 'completed' | 'failed';
 
 export type TraceJsonPrimitive = string | number | boolean | null;
@@ -35,6 +38,8 @@ export interface TraceManifest {
     planner: TraceArtifact[];
     failures?: TraceArtifact[];
     screenshots: TraceArtifact[];
+    compactPlannerViews?: TraceArtifact[];
+    refResolutionAudits?: TraceArtifact[];
   };
 }
 

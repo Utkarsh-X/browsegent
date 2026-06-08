@@ -7,11 +7,11 @@ export interface BrowserAgentRunnerOptions {
   defaultModel: string;
   defaultTraceDir: string;
   runtimeHeaded: boolean;
-  loopFactory?: (
-    input: V2AgentLoopFactoryInput,
-  ) => {
-    run(input: { url: string; goal: string; maxSteps: number; model?: string }): Promise<V2AgentLoopResult>;
-  };
+    loopFactory?: (
+      input: V2AgentLoopFactoryInput,
+    ) => {
+      run(input: { url: string; goal: string; maxSteps: number; model?: string; plannerMode?: 'current' | 'compact_enforced' }): Promise<V2AgentLoopResult>;
+    };
 }
 
 export class BrowserAgentRunner {
@@ -46,6 +46,7 @@ export class BrowserAgentRunner {
       goal: buildGoal(task, options),
       maxSteps,
       model: options.model ?? this.options.defaultModel,
+      ...(options.plannerMode !== undefined ? { plannerMode: options.plannerMode } : {}),
     });
 
     return applyOutputMode(loopResult, options, warnings);

@@ -13,6 +13,8 @@ import { TraceStore } from '../trace/TraceStore';
 import type { TraceArtifact, TraceManifest } from '../trace/types';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { BrowseGentV2HarnessOptions } from './types';
+import { buildRefResolutionAudit } from '../runtime/RefResolutionAudit';
+import { shouldAttemptWeakenedRefSelfHeal } from '../runtime/RefSelfHealingPolicy';
 
 export class BrowseGentV2Harness {
   private readonly session: BrowserSession;
@@ -44,6 +46,7 @@ export class BrowseGentV2Harness {
   async open(url: string): Promise<BrowserObservation> {
     this.generationId += 1;
     await this.session.open(url);
+    await this.stabilizationService.waitForSettledState(this.session.currentPage());
     return this.captureCurrentObservation();
   }
 
@@ -287,12 +290,20 @@ export class BrowseGentV2Harness {
     return this.traceStore.recordPlannerInput(episodeId, input);
   }
 
+  recordCompactPlannerInput(episodeId: string, input: unknown): TraceArtifact {
+    return this.traceStore.recordCompactPlannerInput(episodeId, input);
+  }
+
   recordPlannerOutput(episodeId: string, output: unknown): TraceArtifact {
     return this.traceStore.recordPlannerOutput(episodeId, output);
   }
 
   recordFailureEvidence(failure: FailureEvidence): TraceArtifact {
     return this.traceStore.recordFailureEvidence(failure);
+  }
+
+  recordCompactPlannerView(episodeId: string, payload: unknown): TraceArtifact {
+    return this.traceStore.recordCompactPlannerView(episodeId, payload);
   }
 
   async close(): Promise<void> {
@@ -311,23 +322,60 @@ export class BrowseGentV2Harness {
       beforeObservationId: before.observationId,
     });
     const resolution = this.refService.resolve(refId, before);
+    const decision = shouldAttemptWeakenedRefSelfHeal(kind, resolution.ref);
 
-    if (resolution.state !== 'live' || !resolution.ref) {
-      const result = this.failureResult<TValue>(kind, refId, stepId, mapResolutionError(resolution.state));
+    const ref = resolution.ref;
+    if (!ref || (resolution.state !== 'live' && !decision.allow)) {
+      const auditId = this.recordRefResolutionAudit({
+        observation: before,
+        targetRef: refId,
+        actionKind: kind,
+        failureCode: resolution.state === 'weakened' ? 'low_confidence_ref' : 'stale_ref',
+        diagnostics: {
+          resolutionState: resolution.state,
+          resolutionReason: resolution.reason,
+          confidence: resolution.confidence,
+          selfHealDecision: decision.reason,
+        },
+        selfHeal: {
+          attempted: decision.allow,
+          result: 'not_attempted',
+          reason: decision.reason,
+        },
+      });
+      const error = mapResolutionError(resolution.state, {
+        refResolutionAuditId: auditId,
+        resolutionState: resolution.state,
+        resolutionReason: resolution.reason,
+        confidence: resolution.confidence,
+      });
+      const result = this.failureResult<TValue>(kind, refId, stepId, error);
       this.traceStore.recordActionEnd(stepId, result);
       return result;
     }
 
     try {
-      const execution = await run(resolution.ref);
+      const execution = await run(ref);
       await this.stabilizationService.waitForSettledState(this.session.currentPage());
       const after = await this.captureCurrentObservation();
       const evidence = this.transitionService.compare(before, after);
+      if (resolution.state !== 'live' && decision.allow) {
+        this.recordRefResolutionAudit({
+          observation: before,
+          targetRef: refId,
+          actionKind: kind,
+          selfHeal: {
+            attempted: true,
+            result: 'succeeded',
+            reason: decision.reason,
+          }
+        });
+      }
       const result: V2ToolResult<TValue> = {
         success: true,
         kind,
         targetRef: refId,
-        target: summarizeToolTarget(resolution.ref),
+        target: summarizeToolTarget(ref),
         value: execution.value,
         evidence,
         traceStepId: stepId,
@@ -339,6 +387,26 @@ export class BrowseGentV2Harness {
       return result;
     } catch (error) {
       const result = this.failureResult<TValue>(kind, refId, stepId, mapExecutionError(error));
+      if (result.error && refId) {
+        const auditId = this.recordRefResolutionAudit({
+          observation: before,
+          targetRef: refId,
+          actionKind: kind,
+          failureCode: result.error.code,
+          diagnostics: result.error.diagnostics,
+          ...(resolution.state !== 'live' && decision.allow ? {
+            selfHeal: {
+              attempted: true,
+              result: 'failed',
+              reason: decision.reason,
+            }
+          } : {})
+        });
+        result.error.diagnostics = {
+          ...(result.error.diagnostics ?? {}),
+          refResolutionAuditId: auditId,
+        };
+      }
       try {
         await this.stabilizationService.waitForSettledState(this.session.currentPage());
         const after = await this.captureCurrentObservation();
@@ -365,9 +433,34 @@ export class BrowseGentV2Harness {
       beforeObservationId: before.observationId,
     });
     const resolution = this.refService.resolve(refId, before);
+    const decision = shouldAttemptWeakenedRefSelfHeal(kind, resolution.ref);
 
-    if (resolution.state !== 'live' || !resolution.ref) {
-      const result = this.failureResult<TValue>(kind, refId, stepId, mapResolutionError(resolution.state));
+    const ref = resolution.ref;
+    if (!ref || (resolution.state !== 'live' && !decision.allow)) {
+      const auditId = this.recordRefResolutionAudit({
+        observation: before,
+        targetRef: refId,
+        actionKind: kind,
+        failureCode: resolution.state === 'weakened' ? 'low_confidence_ref' : 'stale_ref',
+        diagnostics: {
+          resolutionState: resolution.state,
+          resolutionReason: resolution.reason,
+          confidence: resolution.confidence,
+          selfHealDecision: decision.reason,
+        },
+        selfHeal: {
+          attempted: decision.allow,
+          result: 'not_attempted',
+          reason: decision.reason,
+        },
+      });
+      const error = mapResolutionError(resolution.state, {
+        refResolutionAuditId: auditId,
+        resolutionState: resolution.state,
+        resolutionReason: resolution.reason,
+        confidence: resolution.confidence,
+      });
+      const result = this.failureResult<TValue>(kind, refId, stepId, error);
       this.traceStore.recordActionEnd(stepId, result);
       return result;
     }
@@ -377,8 +470,8 @@ export class BrowseGentV2Harness {
         success: true,
         kind,
         targetRef: refId,
-        target: summarizeToolTarget(resolution.ref),
-        value: read(resolution.ref, before),
+        target: summarizeToolTarget(ref),
+        value: read(ref, before),
         traceStepId: stepId,
       };
 
@@ -386,6 +479,26 @@ export class BrowseGentV2Harness {
       return result;
     } catch (error) {
       const result = this.failureResult<TValue>(kind, refId, stepId, mapExecutionError(error));
+      if (result.error && refId) {
+        const auditId = this.recordRefResolutionAudit({
+          observation: before,
+          targetRef: refId,
+          actionKind: kind,
+          failureCode: result.error.code,
+          diagnostics: result.error.diagnostics,
+          ...(resolution.state !== 'live' && decision.allow ? {
+            selfHeal: {
+              attempted: true,
+              result: 'failed',
+              reason: decision.reason,
+            }
+          } : {})
+        });
+        result.error.diagnostics = {
+          ...(result.error.diagnostics ?? {}),
+          refResolutionAuditId: auditId,
+        };
+      }
       this.traceStore.recordActionEnd(stepId, result);
       return result;
     }
@@ -423,6 +536,23 @@ export class BrowseGentV2Harness {
       error,
       traceStepId,
     };
+  }
+
+  private recordRefResolutionAudit(input: {
+    observation: BrowserObservation;
+    targetRef: string;
+    actionKind: string;
+    failureCode?: string;
+    diagnostics?: Record<string, unknown>;
+    selfHeal?: {
+      attempted: boolean;
+      result: 'not_attempted' | 'succeeded' | 'failed';
+      reason: string;
+    };
+  }): string {
+    const audit = buildRefResolutionAudit(input);
+    this.traceStore.recordRefResolutionAudit(audit.auditId, audit);
+    return audit.auditId;
   }
 }
 
@@ -475,12 +605,13 @@ function countLiteralMatches(text: string, pattern: string): number {
   return count;
 }
 
-function mapResolutionError(state: string): V2ToolError {
+function mapResolutionError(state: string, diagnostics?: Record<string, unknown>): V2ToolError {
   if (state === 'weakened') {
     return {
       code: 'low_confidence_ref',
       message: 'Ref continuity confidence is below the execution threshold.',
       retryable: false,
+      diagnostics,
     };
   }
 
@@ -488,6 +619,7 @@ function mapResolutionError(state: string): V2ToolError {
     code: 'stale_ref',
     message: 'Ref is not live in the current observation.',
     retryable: false,
+    diagnostics,
   };
 }
 
@@ -497,6 +629,7 @@ function mapExecutionError(error: unknown): V2ToolError {
       code: error.code,
       message: error.message,
       retryable: error.retryable,
+      diagnostics: error.diagnostics,
     };
   }
 

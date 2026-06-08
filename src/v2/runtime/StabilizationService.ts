@@ -13,7 +13,7 @@ export interface StabilizationOptions {
 export class StabilizationService {
   async waitForSettledState(page: Page, options: StabilizationOptions = {}): Promise<StabilizationResult> {
     const startedAt = Date.now();
-    const loadStateTimeoutMs = options.loadStateTimeoutMs ?? 1_000;
+    const loadStateTimeoutMs = options.loadStateTimeoutMs ?? 5_000;
     const quietWindowMs = options.quietWindowMs ?? 75;
     let timedOut = false;
 

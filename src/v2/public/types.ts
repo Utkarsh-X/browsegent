@@ -31,6 +31,7 @@ export interface BrowserAgentRunOptions {
   browser?: BrowserAgentBrowserOptions;
   trace?: boolean | BrowserAgentTraceOptions;
   output?: BrowserAgentOutputMode;
+  plannerMode?: 'current' | 'compact_enforced';
 }
 
 export interface BrowserAgentRunResult {

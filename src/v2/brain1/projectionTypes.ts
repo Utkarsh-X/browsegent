@@ -27,6 +27,11 @@ export interface ProjectionItem {
   score: number;
   regionId?: string;
   selectOptions?: string[];
+  graphPresent?: boolean;
+  graphConfidence?: number;
+  recentlyAppeared?: boolean;
+  recentlyChanged?: boolean;
+  recentlyWeakened?: boolean;
 }
 
 export interface ProjectionRegion {

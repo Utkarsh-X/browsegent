@@ -234,3 +234,97 @@ test('TraceStore writes failure evidence as a replay artifact and manifest entry
   assert.equal(failureJson.targetRef, 'ref_submit');
   assert.equal(traceJson.artifacts.failures[0].kind, 'failure');
 });
+
+test('TraceStore writes compact planner view artifacts and manifest entries', async () => {
+  const traceDir = await freshTraceDir('compact_planner_view');
+  const store = new TraceStore({
+    runId: 'run_trace_compact_view',
+    runtimeMode: 'agent',
+    traceDir,
+    startTime: 5555,
+  });
+
+  const payload = {
+    version: 'compact_planner_telemetry.v1',
+    episodeId: 'episode_1_obs_1',
+    stats: {
+      originalBytes: 1000,
+      compactBytes: 250,
+      baselineBytes: 300,
+      reductionRatio: 0.25,
+      baselineRatio: 0.3,
+    },
+    coverage: {
+      plannedRefs: ['ref_submit'],
+      plannedActionRefs: ['ref_submit'],
+      plannedReadRefs: [],
+      missingPlannedActionRefs: [],
+      missingPlannedReadRefs: [],
+      actionRefCoverage: 1,
+      readRefCoverage: 1,
+    },
+    view: {
+      version: 'compact_planner_view.v1',
+      goal: 'Click submit',
+      actions: [{ id: 1, refId: 'ref_submit', label: 'Submit', tools: ['clickable'] }],
+      reads: [],
+      omitted: {
+        originalCurrentRefs: 1,
+        originalPrimaryRefs: 1,
+        originalSecondaryRefs: 0,
+        originalReadableEvidence: 0,
+      },
+    },
+  };
+
+  const artifact = store.recordCompactPlannerView('episode_1_obs_1', payload);
+  const manifest = await store.flush();
+
+  assert.equal(artifact.kind, 'planner_compact_view');
+  assert.equal(manifest.artifacts.compactPlannerViews?.length, 1);
+  assert.equal(manifest.artifacts.compactPlannerViews?.[0].id, 'episode_1_obs_1-compact');
+
+  const compactJson = JSON.parse(await readFile(
+    join(traceDir, 'run_trace_compact_view', 'compact-planner', 'episode_1_obs_1-compact.json'),
+    'utf8',
+  ));
+  const traceJson = JSON.parse(await readFile(join(traceDir, 'run_trace_compact_view', 'trace.json'), 'utf8'));
+
+  assert.equal(compactJson.version, 'compact_planner_telemetry.v1');
+  assert.equal(compactJson.stats.reductionRatio, 0.25);
+  assert.equal(traceJson.artifacts.compactPlannerViews[0].kind, 'planner_compact_view');
+});
+
+test('TraceStore writes ref resolution audit artifacts and manifest entries', async () => {
+  const traceDir = await freshTraceDir('ref_resolution_audit');
+  const store = new TraceStore({
+    runId: 'run_trace_ref_audit',
+    runtimeMode: 'agent',
+    traceDir,
+    startTime: 6666,
+  });
+
+  const payload = {
+    version: 'ref_resolution_audit.v1',
+    auditId: 'audit_obs_1_ref_submit_click',
+    observationId: 'obs_1',
+    generationId: 1,
+    url: 'https://example.test',
+    actionKind: 'click',
+    targetRef: 'ref_submit',
+    summary: {
+      reason: 'ambiguous_same_role_name',
+      candidateCount: 2,
+      sameRoleNameCandidates: 2,
+      visibleReadyCandidates: 2,
+    },
+    candidates: [],
+  };
+
+  const artifact = store.recordRefResolutionAudit(payload.auditId, payload);
+  const manifest = await store.flush();
+
+  assert.equal(artifact.kind, 'ref_resolution_audit');
+  assert.equal(manifest.artifacts.refResolutionAudits?.length, 1);
+  assert.equal(manifest.artifacts.refResolutionAudits?.[0].id, payload.auditId);
+});

@@ -41,6 +41,7 @@ export interface BenchmarkAdapterRunOptions {
   traceDir: string;
   headed: boolean;
   requestMinIntervalMs?: number;
+  plannerMode?: 'current' | 'compact_enforced';
 }
 
 export type BenchmarkEvidenceMode = 'browsegent_trace' | 'external_artifact';

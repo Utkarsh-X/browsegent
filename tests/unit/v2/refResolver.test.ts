@@ -63,6 +63,39 @@ test('RefResolver ambiguous_ref_resolution error includes tied candidate diagnos
       assert.equal(err.code, 'ambiguous_ref_resolution');
       assert.equal(err.diagnostics?.candidateCount, 2);
       assert.equal(err.diagnostics?.reason, 'tied_candidates');
+      assert.equal(Array.isArray(err.diagnostics?.topCandidates), true);
+      return true;
+    },
+  );
+});
+
+test('RefResolver does not award ordinal identity to unrelated same-role candidates', async () => {
+  const resolver = new RefResolver();
+  const fakePage = {
+    locator: () => ({
+      count: async () => 2,
+      nth: (index: number) => ({
+        evaluate: async () => ({
+          score: 120,
+          identityKey: `button|${index}|candidate`,
+          diagnostics: {
+            nameMatched: false,
+            textMatched: false,
+          },
+        }),
+      }),
+    }),
+  } as never;
+
+  await assert.rejects(
+    () => resolver.resolve(makeRef({
+      selectorCandidates: ['button'],
+      nthRoleName: 1,
+    }), fakePage),
+    (error: unknown) => {
+      const candidate = error as { code?: string; diagnostics?: Record<string, unknown> };
+      assert.equal(candidate.code, 'ambiguous_ref_resolution');
+      assert.equal(candidate.diagnostics?.reason, 'tied_candidates');
       return true;
     },
   );

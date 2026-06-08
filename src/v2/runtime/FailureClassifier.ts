@@ -36,6 +36,7 @@ export interface FailureEvidence {
   observationId?: string;
   targetRef?: string;
   signals: string[];
+  diagnostics?: Record<string, unknown>;
 }
 
 export class FailureClassifier {
@@ -74,6 +75,7 @@ export class FailureClassifier {
       source: context.source ?? (toolResult ? 'tool_result' : 'runtime_error'),
       message: messageFor(kind),
       signals: [`error:${kind}`],
+      diagnostics: error?.diagnostics,
     });
   }
 }
@@ -86,6 +88,7 @@ function createFailureEvidence(
     source: string;
     message: string;
     signals: string[];
+    diagnostics?: Record<string, unknown>;
   },
 ): FailureEvidence {
   return {
@@ -100,6 +103,7 @@ function createFailureEvidence(
     observationId: input.context.observationId,
     targetRef: input.context.targetRef,
     signals: input.signals,
+    ...(input.diagnostics ? { diagnostics: input.diagnostics } : {}),
   };
 }
 
@@ -112,6 +116,7 @@ function extractError(input: V2ToolResult | V2ToolError | V2OperationalError | E
       code: input.code,
       message: input.message,
       retryable: input.retryable,
+      diagnostics: input.diagnostics,
     };
   }
 

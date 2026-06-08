@@ -40,24 +40,26 @@ async function collectTraceDiagnostics(tracePath: string): Promise<BenchmarkDiag
     const manifest = JSON.parse(await readFile(tracePath, 'utf8')) as TraceManifest;
     diagnostics.payloads.traceBytes = await fileSize(tracePath, diagnostics.warnings, 'trace');
     diagnostics.payloads.observations = await summarizeArtifacts(tracePath, manifest.artifacts.observations, diagnostics.warnings);
+    const compactInputs = manifest.artifacts.planner.filter(artifact => artifact.kind === 'compact_planner_input');
+    const plannerInputs = manifest.artifacts.planner.filter(artifact => artifact.kind === 'planner_input');
     diagnostics.payloads.plannerInputs = await summarizeArtifacts(
       tracePath,
-      manifest.artifacts.planner.filter(artifact => artifact.kind === 'planner_input'),
+      compactInputs.length > 0 ? compactInputs : plannerInputs,
       diagnostics.warnings,
     );
     diagnostics.payloads.plannerInputSections = await summarizePlannerInputSections(
       tracePath,
-      manifest.artifacts.planner.filter(artifact => artifact.kind === 'planner_input'),
+      plannerInputs,
       diagnostics.warnings,
     );
     diagnostics.projectionOverlap = await summarizeProjectionOverlap(
       tracePath,
-      manifest.artifacts.planner.filter(artifact => artifact.kind === 'planner_input'),
+      plannerInputs,
       diagnostics.warnings,
     );
     diagnostics.workingSet = await summarizeWorkingSetDiagnostics(
       tracePath,
-      manifest.artifacts.planner.filter(artifact => artifact.kind === 'planner_input'),
+      plannerInputs,
       diagnostics.warnings,
     );
     diagnostics.payloads.plannerOutputs = await summarizeArtifacts(

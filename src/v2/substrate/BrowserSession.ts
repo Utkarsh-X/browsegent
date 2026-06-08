@@ -24,7 +24,18 @@ export class BrowserSession {
     }
 
     this.page = await this.browser.newPage({ viewport: this.options.viewport });
-    await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+
+    let attempts = 0;
+    while (attempts < 3) {
+      try {
+        await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        break;
+      } catch (error) {
+        attempts += 1;
+        if (attempts >= 3) throw error;
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
   }
 
   currentPage(): Page {

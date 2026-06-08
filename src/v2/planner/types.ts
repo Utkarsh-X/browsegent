@@ -103,6 +103,7 @@ export interface PlannerLastResultSummary {
   error?: {
     code: string;
     retryable: boolean;
+    diagnostics?: Record<string, unknown>;
   };
   evidence?: {
     transitionClass: TransitionClass;

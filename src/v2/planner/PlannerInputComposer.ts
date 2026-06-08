@@ -118,6 +118,7 @@ function summarizeLastResult(result: V2ToolResult): PlannerLastResultSummary {
       ? {
           code: result.error.code,
           retryable: result.error.retryable,
+          diagnostics: result.error.diagnostics,
         }
       : undefined,
     evidence: result.evidence

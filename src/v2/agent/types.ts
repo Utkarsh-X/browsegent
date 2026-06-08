@@ -10,6 +10,7 @@ export interface V2AgentLoopInput {
   goal: string;
   maxSteps: number;
   model?: string;
+  plannerMode?: 'current' | 'compact_enforced';
 }
 
 export interface V2AgentLoopResult {
@@ -43,8 +44,10 @@ export interface V2AgentHarnessRuntime extends V2ToolRuntime {
   close(): Promise<void>;
   flushTrace(): Promise<TraceManifest>;
   recordPlannerInput?(episodeId: string, input: unknown): TraceArtifact;
+  recordCompactPlannerInput?(episodeId: string, input: unknown): TraceArtifact;
   recordPlannerOutput?(episodeId: string, output: unknown): TraceArtifact;
   recordFailureEvidence?(failure: FailureEvidence): TraceArtifact;
+  recordCompactPlannerView?(episodeId: string, payload: unknown): TraceArtifact;
 }
 
 export interface V2AgentLoopOptions {

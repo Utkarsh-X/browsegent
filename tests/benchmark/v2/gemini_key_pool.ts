@@ -50,12 +50,38 @@ export function collectGeminiKeyPoolDiagnostics(env: EnvLike = process.env): Gem
 
 function collectRecognizedKeyEntries(env: EnvLike): GeminiKeyPoolEntry[] {
   const entries: GeminiKeyPoolEntry[] = [];
+  const activeEnvName = env.BROWSEGENT_ACTIVE_GEMINI_KEY_ENV_NAME;
+
+  const numberedValues = new Set<string>();
+  const rawEntries: GeminiKeyPoolEntry[] = [];
 
   for (const envName of Object.keys(env).sort(compareKeyEnvNames)) {
     if (!KEY_NAME_PATTERNS.some(pattern => pattern.test(envName))) continue;
+
+    const isNumbered = /^(?:GEMINI_API_KEY|GOOGLE_API_KEY|BROWSEGENT_GEMINI_API_KEY)_\d+$/.test(envName);
     const value = env[envName]?.trim();
     if (!value) continue;
-    entries.push({ envName, value });
+
+    if (isNumbered) {
+      numberedValues.add(value);
+    }
+    rawEntries.push({ envName, value });
+  }
+
+  for (const entry of rawEntries) {
+    const envName = entry.envName;
+    const isUnnumbered = envName === 'GEMINI_API_KEY' || envName === 'GOOGLE_API_KEY' || envName === 'BROWSEGENT_GEMINI_API_KEY';
+
+    if (isUnnumbered) {
+      if (activeEnvName) {
+        continue;
+      }
+      if (numberedValues.has(entry.value)) {
+        continue;
+      }
+    }
+
+    entries.push(entry);
   }
 
   return entries;

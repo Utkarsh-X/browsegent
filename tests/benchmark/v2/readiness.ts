@@ -53,7 +53,7 @@ export function buildMvrReadinessReport(
   const devTaskCount = countUniqueTasksByPartition(report, 'dev');
   const holdoutTaskCount = countUniqueTasksByPartition(report, 'holdout');
   const failedResults = report.results.filter(result => !result.passed);
-  const classifiedFailureCount = failedResults.filter(result => result.failureType).length;
+  const classifiedFailureCount = failedResults.filter(result => result.failureType && result.failureType !== 'unknown').length;
   const checks: MvrReadinessCheck[] = [
     {
       id: 'task_count_20_to_30',

@@ -26,6 +26,7 @@ export interface RunWebVoyagerLiteOptions {
   headed?: boolean;
   traceAudit?: RunBenchmarkOptions['traceAudit'];
   manualAuditPath?: string;
+  plannerMode?: 'current' | 'compact_enforced';
 }
 
 export interface WebVoyagerLiteRunResult {
@@ -60,6 +61,7 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
     geminiKeyIndex: options.geminiKeyIndex,
     headed: options.headed,
     traceAudit: options.traceAudit,
+    plannerMode: options.plannerMode,
   });
 
   const byTaskId = new Map(tasks.map(task => [task.taskId, task]));
@@ -144,6 +146,13 @@ function readCliOptions(): RunWebVoyagerLiteOptions {
   const taskIds = taskIdsArg ? taskIdsArg.split(',') : undefined;
   const taskSlice = readTaskSliceArg();
   const manualAuditPath = readFlag('--manual-audit');
+  const plannerModeArg = readFlag('--planner-mode');
+  let plannerMode: 'current' | 'compact_enforced' = 'current';
+  if (plannerModeArg === 'current' || plannerModeArg === 'compact_enforced') {
+    plannerMode = plannerModeArg;
+  } else if (plannerModeArg !== undefined) {
+    throw new Error(`Unsupported --planner-mode "${plannerModeArg}". Use current or compact_enforced.`);
+  }
 
   return {
     sourceRoot,
@@ -156,6 +165,7 @@ function readCliOptions(): RunWebVoyagerLiteOptions {
     taskIds,
     taskSlice,
     manualAuditPath,
+    plannerMode,
   };
 }
 
