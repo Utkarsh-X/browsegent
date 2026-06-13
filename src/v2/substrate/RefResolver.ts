@@ -4,6 +4,7 @@ import { V2OperationalError } from '../runtime/errors';
 import type { V2Ref } from '../runtime/types';
 
 const MAX_CANDIDATES_PER_SELECTOR = 5;
+const MIN_SINGLE_OVERFLOW_CANDIDATE_SCORE = 120;
 
 export interface ResolvedRefTarget {
   locator: Locator;
@@ -83,7 +84,11 @@ export class RefResolver {
       });
     }
 
-    if (overflowed && sorted[0].score < 140) {
+    if (
+      overflowed
+      && sorted[0].score < 140
+      && (sorted.length > 1 || sorted[0].score < MIN_SINGLE_OVERFLOW_CANDIDATE_SCORE)
+    ) {
       throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" matched too many weak selector candidates.`, {
         retryable: false,
         diagnostics: {
