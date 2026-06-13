@@ -128,14 +128,134 @@ test('CompactPlannerClient throws invalid output error for unknown index', async
   );
 });
 
-test('CompactPlannerClient throws ineligible error when first ref cannot be represented', async () => {
-  const ineligiblePlannerInput: PlannerInput = {
+test('CompactPlannerClient retries once when first compact output fails action compatibility', async () => {
+  const calls: string[] = [];
+  const client = new CompactPlannerClient({
+    provider: async (_system, user) => {
+      calls.push(user);
+      if (calls.length === 1) {
+        return {
+          text: JSON.stringify({
+            plan: [{ tool: 'type', ref: 'a1', text: 'sustainability' }],
+            confidence: 'high',
+          }),
+          inputTokens: 10,
+          outputTokens: 5,
+        };
+      }
+      return {
+        text: JSON.stringify({
+          plan: [{ tool: 'type', ref: 'a2', text: 'sustainability' }],
+          confidence: 'high',
+        }),
+        inputTokens: 11,
+        outputTokens: 6,
+      };
+    },
+  });
+
+  const plannerInput = {
     ...mockPlannerInput,
+    goal: 'Open the form',
+    current: {
+      ...mockPlannerInput.current,
+      refs: {
+        ref_button: { refId: 'ref_button', kind: 'button', role: 'button', name: 'Search' },
+        ref_search: { refId: 'ref_search', kind: 'input', role: 'textbox', name: 'Search input' },
+      },
+    },
     workingSet: {
       ...mockPlannerInput.workingSet!,
+      primaryRefs: [
+        { refId: 'ref_button', kind: 'button', role: 'button', name: 'Search', score: 100, reasons: ['visible_ready'] },
+        { refId: 'ref_search', kind: 'input', role: 'textbox', name: 'Search input', score: 90, reasons: ['form_candidate'] },
+      ],
+      secondaryRefs: [],
+      readableEvidence: [],
       actionSurface: {
-        clickableRefs: [], // Empty means ref_submit will be filtered out and not represented
-        typeableRefs: [],
+        clickableRefs: ['ref_button'],
+        typeableRefs: ['ref_search'],
+        selectableRefs: [],
+        readableRefs: [],
+        ambiguousRefs: [],
+      },
+    },
+  } as any;
+
+  const result = await client.call({ plannerInput, model: 'mock-model' });
+
+  assert.equal(calls.length, 2);
+  assert.match(calls[1], /Choose an index whose tools include the requested tool/);
+  assert.match(calls[1], /choose an index with type/i);
+  assert.match(calls[1], /previousOutput/);
+  assert.match(calls[1], /\\"ref\\":\\"a1\\"/);
+  assert.match(calls[1], /Step 1 ref \\"a1\\" is not compatible with tool \\"type\\"/);
+  assert.doesNotMatch(calls[1], /ref_button/);
+  assert.deepEqual(result.output.plan, [{ tool: 'type', ref: 'ref_search', text: 'sustainability' }]);
+  assert.equal(result.inputTokens, 21);
+  assert.equal(result.outputTokens, 11);
+});
+
+test('CompactPlannerClient does not retry unknown compact index errors', async () => {
+  let calls = 0;
+  const client = new CompactPlannerClient({
+    provider: async () => {
+      calls += 1;
+      return {
+        text: JSON.stringify({
+          plan: [{ tool: 'click', ref: 'a99' }],
+          confidence: 'high',
+        }),
+        inputTokens: 10,
+        outputTokens: 5,
+      };
+    },
+  });
+
+  await assert.rejects(() => client.call({ plannerInput: mockPlannerInput, model: 'mock-model' }));
+  assert.equal(calls, 1);
+});
+
+test('CompactPlannerClient proceeds when legacy primary ref is absent from compact surface', async () => {
+  const plannerInput: PlannerInput = {
+    ...mockPlannerInput,
+    current: {
+      ...mockPlannerInput.current,
+      refs: {
+        ref_submit: {
+          refId: 'ref_submit',
+          kind: 'button',
+          name: 'Submit Button',
+          visibility: 'visible',
+          actionability: 'ready',
+          state: 'live',
+          confidence: 1,
+          score: 1,
+        },
+        ref_search: {
+          refId: 'ref_search',
+          kind: 'input',
+          role: 'textbox',
+          name: 'Search',
+          visibility: 'visible',
+          actionability: 'ready',
+          state: 'live',
+          confidence: 1,
+          score: 1,
+        },
+      },
+    },
+    workingSet: {
+      ...mockPlannerInput.workingSet!,
+      primaryRefs: [
+        { refId: 'ref_submit', kind: 'button', name: 'Submit Button', score: 1, reasons: ['visible_ready'] },
+      ],
+      secondaryRefs: [
+        { refId: 'ref_search', kind: 'input', role: 'textbox', name: 'Search', score: 0.9, reasons: ['form_candidate'] },
+      ],
+      actionSurface: {
+        clickableRefs: [],
+        typeableRefs: ['ref_search'],
         selectableRefs: [],
         readableRefs: [],
         ambiguousRefs: []
@@ -143,26 +263,26 @@ test('CompactPlannerClient throws ineligible error when first ref cannot be repr
     }
   };
 
+  let calls = 0;
   const client = new CompactPlannerClient({
-    provider: async () => ({
+    provider: async () => {
+      calls += 1;
+      return {
       text: JSON.stringify({
-        plan: [{ tool: 'click', ref: 'a1' }],
+        plan: [{ tool: 'type', ref: 'a1', text: 'query' }],
         confidence: 'high'
       }),
       inputTokens: 10,
       outputTokens: 20
-    })
+      };
+    }
   });
 
-  await assert.rejects(
-    () => client.call({
-      plannerInput: ineligiblePlannerInput,
-      model: 'mock-model'
-    }),
-    (err: any) => {
-      assert.equal(err.code, 'COMPACT_PLANNER_INPUT_INELIGIBLE');
-      assert.equal(err.message, 'compact_planner_input_ineligible');
-      return true;
-    }
-  );
+  const result = await client.call({
+    plannerInput,
+    model: 'mock-model'
+  });
+
+  assert.equal(calls, 1);
+  assert.deepEqual(result.output.plan, [{ tool: 'type', ref: 'ref_search', text: 'query' }]);
 });

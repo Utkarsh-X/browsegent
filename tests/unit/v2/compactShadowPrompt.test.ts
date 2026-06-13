@@ -25,6 +25,12 @@ test('buildCompactShadowSystemPrompt assertions', () => {
   assert.ok(!sysPrompt.includes('selectorCandidates'), 'Should not mention selectorCandidates');
 });
 
+test('compact shadow prompt tells planner not to use read-only refs for mutation tools', () => {
+  const prompt = buildCompactShadowSystemPrompt();
+  assert.match(prompt, /Only use indexes whose tools include the requested tool/i);
+  assert.match(prompt, /Do not click, type, or select read-only evidence/i);
+});
+
 test('buildCompactShadowUserMessage assertions', () => {
   const input: CompactShadowPlannerInput = {
     version: 'compact_shadow_input.v1',

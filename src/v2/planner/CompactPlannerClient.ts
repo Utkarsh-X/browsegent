@@ -2,7 +2,7 @@ import { callProvider } from '../../providers';
 import type { TraceStore } from '../trace/TraceStore';
 import type { V2PlannerClientLike } from '../agent/types';
 import { buildCompactPlannerView } from './CompactPlannerView';
-import { buildCompactShadowInput } from './CompactShadowInput';
+import { buildCompactShadowInput, type CompactShadowPlannerInput } from './CompactShadowInput';
 import { callCompactShadowPlanner } from './CompactShadowPlanner';
 import type { PlannerInput, PlannerOutput } from './types';
 import type { V2PlannerProvider } from './V2PlannerClient';
@@ -42,40 +42,41 @@ export class CompactPlannerClient implements V2PlannerClientLike {
     // 1. Build compact view and compact input
     const compactView = buildCompactPlannerView(plannerInput);
     const shadowInputResult = buildCompactShadowInput(compactView);
-    const { input: compactInput, indexToRef, refToIndex, eligibility } = shadowInputResult;
+    const { input: compactInput, indexToRef, refToIndex } = shadowInputResult;
 
     // Record the compact input to trace
     this.traceStore?.recordCompactPlannerInput?.(episodeId, compactInput);
 
-    // 2. Check eligibility
-    let eligible = true;
-    if (plannerInput.workingSet?.primaryRefs?.[0]) {
-      const primaryRef = plannerInput.workingSet.primaryRefs[0].refId;
-      if (refToIndex[primaryRef] === undefined) {
-        eligible = false;
-      }
-    }
-
-    if (!eligible) {
-      throw Object.assign(
-        new Error('compact_planner_input_ineligible'),
-        {
-          code: 'COMPACT_PLANNER_INPUT_INELIGIBLE',
-          inputTokens: 0,
-          outputTokens: 0,
-          durationMs: Date.now() - startedAt,
-        }
-      );
-    }
-
-    // 3. Call the compact shadow planner
-    const result = await callCompactShadowPlanner(
+    // 2. Call the compact shadow planner. In enforced compact mode, legacy
+    // primary refs are advisory; the compact action/read surface is authoritative.
+    let result = await callCompactShadowPlanner(
       this.provider,
       compactInput,
       indexToRef,
       model,
       { mode }
     );
+    let attempts = 1;
+    let totalInputTokens = result.inputTokens;
+    let totalOutputTokens = result.outputTokens;
+
+    if (result.status === 'invalid_output' && isRecoverableCompatibilityError(result.errors)) {
+      const retryInput = buildCompatibilityRetryInput(
+        compactInput,
+        toCompactValidationErrors(result.errors, refToIndex),
+        result.rawText,
+      );
+      result = await callCompactShadowPlanner(
+        this.provider,
+        retryInput,
+        indexToRef,
+        model,
+        { mode }
+      );
+      attempts = 2;
+      totalInputTokens += result.inputTokens;
+      totalOutputTokens += result.outputTokens;
+    }
 
     const durationMs = Date.now() - startedAt;
 
@@ -83,19 +84,19 @@ export class CompactPlannerClient implements V2PlannerClientLike {
       const callResult = {
         output: result.output,
         rawText: result.rawText,
-        inputTokens: result.inputTokens,
-        outputTokens: result.outputTokens,
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
         durationMs,
       };
 
       this.traceStore?.recordPlannerOutput?.(episodeId, {
-        attempts: 1,
+        attempts,
         rawText: result.rawText,
         validation: { ok: true, errors: [] },
         output: result.output,
         metrics: {
-          inputTokens: result.inputTokens,
-          outputTokens: result.outputTokens,
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
           durationMs,
         },
       });
@@ -103,12 +104,12 @@ export class CompactPlannerClient implements V2PlannerClientLike {
       return callResult;
     } else if (result.status === 'invalid_output') {
       this.traceStore?.recordPlannerOutput?.(episodeId, {
-        attempts: 1,
+        attempts,
         rawText: result.rawText,
         validation: { ok: false, errors: result.errors },
         metrics: {
-          inputTokens: result.inputTokens,
-          outputTokens: result.outputTokens,
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
           durationMs,
         },
       });
@@ -119,20 +120,20 @@ export class CompactPlannerClient implements V2PlannerClientLike {
           code: 'PLANNER_INVALID_OUTPUT',
           name: 'PlannerInvalidOutputError',
           errors: result.errors,
-          inputTokens: result.inputTokens,
-          outputTokens: result.outputTokens,
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
           durationMs,
         }
       );
     } else {
       // provider_error
       this.traceStore?.recordPlannerOutput?.(episodeId, {
-        attempts: 1,
+        attempts,
         rawText: '',
         validation: { ok: false, errors: [`provider_error: ${result.error}`] },
         metrics: {
-          inputTokens: result.inputTokens,
-          outputTokens: result.outputTokens,
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
           durationMs,
         },
       });
@@ -140,11 +141,44 @@ export class CompactPlannerClient implements V2PlannerClientLike {
       throw Object.assign(
         new Error(result.error),
         {
-          inputTokens: result.inputTokens,
-          outputTokens: result.outputTokens,
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
           durationMs,
         }
       );
     }
   }
+}
+
+function isRecoverableCompatibilityError(errors: readonly string[]): boolean {
+  return errors.some(error => /not compatible with tool|read-only|action compatibility/i.test(error));
+}
+
+function buildCompatibilityRetryInput(
+  input: CompactShadowPlannerInput,
+  errors: readonly string[],
+  previousOutput: string,
+): CompactShadowPlannerInput {
+  return {
+    ...input,
+    validationFeedback: {
+      previousErrors: errors.slice(0, 3),
+      previousOutput,
+      instruction: 'Choose an index whose tools include the requested tool. For typing, choose an index with type. Use read-only indexes only for get or inspect_region.',
+    },
+  };
+}
+
+function toCompactValidationErrors(
+  errors: readonly string[],
+  refToIndex: Readonly<Record<string, string>>,
+): string[] {
+  const mappings = Object.entries(refToIndex).sort(([left], [right]) => right.length - left.length);
+  return errors.map(error => {
+    let compactError = error;
+    for (const [runtimeRef, compactIndex] of mappings) {
+      compactError = compactError.split(runtimeRef).join(compactIndex);
+    }
+    return compactError;
+  });
 }
