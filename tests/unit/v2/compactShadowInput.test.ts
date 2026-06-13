@@ -106,7 +106,36 @@ test('tool mapping covers clickable -> click, typeable -> type, selectable -> se
   const { input } = buildCompactShadowInput(view);
   assert.deepEqual(input.actions[0].tools, ['click', 'type']); // sorted, deduped
   assert.deepEqual(input.actions[1].tools, ['get', 'select']); // sorted, deduped
-  assert.deepEqual(input.actions[2].tools, []); // unknown tools map to nothing/ignored
+  assert.equal(input.actions.length, 2); // unknown tools are not exposed as action indexes
+});
+
+test('buildCompactShadowInput excludes get-only action entries from action indexes', () => {
+  const view: CompactPlannerView = {
+    version: 'compact_planner_view.v1',
+    goal: 'Read place details',
+    actions: [
+      { id: 1, refId: 'ref_readonly', label: 'Castle Mountains National Monument details', tools: ['readable'] },
+      { id: 2, refId: 'ref_button', label: 'Search', tools: ['clickable'] },
+    ],
+    reads: [
+      { id: 1, refId: 'ref_readonly', text: 'Castle Mountains National Monument 4.4 National reserve Open 24 hours' },
+    ],
+    lanes: {
+      typeable: [],
+      clickable: [{ id: 2, refId: 'ref_button', label: 'Search', tools: ['clickable'] }],
+      selectable: [],
+      readable: [{ id: 1, refId: 'ref_readonly', text: 'Castle Mountains National Monument 4.4 National reserve Open 24 hours' }],
+    },
+    omitted: { originalCurrentRefs: 0, originalPrimaryRefs: 0, originalSecondaryRefs: 0, originalReadableEvidence: 0 },
+  };
+
+  const { input, indexToRef, refToIndex } = buildCompactShadowInput(view);
+
+  assert.deepEqual(input.actions.map(action => action.index), ['a1']);
+  assert.equal(indexToRef.a1, 'ref_button');
+  assert.equal(input.reads[0].index, 'r1');
+  assert.equal(indexToRef.r1, 'ref_readonly');
+  assert.equal(refToIndex.ref_readonly, 'r1');
 });
 
 test('eligibility: action episode is eligible when productionOutput.plan[0].ref exists in refToIndex', () => {

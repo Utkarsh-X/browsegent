@@ -34,6 +34,101 @@ test('buildCompactPlannerView keeps compact actions and readable evidence', () =
   assert.equal(view.omitted.originalCurrentRefs, 2);
 });
 
+test('buildCompactPlannerView preserves visible typeable search inputs ahead of distractors', () => {
+  const distractors = Object.fromEntries(
+    Array.from({ length: 40 }, (_, index) => [
+      `ref_distractor_${index}`,
+      { refId: `ref_distractor_${index}`, kind: 'button', role: 'button', name: `Dictionary distractor ${index}` },
+    ]),
+  );
+  const input = {
+    episodeId: 'episode_cambridge_failure',
+    goal: 'Look up the pronunciation and definition of sustainability',
+    current: {
+      refs: {
+        ...distractors,
+        ref_search: {
+          refId: 'ref_search',
+          kind: 'input',
+          role: 'textbox',
+          name: 'Search',
+          tagName: 'input',
+          inputType: 'text',
+          visibility: 'visible',
+          actionability: 'ready',
+          state: 'live',
+          confidence: 1,
+        },
+      },
+    },
+    workingSet: {
+      mode: 'act',
+      primaryRefs: Object.values(distractors).slice(0, 32),
+      secondaryRefs: [
+        ...Object.values(distractors).slice(32),
+        { refId: 'ref_search', kind: 'input', role: 'textbox', name: 'Search', score: 315, reasons: ['form_candidate', 'role_relevant_to_goal', 'visible_ready'] },
+      ],
+      readableEvidence: [],
+      actionSurface: {
+        clickableRefs: Object.keys(distractors),
+        typeableRefs: ['ref_search'],
+        selectableRefs: [],
+        readableRefs: [],
+        ambiguousRefs: [],
+      },
+    },
+  };
+
+  const view = buildCompactPlannerView(input as any, { maxActions: 24 });
+
+  assert.equal(view.lanes?.typeable.some(ref => ref.refId === 'ref_search'), true);
+  assert.equal(view.actions.some(ref => ref.refId === 'ref_search'), true);
+  assert.ok(view.actions.findIndex(ref => ref.refId === 'ref_search') < 8);
+});
+
+test('buildCompactPlannerView reserves typeable and selectable lanes when clickables are dense', () => {
+  const clickableRefs = Array.from({ length: 30 }, (_, index) => ({
+    refId: `ref_click_${index}`,
+    kind: 'button',
+    role: 'button',
+    name: `Action ${index}`,
+  }));
+  const input = {
+    episodeId: 'episode_dense_actions',
+    goal: 'Compute the requested expression',
+    current: {
+      refs: Object.fromEntries([
+        ...clickableRefs.map(ref => [ref.refId, ref]),
+        ['ref_input', { refId: 'ref_input', kind: 'input', role: 'textbox', name: 'Expression input' }],
+        ['ref_sort', { refId: 'ref_sort', kind: 'select', role: 'combobox', name: 'Sort results by' }],
+      ]),
+    },
+    workingSet: {
+      mode: 'act',
+      primaryRefs: clickableRefs.slice(0, 24),
+      secondaryRefs: [
+        ...clickableRefs.slice(24),
+        { refId: 'ref_input', kind: 'input', role: 'textbox', name: 'Expression input' },
+        { refId: 'ref_sort', kind: 'select', role: 'combobox', name: 'Sort results by' },
+      ],
+      readableEvidence: [],
+      actionSurface: {
+        clickableRefs: [...clickableRefs.map(ref => ref.refId), 'ref_sort'],
+        typeableRefs: ['ref_input'],
+        selectableRefs: ['ref_sort'],
+        readableRefs: [],
+        ambiguousRefs: [],
+      },
+    },
+  };
+
+  const view = buildCompactPlannerView(input as any, { maxActions: 8 });
+
+  assert.equal(view.actions.some(ref => ref.refId === 'ref_input'), true);
+  assert.equal(view.actions.some(ref => ref.refId === 'ref_sort'), true);
+  assert.ok(view.actions.findIndex(ref => ref.refId === 'ref_input') < 4);
+});
+
 test('measureCompactPlannerView reports compact/original ratio', () => {
   const input = {
     goal: 'x',

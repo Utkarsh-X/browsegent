@@ -22,6 +22,7 @@ export interface CompactPlannerView {
   uncertainty?: PlannerUncertainty;
   actions: CompactActionRef[];
   reads: CompactReadRef[];
+  lanes?: CompactPlannerLanes;
   omitted: {
     originalCurrentRefs: number;
     originalPrimaryRefs: number;
@@ -43,6 +44,13 @@ export interface CompactReadRef {
   id: number;
   refId: string;
   text: string;
+}
+
+export interface CompactPlannerLanes {
+  typeable: CompactActionRef[];
+  clickable: CompactActionRef[];
+  selectable: CompactActionRef[];
+  readable: CompactReadRef[];
 }
 
 export interface PlainInteractiveSnapshotBaseline {
@@ -88,18 +96,15 @@ export function buildCompactPlannerView(input: Partial<PlannerInput>, options: {
     ...(workingSet?.secondaryRefs ?? []),
   ];
 
-  const actions = rankedRefs
-    .filter((ref: any) => toolByRef.has(ref.refId))
-    .slice(0, maxActions)
-    .map((ref: any, index: number) => toCompactAction(index + 1, ref, currentRefs[ref.refId], toolByRef.get(ref.refId) ?? []));
-
-  const reads = (workingSet?.readableEvidence ?? [])
-    .slice(0, maxReads)
-    .map((ref: any, index: number) => ({
-      id: index + 1,
-      refId: ref.refId,
-      text: compactText(ref.text ?? '', 220),
-    }));
+  const lanes: CompactPlannerLanes = {
+    typeable: buildActionLane(rankedRefs, currentRefs, toolByRef, 'typeable', maxActions),
+    clickable: buildActionLane(rankedRefs, currentRefs, toolByRef, 'clickable', maxActions),
+    selectable: buildActionLane(rankedRefs, currentRefs, toolByRef, 'selectable', maxActions),
+    readable: buildReadableLane(workingSet?.readableEvidence ?? [], maxReads),
+  };
+  const actions = composeCompactActions(input.goal ?? '', lanes, maxActions)
+    .map((ref, index) => ({ ...ref, id: index + 1 }));
+  const reads = lanes.readable;
 
   return {
     version: 'compact_planner_view.v1',
@@ -117,6 +122,7 @@ export function buildCompactPlannerView(input: Partial<PlannerInput>, options: {
     uncertainty: input.uncertainty,
     actions,
     reads,
+    lanes,
     omitted: {
       originalCurrentRefs: Object.keys(currentRefs).length,
       originalPrimaryRefs: (workingSet?.primaryRefs ?? []).length,
@@ -220,6 +226,74 @@ export function evaluateCompactPlannerCoverage(
     actionRefCoverage: plannedActionRefs.length === 0 ? 1 : (plannedActionRefs.length - missingPlannedActionRefs.length) / plannedActionRefs.length,
     readRefCoverage: plannedReadRefs.length === 0 ? 1 : (plannedReadRefs.length - missingPlannedReadRefs.length) / plannedReadRefs.length,
   };
+}
+
+function buildActionLane(
+  refs: any[],
+  currentRefs: Record<string, any>,
+  toolByRef: Map<string, string[]>,
+  requiredTool: string,
+  maxRefs: number,
+): CompactActionRef[] {
+  return refs
+    .filter((ref: any) => (toolByRef.get(ref.refId) ?? []).includes(requiredTool))
+    .slice(0, maxRefs)
+    .map((ref: any, index: number) => toCompactAction(index + 1, ref, currentRefs[ref.refId], toolByRef.get(ref.refId) ?? []));
+}
+
+function buildReadableLane(refs: any[], maxRefs: number): CompactReadRef[] {
+  return refs
+    .slice(0, maxRefs)
+    .map((ref: any, index: number) => ({
+      id: index + 1,
+      refId: ref.refId,
+      text: compactText(ref.text ?? '', 220),
+    }));
+}
+
+function composeCompactActions(
+  goal: string,
+  lanes: CompactPlannerLanes,
+  maxActions: number,
+): CompactActionRef[] {
+  if (maxActions <= 0) return [];
+
+  const perLaneReserve = Math.max(1, Math.min(4, Math.floor(maxActions / 4)));
+  const reservedTypeable = lanes.typeable.slice(0, Math.min(perLaneReserve, maxActions));
+  const selectableCapacity = Math.max(0, maxActions - reservedTypeable.length);
+  const reservedSelectable = lanes.selectable.slice(0, Math.min(perLaneReserve, selectableCapacity));
+  const reserved = uniqueCompactActions([...reservedTypeable, ...reservedSelectable]);
+  const entryFirst = /(search|find|look up|lookup|query|pronunciation|definition|enter|type|calculate|compute|solve|evaluate|derivative|integral)/i.test(goal);
+
+  if (entryFirst) {
+    return uniqueCompactActions([
+      ...reservedTypeable,
+      ...reservedSelectable,
+      ...lanes.clickable,
+      ...lanes.typeable,
+      ...lanes.selectable,
+    ]).slice(0, maxActions);
+  }
+
+  const clickBudget = Math.max(0, maxActions - reserved.length);
+  return uniqueCompactActions([
+    ...lanes.clickable.slice(0, clickBudget),
+    ...reserved,
+    ...lanes.clickable.slice(clickBudget),
+    ...lanes.typeable,
+    ...lanes.selectable,
+  ]).slice(0, maxActions);
+}
+
+function uniqueCompactActions(refs: CompactActionRef[]): CompactActionRef[] {
+  const seen = new Set<string>();
+  const unique: CompactActionRef[] = [];
+  for (const ref of refs) {
+    if (seen.has(ref.refId)) continue;
+    seen.add(ref.refId);
+    unique.push(ref);
+  }
+  return unique;
 }
 
 function buildToolMap(actionSurface: Record<string, string[]>): Map<string, string[]> {

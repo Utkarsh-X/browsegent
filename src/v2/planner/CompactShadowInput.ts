@@ -11,6 +11,11 @@ export interface CompactShadowPlannerInput {
   lastResult?: CompactPlannerView['lastResult'];
   recovery?: CompactPlannerView['recovery'];
   uncertainty?: CompactPlannerView['uncertainty'];
+  validationFeedback?: {
+    previousErrors: string[];
+    previousOutput: string;
+    instruction: string;
+  };
   actions: Array<{ index: string; role?: string; label: string; tools: string[] }>;
   reads: Array<{ index: string; text: string; tools: ['get', 'inspect_region'] }>;
 }
@@ -58,6 +63,11 @@ export function buildCompactShadowInput(
   let actionIdx = 1;
   for (const action of view.actions || []) {
     const refId = action.refId;
+    const mappedTools = mapTools(action.tools);
+    const hasActionTool = mappedTools.some(tool => tool === 'click' || tool === 'type' || tool === 'select');
+    if (!hasActionTool) {
+      continue;
+    }
     actionRefs.add(refId);
     const index = `a${actionIdx++}`;
 
@@ -65,7 +75,7 @@ export function buildCompactShadowInput(
       index,
       role: action.role,
       label: action.label,
-      tools: mapTools(action.tools),
+      tools: mappedTools,
     });
 
     indexToRef[index] = refId;
