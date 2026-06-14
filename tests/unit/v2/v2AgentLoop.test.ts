@@ -276,6 +276,82 @@ test('V2AgentLoop returns done output without executing tools', async () => {
   assert.equal(harness.closed, true);
 });
 
+test('V2AgentLoop replans once when done output misses required answer details', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    {
+      done: true,
+      val: 'Sustainability means the quality of being able to continue over time. Pronunciation is available via audio buttons.',
+    },
+    {
+      done: true,
+      val: 'UK: /səˌsteɪ.nəˈbɪl.ə.ti/, US: /səˌsteɪ.nəˈbɪl.ə.t̬i/; definition: the quality of being able to continue over a period of time.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/dictionary',
+    goal: 'Look up the pronunciation and definition of the word "sustainability"',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.match(result.value, /UK:/);
+  assert.equal(result.metrics.plannerCalls, 2);
+  assert.equal(result.metrics.toolExecutions, 0);
+  assert.match(planner.inputs[1].answerFeedback?.previousAnswer ?? '', /Pronunciation is available/);
+  assert.deepEqual(planner.inputs[1].answerFeedback?.missingDetails, ['missing_pronunciation_detail']);
+});
+
+test('V2AgentLoop replans when done output omits a pronunciation variant present in evidence', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    {
+      done: true,
+      val: 'The pronunciation is /sÉ™ËŒsteÉª.nÉ™ËˆbÉªl.É™.ti/ (UK). The definition is the quality of being able to continue over a period of time.',
+    },
+    {
+      done: true,
+      val: 'UK: /sÉ™ËŒsteÉª.nÉ™ËˆbÉªl.É™.ti/, US: /sÉ™ËŒsteÉª.nÉ™ËˆbÉªl.É™.tÌ¬i/; definition: the quality of being able to continue over a period of time.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'get',
+    targetRef: 'ref_submit',
+    traceStepId: 'fake_get',
+    value: {
+      text: 'sustainability noun [ U ] uk Your browser does not support HTML5 audio /sÉ™ËŒsteÉª.nÉ™ËˆbÉªl.É™.ti/ us Your browser does not support HTML5 audio /sÉ™ËŒsteÉª.nÉ™ËˆbÉªl.É™.tÌ¬i/ the quality of being able to continue over a period of time',
+    },
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/dictionary',
+    goal: 'Look up the pronunciation and definition of the word "sustainability"',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.match(result.value, /US:/);
+  assert.equal(result.metrics.plannerCalls, 3);
+  assert.deepEqual(planner.inputs[2].answerFeedback?.missingDetails, ['missing_pronunciation_variant_us']);
+});
+
 test('V2AgentLoop records planner artifacts for injected planner clients', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const harness = new FakeHarness();

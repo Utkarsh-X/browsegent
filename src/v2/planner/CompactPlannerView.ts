@@ -19,6 +19,7 @@ export interface CompactPlannerView {
   };
   lastResult?: PlannerLastResultSummary;
   recovery?: PlannerRecoveryState;
+  answerFeedback?: PlannerInput['answerFeedback'];
   uncertainty?: PlannerUncertainty;
   actions: CompactActionRef[];
   reads: CompactReadRef[];
@@ -119,6 +120,7 @@ export function buildCompactPlannerView(input: Partial<PlannerInput>, options: {
     },
     lastResult: input.lastResult,
     recovery: input.recovery,
+    answerFeedback: input.answerFeedback,
     uncertainty: input.uncertainty,
     actions,
     reads,

@@ -51,6 +51,7 @@ export class PlannerInputComposer {
       failures: input.failureEvidence?.map(summarizeFailure),
       deadState: input.deadStateEvidence ? summarizeDeadState(input.deadStateEvidence) : undefined,
       recovery,
+      answerFeedback: input.answerFeedback,
       uncertainty: buildUncertainty(input),
       lineage: input.trace
         ? this.lineageCompressor.compress(input.trace, { maxSteps: input.maxLineageSteps })

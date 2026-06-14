@@ -7,7 +7,7 @@ import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
 import { PlannerInputComposer } from '../planner/PlannerInputComposer';
 import { V2PlannerClient } from '../planner/V2PlannerClient';
 import { CompactPlannerClient } from '../planner/CompactPlannerClient';
-import type { PlannerInput, PlannerOutput } from '../planner/types';
+import type { PlannerAnswerFeedback, PlannerInput, PlannerOutput } from '../planner/types';
 import {
   buildCompactPlannerView,
   buildPlainInteractiveSnapshotBaseline,
@@ -60,6 +60,7 @@ export class V2AgentLoop {
       let deadStateEvidence: DeadStateEvidence | undefined;
       let runtimeUncertainty: RuntimeUncertainty | undefined;
       let lastSuccessfulEvidenceValue: string | undefined;
+      let answerFeedback: PlannerAnswerFeedback | undefined;
 
       for (let stepIndex = 0; stepIndex < maxSteps; stepIndex += 1) {
         const projection = this.projectionService.project(observation, graphSnapshot);
@@ -73,6 +74,7 @@ export class V2AgentLoop {
           failureEvidence: failureEvidence.length > 0 ? failureEvidence : undefined,
           deadStateEvidence,
           runtimeUncertainty,
+          answerFeedback,
         });
         harness.recordPlannerInput?.(plannerInput.episodeId, plannerInput);
         metrics.plannerCalls += 1;
@@ -142,8 +144,18 @@ export class V2AgentLoop {
 
         if (plannerResult.output.done === true) {
           const value = plannerResult.output.val ?? '';
-          const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(input.goal));
+          const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(input.goal), {
+            evidenceText: lastSuccessfulEvidenceValue,
+          });
           if (!answerValidation.ok) {
+            if (stepIndex < maxSteps - 1) {
+              answerFeedback = buildAnswerFeedback(value, answerValidation.reasons);
+              runtimeUncertainty = appendRuntimeUncertaintySignals(
+                runtimeUncertainty,
+                answerValidation.reasons.map(reason => `answer_contract:${reason}`),
+              );
+              continue;
+            }
             return await this.complete(harness, {
               success: false,
               value,
@@ -152,6 +164,7 @@ export class V2AgentLoop {
               metrics,
             });
           }
+          answerFeedback = undefined;
           return await this.complete(harness, {
             success: true,
             value,
@@ -377,7 +390,9 @@ export class V2AgentLoop {
 
       if (result.output.done === true) {
         const value = result.output.val ?? evidenceValue;
-        const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(goal));
+        const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(goal), {
+          evidenceText: evidenceValue,
+        });
         if (!answerValidation.ok) {
           return await this.complete(harness, {
             success: false,
@@ -446,6 +461,25 @@ function formatErrorMessage(error: unknown): string {
 function formatPlannerEscalation(kind: string, reason: string | undefined): string {
   const compactReason = reason?.replace(/\s+/g, ' ').trim();
   return compactReason ? `planner_escalated:${kind}:${compactReason}` : `planner_escalated:${kind}`;
+}
+
+function buildAnswerFeedback(previousAnswer: string, missingDetails: string[]): PlannerAnswerFeedback {
+  return {
+    previousAnswer,
+    missingDetails,
+    instruction:
+      'Previous done answer did not satisfy the answer contract. Continue gathering evidence or return done only when all missing details are answered.',
+  };
+}
+
+function appendRuntimeUncertaintySignals(
+  existing: RuntimeUncertainty | undefined,
+  signals: string[],
+): RuntimeUncertainty {
+  return {
+    level: existing?.level ?? 'medium',
+    signals: [...(existing?.signals ?? []), ...signals].slice(-12),
+  };
 }
 
 function readPlannerErrorMetrics(error: unknown): { inputTokens: number; outputTokens: number; durationMs: number } {

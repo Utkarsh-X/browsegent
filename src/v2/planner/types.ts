@@ -42,6 +42,7 @@ export interface PlannerInputComposerInput {
   failureEvidence?: FailureEvidence[];
   deadStateEvidence?: DeadStateEvidence;
   runtimeUncertainty?: RuntimeUncertainty;
+  answerFeedback?: PlannerAnswerFeedback;
 }
 
 export interface PlannerInput {
@@ -57,9 +58,16 @@ export interface PlannerInput {
   failures?: PlannerFailureSummary[];
   deadState?: PlannerDeadStateSummary;
   recovery?: PlannerRecoveryState;
+  answerFeedback?: PlannerAnswerFeedback;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
   sizeDiagnostics?: ProjectionSizeDiagnostics;
+}
+
+export interface PlannerAnswerFeedback {
+  previousAnswer: string;
+  missingDetails: string[];
+  instruction: string;
 }
 
 export interface PlannerContinuitySummary {

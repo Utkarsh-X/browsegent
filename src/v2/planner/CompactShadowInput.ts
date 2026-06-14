@@ -10,6 +10,7 @@ export interface CompactShadowPlannerInput {
   observationEpoch?: CompactPlannerView['observationEpoch'];
   lastResult?: CompactPlannerView['lastResult'];
   recovery?: CompactPlannerView['recovery'];
+  answerFeedback?: CompactPlannerView['answerFeedback'];
   uncertainty?: CompactPlannerView['uncertainty'];
   validationFeedback?: {
     previousErrors: string[];
@@ -112,6 +113,7 @@ export function buildCompactShadowInput(
     observationEpoch: view.observationEpoch,
     lastResult: view.lastResult,
     recovery: view.recovery,
+    answerFeedback: view.answerFeedback,
     uncertainty: view.uncertainty,
     actions: actionsInput,
     reads: readsInput,
