@@ -111,6 +111,44 @@ test('manual audit partial contributes half credit only to partial score', () =>
   assert.equal(verdict.partialCredit, 0.5);
 });
 
+test('possible references accept clearly relevant concrete answers without exact wording', () => {
+  const verdict = evaluateWebVoyagerResult(
+    task('ArXiv--0', { type: 'possible', answer: 'Any paper related to quantum computing (latest)' }),
+    result({ passed: true, value: 'The latest preprints about quantum computing are arXiv:2606.13606 and arXiv:2606.13551.' }),
+  );
+
+  assert.equal(verdict.internalPassed, true);
+  assert.equal(verdict.referenceMatchType, 'partial');
+  assert.equal(verdict.strictScore, 1);
+  assert.equal(verdict.needsManualReview, true);
+});
+
+test('golden references do not count partial token overlap as strict success', () => {
+  const verdict = evaluateWebVoyagerResult(
+    task('Cambridge Dictionary--0', {
+      type: 'golden',
+      answer: 'UK: /səˌsteɪ.nəˈbɪl.ə.ti/, US: /səˌsteɪ.nəˈbɪl.ə.t̬i/; the quality of being able to continue over a period of time',
+    }),
+    result({ passed: true, value: 'The word sustainability means the quality of being able to continue over a period of time.' }),
+  );
+
+  assert.equal(verdict.referenceMatchType, 'partial');
+  assert.equal(verdict.strictScore, 0);
+  assert.equal(verdict.partialCredit, 0.5);
+  assert.equal(verdict.needsManualReview, true);
+});
+
+test('possible references still reject unrelated answers', () => {
+  const verdict = evaluateWebVoyagerResult(
+    task('ArXiv--0', { type: 'possible', answer: 'Any paper related to quantum computing (latest)' }),
+    result({ passed: true, value: 'The page shows general astronomy news and conference announcements.' }),
+  );
+
+  assert.equal(verdict.referenceMatchType, 'mismatch');
+  assert.equal(verdict.strictScore, 0);
+  assert.equal(verdict.needsManualReview, true);
+});
+
 test('summarizeWebVoyagerRepeats reports mean and standard deviation', () => {
   const summary = summarizeWebVoyagerRepeats([
     summaryFixture({ strictScore: 0.2, manualCorrectedScore: 0.4, environmentAdjustedManualScore: 0.5 }),
@@ -155,7 +193,16 @@ test('isWebVoyagerJudgeResult validates optional judge schema', () => {
   }), false);
 });
 
-function task(id: string, answer: string | undefined): WebVoyagerBenchmarkTask {
+function task(
+  id: string,
+  answer: string | { type?: string; answer: unknown } | undefined,
+): WebVoyagerBenchmarkTask {
+  const referenceAnswer = typeof answer === 'string'
+    ? { id, webName: 'GitHub', type: 'string', answer }
+    : answer
+      ? { id, webName: 'GitHub', type: answer.type, answer: answer.answer }
+      : undefined;
+
   return {
     taskId: 'webvoyager_GitHub__0',
     category: 'webvoyager',
@@ -170,9 +217,7 @@ function task(id: string, answer: string | undefined): WebVoyagerBenchmarkTask {
       originalQuestion: 'Find answer',
       normalizedQuestion: 'Find answer',
       normalized: false,
-      referenceAnswer: answer
-        ? { id, webName: 'GitHub', type: 'string', answer }
-        : undefined,
+      referenceAnswer,
     },
   };
 }

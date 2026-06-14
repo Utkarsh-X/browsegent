@@ -18,7 +18,7 @@ export function evaluateWebVoyagerResult(
   const internalPassed = result.passed === true;
   const environmentStatus = classifyEnvironmentStatus(result, manualAudit);
   const referenceMatchType = environmentStatus === 'normal'
-    ? (reference ? classifyReferenceMatch(result.value, reference.answer) : 'missing_reference')
+    ? (reference ? classifyReferenceMatch(result.value, reference.answer, reference.type) : 'missing_reference')
     : 'not_applicable';
 
   if (!internalPassed) reasons.push('benchmark_result_failed');
@@ -29,9 +29,7 @@ export function evaluateWebVoyagerResult(
 
   const strictScore = environmentStatus === 'normal'
     && internalPassed
-    && referenceMatchType !== 'mismatch'
-    && referenceMatchType !== 'missing_reference'
-    && referenceMatchType !== 'not_applicable'
+    && isStrictReferencePass(referenceMatchType, reference?.type)
     ? 1
     : 0;
   const manualCorrectedScore = scoreManual(manualAudit, strictScore);
@@ -99,7 +97,11 @@ function scorePartial(
   return 0;
 }
 
-function classifyReferenceMatch(value: string, answer: unknown): WebVoyagerReferenceMatchType {
+function classifyReferenceMatch(
+  value: string,
+  answer: unknown,
+  referenceType?: string,
+): WebVoyagerReferenceMatchType {
   const normalizedValue = normalize(value);
   const candidates = Array.isArray(answer) ? answer : [answer];
   const normalizedCandidates = candidates
@@ -119,18 +121,47 @@ function classifyReferenceMatch(value: string, answer: unknown): WebVoyagerRefer
     return 'partial';
   }
 
+  if (
+    referenceType === 'possible'
+    && hasConcreteAnswerSignal(normalizedValue)
+    && normalizedCandidates.some(candidate => hasTokenOverlap(normalizedValue, candidate, 0.45))
+  ) {
+    return 'partial';
+  }
+
   return 'mismatch';
 }
 
+function isStrictReferencePass(
+  referenceMatchType: WebVoyagerReferenceMatchType,
+  referenceType: string | undefined,
+): boolean {
+  if (referenceMatchType === 'exact' || referenceMatchType === 'semantic_subset') {
+    return true;
+  }
+  return referenceType === 'possible' && referenceMatchType === 'partial';
+}
+
+function hasConcreteAnswerSignal(value: string): boolean {
+  return /\b(arxiv:\d{4}\.\d+|[a-z0-9_.-]+\/[a-z0-9_.-]+|\d+(?:\.\d+)?|https?:\/\/)\b/i.test(value);
+}
+
 function hasTokenOverlap(left: string, right: string, threshold: number): boolean {
-  const leftTokens = new Set(left.split(/\s+/).filter(token => token.length >= 3));
-  const rightTokens = new Set(right.split(/\s+/).filter(token => token.length >= 3));
+  const leftTokens = new Set(tokenizeForOverlap(left));
+  const rightTokens = new Set(tokenizeForOverlap(right));
   if (rightTokens.size === 0) return false;
   let matched = 0;
   for (const token of rightTokens) {
     if (leftTokens.has(token)) matched++;
   }
   return matched / rightTokens.size >= threshold;
+}
+
+function tokenizeForOverlap(value: string): string[] {
+  return value
+    .split(/[^a-z0-9]+/i)
+    .map(token => token.trim())
+    .filter(token => token.length >= 3);
 }
 
 function normalize(value: string): string {
