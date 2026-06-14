@@ -104,3 +104,13 @@ test('buildFinalizationEvidence includes answer contract and bounded candidates'
   assert.match(evidence, /resource-watch\/resource-watch/);
 });
 
+test('buildFinalizationEvidence includes required answer details from the goal', () => {
+  const evidence = buildFinalizationEvidence({
+    goal: 'Look up the pronunciation and definition of the word "sustainability"',
+    projection: makeProjection(),
+  });
+
+  assert.match(evidence, /Required answer details:/);
+  assert.match(evidence, /pronunciation/);
+  assert.match(evidence, /definition/);
+});

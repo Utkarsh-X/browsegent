@@ -20,6 +20,12 @@ export function buildFinalizationEvidence(input: FinalizationEvidenceInput): str
 
   const contract = inferAnswerContract(input.goal);
   sections.push(`Answer contract: ${contract.kind}; ${contract.reason}; nonUrlText=${contract.requiresNonUrlText}; rankingEvidence=${contract.requiresRankingEvidence}`);
+  if (contract.requiredDetails.length > 0) {
+    sections.push([
+      'Required answer details:',
+      ...contract.requiredDetails.map(detail => `- ${describeRequiredDetail(detail)}`),
+    ].join('\n'));
+  }
 
   const readableItems = input.projection.readables
     .filter(item => item.visibility === 'visible')
@@ -63,4 +69,17 @@ function scoreReadable(item: ProjectionItem, goal: string): number {
 function compactText(value: string, maxLength: number): string {
   const compacted = value.replace(/\s+/g, ' ').trim();
   return compacted.length > maxLength ? `${compacted.slice(0, maxLength - 3)}...` : compacted;
+}
+
+function describeRequiredDetail(detail: string): string {
+  switch (detail) {
+    case 'pronunciation':
+      return 'pronunciation';
+    case 'definition':
+      return 'definition';
+    case 'concrete_basic_information':
+      return 'concrete basic information such as location/address, hours, phone/contact, rating, or other visible factual fields';
+    default:
+      return detail;
+  }
 }
