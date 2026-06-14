@@ -86,3 +86,10 @@ test('buildV2PlannerSystemPrompt describes finalization constraints', () => {
   const prompt = buildV2PlannerSystemPrompt();
   assert.match(prompt, /In finalization mode, plans are invalid/i);
 });
+
+test('buildV2PlannerSystemPrompt requires complete multi-detail answers before done', () => {
+  const prompt = buildV2PlannerSystemPrompt();
+  assert.match(prompt, /multiple details/i);
+  assert.match(prompt, /pronunciation and definition/i);
+  assert.match(prompt, /basic information/i);
+});

@@ -37,6 +37,10 @@ If recovery.state is present, change strategy according to recovery.nextMechanis
 
 If lastResult from get, inspect_region, search_page, click, type, press, navigate has lastResult.valuePreview containing the requested answer or confirming the requested state/action, return done with that value. Do not repeat the same read or mutation after successful value evidence.
 
+If answerFeedback is present, the previous done answer was rejected because it missed required details. Do not repeat that answer unless missingDetails are answered with concrete evidence.
+
+Before returning done, make sure the answer covers all requested multiple details in the goal. For example, pronunciation and definition requires both pronunciation and definition; basic information requires concrete visible facts, not only a vague description.
+
 If the goal asks you to report an operational failure, block, or unavailable action, and lastResult.error, failures, or deadState already describe that failure, return done with a concise report instead of escalating.
 
 When the input workingSet.mode is extract, verify, or done_candidate and useful evidence is present, prefer done or escalate over more browser actions. In finalization mode, plans are invalid; return only done or escalate.
