@@ -194,7 +194,79 @@ async function diagnoseGaps(page: Page, observer: ObservationService, refService
 
 // Stubs for future tasks
 async function auditDynamicUI(page: Page, observer: ObservationService, refService: RefService): Promise<DynamicUIResult[]> {
-  return [];
+  const results: DynamicUIResult[] = [];
+
+  // 1. Wikipedia Autocomplete
+  try {
+    await page.goto('https://www.wikipedia.org/');
+    await page.waitForTimeout(2000);
+
+    const rawBefore = await observer.capture({ page, sessionId: 'dyn', generationId: 1 });
+    const obsBefore = refService.assign(rawBefore);
+
+    const input = page.locator('input[name="search"]');
+    await input.fill('computer');
+    await page.waitForTimeout(1000); // let popover render
+
+    const rawDuring = await observer.capture({ page, sessionId: 'dyn', generationId: 2 });
+    const obsDuring = refService.assign(rawDuring);
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+
+    const rawAfter = await observer.capture({ page, sessionId: 'dyn', generationId: 3 });
+    const obsAfter = refService.assign(rawAfter);
+
+    const hasTransient = obsDuring.refs.some(r => r.text?.toLowerCase().includes('science') || r.name?.toLowerCase().includes('science'));
+
+    results.push({
+      interaction: 'Wikipedia Search Autocomplete Popup',
+      beforeCount: obsBefore.refs.length,
+      duringCount: obsDuring.refs.length,
+      afterCount: obsAfter.refs.length,
+      transientCaptured: hasTransient,
+      transientDetails: hasTransient ? 'Captured popover suggestions successfully.' : 'No suggestions found in refs.'
+    });
+  } catch (err: any) {
+    console.error('Error auditing Wikipedia dynamic UI:', err.message);
+  }
+
+  // 2. Cambridge Autocomplete
+  try {
+    await page.goto('https://dictionary.cambridge.org/');
+    await page.waitForTimeout(2000);
+
+    const rawBefore = await observer.capture({ page, sessionId: 'dyn', generationId: 4 });
+    const obsBefore = refService.assign(rawBefore);
+
+    const input = page.locator('input[name="q"]').first();
+    await input.fill('sustainability');
+    await page.waitForTimeout(1000);
+
+    const rawDuring = await observer.capture({ page, sessionId: 'dyn', generationId: 5 });
+    const obsDuring = refService.assign(rawDuring);
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+
+    const rawAfter = await observer.capture({ page, sessionId: 'dyn', generationId: 6 });
+    const obsAfter = refService.assign(rawAfter);
+
+    const hasTransient = obsDuring.refs.some(r => r.text?.toLowerCase().includes('sustainability') || r.name?.toLowerCase().includes('sustainability'));
+
+    results.push({
+      interaction: 'Cambridge Autocomplete Dropdown',
+      beforeCount: obsBefore.refs.length,
+      duringCount: obsDuring.refs.length,
+      afterCount: obsAfter.refs.length,
+      transientCaptured: hasTransient,
+      transientDetails: hasTransient ? 'Captured dictionary autocomplete items successfully.' : 'No items found in refs.'
+    });
+  } catch (err: any) {
+    console.error('Error auditing Cambridge dynamic UI:', err.message);
+  }
+
+  return results;
 }
 
 async function auditPlannerReduction(
