@@ -331,18 +331,74 @@ async function auditPlannerReduction(
 }
 
 async function run() {
-  console.log('Skeleton setup complete. Dynamic UI and Planner reduction audits are currently stubbed.');
+  console.log('Starting Observation Gap & Dynamic UI Audit...');
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext();
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+  });
   const page = await context.newPage();
 
   const observer = new ObservationService();
   const refService = new RefService();
+  const selector = new PlannerWorkingSetSelector();
 
+  // 1. Run Gap Diagnoses
   const gaps = await diagnoseGaps(page, observer, refService);
-  console.log('Diagnosed gaps:', gaps);
+
+  // 2. Run Dynamic UI Audit
+  const dynamicUI = await auditDynamicUI(page, observer, refService);
+
+  // 3. Run Reduction Rates
+  const reductions: ReductionMetrics[] = [];
+  const sites = [
+    { name: 'Wikipedia', url: 'https://www.wikipedia.org/' },
+    { name: 'Cambridge Dictionary', url: 'https://dictionary.cambridge.org/' },
+    { name: 'Amazon', url: 'https://www.amazon.com/' },
+    { name: 'GitHub', url: 'https://github.com/' }
+  ];
+  for (const s of sites) {
+    try {
+      const metric = await auditPlannerReduction(page, observer, refService, selector, s.name, s.url);
+      reductions.push(metric);
+    } catch (err: any) {
+      console.error(`Reduction check failed for ${s.name}:`, err.message);
+    }
+  }
 
   await browser.close();
+
+  // Build Markdown Report
+  let markdown = `# Observation Layer Findings & Gap Analysis Log\n\n`;
+  markdown += `Generated on: ${new Date().toISOString()}\n\n`;
+
+  markdown += `## 1. Observation Gap Analysis\n\n`;
+  markdown += `| Site | State | Expected Control | Locator Check | Observation Check | Root Cause Analysis |\n`;
+  markdown += `| :--- | :--- | :--- | :---: | :---: | :--- |\n`;
+  for (const g of gaps) {
+    markdown += `| ${g.site} | ${g.stateLabel} | ${g.expectedControl} | \`${g.locatorCheck}\` | \`${g.observationCheck}\` | ${g.reason} |\n`;
+  }
+  markdown += `\n`;
+
+  markdown += `## 2. Dynamic UI Audit\n\n`;
+  markdown += `| Interaction | Refs Before | Refs During | Refs After | Transient Captured | Details |\n`;
+  markdown += `| :--- | :---: | :---: | :---: | :---: | :--- |\n`;
+  for (const d of dynamicUI) {
+    markdown += `| ${d.interaction} | ${d.beforeCount} | ${d.duringCount} | ${d.afterCount} | \`${d.transientCaptured}\` | ${d.transientDetails} |\n`;
+  }
+  markdown += `\n`;
+
+  markdown += `## 3. Planner Surface Reduction Audit\n\n`;
+  markdown += `| Site | State | Observed DOM | allocated Refs | Actionable Refs | Working Set Refs | Reduction Rate |\n`;
+  markdown += `| :--- | :--- | :---: | :---: | :---: | :---: | :---: |\n`;
+  for (const r of reductions) {
+    const rate = r.observed > 0 ? (1 - (r.workingSet / r.observed)) * 100 : 0;
+    markdown += `| ${r.site} | ${r.state} | ${r.observed} | ${r.refs} | ${r.actionable} | ${r.workingSet} | ${rate.toFixed(1)}% |\n`;
+  }
+  markdown += `\n`;
+
+  const dest = resolve(__dirname, '../docs/superpowers/specs/OBSERVATION_FINDINGS_LOG.md');
+  writeFileSync(dest, markdown, 'utf8');
+  console.log(`Findings log complete! Report written to ${dest}`);
 }
 
 // Export functions and interfaces
