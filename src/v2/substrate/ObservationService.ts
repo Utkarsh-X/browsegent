@@ -347,6 +347,23 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
     return getComputedStyle(element).cursor === 'pointer';
   }
 
+  function isAriaHidden(element) {
+    let current = element;
+    while (current) {
+      if (current.getAttribute && current.getAttribute('aria-hidden') === 'true') {
+        return true;
+      }
+      if (current.parentNode) {
+        current = current.parentNode;
+      } else if (current.host) {
+        current = current.host;
+      } else {
+        break;
+      }
+    }
+    return false;
+  }
+
   function computeVisibility(element) {
     const style = getComputedStyle(element);
     const rect = element.getBoundingClientRect();
@@ -356,7 +373,8 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
       style.visibility === 'hidden' ||
       style.opacity === '0' ||
       rect.width <= 0 ||
-      rect.height <= 0
+      rect.height <= 0 ||
+      isAriaHidden(element)
     ) {
       return 'hidden';
     }
