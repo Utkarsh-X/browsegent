@@ -401,7 +401,6 @@ async function traceLineage(
 }
 
 
-// Stub for run (future task)
 async function run() {
   console.log('Starting Lineage and Dynamic Surface Audit...');
   const browser = await chromium.launch({ headless: true });
@@ -447,6 +446,4 @@ async function run() {
   console.log(`Validation findings log complete! Report written to ${dest}`);
 }
 
-if (require.main === module) {
-  run().catch(console.error);
-}
+run().catch(console.error);
