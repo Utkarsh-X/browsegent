@@ -18,7 +18,8 @@
     "check:v2:boundaries": "tsx scripts/check_v2_boundaries.ts",
     "check:v2:no-cognition": "tsx scripts/check_v2_no_cognition_leakage.ts",
     "check:v2": "npm run check:v2:boundaries && npm run check:v2:no-cognition",
-    "check:v2:release": "tsx scripts/check_v2_release_gate.ts"
+    "check:v2:release": "tsx scripts/check_v2_release_gate.ts",
+    "test:invariants": "tsx --test tests/integration/v2/architecturalInvariants.test.ts"
   },
   "keywords": [],
   "author": "",
