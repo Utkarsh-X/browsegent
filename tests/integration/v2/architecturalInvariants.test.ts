@@ -256,6 +256,8 @@ test('Layer 4 Invariant: Planner Working Set Affordance Correctness', async () =
         nthRoleName: r.nthRoleName,
         regionId: r.regionId,
         kind: (r.tagName === 'button' ? 'button' : r.tagName === 'input' ? 'input' : 'generic') as any,
+        continuityConfidence: r.continuityConfidence ?? 1.0,
+        score: 1.0,
       })),
       readables: [],
       navigation: [],

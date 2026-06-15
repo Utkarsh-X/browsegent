@@ -277,13 +277,56 @@ async function auditPlannerReduction(
   siteName: string,
   url: string
 ): Promise<ReductionMetrics> {
+  await page.goto(url);
+  await page.waitForTimeout(2000);
+
+  const rawObs = await observer.capture({ page, sessionId: 'reduction', generationId: 1 });
+  const obs = refService.assign(rawObs);
+  
+  const projection = {
+    projectionId: 'proj_reduction',
+    observationId: obs.observationId,
+    generationId: obs.generationId,
+    url: obs.url,
+    title: obs.title,
+    interactions: ((obs as any).interactions ?? obs.refs).map((r: any) => ({
+      refId: r.refId,
+      tagName: r.tagName,
+      role: r.role,
+      name: r.name,
+      text: r.text,
+      capabilities: r.capabilities,
+      visibility: r.visibility,
+      actionability: r.actionability,
+      state: r.state,
+      nthRoleName: r.nthRoleName,
+      regionId: r.regionId,
+      kind: 'generic' as any,
+      continuityConfidence: r.continuityConfidence ?? 1.0,
+      score: 1.0,
+    })),
+    readables: [],
+    navigation: [],
+    regions: [],
+    warnings: [],
+    stats: { interactionCount: obs.refs ? obs.refs.length : 0, readableCount: 0, navigationCount: 0, regionCount: 0 },
+  };
+
+  const selection = selector.select({
+    goal: 'Audit reduction rates',
+    projection,
+  });
+
+  const surface = selection.workingSet.actionSurface;
+  const actionableCount = surface.clickableRefs.length + surface.typeableRefs.length + surface.selectableRefs.length;
+
   return {
     site: siteName,
     state: 'State A (Homepage)',
-    observed: 0,
-    refs: 0,
-    actionable: 0,
-    workingSet: 0
+    observed: obs.refs ? obs.refs.length : 0,
+    refs: obs.refs ? obs.refs.length : 0,
+    actionable: actionableCount,
+    workingSet: selection.workingSet.primaryRefs.length + selection.workingSet.secondaryRefs.length
   };
 }
 
