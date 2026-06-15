@@ -350,7 +350,7 @@ async function traceLineage(
     const trace = await traceControl(
       'https://www.wikipedia.org/',
       'Wikipedia Search Input',
-      n => n.tagName?.toLowerCase() === 'input' && n.name === 'search',
+      n => n.tagName?.toLowerCase() === 'input' && (n.attributes?.name === 'search' || n.name?.toLowerCase().includes('search')),
       r => r.tagName === 'input' && (r.name?.toLowerCase().includes('search') || r.text?.toLowerCase().includes('search'))
     );
     traces.push(trace);
@@ -363,7 +363,7 @@ async function traceLineage(
     const trace = await traceControl(
       'https://dictionary.cambridge.org/',
       'Cambridge Dictionary Search Input',
-      n => n.tagName?.toLowerCase() === 'input' && n.name === 'q',
+      n => n.tagName?.toLowerCase() === 'input' && (n.attributes?.name === 'q' || n.name?.toLowerCase().includes('search')),
       r => r.tagName === 'input' && (r.name?.toLowerCase().includes('search') || r.text?.toLowerCase().includes('search'))
     );
     traces.push(trace);
@@ -389,8 +389,8 @@ async function traceLineage(
     const trace = await traceControl(
       'https://github.com/Utkarsh-X/browsegent',
       'GitHub Issues Tab Link',
-      n => n.tagName?.toLowerCase() === 'a' && n.attributes?.['data-tab-item'] === 'issues-tab',
-      r => r.role === 'link' && r.name === 'Issues'
+      n => n.tagName?.toLowerCase() === 'a' && (n.attributes?.href?.includes('/issues') || n.name?.startsWith('Issues')),
+      r => r.role === 'link' && r.name?.startsWith('Issues')
     );
     traces.push(trace);
   } catch (err: any) {

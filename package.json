@@ -21,7 +21,8 @@
     "check:v2:release": "tsx scripts/check_v2_release_gate.ts",
     "test:invariants": "tsx --test tests/integration/v2/architecturalInvariants.test.ts",
     "audit:observation": "tsx scripts/run_observation_audit.ts",
-    "audit:observation:gap": "tsx scripts/run_observation_gap_audit.ts"
+    "audit:observation:gap": "tsx scripts/run_observation_gap_audit.ts",
+    "audit:observation:lineage": "tsx scripts/run_lineage_and_surface_audit.ts"
   },
   "keywords": [],
   "author": "",
