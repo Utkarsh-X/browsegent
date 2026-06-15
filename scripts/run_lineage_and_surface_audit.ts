@@ -233,7 +233,6 @@ async function auditDynamicSurfaces(
   return results;
 }
 
-// Stub for traceLineage (future task)
 async function traceLineage(
   page: Page,
   observer: ObservationService,
@@ -275,7 +274,6 @@ async function traceLineage(
       };
     });
     rawObs.nodes = nodes;
-
     const obs = refService.assign(rawObs);
 
     const projection = {
@@ -329,10 +327,10 @@ async function traceLineage(
       
       actStatus = matchedRef.actionability;
 
-      const wsItem = selection.workingSet.primaryRefs.find(r => r.refId === matchedRef.refId) ??
+      const wsItem: any = selection.workingSet.primaryRefs.find(r => r.refId === matchedRef.refId) ??
                    selection.workingSet.secondaryRefs.find(r => r.refId === matchedRef.refId);
       isWorkingSet = !!wsItem;
-      wsReason = wsItem ? (wsItem as any).includeReason ?? wsItem.reasons.join(', ') : 'Dropped during Working Set compression';
+      wsReason = wsItem ? (wsItem.includeReason ?? wsItem.reasons?.join(', ')) : 'Dropped during Working Set compression';
     }
 
     return {
@@ -401,6 +399,7 @@ async function traceLineage(
 
   return traces;
 }
+
 
 // Stub for run (future task)
 async function run() {
