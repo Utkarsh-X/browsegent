@@ -214,3 +214,81 @@ test('Layer 2 Invariant: Reference Survival, Layout Shift, Ambiguity, and Negati
     await browser.close();
   }
 });
+
+test('Layer 4 Invariant: Planner Working Set Affordance Correctness', async () => {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  const observer = new ObservationService();
+  const refService = new RefService();
+  const selector = new PlannerWorkingSetSelector();
+
+  try {
+    await page.goto(fixtureUrl('static-controls.html'));
+    const rawObs = await observer.capture({ page, sessionId: 's1', generationId: 1 });
+    const obs = refService.assign(rawObs);
+
+    const submitBtn = obs.refs.find(ref => ref.name === 'Submit form');
+    const searchInput = obs.refs.find(ref => ref.name === 'Search docs');
+    const disabledBtn = obs.refs.find(ref => ref.name === 'Disabled action');
+    const hiddenBtn = obs.refs.find(ref => ref.name === 'Hidden action');
+
+    assert.ok(submitBtn);
+    assert.ok(searchInput);
+    assert.ok(disabledBtn);
+
+    // Build operational projection input
+    const projection = {
+      projectionId: 'proj_test',
+      observationId: obs.observationId,
+      generationId: obs.generationId,
+      url: obs.url,
+      title: obs.title,
+      interactions: obs.refs.map(r => ({
+        refId: r.refId,
+        tagName: r.tagName,
+        role: r.role,
+        name: r.name,
+        text: r.text,
+        capabilities: r.capabilities,
+        visibility: r.visibility,
+        actionability: r.actionability,
+        state: r.state,
+        nthRoleName: r.nthRoleName,
+        regionId: r.regionId,
+        kind: (r.tagName === 'button' ? 'button' : r.tagName === 'input' ? 'input' : 'generic') as any,
+      })),
+      readables: [],
+      navigation: [],
+      regions: [],
+      warnings: [],
+      stats: { interactionCount: obs.refs.length, readableCount: 0, navigationCount: 0, regionCount: 0 },
+    };
+
+    const selection = selector.select({
+      goal: 'Submit the search form and read documentation',
+      projection,
+    });
+
+    const surface = selection.workingSet.actionSurface;
+
+    // Assert affordance correctness:
+    // 1. Submit Button must be clickable, not typeable
+    assert.ok(surface.clickableRefs.includes(submitBtn.refId), 'Submit button should be clickable');
+    assert.ok(!surface.typeableRefs.includes(submitBtn.refId), 'Submit button should not be typeable');
+
+    // 2. Search Input must be typeable, not clickable
+    assert.ok(surface.typeableRefs.includes(searchInput.refId), 'Search input should be typeable');
+    assert.ok(!surface.clickableRefs.includes(searchInput.refId), 'Search input should not be clickable');
+
+    // 3. Disabled Button must not be clickable or typeable in the active action surface
+    assert.ok(!surface.clickableRefs.includes(disabledBtn.refId), 'Disabled button should be excluded from clickable refs');
+    
+    // 4. Hidden Button must not be clickable or typeable
+    if (hiddenBtn) {
+      assert.ok(!surface.clickableRefs.includes(hiddenBtn.refId), 'Hidden button should be excluded from clickable refs');
+    }
+
+  } finally {
+    await browser.close();
+  }
+});
