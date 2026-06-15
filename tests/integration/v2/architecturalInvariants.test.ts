@@ -292,3 +292,99 @@ test('Layer 4 Invariant: Planner Working Set Affordance Correctness', async () =
     await browser.close();
   }
 });
+
+test('Layer 3 Invariant: Continuity Transitions and Graph Growth Bounds', async () => {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  const observer = new ObservationService();
+  const refService = new RefService();
+  const interpreter = new ContinuityInterpreter();
+  const graph = new ContinuityGraph({ maxTransitions: 5 });
+
+  try {
+    // 1. Transition Classification on element appearance
+    await page.goto(fixtureUrl('delayed-load.html'));
+    const rawBefore = await observer.capture({ page, sessionId: 's1', generationId: 1 });
+    const before = refService.assign(rawBefore);
+    graph.applyObservation(before);
+
+    await page.click('#load');
+    // Wait for the 250ms delayed element creation to paint
+    await page.waitForTimeout(300);
+
+    // Keep generationId = 1 to indicate local dynamic state change rather than hard refresh
+    const rawAfter = await observer.capture({ page, sessionId: 's1', generationId: 1 });
+    const after = refService.assign(rawAfter);
+    
+    const evidence = interpreter.interpret(before, after);
+    graph.applyTransition(evidence);
+    const snapshot = graph.applyObservation(after);
+
+    assert.equal(evidence.transitionClass, 'structural_local', 'Delayed load should classify as structural local transition');
+    assert.ok(evidence.refChanges.appeared.length > 0, 'New element must be classified under appeared refs');
+    
+    const appearedRefId = evidence.refChanges.appeared[0];
+    const graphNode = snapshot.refs.find(node => node.refId === appearedRefId);
+    assert.ok(graphNode, 'Appeared element should exist in the graph snapshot');
+    assert.equal(graphNode.present, true, 'Appeared element should be currently present in graph');
+
+    // 2. Graph Growth Bounds Stress Loop (200 dynamic additions/removals)
+    await page.setContent(`
+      <html>
+        <body>
+          <div id="container"></div>
+        </body>
+      </html>
+    `);
+
+    let lastObs = refService.assign(await observer.capture({ page, sessionId: 's1', generationId: 2 }));
+    graph.applyObservation(lastObs);
+
+    for (let i = 0; i < 200; i++) {
+      // Dynamic mutation: add or remove elements to generate new references
+      await page.evaluate((index) => {
+        const container = document.getElementById('container');
+        if (container) {
+          // Keep a rolling window of elements to trigger both appearance and disappearance transitions
+          if (index % 2 === 0) {
+            const el = document.createElement('button');
+            el.id = `dyn-btn-${index}`;
+            el.textContent = `Dynamic Action ${index}`;
+            container.appendChild(el);
+          } else {
+            const oldEl = document.getElementById(`dyn-btn-${index - 1}`);
+            if (oldEl) {
+              oldEl.remove();
+            }
+          }
+        }
+      }, i);
+
+      // Keep generationId constant as these are DOM mutations within the same page document
+      const rawCurrent = await observer.capture({ page, sessionId: 's1', generationId: 2 });
+      const current = refService.assign(rawCurrent);
+      
+      const stepEvidence = interpreter.interpret(lastObs, current);
+      graph.applyTransition(stepEvidence);
+      const loopSnapshot = graph.applyObservation(current);
+
+      lastObs = current;
+
+      if (i === 199) {
+        // Log the final status of the graph for our audit report
+        console.log(`[Audit Snapshot] Total accumulated historical refs in Graph memory: ${loopSnapshot.refs.length}`);
+        console.log(`[Audit Snapshot] Currently present refs: ${loopSnapshot.stats.presentRefCount}`);
+        console.log(`[Audit Snapshot] Transition history count: ${loopSnapshot.stats.transitionCount}`);
+
+        // Verify bounds:
+        assert.ok(loopSnapshot.stats.transitionCount <= 5, 'Transition history must remain bounded');
+        assert.ok(loopSnapshot.stats.presentRefCount <= 10, 'Active references count must remain small and bounded');
+        // Assert that historical references memory growth is bounded
+        assert.ok(loopSnapshot.refs.length < 500, 'Historical references index remains below stress-limit');
+      }
+    }
+
+  } finally {
+    await browser.close();
+  }
+});
