@@ -20,9 +20,11 @@
     "check:v2": "npm run check:v2:boundaries && npm run check:v2:no-cognition",
     "check:v2:release": "tsx scripts/check_v2_release_gate.ts",
     "test:invariants": "tsx --test tests/integration/v2/architecturalInvariants.test.ts",
+    "test:recovery": "tsx --test tests/integration/v2/recoveryValidation.test.ts",
     "audit:observation": "tsx scripts/run_observation_audit.ts",
     "audit:observation:gap": "tsx scripts/run_observation_gap_audit.ts",
-    "audit:observation:lineage": "tsx scripts/run_lineage_and_surface_audit.ts"
+    "audit:observation:lineage": "tsx scripts/run_lineage_and_surface_audit.ts",
+    "audit:stability": "tsx scripts/run_long_session_stability_audit.ts"
   },
   "keywords": [],
   "author": "",
