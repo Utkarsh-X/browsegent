@@ -1,4 +1,4 @@
-import type { Locator, Page } from 'playwright';
+import type { ElementHandle, JSHandle, Page } from 'playwright';
 
 import { V2OperationalError } from '../runtime/errors';
 import type { V2Ref } from '../runtime/types';
@@ -7,6 +7,10 @@ import { RefResolver } from './RefResolver';
 export interface InputExecutionResult<TValue = unknown> {
   kind: 'click' | 'type' | 'select';
   value?: TValue;
+  interactionEvidence?: {
+    clickEventObserved: boolean;
+    targetConnectedAfterAction: boolean;
+  };
 }
 
 export class InputService {
@@ -17,19 +21,44 @@ export class InputService {
     this.assertActionCompatible(ref, 'click');
     const { locator } = await this.resolver.resolve(ref, page);
     await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
+    const target = await locator.elementHandle();
+    if (!target) {
+      throw new V2OperationalError('stale_ref', 'Target no longer resolves to an attached element.', { retryable: false });
+    }
 
-    const clickPosition = await this.findUnblockedClickPosition(locator);
+    const clickPosition = await this.findUnblockedClickPosition(target);
     if (!clickPosition) {
+      await target.dispose();
       throw new V2OperationalError('target_blocked', 'Target center point is covered by another element.', { retryable: false });
     }
 
+    let clickOutcome: JSHandle<{ clickEventObserved: boolean }> | undefined;
     try {
-      await locator.click({ timeout: 1_500, position: clickPosition });
+      clickOutcome = await target.evaluateHandle((element) => {
+        const outcome = { clickEventObserved: false };
+        element.addEventListener('click', () => {
+          outcome.clickEventObserved = true;
+        }, { capture: true, once: true });
+        return outcome;
+      });
+      await target.click({ timeout: 1_500, position: clickPosition });
+      const [clickEventObserved, targetConnectedAfterAction] = await Promise.all([
+        clickOutcome.evaluate(outcome => outcome.clickEventObserved),
+        target.evaluate(element => element.isConnected),
+      ]);
+      return {
+        kind: 'click',
+        interactionEvidence: {
+          clickEventObserved,
+          targetConnectedAfterAction,
+        },
+      };
     } catch (error) {
       throw mapPlaywrightError(error, 'click');
+    } finally {
+      await clickOutcome?.dispose();
+      await target.dispose();
     }
-
-    return { kind: 'click' };
   }
 
   async type(ref: V2Ref, text: string, page: Page): Promise<InputExecutionResult<{ inputValue: string }>> {
@@ -117,9 +146,10 @@ export class InputService {
     }
   }
 
-  private async findUnblockedClickPosition(locator: Locator): Promise<{ x: number; y: number } | undefined> {
-    const position = await locator.evaluate((element) => {
-      const rect = element.getBoundingClientRect();
+  private async findUnblockedClickPosition(target: ElementHandle): Promise<{ x: number; y: number } | undefined> {
+    const position = await target.evaluate((element) => {
+      const targetElement = element as Element;
+      const rect = targetElement.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) {
         return undefined;
       }
@@ -140,7 +170,7 @@ export class InputService {
         const viewportX = Math.max(0, Math.min(window.innerWidth - 1, rect.left + candidate.x));
         const viewportY = Math.max(0, Math.min(window.innerHeight - 1, rect.top + candidate.y));
         const topElement = document.elementFromPoint(viewportX, viewportY);
-        if (topElement && (topElement === element || element.contains(topElement))) {
+        if (topElement && (topElement === targetElement || targetElement.contains(topElement))) {
           return {
             x: Math.max(0, Math.min(rect.width, viewportX - rect.left)),
             y: Math.max(0, Math.min(rect.height, viewportY - rect.top)),

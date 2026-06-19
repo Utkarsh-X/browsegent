@@ -3,10 +3,10 @@ import { isSupportedNavigationUrl } from '../runtime/navigationPolicy';
 import { RefService } from '../runtime/RefService';
 import { StabilizationService } from '../runtime/StabilizationService';
 import { TransitionService } from '../runtime/TransitionService';
-import type { BrowserObservation, V2Ref, V2ToolError, V2ToolResult, V2ToolTargetSummary } from '../runtime/types';
+import type { BrowserObservation, TransitionEvidence, V2Ref, V2ToolError, V2ToolResult, V2ToolTargetSummary } from '../runtime/types';
 import type { PlannerPressKey } from '../planner/types';
 import { BrowserSession } from '../substrate/BrowserSession';
-import { InputService } from '../substrate/InputService';
+import { InputService, type InputExecutionResult } from '../substrate/InputService';
 import { KeyboardService } from '../substrate/KeyboardService';
 import { ObservationService } from '../substrate/ObservationService';
 import { TraceStore } from '../trace/TraceStore';
@@ -315,7 +315,7 @@ export class BrowseGentV2Harness {
   private async executeMutation<TValue>(
     kind: 'click' | 'type' | 'select',
     refId: string,
-    run: (ref: NonNullable<ReturnType<RefService['resolve']>['ref']>) => Promise<{ value?: TValue }>,
+    run: (ref: NonNullable<ReturnType<RefService['resolve']>['ref']>) => Promise<InputExecutionResult<TValue>>,
   ): Promise<V2ToolResult<TValue>> {
     const before = this.assertOpened();
     const stepId = this.traceStore.recordActionStart({
@@ -358,9 +358,7 @@ export class BrowseGentV2Harness {
 
     try {
       const execution = await run(ref);
-      await this.stabilizationService.waitForSettledState(this.session.currentPage());
-      const after = await this.captureCurrentObservation();
-      const evidence = this.transitionService.compare(before, after);
+      let result = await this.buildSuccessfulMutationResult(kind, refId, ref, before, stepId, execution);
       if (resolution.state !== 'live' && decision.allow) {
         this.recordRefResolutionAudit({
           observation: before,
@@ -373,22 +371,34 @@ export class BrowseGentV2Harness {
           }
         });
       }
-      const result: V2ToolResult<TValue> = {
-        success: true,
-        kind,
-        targetRef: refId,
-        target: summarizeToolTarget(ref),
-        value: execution.value,
-        evidence,
-        traceStepId: stepId,
-      };
+      if (shouldRetrySilentDetachedClick(kind, refId, result.evidence, execution)) {
+        result = await this.retryAfterDetachedMutation({
+          kind,
+          refId,
+          before,
+          stepId,
+          run,
+          reason: 'silent_detached_target_weakened',
+        });
+      }
 
       this.traceStore.recordActionEnd(stepId, result, {
-        afterObservationId: after.observationId,
+        afterObservationId: result.evidence?.afterObservationId,
       });
       return result;
     } catch (error) {
-      const result = this.failureResult<TValue>(kind, refId, stepId, mapExecutionError(error));
+      const mappedError = mapExecutionError(error);
+      const detachedRetryResult = mappedError.code === 'element_detached'
+        ? await this.retryAfterDetachedMutation({
+          kind,
+          refId,
+          before,
+          stepId,
+          run,
+          reason: 'element_detached',
+        })
+        : undefined;
+      const result = detachedRetryResult ?? this.failureResult<TValue>(kind, refId, stepId, mappedError);
       if (result.error && refId) {
         const auditId = this.recordRefResolutionAudit({
           observation: before,
@@ -420,6 +430,127 @@ export class BrowseGentV2Harness {
         this.traceStore.recordActionEnd(stepId, result);
       }
       return result;
+    }
+  }
+
+  private async buildSuccessfulMutationResult<TValue>(
+    kind: 'click' | 'type' | 'select',
+    refId: string,
+    ref: NonNullable<ReturnType<RefService['resolve']>['ref']>,
+    before: BrowserObservation,
+    stepId: string,
+    execution: InputExecutionResult<TValue>,
+  ): Promise<V2ToolResult<TValue>> {
+    await this.stabilizationService.waitForSettledState(this.session.currentPage());
+    const after = await this.captureCurrentObservation();
+    const evidence = this.transitionService.compare(before, after);
+    return {
+      success: true,
+      kind,
+      targetRef: refId,
+      target: summarizeToolTarget(ref),
+      value: execution.value,
+      evidence,
+      traceStepId: stepId,
+    };
+  }
+
+  private async retryAfterDetachedMutation<TValue>(
+    input: {
+      kind: 'click' | 'type' | 'select';
+      refId: string;
+      before: BrowserObservation;
+      stepId: string;
+      run: (ref: NonNullable<ReturnType<RefService['resolve']>['ref']>) => Promise<InputExecutionResult<TValue>>;
+      reason: string;
+    },
+  ): Promise<V2ToolResult<TValue>> {
+    const refreshed = this.assertOpened();
+    const resolution = this.refService.resolve(input.refId, refreshed);
+    const decision = shouldAttemptWeakenedRefSelfHeal(input.kind, resolution.ref);
+
+    const ref = resolution.ref;
+    if (!ref || (resolution.state !== 'live' && !decision.allow)) {
+      const auditId = this.recordRefResolutionAudit({
+        observation: refreshed,
+        targetRef: input.refId,
+        actionKind: input.kind,
+        failureCode: resolution.state === 'weakened' ? 'low_confidence_ref' : 'stale_ref',
+        diagnostics: {
+          detachedRetry: true,
+          detachedRetryReason: input.reason,
+          resolutionState: resolution.state,
+          resolutionReason: resolution.reason,
+          confidence: resolution.confidence,
+        },
+        selfHeal: {
+          attempted: true,
+          result: 'failed',
+          reason: decision.reason,
+        },
+      });
+      return this.failureResult<TValue>(input.kind, input.refId, input.stepId, {
+        code: resolution.state === 'weakened' ? 'low_confidence_ref' : 'stale_ref',
+        message: 'Target detached and did not resolve to a safe live ref after re-observation.',
+        retryable: false,
+        diagnostics: {
+          refResolutionAuditId: auditId,
+          detachedRetry: true,
+          detachedRetryReason: input.reason,
+          resolutionState: resolution.state,
+        },
+      });
+    }
+
+    try {
+      const execution = await input.run(ref);
+      const result = await this.buildSuccessfulMutationResult(input.kind, input.refId, ref, input.before, input.stepId, execution);
+      this.recordRefResolutionAudit({
+        observation: refreshed,
+        targetRef: input.refId,
+        actionKind: input.kind,
+        diagnostics: {
+          detachedRetry: true,
+          detachedRetryReason: input.reason,
+          resolutionState: resolution.state,
+          confidence: resolution.confidence,
+        },
+        selfHeal: {
+          attempted: true,
+          result: 'succeeded',
+          reason: decision.reason,
+        },
+      });
+      return result;
+    } catch (retryError) {
+      const mapped = mapExecutionError(retryError);
+      const auditId = this.recordRefResolutionAudit({
+        observation: refreshed,
+        targetRef: input.refId,
+        actionKind: input.kind,
+        failureCode: mapped.code,
+        diagnostics: {
+          ...(mapped.diagnostics ?? {}),
+          detachedRetry: true,
+          detachedRetryReason: input.reason,
+        },
+        selfHeal: {
+          attempted: true,
+          result: 'failed',
+          reason: decision.reason,
+        },
+      });
+      return this.failureResult<TValue>(input.kind, input.refId, input.stepId, {
+        code: mapped.code,
+        message: mapped.message,
+        retryable: false,
+        diagnostics: {
+          ...(mapped.diagnostics ?? {}),
+          refResolutionAuditId: auditId,
+          detachedRetry: true,
+          detachedRetryReason: input.reason,
+        },
+      });
     }
   }
 
@@ -573,6 +704,29 @@ function joinUniqueText(values: Array<string | undefined>): string {
   return parts.filter((part, index) =>
     parts.findIndex(existing => existing.toLowerCase() === part.toLowerCase()) === index
   ).join(' ');
+}
+
+function shouldRetrySilentDetachedClick(
+  kind: 'click' | 'type' | 'select',
+  refId: string,
+  evidence: TransitionEvidence | undefined,
+  execution: InputExecutionResult,
+): boolean {
+  if (
+    kind !== 'click'
+    || !evidence
+    || execution.interactionEvidence?.clickEventObserved !== false
+    || execution.interactionEvidence.targetConnectedAfterAction !== false
+  ) {
+    return false;
+  }
+  return evidence.transitionClass === 'structural_local'
+    && evidence.generationChanged === false
+    && evidence.urlChanged === false
+    && evidence.refChanges.appeared.length === 0
+    && evidence.refChanges.disappeared.length === 0
+    && evidence.refChanges.weakened.length === 1
+    && evidence.refChanges.weakened[0] === refId;
 }
 
 function summarizeToolTarget(ref: V2Ref): V2ToolTargetSummary {

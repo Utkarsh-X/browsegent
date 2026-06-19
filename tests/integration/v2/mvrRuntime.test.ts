@@ -297,6 +297,57 @@ test('BrowseGentV2Harness rejects a stale ref without selector guessing', async 
   }
 });
 
+test('BrowseGentV2Harness reobserves and retries once when a live ref detaches during click', async () => {
+  const traceDir = await freshTraceDir('detaching_click');
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_detaching_click',
+    traceDir,
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('detaching-click.html'));
+    const target = observation.refs.find(ref => ref.name === 'Detaching target');
+    assert.ok(target);
+
+    const result = await harness.click(target.refId);
+    const searchResult = await harness.searchPage('Clicked replacement');
+    const manifest = await harness.flushTrace();
+
+    assert.equal(result.success, true);
+    assert.equal(result.kind, 'click');
+    assert.equal(result.targetRef, target.refId);
+    assert.equal(searchResult.value?.matches, 1);
+    assert.ok(manifest.artifacts.observations.length >= 2);
+    assert.ok(manifest.artifacts.refResolutionAudits?.some(artifact => artifact.kind === 'ref_resolution_audit'));
+  } finally {
+    await harness.close();
+  }
+});
+
+test('BrowseGentV2Harness does not retry a click that fired before a same-identity rerender', async () => {
+  const traceDir = await freshTraceDir('rerender_after_click');
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_rerender_after_click',
+    traceDir,
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('rerender-after-click.html'));
+    const target = observation.refs.find(ref => ref.name === 'Rerender target');
+    assert.ok(target);
+
+    const result = await harness.click(target.refId);
+    const doubleClickEvidence = await harness.searchPage('Double click detected');
+
+    assert.equal(result.success, true);
+    assert.equal(doubleClickEvidence.value?.matches, 0);
+  } finally {
+    await harness.close();
+  }
+});
+
 test('BrowseGentV2Harness trace replay links before and after observations for a mutation', async () => {
   const traceDir = await freshTraceDir('trace');
   const harness = new BrowseGentV2Harness({

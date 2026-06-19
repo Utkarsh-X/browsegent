@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Rerender After Click Fixture</title>
+</head>
+<body>
+  <div id="mount"></div>
+  <script>
+    let clickCount = 0;
+
+    function renderButton() {
+      const button = document.createElement('button');
+      button.id = 'rerender-target';
+      button.textContent = 'Rerender target';
+      button.addEventListener('click', () => {
+        clickCount += 1;
+        if (clickCount > 1) {
+          const warning = document.createElement('p');
+          warning.textContent = 'Double click detected';
+          document.body.appendChild(warning);
+        }
+        renderButton();
+      });
+      document.querySelector('#mount').replaceChildren(button);
+    }
+
+    renderButton();
+  </script>
+</body>
+</html>

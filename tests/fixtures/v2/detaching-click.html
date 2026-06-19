@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Detaching Click Fixture</title>
+</head>
+<body>
+  <button
+    id="detaching-target"
+    onmousedown="
+      if (!document.body.dataset.replaced) {
+        document.body.dataset.replaced = 'true';
+        const replacement = document.createElement('button');
+        replacement.id = 'detaching-target';
+        replacement.textContent = 'Detaching target';
+        replacement.onclick = () => {
+          document.body.dataset.clicked = 'true';
+          replacement.textContent = 'Clicked replacement';
+        };
+        this.replaceWith(replacement);
+      }
+    "
+  >Detaching target</button>
+</body>
+</html>

@@ -20,14 +20,30 @@ function makeRef(): V2Ref {
   };
 }
 
-test('InputService maps Playwright timeout with not visible details to target_hidden', async () => {
-  const locator = {
-    scrollIntoViewIfNeeded: async () => undefined,
-    evaluate: async (_fn: unknown, input?: unknown) => input ? { score: 100, identityKey: 'hidden-button' } : false,
+function makeFailingClickLocator(message: string, identityKey: string) {
+  const handle = {
+    evaluate: async (_fn: unknown, input?: unknown) => input ? { score: 100, identityKey } : false,
+    evaluateHandle: async () => ({
+      evaluate: async () => false,
+      dispose: async () => undefined,
+    }),
     click: async () => {
-      throw new Error('Timeout 1500ms exceeded. element is not visible');
+      throw new Error(message);
     },
+    dispose: async () => undefined,
   };
+  return {
+    scrollIntoViewIfNeeded: async () => undefined,
+    evaluate: handle.evaluate,
+    elementHandle: async () => handle,
+  };
+}
+
+test('InputService maps Playwright timeout with not visible details to target_hidden', async () => {
+  const locator = makeFailingClickLocator(
+    'Timeout 1500ms exceeded. element is not visible',
+    'hidden-button',
+  );
   const page = {
     locator: () => ({
       count: async () => 1,
@@ -71,13 +87,10 @@ test('InputService maps non-editable fill failure to target_not_editable', async
 });
 
 test('InputService keeps pointer interception classified as target_blocked', async () => {
-  const locator = {
-    scrollIntoViewIfNeeded: async () => undefined,
-    evaluate: async (_fn: unknown, input?: unknown) => input ? { score: 100, identityKey: 'blocked-button' } : false,
-    click: async () => {
-      throw new Error('subtree intercepts pointer events and target will not receive pointer events');
-    },
-  };
+  const locator = makeFailingClickLocator(
+    'subtree intercepts pointer events and target will not receive pointer events',
+    'blocked-button',
+  );
   const page = {
     locator: () => ({
       count: async () => 1,
