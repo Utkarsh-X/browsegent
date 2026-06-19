@@ -250,6 +250,31 @@ test('BrowseGentV2Harness rejects an occluded click as target_blocked', async ()
   }
 });
 
+test('BrowseGentV2Harness clicks a verified alternate point when only the target center is blocked', async () => {
+  const traceDir = await freshTraceDir('partially_blocked');
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_partially_blocked',
+    traceDir,
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('partially-blocked-button.html'));
+    const target = observation.refs.find(ref => ref.name === 'Partially blocked target');
+    assert.ok(target);
+
+    const result = await harness.click(target.refId);
+    const searchResult = await harness.searchPage('Clicked safely');
+
+    assert.equal(result.success, true);
+    assert.equal(result.kind, 'click');
+    assert.equal(result.targetRef, target.refId);
+    assert.equal(searchResult.value?.matches, 1);
+  } finally {
+    await harness.close();
+  }
+});
+
 test('BrowseGentV2Harness rejects a stale ref without selector guessing', async () => {
   const harness = new BrowseGentV2Harness({
     headed: false,

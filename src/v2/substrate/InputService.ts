@@ -18,12 +18,13 @@ export class InputService {
     const { locator } = await this.resolver.resolve(ref, page);
     await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
 
-    if (await this.isCenterPointBlocked(locator)) {
+    const clickPosition = await this.findUnblockedClickPosition(locator);
+    if (!clickPosition) {
       throw new V2OperationalError('target_blocked', 'Target center point is covered by another element.', { retryable: false });
     }
 
     try {
-      await locator.click({ timeout: 1_500 });
+      await locator.click({ timeout: 1_500, position: clickPosition });
     } catch (error) {
       throw mapPlaywrightError(error, 'click');
     }
@@ -116,18 +117,40 @@ export class InputService {
     }
   }
 
-  private async isCenterPointBlocked(locator: Locator): Promise<boolean> {
-    return locator.evaluate((element) => {
+  private async findUnblockedClickPosition(locator: Locator): Promise<{ x: number; y: number } | undefined> {
+    const position = await locator.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) {
-        return true;
+        return undefined;
       }
 
-      const x = Math.max(0, Math.min(window.innerWidth - 1, rect.left + rect.width / 2));
-      const y = Math.max(0, Math.min(window.innerHeight - 1, rect.top + rect.height / 2));
-      const topElement = document.elementFromPoint(x, y);
-      return Boolean(topElement && topElement !== element && !element.contains(topElement));
-    });
+      const insetX = Math.min(8, Math.max(1, rect.width / 4));
+      const insetY = Math.min(8, Math.max(1, rect.height / 4));
+      const candidatePositions = [
+        { x: rect.width / 2, y: rect.height / 2 },
+        { x: insetX, y: insetY },
+        { x: rect.width - insetX, y: insetY },
+        { x: insetX, y: rect.height - insetY },
+        { x: rect.width - insetX, y: rect.height - insetY },
+        { x: rect.width * 0.25, y: rect.height / 2 },
+        { x: rect.width * 0.75, y: rect.height / 2 },
+      ];
+
+      for (const candidate of candidatePositions) {
+        const viewportX = Math.max(0, Math.min(window.innerWidth - 1, rect.left + candidate.x));
+        const viewportY = Math.max(0, Math.min(window.innerHeight - 1, rect.top + candidate.y));
+        const topElement = document.elementFromPoint(viewportX, viewportY);
+        if (topElement && (topElement === element || element.contains(topElement))) {
+          return {
+            x: Math.max(0, Math.min(rect.width, viewportX - rect.left)),
+            y: Math.max(0, Math.min(rect.height, viewportY - rect.top)),
+          };
+        }
+      }
+
+      return undefined;
+    }) as { x: number; y: number } | undefined | false;
+    return position === false ? { x: 0, y: 0 } : position;
   }
 }
 

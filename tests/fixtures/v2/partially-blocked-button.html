@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Partially Blocked Button Fixture</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 32px;
+    }
+
+    #target {
+      position: absolute;
+      left: 80px;
+      top: 80px;
+      width: 220px;
+      height: 64px;
+    }
+
+    #center-overlay {
+      position: absolute;
+      left: 155px;
+      top: 95px;
+      width: 70px;
+      height: 34px;
+      background: rgba(0, 0, 0, 0.2);
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <button id="target" onclick="document.body.dataset.clicked = 'true'; this.textContent = 'Clicked safely';">Partially blocked target</button>
+  <div id="center-overlay" aria-label="Center overlay"></div>
+</body>
+</html>
