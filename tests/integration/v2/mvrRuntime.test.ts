@@ -343,6 +343,32 @@ test('BrowseGentV2Harness read-only tools expose bounded operational evidence an
   }
 });
 
+test('BrowseGentV2Harness explicit read tools preserve late evidence beyond compact planner labels', async () => {
+  const traceDir = await freshTraceDir('long_read_tools');
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_long_read_tools',
+    traceDir,
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('long-readable.html'));
+    const details = observation.refs.find(ref => ref.selectorCandidates.includes('#details'));
+    assert.ok(details);
+
+    const getResult = await harness.get(details.refId);
+    const inspectResult = await harness.inspectRegion(details.refId);
+
+    assert.equal(getResult.success, true);
+    assert.match(getResult.value?.text ?? '', /CONFIRMATION-CODE-7429/);
+
+    assert.equal(inspectResult.success, true);
+    assert.match(inspectResult.value?.text ?? '', /CONFIRMATION-CODE-7429/);
+  } finally {
+    await harness.close();
+  }
+});
+
 test('BrowseGentV2Harness get prefers accessible names over generic visible text', async () => {
   const harness = new BrowseGentV2Harness({
     headed: false,

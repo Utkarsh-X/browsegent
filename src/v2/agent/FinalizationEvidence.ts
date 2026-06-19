@@ -11,7 +11,7 @@ export interface FinalizationEvidenceInput {
 
 export function buildFinalizationEvidence(input: FinalizationEvidenceInput): string {
   const maxReadableItems = input.maxReadableItems ?? 12;
-  const maxTextLength = input.maxTextLength ?? 180;
+  const maxTextLength = input.maxTextLength ?? 2_000;
   const sections: string[] = [];
 
   if (input.lastSuccessfulEvidenceValue?.trim()) {

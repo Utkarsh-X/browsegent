@@ -240,6 +240,29 @@ test('PlannerInputComposer previews object-valued tool results for replanning', 
   assert.equal(input.lastResult?.valuePreview, 'Ada Lovelace Name');
 });
 
+test('PlannerInputComposer preserves richer previews for explicit read results without expanding ref lanes', () => {
+  const observation = makeObservation({ observationId: 'obs_long_read_preview' });
+  const projection = new ProjectionService().project(observation);
+  const lateMarker = 'LATE-READ-EVIDENCE-9173';
+  const longReadText = `${'read evidence '.repeat(70)}${lateMarker}`;
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_long_read_preview',
+    goal: 'Report the late evidence marker',
+    projection,
+    lastResult: {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_article',
+      value: { text: longReadText },
+      traceStepId: 'step_get_article',
+    },
+  });
+
+  assert.match(input.lastResult?.valuePreview ?? '', new RegExp(lateMarker));
+  assert.equal(input.current.refs.ref_primary.name, 'Primary');
+  assert.equal(input.current.refs.ref_primary.text, undefined);
+});
+
 test('PlannerInputComposer previews successful mutation target facts for replanning', () => {
   const observation = makeObservation({ observationId: 'obs_mutation_preview' });
   const projection = new ProjectionService().project(observation);

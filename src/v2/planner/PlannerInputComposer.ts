@@ -16,6 +16,9 @@ import type {
   PlannerUncertaintyLevel,
 } from './types';
 
+const DEFAULT_RESULT_PREVIEW_LIMIT = 240;
+const READ_RESULT_PREVIEW_LIMIT = 1_500;
+
 export class PlannerInputComposer {
   private readonly lineageCompressor = new LineageCompressor();
   private readonly workingSetSelector = new PlannerWorkingSetSelector();
@@ -228,36 +231,41 @@ function chooseUncertaintyLevel(signals: string[]): PlannerUncertaintyLevel {
 }
 
 function previewValue(value: unknown): string | undefined {
+  return previewValueWithLimit(value, DEFAULT_RESULT_PREVIEW_LIMIT);
+}
+
+function previewValueWithLimit(value: unknown, maxLength: number): string | undefined {
   if (value === undefined || value === null) {
     return undefined;
   }
 
   if (typeof value === 'string') {
-    return value.replace(/\s+/g, ' ').trim().slice(0, 240);
+    return compactPreview(value, maxLength);
   }
 
   if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
   }
 
-  const objectPreview = previewObjectValue(value);
+  const objectPreview = previewObjectValue(value, maxLength);
   if (objectPreview) {
     return objectPreview;
   }
 
-  return compactPreview(JSON.stringify(value));
+  return compactPreview(JSON.stringify(value), maxLength);
 }
 
 function previewResultEvidence(result: V2ToolResult): string | undefined {
+  const maxLength = isReadResult(result.kind) ? READ_RESULT_PREVIEW_LIMIT : DEFAULT_RESULT_PREVIEW_LIMIT;
   const parts = [
-    previewValue(result.value),
+    previewValueWithLimit(result.value, maxLength),
     previewToolTarget(result.target),
   ].filter((part): part is string => typeof part === 'string' && part.length > 0);
 
-  return parts.length > 0 ? compactPreview(parts.join(' ')) : undefined;
+  return parts.length > 0 ? compactPreview(parts.join(' '), maxLength) : undefined;
 }
 
-function previewObjectValue(value: unknown): string | undefined {
+function previewObjectValue(value: unknown, maxLength: number): string | undefined {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return undefined;
   }
@@ -277,7 +285,7 @@ function previewObjectValue(value: unknown): string | undefined {
     parts.push(...preview.filter((part): part is string => typeof part === 'string' && part.trim().length > 0));
   }
 
-  return parts.length > 0 ? compactPreview(parts.join(' ')) : undefined;
+  return parts.length > 0 ? compactPreview(parts.join(' '), maxLength) : undefined;
 }
 
 function previewToolTarget(target: V2ToolResult['target']): string | undefined {
@@ -289,9 +297,13 @@ function previewToolTarget(target: V2ToolResult['target']): string | undefined {
     .filter((part): part is string => typeof part === 'string' && part.trim().length > 0);
   const uniqueParts = parts.filter((part, index) => parts.findIndex(existing => existing.toLowerCase() === part.toLowerCase()) === index);
 
-  return uniqueParts.length > 0 ? compactPreview(uniqueParts.join(' ')) : undefined;
+  return uniqueParts.length > 0 ? compactPreview(uniqueParts.join(' '), DEFAULT_RESULT_PREVIEW_LIMIT) : undefined;
 }
 
-function compactPreview(value: string): string {
-  return value.replace(/\s+/g, ' ').trim().slice(0, 240);
+function compactPreview(value: string, maxLength: number): string {
+  return value.replace(/\s+/g, ' ').trim().slice(0, maxLength);
+}
+
+function isReadResult(kind: string | undefined): boolean {
+  return kind === 'get' || kind === 'inspect_region' || kind === 'search_page';
 }

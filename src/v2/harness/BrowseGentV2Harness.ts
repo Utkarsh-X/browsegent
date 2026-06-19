@@ -16,6 +16,8 @@ import type { BrowseGentV2HarnessOptions } from './types';
 import { buildRefResolutionAudit } from '../runtime/RefResolutionAudit';
 import { shouldAttemptWeakenedRefSelfHeal } from '../runtime/RefSelfHealingPolicy';
 
+const READ_EVIDENCE_TEXT_LIMIT = 4_000;
+
 export class BrowseGentV2Harness {
   private readonly session: BrowserSession;
   private readonly observer = new ObservationService();
@@ -153,15 +155,15 @@ export class BrowseGentV2Harness {
 
   async get(refId: string): Promise<V2ToolResult<{ text: string; value?: string }>> {
     return this.executeRefRead('get', refId, (ref) => ({
-      text: compactText(ref.name || ref.text || ''),
-      value: ref.role === 'textbox' && ref.name ? compactText(ref.name) : undefined,
+      text: compactText(joinUniqueText([ref.name, ref.text]), READ_EVIDENCE_TEXT_LIMIT),
+      value: ref.role === 'textbox' && ref.name ? compactText(ref.name, READ_EVIDENCE_TEXT_LIMIT) : undefined,
     }));
   }
 
   async inspectRegion(refId: string): Promise<V2ToolResult<{ refId: string; text: string; nearbyRefs: string[] }>> {
     return this.executeRefRead('inspect_region', refId, (ref, observation) => ({
       refId: ref.refId,
-      text: compactText([ref.name, ref.text].filter(Boolean).join(' ')),
+      text: compactText(joinUniqueText([ref.name, ref.text]), READ_EVIDENCE_TEXT_LIMIT),
       nearbyRefs: observation.refs
         .filter(candidate => candidate.refId !== ref.refId && candidate.visibility !== 'hidden')
         .slice(0, 5)
@@ -559,6 +561,18 @@ export class BrowseGentV2Harness {
 function compactText(text: string, maxLength = 500): string {
   const compacted = text.replace(/\s+/g, ' ').trim();
   return compacted.length > maxLength ? `${compacted.slice(0, maxLength - 3)}...` : compacted;
+}
+
+function joinUniqueText(values: Array<string | undefined>): string {
+  const parts = values
+    .map(value => value?.replace(/\s+/g, ' ').trim())
+    .filter((value): value is string => Boolean(value));
+  if (parts.length >= 2 && parts[1].length <= parts[0].length) {
+    return parts[0];
+  }
+  return parts.filter((part, index) =>
+    parts.findIndex(existing => existing.toLowerCase() === part.toLowerCase()) === index
+  ).join(' ');
 }
 
 function summarizeToolTarget(ref: V2Ref): V2ToolTargetSummary {

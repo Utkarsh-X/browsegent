@@ -114,3 +114,14 @@ test('buildFinalizationEvidence includes required answer details from the goal',
   assert.match(evidence, /pronunciation/);
   assert.match(evidence, /definition/);
 });
+
+test('buildFinalizationEvidence preserves late details from explicit read evidence', () => {
+  const lateMarker = 'FINALIZATION-LATE-DETAIL-3184';
+  const evidence = buildFinalizationEvidence({
+    goal: 'Report the late detail from the extracted evidence',
+    projection: makeProjection(),
+    lastSuccessfulEvidenceValue: `${'extracted detail '.repeat(80)}${lateMarker}`,
+  });
+
+  assert.match(evidence, new RegExp(lateMarker));
+});
