@@ -90,7 +90,31 @@ test('BrowseGentV2Harness clicks the visible semantic match instead of a hidden 
   }
 });
 
-test('InputService rejects equivalent visible selector matches as ambiguous', async () => {
+test('BrowseGentV2Harness clicks the requested exact semantic duplicate ordinal', async () => {
+  const traceDir = await freshTraceDir('semantic-ordinal');
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_semantic_ordinal',
+    traceDir,
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('repeated-controls.html'));
+    const openButtons = observation.refs.filter(ref => ref.name === 'Open');
+
+    assert.deepEqual(openButtons.map(ref => ref.nthRoleName), [1, 2, 3]);
+
+    const result = await harness.click(openButtons[1].refId);
+    const selection = await harness.searchPage('Selected Beta');
+
+    assert.equal(result.success, true);
+    assert.equal(selection.value?.matches, 1);
+  } finally {
+    await harness.close();
+  }
+});
+
+test('InputService ordinal groups do not include equal controls inside child frames', async () => {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 
@@ -99,33 +123,44 @@ test('InputService rejects equivalent visible selector matches as ambiguous', as
       <!doctype html>
       <html>
         <body>
-          <button class="button">Search</button>
-          <button class="button">Search</button>
+          <button class="duplicate" data-target="outer-1">Open</button>
+          <button class="duplicate" data-target="outer-2">Open</button>
+          <iframe srcdoc="
+            <button class='duplicate' data-target='inner-1'>Open</button>
+            <button class='duplicate' data-target='inner-2'>Open</button>
+          "></iframe>
+          <script>
+            for (const button of document.querySelectorAll('.duplicate')) {
+              button.addEventListener('click', () => {
+                document.body.dataset.selected = button.dataset.target;
+              });
+            }
+          </script>
         </body>
       </html>
     `);
 
-    await assert.rejects(
-      () => new InputService().click({
-        refId: 'ref_ambiguous_search',
-        generationId: 1,
-        targetId: 'target_ambiguous_search',
-        selectorCandidates: ['button.button'],
-        role: 'button',
-        tagName: 'button',
-        name: 'Search',
-        text: 'Search',
-        visibility: 'visible',
-        actionability: 'ready',
-        continuityConfidence: 1,
-        state: 'live',
-        capabilities: { clickable: true, typeable: false, selectable: false, readable: true },
-      }, page),
-      (error: unknown) => {
-        assert.ok(error instanceof Error);
-        assert.equal((error as { code?: string }).code, 'ambiguous_ref_resolution');
-        return true;
-      },
+    await new InputService().click({
+      refId: 'ref_outer_second',
+      generationId: 1,
+      targetId: 'target_outer_second',
+      selectorCandidates: ['button.duplicate'],
+      role: 'button',
+      tagName: 'button',
+      name: 'Open',
+      text: 'Open',
+      nthRoleName: 2,
+      visibility: 'visible',
+      actionability: 'ready',
+      continuityConfidence: 1,
+      state: 'live',
+      capabilities: { clickable: true, typeable: false, selectable: false, readable: true },
+    }, page);
+
+    assert.equal(await page.locator('body').getAttribute('data-selected'), 'outer-2');
+    assert.equal(
+      await page.locator('iframe').contentFrame().locator('button.duplicate').count(),
+      2,
     );
   } finally {
     await browser.close();

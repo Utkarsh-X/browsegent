@@ -8,16 +8,25 @@
     <main>
       <section class="card">
         <h2>Alpha</h2>
-        <button class="open-card">Open</button>
+        <button class="open-card" data-card="Alpha">Open</button>
       </section>
       <section class="card">
         <h2>Beta</h2>
-        <button class="open-card">Open</button>
+        <button class="open-card" data-card="Beta">Open</button>
       </section>
       <section class="card">
         <h2>Gamma</h2>
-        <button class="open-card">Open</button>
+        <button class="open-card" data-card="Gamma">Open</button>
       </section>
     </main>
+    <p id="selection" aria-live="polite"></p>
+    <script>
+      for (const button of document.querySelectorAll('.open-card')) {
+        button.addEventListener('click', () => {
+          document.querySelector('#selection').textContent =
+            `Selected ${button.getAttribute('data-card')}`;
+        });
+      }
+    </script>
   </body>
 </html>

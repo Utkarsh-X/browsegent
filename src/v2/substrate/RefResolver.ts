@@ -240,210 +240,229 @@ function normalizeSemanticIdentity(value: string): string {
   return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
-async function scoreCandidate(locator: Locator, ref: V2Ref): Promise<{ score: number; identityKey: string; diagnostics?: CandidateDiagnostics }> {
-  return locator.evaluate((element, expected) => {
-    const ownerDocument = element.ownerDocument;
-    const ownerWindow = ownerDocument.defaultView || window;
-    const rect = element.getBoundingClientRect();
+const SCORE_CANDIDATE_SOURCE = String.raw`
+const ownerDocument = element.ownerDocument;
+const ownerWindow = ownerDocument.defaultView || window;
+const rect = element.getBoundingClientRect();
 
-    const identityKey = [
-      element.tagName.toLowerCase(),
-      Math.round(rect.left),
-      Math.round(rect.top),
-      Math.round(rect.width),
-      Math.round(rect.height),
-      normalize(element.textContent || ''),
-    ].join('|');
+const normalizedText = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+const normalizedSemanticIdentity = (value) => normalizedText(value).toLowerCase();
+const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
 
-    if (!isVisible(element)) {
-      return { score: -1, identityKey };
-    }
+const identityKey = [
+  element.tagName.toLowerCase(),
+  Math.round(rect.left),
+  Math.round(rect.top),
+  Math.round(rect.width),
+  Math.round(rect.height),
+  normalize(element.textContent || ''),
+].join('|');
 
-    let score = 100;
-    const tagName = element.tagName.toLowerCase();
-    const role = normalizedSemanticIdentity(explicitOrNativeRole(element) || '');
-    const liveAccessibleName = accessibleName(element) || '';
-    const accessibleNameIdentity = normalizedSemanticIdentity(liveAccessibleName);
-    const text = normalizedSemanticIdentity(element.textContent || '');
-    const name = normalizedSemanticIdentity(expected.name || '');
-    const expectedText = normalizedSemanticIdentity(expected.text || '');
+const isVisible = (target) => {
+  const targetStyle = ownerWindow.getComputedStyle(target);
+  const targetRect = target.getBoundingClientRect();
+  return !target.hasAttribute('hidden')
+    && targetStyle.display !== 'none'
+    && targetStyle.visibility !== 'hidden'
+    && targetStyle.opacity !== '0'
+    && targetRect.width > 0
+    && targetRect.height > 0;
+};
 
-    if (expected.tagName && tagName === normalizedSemanticIdentity(expected.tagName)) score += 15;
-    if (expected.role && role === normalizedSemanticIdentity(expected.role)) score += 15;
-    if (name && accessibleNameIdentity === name) score += 30;
-    if (expectedText && text === expectedText) score += 20;
+if (!isVisible(element)) {
+  return { score: -1, identityKey };
+}
 
-    const semanticGroup = walkOwnerDocument(element)
-      .filter(candidate => isInteractiveElement(candidate) && isVisible(candidate))
-      .filter(candidate => normalizedSemanticIdentity(explicitOrNativeRole(candidate) || '') === role)
-      .filter(candidate => normalizedSemanticIdentity(accessibleName(candidate) || '') === accessibleNameIdentity);
-    const semanticIndex = semanticGroup.indexOf(element);
+const explicitOrNativeRole = (target) => {
+  const explicit = target.getAttribute('role');
+  if (explicit) return explicit.toLowerCase();
 
-    return {
-      score,
-      identityKey,
-      diagnostics: {
-        tagName,
-        role,
-        accessibleName: accessibleNameIdentity,
-        nameMatched: Boolean(name && accessibleNameIdentity === name),
-        textMatched: Boolean(expectedText && text === expectedText),
-        semanticOrdinal: semanticIndex >= 0 ? semanticIndex + 1 : undefined,
-        semanticGroupSize: semanticGroup.length,
-        semanticScope: ownerDocument === document ? 'owner_document' : 'unknown',
-      },
-    };
-
-    function walkOwnerDocument(target: Element): Element[] {
-      const walked: Element[] = [];
-
-      function walk(root: Document | ShadowRoot | Element): void {
-        for (const child of Array.from(root.children || [])) {
-          walked.push(child);
-          if (child.shadowRoot) {
-            walk(child.shadowRoot);
-          }
-          walk(child);
-        }
-      }
-
-      walk(target.ownerDocument);
-      return walked;
-    }
-
-    function explicitOrNativeRole(target: Element): string | undefined {
-      const explicit = target.getAttribute('role');
-      if (explicit) return explicit.toLowerCase();
-
-      switch (target.tagName.toLowerCase()) {
-        case 'a':
-          return 'link';
+  switch (target.tagName.toLowerCase()) {
+    case 'a':
+      return 'link';
+    case 'button':
+      return 'button';
+    case 'input':
+      switch (String(target.getAttribute('type') || 'text').toLowerCase()) {
         case 'button':
+        case 'submit':
+        case 'reset':
+        case 'image':
           return 'button';
-        case 'input':
-          switch (String(target.getAttribute('type') || 'text').toLowerCase()) {
-            case 'button':
-            case 'submit':
-            case 'reset':
-            case 'image':
-              return 'button';
-            case 'checkbox':
-              return 'checkbox';
-            case 'radio':
-              return 'radio';
-            case 'search':
-              return 'searchbox';
-            default:
-              return 'textbox';
-          }
-        case 'textarea':
-          return 'textbox';
-        case 'select':
-          return 'combobox';
+        case 'checkbox':
+          return 'checkbox';
+        case 'radio':
+          return 'radio';
+        case 'search':
+          return 'searchbox';
         default:
-          return undefined;
+          return 'textbox';
       }
+    case 'textarea':
+      return 'textbox';
+    case 'select':
+      return 'combobox';
+    default:
+      return undefined;
+  }
+};
+
+const ariaLabelledByText = (target) => {
+  const labelledBy = target.getAttribute('aria-labelledby');
+  if (!labelledBy) {
+    return undefined;
+  }
+
+  const text = labelledBy
+    .split(/\s+/)
+    .map(id => target.ownerDocument.getElementById(id)?.textContent || '')
+    .map(normalizedText)
+    .filter(Boolean)
+    .join(' ');
+  return text || undefined;
+};
+
+const accessibleName = (target) => {
+  const direct =
+    ariaLabelledByText(target)
+    || target.getAttribute('aria-label')
+    || target.getAttribute('placeholder')
+    || target.getAttribute('title');
+
+  if (direct) {
+    return normalizedText(direct);
+  }
+
+  if (target instanceof ownerWindow.HTMLInputElement && target.value) {
+    return normalizedText(target.value);
+  }
+
+  if (
+    (target instanceof ownerWindow.HTMLInputElement
+      || target instanceof ownerWindow.HTMLSelectElement
+      || target instanceof ownerWindow.HTMLTextAreaElement)
+    && target.labels
+    && target.labels.length > 0
+  ) {
+    const labelText = Array.from(target.labels)
+      .map(label => normalizedText(label.textContent || ''))
+      .filter(Boolean)
+      .join(' ');
+    if (labelText) {
+      return labelText;
     }
+  }
 
-    function accessibleName(target: Element): string | undefined {
-      const direct =
-        ariaLabelledByText(target)
-        || target.getAttribute('aria-label')
-        || target.getAttribute('placeholder')
-        || target.getAttribute('title');
+  const formName = target.getAttribute('name');
+  if (formName) {
+    return normalizedText(formName);
+  }
 
-      if (direct) {
-        return normalizedText(direct);
-      }
+  return normalizedText(target.textContent || '') || undefined;
+};
 
-      if (target instanceof HTMLInputElement && target.value) {
-        return normalizedText(target.value);
-      }
+const isInteractiveElement = (target) => {
+  const targetTagName = target.tagName.toLowerCase();
+  if (['a', 'button', 'input', 'select', 'textarea', 'summary', 'details', 'option'].includes(targetTagName)) {
+    return true;
+  }
 
-      if (
-        (target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement)
-        && target.labels
-        && target.labels.length > 0
-      ) {
-        const labelText = Array.from(target.labels).map(label => normalizedText(label.textContent || '')).filter(Boolean).join(' ');
-        if (labelText) {
-          return labelText;
-        }
-      }
+  const targetRole = target.getAttribute('role') && target.getAttribute('role')?.toLowerCase();
+  if (
+    targetRole
+    && ['button', 'link', 'tab', 'option', 'menuitem', 'checkbox', 'radio', 'switch', 'textbox', 'combobox'].includes(targetRole)
+  ) {
+    return true;
+  }
 
-      const formName = target.getAttribute('name');
-      if (formName) {
-        return normalizedText(formName);
-      }
+  if (target.getAttribute('contenteditable') === 'true') {
+    return true;
+  }
 
-      return normalizedText(target.textContent || '') || undefined;
+  const tabindex = target.getAttribute('tabindex');
+  if (tabindex !== null && Number(tabindex) >= 0) {
+    return true;
+  }
+
+  if (Array.from(target.getAttributeNames()).some(name => name.startsWith('on'))) {
+    return true;
+  }
+
+  return ownerWindow.getComputedStyle(target).cursor === 'pointer';
+};
+
+const walkOwnerDocument = (target) => {
+  const walked = [];
+  const pending = Array.from(target.ownerDocument.children || []);
+
+  while (pending.length > 0) {
+    const child = pending.shift();
+    walked.push(child);
+
+    if (child.shadowRoot) {
+      pending.unshift(...Array.from(child.shadowRoot.children || []));
     }
+    pending.unshift(...Array.from(child.children || []));
+  }
 
-    function ariaLabelledByText(target: Element): string | undefined {
-      const labelledBy = target.getAttribute('aria-labelledby');
-      if (!labelledBy) {
-        return undefined;
-      }
+  return walked;
+};
 
-      const text = labelledBy
-        .split(/\s+/)
-        .map(id => target.ownerDocument.getElementById(id)?.textContent || '')
-        .map(normalizedText)
-        .filter(Boolean)
-        .join(' ');
-      return text || undefined;
-    }
+let score = 100;
+const tagName = element.tagName.toLowerCase();
+const role = normalizedSemanticIdentity(explicitOrNativeRole(element) || '');
+const liveAccessibleName = accessibleName(element) || '';
+const accessibleNameIdentity = normalizedSemanticIdentity(liveAccessibleName);
+const text = normalizedSemanticIdentity(element.textContent || '');
+const name = normalizedSemanticIdentity(expected.name || '');
+const expectedText = normalizedSemanticIdentity(expected.text || '');
 
-    function isInteractiveElement(target: Element): boolean {
-      const targetTagName = target.tagName.toLowerCase();
-      if (['a', 'button', 'input', 'select', 'textarea', 'summary', 'details', 'option'].includes(targetTagName)) {
-        return true;
-      }
+if (expected.tagName && tagName === normalizedSemanticIdentity(expected.tagName)) score += 15;
+if (expected.role && role === normalizedSemanticIdentity(expected.role)) score += 15;
+if (name && accessibleNameIdentity === name) score += 30;
+if (expectedText && text === expectedText) score += 20;
 
-      const targetRole = target.getAttribute('role') && target.getAttribute('role')?.toLowerCase();
-      if (targetRole && ['button', 'link', 'tab', 'option', 'menuitem', 'checkbox', 'radio', 'switch', 'textbox', 'combobox'].includes(targetRole)) {
-        return true;
-      }
+const semanticGroup = walkOwnerDocument(element)
+  .filter(candidate => isInteractiveElement(candidate) && isVisible(candidate))
+  .filter(candidate => normalizedSemanticIdentity(explicitOrNativeRole(candidate) || '') === role)
+  .filter(candidate => normalizedSemanticIdentity(accessibleName(candidate) || '') === accessibleNameIdentity);
+const semanticIndex = semanticGroup.indexOf(element);
 
-      if (target.getAttribute('contenteditable') === 'true') {
-        return true;
-      }
+return {
+  score,
+  identityKey,
+  diagnostics: {
+    tagName,
+    role,
+    accessibleName: accessibleNameIdentity,
+    nameMatched: Boolean(name && accessibleNameIdentity === name),
+    textMatched: Boolean(expectedText && text === expectedText),
+    semanticOrdinal: semanticIndex >= 0 ? semanticIndex + 1 : undefined,
+    semanticGroupSize: semanticGroup.length,
+    semanticScope: ownerDocument === document ? 'owner_document' : 'unknown',
+  },
+};
+`;
 
-      const tabindex = target.getAttribute('tabindex');
-      if (tabindex !== null && Number(tabindex) >= 0) {
-        return true;
-      }
+interface ScoreCandidateExpected {
+  tagName?: string;
+  role?: string;
+  name?: string;
+  text?: string;
+  nthRoleName?: number;
+}
 
-      if (Array.from(target.getAttributeNames()).some(name => name.startsWith('on'))) {
-        return true;
-      }
+const SCORE_CANDIDATE_PAGE_FUNCTION = Function(
+  'element',
+  'expected',
+  SCORE_CANDIDATE_SOURCE,
+) as unknown as (
+  element: Element,
+  expected: ScoreCandidateExpected,
+) => { score: number; identityKey: string; diagnostics?: CandidateDiagnostics };
 
-      return ownerWindow.getComputedStyle(target).cursor === 'pointer';
-    }
-
-    function isVisible(target: Element): boolean {
-      const targetStyle = ownerWindow.getComputedStyle(target);
-      const targetRect = target.getBoundingClientRect();
-      return !target.hasAttribute('hidden')
-        && targetStyle.display !== 'none'
-        && targetStyle.visibility !== 'hidden'
-        && targetStyle.opacity !== '0'
-        && targetRect.width > 0
-        && targetRect.height > 0;
-    }
-
-    function normalizedText(value: string): string {
-      return String(value || '').replace(/\s+/g, ' ').trim();
-    }
-
-    function normalizedSemanticIdentity(value: string): string {
-      return normalizedText(value).toLowerCase();
-    }
-
-    function normalize(value: string): string {
-      return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
-    }
-  }, {
+async function scoreCandidate(locator: Locator, ref: V2Ref): Promise<{ score: number; identityKey: string; diagnostics?: CandidateDiagnostics }> {
+  return locator.evaluate(SCORE_CANDIDATE_PAGE_FUNCTION, {
     tagName: ref.tagName,
     role: ref.role,
     name: ref.name,
