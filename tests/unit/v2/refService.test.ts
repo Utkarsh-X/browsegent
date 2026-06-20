@@ -111,3 +111,24 @@ test('RefService resolve rejects missing refs without selector guessing', () => 
   assert.equal(resolved.ref, undefined);
   assert.equal(resolved.confidence, 0);
 });
+
+test('RefService resolve returns only the live ref stored in the active observation', () => {
+  const service = new RefService();
+  const first = service.assign(makeObservation([
+    makeRef({ refId: 'incoming_first', generationId: 1 }),
+  ], 1));
+  const active = service.assign(makeObservation([
+    makeRef({ refId: 'incoming_active', generationId: 2 }),
+  ], 2));
+
+  const resolved = service.resolve(active.refs[0].refId, active);
+
+  assert.equal(resolved.state, 'live');
+  assert.equal(resolved.ref, active.refs[0]);
+  assert.equal(resolved.ref?.generationId, active.generationId);
+
+  const removed = service.resolve(first.refs[0].refId, makeObservation([], 2));
+  assert.equal(removed.state, 'invalid');
+  assert.equal(removed.ref, undefined);
+  assert.equal(removed.reason, 'ref_not_present_in_current_observation');
+});
