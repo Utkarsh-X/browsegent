@@ -34,6 +34,17 @@ Keep the change inside the substrate boundary:
 
 The implementation should share or exactly mirror normalization and accessible-name rules between observation and resolution. If those rules cannot be made equivalent in this slice, ordinal resolution must fail closed.
 
+## Current Observation Contract
+
+`V2Ref` does not carry an `observationId`. In the current architecture, "current observation" has one precise operational meaning:
+
+1. `BrowseGentV2Harness.assertOpened()` returns the active `BrowserObservation` immediately before execution.
+2. `RefService.resolve(refId, activeObservation)` must return the exact ref stored in `activeObservation.refs`.
+3. The returned resolution state must be `live`.
+4. The ref's `generationId` must equal `activeObservation.generationId`.
+
+Only a ref satisfying all four conditions is eligible for ordinal disambiguation. A ref retained from an older observation, reconstructed outside `activeObservation.refs`, or returned as `weakened`, `stale`, or `invalid` is not eligible.
+
 ## Resolution Flow
 
 The existing bounded selector collection and candidate scoring run first.
@@ -54,6 +65,19 @@ The ordinal path must not bypass existing overflow safeguards. A broad selector 
 
 Ordinal resolution is not a stale-ref healing mechanism. A weakened, invalid, or non-current ref must continue through the existing recovery policy rather than gaining identity from position.
 
+## Frame Scope Contract
+
+Ordinal semantic groups never cross document or frame boundaries.
+
+For the current implementation:
+
+- the group is computed only from elements in the candidate element's `ownerDocument`;
+- main-document candidates are compared only with main-document elements;
+- candidates from different documents or frames cannot participate in the same ordinal group;
+- if `ref.frameId` identifies a child frame that the resolver cannot explicitly scope and verify, ordinal disambiguation must fail with `semantic_scope_unstable`.
+
+This slice must not introduce broad cross-frame scanning. Future iframe execution support must create a frame-scoped locator first, then apply the same exact role/name/ordinal rules inside that frame.
+
 ## Accessible Name Contract
 
 Ordinal matching requires an accessible name, not arbitrary page text. The resolver may use the same bounded sources used by observation, such as explicit ARIA labeling and native control naming, but it must not substitute unrelated descendant text when the observation recorded a different name.
@@ -67,11 +91,11 @@ Text-only duplicate elements are outside this slice. They remain ambiguous unles
 The resolver must fail with `ambiguous_ref_resolution` when:
 
 - role, accessible name, or ordinal metadata is missing;
-- the ref is not live in the current observation;
+- the ref does not satisfy the Current Observation Contract;
 - no exact semantic group exists;
 - the recorded ordinal is outside the live group;
 - more than one candidate maps to the ordinal;
-- document/frame scope cannot be reproduced consistently;
+- the Frame Scope Contract cannot be proven;
 - candidate collection overflow or existing safety checks reject the result.
 
 The resolver must never:
@@ -123,8 +147,10 @@ Required cases:
 6. Duplicate candidates that cannot be mapped uniquely remain ambiguous.
 7. A live current-observation ref with preserved exact semantic order resolves safely.
 8. A weakened, stale, or non-current ref cannot use ordinal resolution.
-9. Existing candidate bounds and overflow behavior remain unchanged.
-10. Existing stale, blocked, and detached recovery tests remain green.
+9. Equal role/name controls in different documents or frames never share an ordinal group.
+10. Unsupported child-frame scope fails with `semantic_scope_unstable`.
+11. Existing candidate bounds and overflow behavior remain unchanged.
+12. Existing stale, blocked, and detached recovery tests remain green.
 
 After focused tests pass, run the V2 unit and integration suites plus build and static V2 checks. Do not use benchmark score as the acceptance criterion for this slice.
 
@@ -141,6 +167,7 @@ The slice is complete when:
 - an exact semantic duplicate can be selected by its recorded ordinal;
 - ordinal evidence cannot distinguish semantically different candidates;
 - ordinal evidence cannot heal stale, weakened, or non-current refs;
+- ordinal groups cannot cross frame or document boundaries;
 - all uncertain cases fail explicitly without a browser action;
 - diagnostics explain ordinal success or refusal without context bloat;
 - existing resolver safety bounds and regression suites pass;
