@@ -183,6 +183,10 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
     return String(text || '').replace(/\\s+/g, ' ').trim();
   }
 
+  function normalizedSemanticIdentity(text) {
+    return normalizedText(text).toLowerCase();
+  }
+
   function escapeCssString(value) {
     return String(value).replace(/\\\\/g, '\\\\\\\\').replace(/"/g, '\\\\"');
   }
@@ -407,7 +411,7 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
       const name = accessibleName(element);
       const text = normalizedText(element.textContent || '');
       const role = explicitOrNativeRole(element);
-      const roleNameKey = (role || 'generic') + '|' + (name || text || '');
+      const roleNameKey = normalizedSemanticIdentity(role || 'generic') + '|' + normalizedSemanticIdentity(name || text || '');
       const nthRoleName = (roleNameCounts.get(roleNameKey) || 0) + 1;
       roleNameCounts.set(roleNameKey, nthRoleName);
       const visibility = computeVisibility(element);

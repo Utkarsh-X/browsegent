@@ -16,8 +16,30 @@ interface ScoredCandidate {
   locator: Locator;
   score: number;
   identityKey: string;
-  diagnostics?: Record<string, unknown>;
+  diagnostics?: CandidateDiagnostics;
 }
+
+interface CandidateDiagnostics {
+  tagName: string;
+  role: string;
+  accessibleName: string;
+  nameMatched: boolean;
+  textMatched: boolean;
+  semanticOrdinal?: number;
+  semanticGroupSize: number;
+  semanticScope: 'owner_document' | 'unknown';
+}
+
+type OrdinalRefusalReason =
+  | 'ordinal_metadata_incomplete'
+  | 'exact_semantic_group_missing'
+  | 'ordinal_out_of_range'
+  | 'ordinal_candidate_not_unique'
+  | 'semantic_scope_unstable';
+
+type OrdinalSelection =
+  | { candidate: ScoredCandidate; semanticGroupSize: number }
+  | { ordinalReason: OrdinalRefusalReason; semanticGroupSize?: number };
 
 export class RefResolver {
   async resolve(ref: V2Ref, page: Page): Promise<ResolvedRefTarget> {
@@ -69,12 +91,54 @@ export class RefResolver {
     }
 
     if (sorted.length > 1 && sorted[0].score === sorted[1].score) {
+      const topScore = sorted[0].score;
+      const tiedCandidates = sorted.filter(candidate => candidate.score === topScore);
+      const ordinalSelection = selectExactSemanticOrdinalCandidate(tiedCandidates, ref);
+      if ('candidate' in ordinalSelection) {
+        const selected = ordinalSelection.candidate;
+        if (
+          overflowed
+          && selected.score < 140
+          && (sorted.length > 1 || selected.score < MIN_SINGLE_OVERFLOW_CANDIDATE_SCORE)
+        ) {
+          throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" matched too many weak selector candidates.`, {
+            retryable: false,
+            diagnostics: {
+              candidateCount: sorted.length,
+              reason: 'overflow_weak_selectors',
+              topScore: selected.score,
+              topCandidates: sorted.slice(0, 5).map(candidate => ({
+                score: candidate.score,
+                identityKey: candidate.identityKey,
+                diagnostics: candidate.diagnostics,
+              })),
+            },
+          });
+        }
+
+        return {
+          locator: selected.locator,
+          resolution: selected.score >= 140 ? 'semantic_selector' : 'unique_selector',
+          diagnostics: {
+            reason: 'resolved_exact_semantic_ordinal',
+            candidateCount: sorted.length,
+            topScore: selected.score,
+            topIdentityKey: selected.identityKey,
+            expectedOrdinal: ref.nthRoleName,
+            semanticGroupSize: ordinalSelection.semanticGroupSize,
+          },
+        };
+      }
+
       throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" resolved to multiple equivalent candidates.`, {
         retryable: false,
         diagnostics: {
           candidateCount: sorted.length,
           reason: 'tied_candidates',
-          topScore: sorted[0].score,
+          ordinalReason: ordinalSelection.ordinalReason,
+          expectedOrdinal: ref.nthRoleName,
+          semanticGroupSize: ordinalSelection.semanticGroupSize,
+          topScore,
           topCandidates: sorted.slice(0, 5).map(candidate => ({
             score: candidate.score,
             identityKey: candidate.identityKey,
@@ -84,17 +148,18 @@ export class RefResolver {
       });
     }
 
+    const selected = sorted[0];
     if (
       overflowed
-      && sorted[0].score < 140
-      && (sorted.length > 1 || sorted[0].score < MIN_SINGLE_OVERFLOW_CANDIDATE_SCORE)
+      && selected.score < 140
+      && (sorted.length > 1 || selected.score < MIN_SINGLE_OVERFLOW_CANDIDATE_SCORE)
     ) {
       throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" matched too many weak selector candidates.`, {
         retryable: false,
         diagnostics: {
           candidateCount: sorted.length,
           reason: 'overflow_weak_selectors',
-          topScore: sorted[0].score,
+          topScore: selected.score,
           topCandidates: sorted.slice(0, 5).map(candidate => ({
             score: candidate.score,
             identityKey: candidate.identityKey,
@@ -105,28 +170,81 @@ export class RefResolver {
     }
 
     return {
-      locator: sorted[0].locator,
-      resolution: sorted[0].score >= 140 ? 'semantic_selector' : 'unique_selector',
+      locator: selected.locator,
+      resolution: selected.score >= 140 ? 'semantic_selector' : 'unique_selector',
       diagnostics: {
         reason: 'resolved_unique_top_candidate',
         candidateCount: sorted.length,
-        topScore: sorted[0].score,
-        topIdentityKey: sorted[0].identityKey,
+        topScore: selected.score,
+        topIdentityKey: selected.identityKey,
       },
     };
   }
 }
 
-async function scoreCandidate(locator: Locator, ref: V2Ref): Promise<{ score: number; identityKey: string; diagnostics?: Record<string, unknown> }> {
+function selectExactSemanticOrdinalCandidate(candidates: ScoredCandidate[], ref: V2Ref): OrdinalSelection {
+  const expectedRole = normalizeSemanticIdentity(ref.role || '');
+  const expectedName = normalizeSemanticIdentity(ref.name || '');
+  const expectedOrdinal = ref.nthRoleName;
+
+  if (
+    ref.state !== 'live'
+    || !expectedRole
+    || !expectedName
+    || !Number.isInteger(expectedOrdinal)
+    || Number(expectedOrdinal) < 1
+  ) {
+    return { ordinalReason: 'ordinal_metadata_incomplete' };
+  }
+
+  const exactCandidates = candidates.filter(candidate => {
+    const diagnostics = candidate.diagnostics;
+    return diagnostics
+      && normalizeSemanticIdentity(diagnostics.role) === expectedRole
+      && normalizeSemanticIdentity(diagnostics.accessibleName) === expectedName
+      && diagnostics.nameMatched;
+  });
+
+  if (exactCandidates.length === 0) {
+    return { ordinalReason: 'exact_semantic_group_missing' };
+  }
+
+  if (exactCandidates.some(candidate => candidate.diagnostics?.semanticScope !== 'owner_document')) {
+    return { ordinalReason: 'semantic_scope_unstable' };
+  }
+
+  const groupSizes = new Set(exactCandidates.map(candidate => candidate.diagnostics?.semanticGroupSize));
+  const semanticGroupSize = exactCandidates[0]?.diagnostics?.semanticGroupSize;
+  if (
+    groupSizes.size !== 1
+    || !Number.isInteger(semanticGroupSize)
+    || Number(semanticGroupSize) < exactCandidates.length
+  ) {
+    return { ordinalReason: 'ordinal_metadata_incomplete' };
+  }
+  const expectedSemanticGroupSize = Number(semanticGroupSize);
+
+  if (Number(expectedOrdinal) > expectedSemanticGroupSize) {
+    return { ordinalReason: 'ordinal_out_of_range', semanticGroupSize: expectedSemanticGroupSize };
+  }
+
+  const ordinalCandidates = exactCandidates.filter(candidate => candidate.diagnostics?.semanticOrdinal === expectedOrdinal);
+  if (ordinalCandidates.length !== 1) {
+    return { ordinalReason: 'ordinal_candidate_not_unique', semanticGroupSize: expectedSemanticGroupSize };
+  }
+
+  return { candidate: ordinalCandidates[0], semanticGroupSize: expectedSemanticGroupSize };
+}
+
+function normalizeSemanticIdentity(value: string): string {
+  return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+async function scoreCandidate(locator: Locator, ref: V2Ref): Promise<{ score: number; identityKey: string; diagnostics?: CandidateDiagnostics }> {
   return locator.evaluate((element, expected) => {
-    const style = window.getComputedStyle(element);
+    const ownerDocument = element.ownerDocument;
+    const ownerWindow = ownerDocument.defaultView || window;
     const rect = element.getBoundingClientRect();
-    const visible = !element.hasAttribute('hidden')
-      && style.display !== 'none'
-      && style.visibility !== 'hidden'
-      && style.opacity !== '0'
-      && rect.width > 0
-      && rect.height > 0;
 
     const identityKey = [
       element.tagName.toLowerCase(),
@@ -137,27 +255,29 @@ async function scoreCandidate(locator: Locator, ref: V2Ref): Promise<{ score: nu
       normalize(element.textContent || ''),
     ].join('|');
 
-    if (!visible) {
+    if (!isVisible(element)) {
       return { score: -1, identityKey };
     }
 
     let score = 100;
     const tagName = element.tagName.toLowerCase();
-    const role = normalize(element.getAttribute('role') || nativeRole(element));
-    const ariaLabel = normalize(
-      element.getAttribute('aria-label')
-      || element.getAttribute('placeholder')
-      || element.getAttribute('title')
-      || '',
-    );
-    const text = normalize(element.textContent || '');
-    const name = normalize(expected.name || '');
-    const expectedText = normalize(expected.text || '');
+    const role = normalizedSemanticIdentity(explicitOrNativeRole(element) || '');
+    const liveAccessibleName = accessibleName(element) || '';
+    const accessibleNameIdentity = normalizedSemanticIdentity(liveAccessibleName);
+    const text = normalizedSemanticIdentity(element.textContent || '');
+    const name = normalizedSemanticIdentity(expected.name || '');
+    const expectedText = normalizedSemanticIdentity(expected.text || '');
 
-    if (expected.tagName && tagName === normalize(expected.tagName)) score += 15;
-    if (expected.role && role === normalize(expected.role)) score += 15;
-    if (name && (ariaLabel === name || text === name)) score += 30;
+    if (expected.tagName && tagName === normalizedSemanticIdentity(expected.tagName)) score += 15;
+    if (expected.role && role === normalizedSemanticIdentity(expected.role)) score += 15;
+    if (name && accessibleNameIdentity === name) score += 30;
     if (expectedText && text === expectedText) score += 20;
+
+    const semanticGroup = walkOwnerDocument(element)
+      .filter(candidate => isInteractiveElement(candidate) && isVisible(candidate))
+      .filter(candidate => normalizedSemanticIdentity(explicitOrNativeRole(candidate) || '') === role)
+      .filter(candidate => normalizedSemanticIdentity(accessibleName(candidate) || '') === accessibleNameIdentity);
+    const semanticIndex = semanticGroup.indexOf(element);
 
     return {
       score,
@@ -165,24 +285,159 @@ async function scoreCandidate(locator: Locator, ref: V2Ref): Promise<{ score: nu
       diagnostics: {
         tagName,
         role,
-        nameMatched: Boolean(name && (ariaLabel === name || text === name)),
+        accessibleName: accessibleNameIdentity,
+        nameMatched: Boolean(name && accessibleNameIdentity === name),
         textMatched: Boolean(expectedText && text === expectedText),
+        semanticOrdinal: semanticIndex >= 0 ? semanticIndex + 1 : undefined,
+        semanticGroupSize: semanticGroup.length,
+        semanticScope: ownerDocument === document ? 'owner_document' : 'unknown',
       },
     };
 
-    function nativeRole(target: Element): string {
-      const targetTagName = target.tagName.toLowerCase();
-      if (targetTagName === 'a') return 'link';
-      if (targetTagName === 'button') return 'button';
-      if (targetTagName === 'select') return 'combobox';
-      if (targetTagName === 'textarea') return 'textbox';
-      if (targetTagName === 'input') {
-        const inputType = String(target.getAttribute('type') || 'text').toLowerCase();
-        if (['button', 'submit', 'reset', 'image'].includes(inputType)) return 'button';
-        if (inputType === 'search') return 'searchbox';
-        return 'textbox';
+    function walkOwnerDocument(target: Element): Element[] {
+      const walked: Element[] = [];
+
+      function walk(root: Document | ShadowRoot | Element): void {
+        for (const child of Array.from(root.children || [])) {
+          walked.push(child);
+          if (child.shadowRoot) {
+            walk(child.shadowRoot);
+          }
+          walk(child);
+        }
       }
-      return '';
+
+      walk(target.ownerDocument);
+      return walked;
+    }
+
+    function explicitOrNativeRole(target: Element): string | undefined {
+      const explicit = target.getAttribute('role');
+      if (explicit) return explicit.toLowerCase();
+
+      switch (target.tagName.toLowerCase()) {
+        case 'a':
+          return 'link';
+        case 'button':
+          return 'button';
+        case 'input':
+          switch (String(target.getAttribute('type') || 'text').toLowerCase()) {
+            case 'button':
+            case 'submit':
+            case 'reset':
+            case 'image':
+              return 'button';
+            case 'checkbox':
+              return 'checkbox';
+            case 'radio':
+              return 'radio';
+            case 'search':
+              return 'searchbox';
+            default:
+              return 'textbox';
+          }
+        case 'textarea':
+          return 'textbox';
+        case 'select':
+          return 'combobox';
+        default:
+          return undefined;
+      }
+    }
+
+    function accessibleName(target: Element): string | undefined {
+      const direct =
+        ariaLabelledByText(target)
+        || target.getAttribute('aria-label')
+        || target.getAttribute('placeholder')
+        || target.getAttribute('title');
+
+      if (direct) {
+        return normalizedText(direct);
+      }
+
+      if (target instanceof HTMLInputElement && target.value) {
+        return normalizedText(target.value);
+      }
+
+      if (
+        (target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement)
+        && target.labels
+        && target.labels.length > 0
+      ) {
+        const labelText = Array.from(target.labels).map(label => normalizedText(label.textContent || '')).filter(Boolean).join(' ');
+        if (labelText) {
+          return labelText;
+        }
+      }
+
+      const formName = target.getAttribute('name');
+      if (formName) {
+        return normalizedText(formName);
+      }
+
+      return normalizedText(target.textContent || '') || undefined;
+    }
+
+    function ariaLabelledByText(target: Element): string | undefined {
+      const labelledBy = target.getAttribute('aria-labelledby');
+      if (!labelledBy) {
+        return undefined;
+      }
+
+      const text = labelledBy
+        .split(/\s+/)
+        .map(id => target.ownerDocument.getElementById(id)?.textContent || '')
+        .map(normalizedText)
+        .filter(Boolean)
+        .join(' ');
+      return text || undefined;
+    }
+
+    function isInteractiveElement(target: Element): boolean {
+      const targetTagName = target.tagName.toLowerCase();
+      if (['a', 'button', 'input', 'select', 'textarea', 'summary', 'details', 'option'].includes(targetTagName)) {
+        return true;
+      }
+
+      const targetRole = target.getAttribute('role') && target.getAttribute('role')?.toLowerCase();
+      if (targetRole && ['button', 'link', 'tab', 'option', 'menuitem', 'checkbox', 'radio', 'switch', 'textbox', 'combobox'].includes(targetRole)) {
+        return true;
+      }
+
+      if (target.getAttribute('contenteditable') === 'true') {
+        return true;
+      }
+
+      const tabindex = target.getAttribute('tabindex');
+      if (tabindex !== null && Number(tabindex) >= 0) {
+        return true;
+      }
+
+      if (Array.from(target.getAttributeNames()).some(name => name.startsWith('on'))) {
+        return true;
+      }
+
+      return ownerWindow.getComputedStyle(target).cursor === 'pointer';
+    }
+
+    function isVisible(target: Element): boolean {
+      const targetStyle = ownerWindow.getComputedStyle(target);
+      const targetRect = target.getBoundingClientRect();
+      return !target.hasAttribute('hidden')
+        && targetStyle.display !== 'none'
+        && targetStyle.visibility !== 'hidden'
+        && targetStyle.opacity !== '0'
+        && targetRect.width > 0
+        && targetRect.height > 0;
+    }
+
+    function normalizedText(value: string): string {
+      return String(value || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function normalizedSemanticIdentity(value: string): string {
+      return normalizedText(value).toLowerCase();
     }
 
     function normalize(value: string): string {
