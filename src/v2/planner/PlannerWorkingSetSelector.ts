@@ -303,18 +303,34 @@ function buildQuarantinedActions(input: PlannerWorkingSetSelectorInput): Planner
 function quarantinedActionsFromUncertainty(signals: readonly string[] | undefined): PlannerQuarantinedAction[] {
   const actions: PlannerQuarantinedAction[] = [];
   for (const signal of signals ?? []) {
-    const match = signal.match(/^repeated_no_progress_transition:([^:]+):([^:]+):(\d+)$/);
-    if (!match) continue;
-    const [, tool, refId, countText] = match;
-    const count = Number.parseInt(countText, 10);
-    if (!Number.isFinite(count) || count < 3) continue;
-    actions.push({
-      refId,
-      tool,
-      failureKind: 'no_progress_loop',
-      retryable: false,
-      persistence: 'persistent',
-    });
+    const noProgressMatch = signal.match(/^repeated_no_progress_transition:([^:]+):([^:]+):(\d+)$/);
+    if (noProgressMatch) {
+      const [, tool, refId, countText] = noProgressMatch;
+      const count = Number.parseInt(countText, 10);
+      if (!Number.isFinite(count) || count < 3) continue;
+      actions.push({
+        refId,
+        tool,
+        failureKind: 'no_progress_loop',
+        retryable: false,
+        persistence: 'persistent',
+      });
+      continue;
+    }
+
+    const repeatedReadMatch = signal.match(/^repeated_value_preview:(get|inspect_region):([^:]+):(\d+)$/);
+    if (repeatedReadMatch) {
+      const [, tool, refId, countText] = repeatedReadMatch;
+      const count = Number.parseInt(countText, 10);
+      if (!Number.isFinite(count) || count < 3) continue;
+      actions.push({
+        refId,
+        tool,
+        failureKind: 'repeated_read_loop',
+        retryable: false,
+        persistence: 'persistent',
+      });
+    }
   }
   return actions;
 }
@@ -340,6 +356,15 @@ function isQuarantinedForTool(refId: string, tool: 'click' | 'type' | 'select', 
   );
 }
 
+function isQuarantinedForRead(refId: string, quarantinedActions: PlannerQuarantinedAction[]): boolean {
+  return quarantinedActions.some(action =>
+    action.refId === refId
+    && (action.tool === 'get' || action.tool === 'inspect_region')
+    && action.retryable === false
+    && action.persistence === 'persistent'
+  );
+}
+
 function buildActionSurface(
   projection: OperationalProjection,
   selectedSet: Set<string>,
@@ -355,6 +380,7 @@ function buildActionSurface(
   const readableSet = new Set(
     projection.readables
       .filter(item => selectedSet.has(item.refId))
+      .filter(item => !isQuarantinedForRead(item.refId, quarantinedActions))
       .filter(item => Boolean(item.name?.trim() || item.text?.trim()))
       .map(item => item.refId),
   );

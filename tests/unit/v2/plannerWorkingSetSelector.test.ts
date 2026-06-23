@@ -529,3 +529,50 @@ test('PlannerWorkingSetSelector quarantines repeated no-progress action from mat
     && action.failureKind === 'no_progress_loop'
   ));
 });
+
+test('PlannerWorkingSetSelector quarantines repeated identical read from readable lane only', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_repeated_row',
+      role: 'row',
+      name: 'Castle Mountains National Monument, California, USA',
+      text: 'Castle Mountains National Monument, California, USA',
+      visibility: 'visible',
+      actionability: 'ready',
+      capabilities: { clickable: false, typeable: false, selectable: false, readable: true },
+    }),
+    makeRef({
+      refId: 'ref_alternative',
+      role: 'text',
+      name: 'Nearby facts panel',
+      text: 'Nearby facts panel',
+      visibility: 'visible',
+      actionability: 'ready',
+      capabilities: { clickable: false, typeable: false, selectable: false, readable: true },
+    }),
+    makeRef({
+      refId: 'ref_search',
+      role: 'textbox',
+      name: 'Search',
+      visibility: 'visible',
+      actionability: 'ready',
+      capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 6, maxSecondaryRefs: 6 }).select({
+    goal: 'Find concrete basic information about Castle Mountains National Monument',
+    projection,
+    uncertaintySignals: ['repeated_value_preview:get:ref_repeated_row:3'],
+  });
+
+  assert.equal(selection.workingSet.actionSurface.readableRefs.includes('ref_repeated_row'), false);
+  assert.ok(selection.workingSet.actionSurface.readableRefs.includes('ref_alternative'));
+  assert.ok(selection.workingSet.actionSurface.typeableRefs.includes('ref_search'));
+  assert.ok(selection.current.refs.ref_repeated_row);
+  assert.ok(selection.workingSet.quarantinedActions.some(action =>
+    action.refId === 'ref_repeated_row'
+    && action.tool === 'get'
+    && action.failureKind === 'repeated_read_loop'
+  ));
+});
