@@ -92,6 +92,21 @@ test('validateAnswerAgainstContract requires concrete fields for basic informati
   assert.ok(validation.reasons.includes('missing_concrete_basic_information'));
 });
 
+test('validateAnswerAgainstContract rejects basic information answer missing specific location from evidence', () => {
+  const contract = inferAnswerContract('Find out its Basic Information');
+  const validation = validateAnswerAgainstContract(
+    'Castle Mountains National Monument is a national reserve in California. It is open 24 hours and has a rating of 4.4.',
+    contract,
+    {
+      evidenceText:
+        'Castle Mountains National Monument Barstow, California, USA Open 24 hours 4.4 National reserve Desert grassland and rock spires',
+    },
+  );
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('missing_basic_information_location'));
+});
+
 test('validateAnswerAgainstContract rejects one pronunciation variant when evidence contains UK and US variants', () => {
   const contract = inferAnswerContract('Look up the pronunciation and definition of the word "sustainability"');
   const validation = validateAnswerAgainstContract(

@@ -1,6 +1,6 @@
 import { inferAnswerContract, validateAnswerAgainstContract } from './AnswerContract';
 import { ProjectionService } from '../brain1/ProjectionService';
-import { buildFinalizationEvidence } from './FinalizationEvidence';
+import { buildFinalizationEvidence, type ReadEvidenceHistoryEntry } from './FinalizationEvidence';
 import { ContinuityGraph } from '../graph/ContinuityGraph';
 import type { ContinuityGraphSnapshot } from '../graph/types';
 import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
@@ -60,6 +60,7 @@ export class V2AgentLoop {
       let deadStateEvidence: DeadStateEvidence | undefined;
       let runtimeUncertainty: RuntimeUncertainty | undefined;
       let lastSuccessfulEvidenceValue: string | undefined;
+      let readEvidenceHistory: ReadEvidenceHistoryEntry[] = [];
       let answerFeedback: PlannerAnswerFeedback | undefined;
 
       for (let stepIndex = 0; stepIndex < maxSteps; stepIndex += 1) {
@@ -145,7 +146,7 @@ export class V2AgentLoop {
         if (plannerResult.output.done === true) {
           const value = plannerResult.output.val ?? '';
           const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(input.goal), {
-            evidenceText: lastSuccessfulEvidenceValue,
+            evidenceText: buildValidationEvidence(lastSuccessfulEvidenceValue ?? '', readEvidenceHistory),
           });
           if (!answerValidation.ok) {
             if (stepIndex < maxSteps - 1) {
@@ -205,6 +206,7 @@ export class V2AgentLoop {
             graphSnapshot = graph.applyTransition(transitionEvidence);
           }
           lastSuccessfulEvidenceValue = successfulToolEvidencePreview(lastResult) ?? lastSuccessfulEvidenceValue;
+          readEvidenceHistory = appendReadEvidenceHistory(readEvidenceHistory, lastResult);
           const progressSignals = progressMemory.record(lastResult);
 
           if (!lastResult.success) {
@@ -264,7 +266,7 @@ export class V2AgentLoop {
       if (lastSuccessfulEvidenceValue) {
         const finalizationResult = await this.attemptFinalization(
           harness, plannerClient, observation, graphSnapshot,
-          input.goal, lastSuccessfulEvidenceValue, metrics,
+          input.goal, lastSuccessfulEvidenceValue, readEvidenceHistory, metrics,
         );
         if (finalizationResult) return finalizationResult;
 
@@ -349,6 +351,7 @@ export class V2AgentLoop {
     graphSnapshot: ContinuityGraphSnapshot | undefined,
     goal: string,
     evidenceValue: string,
+    readEvidenceHistory: ReadEvidenceHistoryEntry[],
     metrics: { plannerCalls: number; inputTokens: number; outputTokens: number; plannerDurationMs: number; toolExecutions: number },
   ): Promise<V2AgentLoopResult | undefined> {
     const projection = this.projectionService.project(observation, graphSnapshot);
@@ -356,7 +359,9 @@ export class V2AgentLoop {
       goal,
       projection,
       lastSuccessfulEvidenceValue: evidenceValue,
+      readEvidenceHistory,
     });
+    const validationEvidence = buildValidationEvidence(evidenceValue, readEvidenceHistory);
     const finalizationInput = this.plannerInputComposer.compose({
       episodeId: `episode_finalization_${observation.observationId}`,
       goal: `${goal}\n\nFinalization evidence:\n${finalizationEvidence}\n\nReturn done with the best answer if the evidence answers the goal. Otherwise escalate with a concise reason. Do not return a plan.`,
@@ -391,7 +396,7 @@ export class V2AgentLoop {
       if (result.output.done === true) {
         const value = result.output.val ?? evidenceValue;
         const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(goal), {
-          evidenceText: evidenceValue,
+          evidenceText: validationEvidence,
         });
         if (!answerValidation.ok) {
           return await this.complete(harness, {
@@ -452,6 +457,39 @@ function recordCompactPlannerTelemetry(input: {
 
 function appendBoundedFailure(existing: FailureEvidence[], next: FailureEvidence): FailureEvidence[] {
   return [...existing, next].slice(-8);
+}
+
+function appendReadEvidenceHistory(
+  existing: ReadEvidenceHistoryEntry[],
+  result: V2ToolResult,
+): ReadEvidenceHistoryEntry[] {
+  if (!result.success || !READ_TOOL_KINDS.has(result.kind)) {
+    return existing;
+  }
+
+  const text = richResultEvidenceText(result.value);
+  if (!text) {
+    return existing;
+  }
+
+  const entry: ReadEvidenceHistoryEntry = {
+    kind: result.kind,
+    targetRef: result.targetRef,
+    text,
+  };
+  const normalized = normalizeProgressValue(`${entry.kind}:${entry.targetRef ?? 'global'}:${entry.text}`);
+  const withoutDuplicate = existing.filter(previous =>
+    normalizeProgressValue(`${previous.kind}:${previous.targetRef ?? 'global'}:${previous.text}`) !== normalized
+  );
+
+  return [...withoutDuplicate, entry].slice(-READ_EVIDENCE_HISTORY_LIMIT);
+}
+
+function buildValidationEvidence(lastEvidence: string, readEvidenceHistory: ReadEvidenceHistoryEntry[]): string {
+  return [
+    lastEvidence,
+    ...readEvidenceHistory.map(entry => entry.text),
+  ].filter(text => text.trim().length > 0).join('\n');
 }
 
 function formatErrorMessage(error: unknown): string {
@@ -520,6 +558,7 @@ function numberOrZero(value: unknown): number {
 const READ_TOOL_KINDS = new Set(['get', 'inspect_region', 'search_page']);
 const MUTATION_EVIDENCE_KINDS = new Set(['click', 'type', 'select', 'press', 'navigate']);
 const PROGRESS_HISTORY_LIMIT = 8;
+const READ_EVIDENCE_HISTORY_LIMIT = 4;
 const REPEAT_SIGNAL_THRESHOLD = 2;
 
 interface ActionProgressEntry {
@@ -706,6 +745,30 @@ function successfulToolEvidencePreview(result: V2ToolResult): string | undefined
   return undefined;
 }
 
+function richResultEvidenceText(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    return compactRichEvidence(value);
+  }
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const record = value as Record<string, unknown>;
+  const parts: string[] = [];
+  for (const key of ['value', 'text', 'inputValue', 'url'] as const) {
+    const part = record[key];
+    if (typeof part === 'string' && part.trim()) {
+      parts.push(part);
+    }
+  }
+
+  if (Array.isArray(record.preview)) {
+    parts.push(...record.preview.filter((part): part is string => typeof part === 'string' && part.trim().length > 0));
+  }
+
+  return parts.length > 0 ? compactRichEvidence(parts.join(' ')) : undefined;
+}
+
 function previewResultValue(value: unknown): string | undefined {
   if (typeof value === 'string') {
     return compactResultPreview(value);
@@ -748,4 +811,8 @@ function previewToolTarget(target: V2ToolResult['target']): string | undefined {
 
 function compactResultPreview(value: string): string {
   return value.replace(/\s+/g, ' ').trim().slice(0, 500);
+}
+
+function compactRichEvidence(value: string): string {
+  return value.replace(/\s+/g, ' ').trim().slice(0, 4_000);
 }

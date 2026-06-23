@@ -352,6 +352,60 @@ test('V2AgentLoop replans when done output omits a pronunciation variant present
   assert.deepEqual(planner.inputs[2].answerFeedback?.missingDetails, ['missing_pronunciation_variant_us']);
 });
 
+test('V2AgentLoop validates done output against accumulated read history, not only the latest read', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    {
+      done: true,
+      val: 'UK: /səˌsteɪ.nəˈbɪl.ə.ti/; definition: the quality of being able to continue over a period of time.',
+    },
+    {
+      done: true,
+      val: 'UK: /səˌsteɪ.nəˈbɪl.ə.ti/, US: /səˌsteɪ.nəˈbɪl.ə.t̬i/; definition: the quality of being able to continue over a period of time.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      traceStepId: 'fake_get_rich_pronunciation',
+      value: {
+        text: 'sustainability noun uk /səˌsteɪ.nəˈbɪl.ə.ti/ us /səˌsteɪ.nəˈbɪl.ə.t̬i/ definition: the quality of being able to continue over a period of time',
+      },
+    },
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      traceStepId: 'fake_get_short_pronunciation',
+      value: {
+        text: 'sustainability noun uk /səˌsteɪ.nəˈbɪl.ə.ti/ definition: the quality of being able to continue over a period of time',
+      },
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/dictionary',
+    goal: 'Look up the pronunciation and definition of the word "sustainability"',
+    maxSteps: 4,
+  });
+
+  assert.equal(result.success, true);
+  assert.match(result.value, /US:/);
+  assert.equal(planner.inputs.length, 4);
+  assert.deepEqual(planner.inputs[3].answerFeedback?.missingDetails, ['missing_pronunciation_variant_us']);
+});
+
 test('V2AgentLoop records planner artifacts for injected planner clients', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const harness = new FakeHarness();
@@ -973,6 +1027,47 @@ test('V2AgentLoop attempts finalization when useful evidence exists at max steps
   assert.equal(planner.inputs.length, 3);
   assert.match(planner.inputs[2].goal, /Finalization evidence:/);
   assert.match(planner.inputs[2].goal, /Readable evidence:/);
+});
+
+test('V2AgentLoop finalization preserves earlier rich read evidence beyond compact previews', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { escalate: 'dead_end', reason: 'not enough evidence' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const lateMarker = 'EARLIER-RICH-READ-DETAIL-7741';
+  dispatcher.results.push(
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      value: { text: `${'first read detail '.repeat(70)}${lateMarker}` },
+      traceStepId: 'tool_get_rich',
+    },
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      value: { text: 'Second shorter read without the late detail.' },
+      traceStepId: 'tool_get_short',
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Report the earlier rich read detail',
+    maxSteps: 2,
+  });
+
+  assert.equal(planner.inputs.length, 3);
+  assert.match(planner.inputs[2].goal, new RegExp(lateMarker));
 });
 
 test('V2AgentLoop falls through to max_steps_exhausted when finalization planner refuses to finish', async () => {

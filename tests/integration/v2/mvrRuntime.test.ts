@@ -454,6 +454,28 @@ test('BrowseGentV2Harness read-only tools expose bounded operational evidence an
   }
 });
 
+test('BrowseGentV2Harness search_page preserves richer match text beyond compact preview', async () => {
+  const traceDir = await freshTraceDir('search_page_rich_evidence');
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_search_page_rich_evidence',
+    traceDir,
+  });
+
+  try {
+    await harness.open(fixtureUrl('search-evidence.html'));
+
+    const searchResult = await harness.searchPage('needle');
+
+    assert.equal(searchResult.success, true);
+    assert.equal(searchResult.value?.matches, 4);
+    assert.equal(searchResult.value?.preview.length, 3);
+    assert.match((searchResult.value as { text?: string } | undefined)?.text ?? '', /LATE-SEARCH-EVIDENCE-6382/);
+  } finally {
+    await harness.close();
+  }
+});
+
 test('BrowseGentV2Harness explicit read tools preserve late evidence beyond compact planner labels', async () => {
   const traceDir = await freshTraceDir('long_read_tools');
   const harness = new BrowseGentV2Harness({

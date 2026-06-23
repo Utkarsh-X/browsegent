@@ -138,6 +138,23 @@ test('golden references do not count partial token overlap as strict success', (
   assert.equal(verdict.needsManualReview, true);
 });
 
+test('golden references accept complete answers with required phonetic evidence in different wording', () => {
+  const verdict = evaluateWebVoyagerResult(
+    task('Cambridge Dictionary--0', {
+      type: 'golden',
+      answer: 'UK: /sÉ™ËŒsteÉª.nÉ™ËˆbÉªl.É™.ti/, US: /sÉ™ËŒsteÉª.nÉ™ËˆbÉªl.É™.tÌ¬i/; the quality of being able to continue over a period of time',
+    }),
+    result({
+      passed: true,
+      value: 'The pronunciation of sustainability is /sÉ™ËŒsteÉª.nÉ™ËˆbÉªl.É™.ti/ (UK) and /sÉ™ËŒsteÉª.nÉ™ËˆbÉªl.É™.tÌ¬i/ (US). It means the quality of being able to continue over a period of time.',
+    }),
+  );
+
+  assert.equal(verdict.referenceMatchType, 'semantic_subset');
+  assert.equal(verdict.strictScore, 1);
+  assert.equal(verdict.needsManualReview, false);
+});
+
 test('possible references still reject unrelated answers', () => {
   const verdict = evaluateWebVoyagerResult(
     task('ArXiv--0', { type: 'possible', answer: 'Any paper related to quantum computing (latest)' }),

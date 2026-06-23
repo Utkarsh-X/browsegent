@@ -66,6 +66,13 @@ export function validateAnswerAgainstContract(
   if (contract.requiredDetails.includes('concrete_basic_information') && !hasConcreteBasicInformation(compact)) {
     reasons.push('missing_concrete_basic_information');
   }
+  if (
+    contract.requiredDetails.includes('concrete_basic_information')
+    && evidenceContainsSpecificLocation(options.evidenceText)
+    && !answerIncludesEvidenceLocation(compact, options.evidenceText)
+  ) {
+    reasons.push('missing_basic_information_location');
+  }
   // TODO: Validate requiresRankingEvidence when ranking evidence is available in finalization context.
   return { ok: reasons.length === 0, reasons };
 }
@@ -122,6 +129,33 @@ function hasConcreteBasicInformation(value: string): boolean {
     /\b(price|cost|fee|ticket)\b/i,
   ];
   return signals.filter(signal => signal.test(value)).length >= 2;
+}
+
+function evidenceContainsSpecificLocation(evidenceText: string | undefined): boolean {
+  return extractSpecificLocations(evidenceText ?? '').length > 0;
+}
+
+function answerIncludesEvidenceLocation(answer: string, evidenceText: string | undefined): boolean {
+  const answerTokens = new Set(tokenizePlace(answer));
+  return extractSpecificLocations(evidenceText ?? '').some(location => {
+    const tokens = tokenizePlace(location);
+    if (tokens.length === 0) return false;
+    return tokens.every(token => answerTokens.has(token));
+  });
+}
+
+function extractSpecificLocations(value: string): string[] {
+  return [...value.matchAll(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*(?:[A-Z][a-z]+|[A-Z]{2})(?:,\s*(?:USA|United States|United States of America))?/g)]
+    .map(match => match[0])
+    .filter(location => tokenizePlace(location).length >= 2);
+}
+
+function tokenizePlace(value: string): string[] {
+  return value
+    .toLowerCase()
+    .split(/[^a-z0-9]+/i)
+    .map(token => token.trim())
+    .filter(token => token.length >= 3 && !['usa', 'united', 'states', 'america'].includes(token));
 }
 
 function inferRequiredDetails(normalizedGoal: string): AnswerRequiredDetail[] {

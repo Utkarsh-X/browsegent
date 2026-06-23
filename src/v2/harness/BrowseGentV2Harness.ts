@@ -171,7 +171,7 @@ export class BrowseGentV2Harness {
     }));
   }
 
-  async searchPage(pattern: string): Promise<V2ToolResult<{ matches: number; preview: string[] }>> {
+  async searchPage(pattern: string): Promise<V2ToolResult<{ matches: number; preview: string[]; text?: string }>> {
     const before = this.assertOpened();
     const stepId = this.traceStore.recordActionStart({
       kind: 'search_page',
@@ -187,18 +187,23 @@ export class BrowseGentV2Harness {
         .filter(line => line.toLowerCase().includes(lowerPattern))
         .slice(0, 3)
         .map(line => compactText(line, 240));
+      const text = lines
+        .filter(line => line.toLowerCase().includes(lowerPattern))
+        .slice(0, 12)
+        .map(line => compactText(line, 500))
+        .join('\n');
       const matches = countLiteralMatches(bodyText, pattern);
-      const result: V2ToolResult<{ matches: number; preview: string[] }> = {
+      const result: V2ToolResult<{ matches: number; preview: string[]; text?: string }> = {
         success: true,
         kind: 'search_page',
-        value: { matches, preview },
+        value: { matches, preview, text: text || undefined },
         traceStepId: stepId,
       };
 
       this.traceStore.recordActionEnd(stepId, result);
       return result;
     } catch (error) {
-      const result = this.failureResult<{ matches: number; preview: string[] }>('search_page', undefined, stepId, mapExecutionError(error));
+      const result = this.failureResult<{ matches: number; preview: string[]; text?: string }>('search_page', undefined, stepId, mapExecutionError(error));
       this.traceStore.recordActionEnd(stepId, result);
       return result;
     }

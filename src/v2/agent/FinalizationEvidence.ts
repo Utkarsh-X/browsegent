@@ -5,17 +5,40 @@ export interface FinalizationEvidenceInput {
   goal: string;
   projection: OperationalProjection;
   lastSuccessfulEvidenceValue?: string;
+  readEvidenceHistory?: ReadEvidenceHistoryEntry[];
+  maxReadEvidenceItems?: number;
   maxReadableItems?: number;
   maxTextLength?: number;
 }
 
+export interface ReadEvidenceHistoryEntry {
+  kind: string;
+  targetRef?: string;
+  text: string;
+}
+
 export function buildFinalizationEvidence(input: FinalizationEvidenceInput): string {
   const maxReadableItems = input.maxReadableItems ?? 12;
+  const maxReadEvidenceItems = input.maxReadEvidenceItems ?? 4;
   const maxTextLength = input.maxTextLength ?? 2_000;
   const sections: string[] = [];
 
   if (input.lastSuccessfulEvidenceValue?.trim()) {
     sections.push(`Last successful evidence: ${compactText(input.lastSuccessfulEvidenceValue, maxTextLength)}`);
+  }
+
+  const readEvidence = (input.readEvidenceHistory ?? [])
+    .filter(entry => entry.text.trim().length > 0)
+    .slice(-maxReadEvidenceItems);
+
+  if (readEvidence.length > 0) {
+    sections.push([
+      'Read result history:',
+      ...readEvidence.map((entry, index) => {
+        const ref = entry.targetRef ? ` ${entry.targetRef}` : '';
+        return `- read_${index + 1} [${entry.kind}${ref}]: ${compactText(entry.text, maxTextLength)}`;
+      }),
+    ].join('\n'));
   }
 
   const contract = inferAnswerContract(input.goal);

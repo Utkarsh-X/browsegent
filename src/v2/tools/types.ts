@@ -12,7 +12,7 @@ export interface V2ToolRuntime {
   navigate(url: string): Promise<V2ToolResult<{ url: string }>>;
   get(refId: string): Promise<V2ToolResult<{ text: string; value?: string }>>;
   inspectRegion(refId: string): Promise<V2ToolResult<{ refId: string; text: string; nearbyRefs: string[] }>>;
-  searchPage(pattern: string): Promise<V2ToolResult<{ matches: number; preview: string[] }>>;
+  searchPage(pattern: string): Promise<V2ToolResult<{ matches: number; preview: string[]; text?: string }>>;
   scroll(direction?: 'down' | 'up'): Promise<V2ToolResult<{ direction: 'down' | 'up' }>>;
   waitForState(input: { pattern?: string; timeout?: number }): Promise<V2ToolResult<{ matched: boolean }>>;
   press(key: PlannerPressKey): Promise<V2ToolResult<{ key: PlannerPressKey }>>;

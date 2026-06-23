@@ -117,6 +117,13 @@ function classifyReferenceMatch(
     return 'semantic_subset';
   }
 
+  if (
+    referenceType === 'golden'
+    && normalizedCandidates.some(candidate => hasRequiredPhoneticEvidence(normalizedValue, candidate))
+  ) {
+    return 'semantic_subset';
+  }
+
   if (normalizedCandidates.some(candidate => hasTokenOverlap(normalizedValue, candidate, 0.6))) {
     return 'partial';
   }
@@ -144,6 +151,19 @@ function isStrictReferencePass(
 
 function hasConcreteAnswerSignal(value: string): boolean {
   return /\b(arxiv:\d{4}\.\d+|[a-z0-9_.-]+\/[a-z0-9_.-]+|\d+(?:\.\d+)?|https?:\/\/)\b/i.test(value);
+}
+
+function hasRequiredPhoneticEvidence(value: string, reference: string): boolean {
+  const phoneticSegments = extractSlashDelimitedSegments(reference);
+  if (phoneticSegments.length === 0) return false;
+  return phoneticSegments.every(segment => value.includes(segment))
+    && hasTokenOverlap(value, reference, 0.6);
+}
+
+function extractSlashDelimitedSegments(value: string): string[] {
+  return [...value.matchAll(/\/([^/]{2,120})\//g)]
+    .map(match => match[0].trim())
+    .filter(Boolean);
 }
 
 function hasTokenOverlap(left: string, right: string, threshold: number): boolean {
