@@ -145,7 +145,7 @@ export class V2PlannerClient {
       if (attempt === 1) {
         const guidance = buildActionCompatibilityGuidance(
           lastErrors,
-          collectValidationContext(input.plannerInput),
+          input.plannerInput,
         );
         const feedbackSuffix = guidance ? `\nChoose a compatible ref:\n${guidance}` : '';
         userMessage = `${baseUserMessage}\n\n${buildV2PlannerValidationFeedback(lastErrors)}${feedbackSuffix}`;
@@ -153,6 +153,39 @@ export class V2PlannerClient {
     }
 
     const durationMs = Date.now() - startedAt;
+    const rescuedOutput = buildReadableOnlyClickRescue(
+      lastRawText,
+      input.plannerInput,
+      lastErrors,
+    );
+    if (rescuedOutput) {
+      const result: V2PlannerCallResult = {
+        output: rescuedOutput,
+        rawText: lastRawText,
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+        durationMs,
+      };
+
+      this.recordPlannerOutput(input.plannerInput.episodeId, {
+        attempts: 2,
+        rawText: lastRawText,
+        validation: { ok: true, errors: [] },
+        output: rescuedOutput,
+        recovery: {
+          kind: 'readable_only_click_to_get',
+          sourceErrors: lastErrors,
+        },
+        metrics: {
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
+          durationMs,
+        },
+      });
+
+      return result;
+    }
+
     this.recordPlannerOutput(input.plannerInput.episodeId, {
       attempts: 2,
       rawText: lastRawText,
@@ -201,30 +234,140 @@ export class V2PlannerClient {
 
 function buildActionCompatibilityGuidance(
   errors: string[],
-  context: PlannerOutputValidationContext,
+  input: PlannerInput,
 ): string | undefined {
-  const surface = context.actionSurface;
+  const surface = input.workingSet?.actionSurface;
   if (!surface) return undefined;
 
   const lines: string[] = [];
   for (const error of errors) {
     const typeMatch = error.match(/ref "([^"]+)" is not compatible with tool "type"/);
-    if (typeMatch && surface.typeableRefs.length > 0) {
-      lines.push(`Typeable refs available: ${surface.typeableRefs.slice(0, 5).join(', ')}`);
+    if (typeMatch) {
+      lines.push(formatInvalidRefDetail(typeMatch[1], input, surface));
+      if (surface.typeableRefs.length > 0) {
+        lines.push(`Typeable refs available: ${formatRefAlternatives(surface.typeableRefs, input)}`);
+      }
     }
 
     const clickMatch = error.match(/ref "([^"]+)" is not compatible with tool "(click|close)"/);
-    if (clickMatch && surface.clickableRefs.length > 0) {
-      lines.push(`Clickable refs available: ${surface.clickableRefs.slice(0, 5).join(', ')}`);
+    if (clickMatch) {
+      const invalidRef = clickMatch[1];
+      lines.push(formatInvalidRefDetail(invalidRef, input, surface));
+      if (isReadableOnlyRef(invalidRef, surface)) {
+        lines.push(
+          `Ref ${invalidRef} is readable-only evidence, not a click target. If its text answers the goal, return done; otherwise use get("${invalidRef}") to extract it before answering.`,
+        );
+      }
+      if (surface.clickableRefs.length > 0) {
+        lines.push(`Clickable refs available: ${formatRefAlternatives(surface.clickableRefs, input)}`);
+      }
     }
 
     const selectMatch = error.match(/ref "([^"]+)" is not compatible with tool "select"/);
-    if (selectMatch && surface.selectableRefs.length > 0) {
-      lines.push(`Selectable refs available: ${surface.selectableRefs.slice(0, 5).join(', ')}`);
+    if (selectMatch) {
+      lines.push(formatInvalidRefDetail(selectMatch[1], input, surface));
+      if (surface.selectableRefs.length > 0) {
+        lines.push(`Selectable refs available: ${formatRefAlternatives(surface.selectableRefs, input)}`);
+      }
     }
   }
 
   return lines.length > 0 ? [...new Set(lines)].join('\n') : undefined;
+}
+
+function buildReadableOnlyClickRescue(
+  rawText: string,
+  input: PlannerInput,
+  errors: string[],
+): PlannerOutput | undefined {
+  const surface = input.workingSet?.actionSurface;
+  if (!surface) return undefined;
+
+  const parsed = robustJsonParse(rawText);
+  if (!parsed || !Array.isArray(parsed.plan)) return undefined;
+
+  const firstStep = parsed.plan[0];
+  if (!firstStep || typeof firstStep !== 'object') return undefined;
+
+  const tool = (firstStep as { tool?: unknown }).tool;
+  const ref = (firstStep as { ref?: unknown }).ref;
+  if ((tool !== 'click' && tool !== 'close') || typeof ref !== 'string') return undefined;
+  if (!input.current.refs?.[ref]) return undefined;
+  if (!isReadableOnlyRef(ref, surface)) return undefined;
+
+  const compatibilityError = `ref "${ref}" is not compatible with tool "${tool}"`;
+  if (!errors.some(error => error.includes(compatibilityError))) return undefined;
+
+  return {
+    plan: [{ tool: 'get', ref }],
+    confidence: 'low',
+  };
+}
+
+function formatInvalidRefDetail(
+  refId: string | undefined,
+  input: PlannerInput,
+  surface: NonNullable<PlannerOutputValidationContext['actionSurface']>,
+): string {
+  if (!refId) return 'Invalid ref detail: unknown';
+  const ref = input.current.refs?.[refId];
+  if (!ref) return `Invalid ref detail: ${refId} is not present in current refs`;
+  const facts = [
+    `role=${ref.role ?? 'unknown'}`,
+    `kind=${ref.kind ?? 'unknown'}`,
+    `tools=${formatRefTools(refId, surface)}`,
+  ];
+  const label = firstNonEmpty(ref.name, ref.text);
+  if (label) {
+    facts.push(`label="${truncateForGuidance(label, 120)}"`);
+  }
+  return `Invalid ref detail: ${refId} ${facts.join(' ')}`;
+}
+
+function formatRefAlternatives(refIds: string[], input: PlannerInput): string {
+  return refIds.slice(0, 5).map(refId => formatRefAlternative(refId, input)).join(', ');
+}
+
+function formatRefAlternative(refId: string, input: PlannerInput): string {
+  const ref = input.current.refs?.[refId];
+  if (!ref) return refId;
+  const label = firstNonEmpty(ref.name, ref.text);
+  const role = ref.role ?? ref.kind ?? 'ref';
+  if (!label) return `${refId} (${role})`;
+  return `${refId} (${role} "${truncateForGuidance(label, 80)}")`;
+}
+
+function formatRefTools(
+  refId: string,
+  surface: NonNullable<PlannerOutputValidationContext['actionSurface']>,
+): string {
+  const tools: string[] = [];
+  if (surface.clickableRefs.includes(refId)) tools.push('clickable');
+  if (surface.typeableRefs.includes(refId)) tools.push('typeable');
+  if (surface.selectableRefs.includes(refId)) tools.push('selectable');
+  if (surface.readableRefs.includes(refId)) tools.push('readable');
+  if (surface.ambiguousRefs.includes(refId)) tools.push('ambiguous');
+  return tools.length > 0 ? tools.join('|') : 'none';
+}
+
+function isReadableOnlyRef(
+  refId: string | undefined,
+  surface: NonNullable<PlannerOutputValidationContext['actionSurface']>,
+): boolean {
+  if (!refId) return false;
+  return surface.readableRefs.includes(refId)
+    && !surface.clickableRefs.includes(refId)
+    && !surface.typeableRefs.includes(refId)
+    && !surface.selectableRefs.includes(refId);
+}
+
+function firstNonEmpty(...values: Array<string | undefined>): string | undefined {
+  return values.find(value => typeof value === 'string' && value.trim().length > 0)?.trim();
+}
+
+function truncateForGuidance(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, Math.max(0, maxLength - 3))}...`;
 }
 
 function collectValidationContext(input: PlannerInput): PlannerOutputValidationContext {

@@ -566,6 +566,197 @@ test('V2PlannerClient includes action-compatible ref alternatives in retry feedb
   assert.match(providerUsers[1], /ref_input/);
 });
 
+test('V2PlannerClient gives labeled recovery guidance for click-on-readable-only evidence', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_click_readable_guidance');
+  plannerInput.goal = 'Find the basic information for Castle Mountains National Monument';
+  plannerInput.current.refs = {
+    ref_result_row: {
+      refId: 'ref_result_row',
+      kind: 'generic',
+      role: 'row',
+      name: 'Castle Mountains National Monument, California, USA',
+      text: 'Castle Mountains National Monument, California, USA',
+      visibility: 'visible',
+      actionability: 'ready',
+      state: 'live',
+      confidence: 1,
+      score: 115,
+    },
+    ref_search_box: {
+      refId: 'ref_search_box',
+      kind: 'input',
+      role: 'combobox',
+      name: 'Castle Mountains National Monument',
+      text: 'Castle Mountains National Monument',
+      visibility: 'visible',
+      actionability: 'ready',
+      state: 'live',
+      confidence: 1,
+      score: 109,
+    },
+    ref_zoom_out: {
+      refId: 'ref_zoom_out',
+      kind: 'button',
+      role: 'button',
+      name: 'Zoom out',
+      text: 'Zoom out',
+      visibility: 'visible',
+      actionability: 'ready',
+      state: 'live',
+      confidence: 1,
+      score: 80,
+    },
+  };
+  plannerInput.current.interactions = [
+    { refId: 'ref_result_row', rank: 1 },
+    { refId: 'ref_search_box', rank: 2 },
+    { refId: 'ref_zoom_out', rank: 3 },
+  ];
+  plannerInput.current.readables = [
+    { refId: 'ref_result_row', rank: 1 },
+    { refId: 'ref_search_box', rank: 2 },
+  ];
+  plannerInput.workingSet = {
+    mode: 'act',
+    modeReason: 'test',
+    primaryRefs: [],
+    secondaryRefs: [],
+    readableEvidence: [
+      {
+        refId: 'ref_result_row',
+        text: 'Castle Mountains National Monument, California, USA',
+        reasons: ['goal_keyword_match'],
+      },
+    ],
+    navigationRefs: [],
+    actionSurface: {
+      clickableRefs: ['ref_search_box', 'ref_zoom_out'],
+      typeableRefs: ['ref_search_box'],
+      selectableRefs: [],
+      readableRefs: ['ref_result_row', 'ref_search_box'],
+      ambiguousRefs: [],
+    },
+    changedRefs: {
+      appearedCount: 0,
+      weakenedCount: 0,
+      preservedCount: 0,
+      topRefs: [],
+      omittedCount: 0,
+    },
+    failedRefs: [],
+    quarantinedActions: [],
+    regionSummaries: [],
+    omitted: {
+      observedRefCount: 3,
+      selectedRefCount: 3,
+      droppedRefCount: 0,
+      droppedByReason: {},
+    },
+  };
+
+  const providerUsers: string[] = [];
+  const responses = [
+    '{"plan":[{"tool":"click","ref":"ref_result_row"}],"confidence":"medium"}',
+    '{"plan":[{"tool":"get","ref":"ref_result_row"}],"confidence":"high"}',
+  ];
+  const client = new V2PlannerClient({
+    provider: async (_system, user) => {
+      providerUsers.push(user);
+      return {
+        text: responses.shift() ?? '{}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.equal(result.output.plan?.[0].tool, 'get');
+  assert.equal(result.output.plan?.[0].ref, 'ref_result_row');
+  assert.equal(providerUsers.length, 2);
+  assert.match(providerUsers[1], /Invalid ref detail: ref_result_row/);
+  assert.match(providerUsers[1], /role=row/);
+  assert.match(providerUsers[1], /readable-only evidence/i);
+  assert.match(providerUsers[1], /use get\("ref_result_row"\)/i);
+  assert.match(providerUsers[1], /ref_search_box.*Castle Mountains National Monument/);
+  assert.match(providerUsers[1], /ref_zoom_out.*Zoom out/);
+});
+
+test('V2PlannerClient rescues repeated click-on-readable-only output as safe get action', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_click_readable_rescue');
+  plannerInput.current.refs = {
+    ref_result_row: {
+      refId: 'ref_result_row',
+      kind: 'generic',
+      role: 'row',
+      name: 'Castle Mountains National Monument, California, USA',
+      text: 'Castle Mountains National Monument, California, USA',
+      visibility: 'visible',
+      actionability: 'ready',
+      state: 'live',
+      confidence: 1,
+      score: 115,
+    },
+  };
+  plannerInput.current.interactions = [{ refId: 'ref_result_row', rank: 1 }];
+  plannerInput.current.readables = [{ refId: 'ref_result_row', rank: 1 }];
+  plannerInput.workingSet = {
+    mode: 'act',
+    modeReason: 'test',
+    primaryRefs: [],
+    secondaryRefs: [],
+    readableEvidence: [
+      {
+        refId: 'ref_result_row',
+        text: 'Castle Mountains National Monument, California, USA',
+        reasons: ['goal_keyword_match'],
+      },
+    ],
+    navigationRefs: [],
+    actionSurface: {
+      clickableRefs: [],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: ['ref_result_row'],
+      ambiguousRefs: [],
+    },
+    changedRefs: {
+      appearedCount: 0,
+      weakenedCount: 0,
+      preservedCount: 0,
+      topRefs: [],
+      omittedCount: 0,
+    },
+    failedRefs: [],
+    quarantinedActions: [],
+    regionSummaries: [],
+    omitted: {
+      observedRefCount: 1,
+      selectedRefCount: 1,
+      droppedRefCount: 0,
+      droppedByReason: {},
+    },
+  };
+
+  const client = new V2PlannerClient({
+    provider: async () => ({
+      text: '{"plan":[{"tool":"click","ref":"ref_result_row"}],"confidence":"medium"}',
+      inputTokens: 5,
+      outputTokens: 3,
+    }),
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.deepEqual(result.output, {
+    plan: [{ tool: 'get', ref: 'ref_result_row' }],
+    confidence: 'low',
+  });
+});
+
 test('V2PlannerClient accepts queued launcher plan when first step is compatible', async () => {
   const { V2PlannerClient } = await loadPlannerClientModule();
   const plannerInput = makePlannerInput('episode_launcher_plan');
