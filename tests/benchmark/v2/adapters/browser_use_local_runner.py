@@ -99,36 +99,39 @@ async def run_browser_use(input_path: Path, output_path: Path) -> int:
             headless=not bool(payload.get("headed")),
             window_size={"width": 1280, "height": 900},
         )
-        task = f"Open {payload['url']} and complete this task: {payload['goal']}"
-        llm = RateLimitedChatGoogle(
-            ChatGoogle(model=normalize_gemini_model_name(payload.get("model"))),
-            payload.get("requestMinIntervalMs"),
-        )
-        agent = Agent(task=task, llm=llm, browser=browser)
-        history = await agent.run(max_steps=int(payload.get("maxSteps") or 8))
-        value = extract_final_result(history)
-        step_count = count_history_steps(history)
+        try:
+            task = f"Open {payload['url']} and complete this task: {payload['goal']}"
+            llm = RateLimitedChatGoogle(
+                ChatGoogle(model=normalize_gemini_model_name(payload.get("model"))),
+                payload.get("requestMinIntervalMs"),
+            )
+            agent = Agent(task=task, llm=llm, browser=browser)
+            history = await agent.run(max_steps=int(payload.get("maxSteps") or 8))
+            value = extract_final_result(history)
+            step_count = count_history_steps(history)
 
-        # Extract token usage from browser-use's UsageSummary
-        input_tokens = 0
-        output_tokens = 0
-        usage = getattr(history, "usage", None)
-        if usage is not None:
-            input_tokens = getattr(usage, "total_prompt_tokens", 0) or 0
-            output_tokens = getattr(usage, "total_completion_tokens", 0) or 0
+            # Extract token usage from browser-use's UsageSummary
+            input_tokens = 0
+            output_tokens = 0
+            usage = getattr(history, "usage", None)
+            if usage is not None:
+                input_tokens = getattr(usage, "total_prompt_tokens", 0) or 0
+                output_tokens = getattr(usage, "total_completion_tokens", 0) or 0
 
-        write_json(output_path, {
-            "success": bool(value.strip()),
-            "value": value,
-            "metrics": {
-                "plannerCalls": step_count,
-                "toolExecutions": step_count,
-                "rateLimitWaitMs": llm.rate_limit_wait_ms,
-                "inputTokens": input_tokens,
-                "outputTokens": output_tokens,
-            },
-        })
-        return 0
+            write_json(output_path, {
+                "success": bool(value.strip()),
+                "value": value,
+                "metrics": {
+                    "plannerCalls": step_count,
+                    "toolExecutions": step_count,
+                    "rateLimitWaitMs": llm.rate_limit_wait_ms,
+                    "inputTokens": input_tokens,
+                    "outputTokens": output_tokens,
+                },
+            })
+            return 0
+        finally:
+            await browser.close()
     except Exception as exc:
         message = f"{type(exc).__name__}: {exc}"
         write_json(output_path, {
