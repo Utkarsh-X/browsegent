@@ -19,7 +19,7 @@ export interface ReadEvidenceHistoryEntry {
 
 export function buildFinalizationEvidence(input: FinalizationEvidenceInput): string {
   const maxReadableItems = input.maxReadableItems ?? 12;
-  const maxReadEvidenceItems = input.maxReadEvidenceItems ?? 4;
+  const maxReadEvidenceItems = input.maxReadEvidenceItems ?? 8;
   const maxTextLength = input.maxTextLength ?? 2_000;
   const sections: string[] = [];
 

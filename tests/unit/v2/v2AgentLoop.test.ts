@@ -1070,6 +1070,71 @@ test('V2AgentLoop finalization preserves earlier rich read evidence beyond compa
   assert.match(planner.inputs[2].goal, new RegExp(lateMarker));
 });
 
+test('V2AgentLoop finalization preserves earliest read evidence across broader extraction history', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { escalate: 'dead_end', reason: 'not enough evidence' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const earliestMarker = 'EARLIEST-READ-DETAIL-5291';
+  dispatcher.results.push(
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      value: { text: `first extracted fact ${earliestMarker}` },
+      traceStepId: 'tool_get_1',
+    },
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      value: { text: 'second extracted fact' },
+      traceStepId: 'tool_get_2',
+    },
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      value: { text: 'third extracted fact' },
+      traceStepId: 'tool_get_3',
+    },
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      value: { text: 'fourth extracted fact' },
+      traceStepId: 'tool_get_4',
+    },
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      value: { text: 'fifth extracted fact' },
+      traceStepId: 'tool_get_5',
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Report all extracted facts',
+    maxSteps: 5,
+  });
+
+  assert.equal(planner.inputs.length, 6);
+  assert.match(planner.inputs[5].goal, new RegExp(earliestMarker));
+});
+
 test('V2AgentLoop falls through to max_steps_exhausted when finalization planner refuses to finish', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([

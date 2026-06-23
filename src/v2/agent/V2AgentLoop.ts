@@ -558,7 +558,7 @@ function numberOrZero(value: unknown): number {
 const READ_TOOL_KINDS = new Set(['get', 'inspect_region', 'search_page']);
 const MUTATION_EVIDENCE_KINDS = new Set(['click', 'type', 'select', 'press', 'navigate']);
 const PROGRESS_HISTORY_LIMIT = 8;
-const READ_EVIDENCE_HISTORY_LIMIT = 4;
+const READ_EVIDENCE_HISTORY_LIMIT = 8;
 const REPEAT_SIGNAL_THRESHOLD = 2;
 
 interface ActionProgressEntry {
