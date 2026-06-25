@@ -1,114 +1,91 @@
-# Design Specification: Compact Text Tree Serialization for BrowseGent v2
+# Design Specification: Compact CRM Serialization & A/B Validation
 
-This document specifies the technical design for transitioning BrowseGent's representation layer from JSON dictionary serialization to a compact, indented text-tree format. This design aims to reduce input tokens by $\ge 75\%$ while preserving stable reference tracking (`v2ref_N` IDs) and spatial layout context.
+This document specifies the technical design for introducing a compact, indented text-tree format (**Compact Ref Markup - CRM**) to serialize the page state for the LLM Planner, implemented behind a **Feature Flag** to support side-by-side A/B verification.
 
 ---
 
 ## 1. Goal & Requirements
 
-* **Primary Goal:** Minimize the token footprint of the serialized page state sent to the LLM Planner.
-* **Functional Preservation:** The Planner must still identify elements using stable `v2ref_N` IDs and accurately comprehend their spatial relationships (parent-child hierarchy and sibling ordering).
-* **State Awareness:** The Planner must remain aware of abnormal element states (such as weakened confidence or disabled/hidden states) without serializing redundant default states.
+* **Primary Goal:** Substantially reduce the input token footprint of the planner prompts (currently element representation and working set duplicates drive 95.8% of prompt tokens).
+* **Affordance Preservation:** Maintain semantic partitions ("click target", "readable", "navigable") in the serialization to avoid degrading planner execution quality.
+* **Non-Destructive Validation:** Implement the serialization layer behind a feature flag (`plannerSerialization: "json" | "crm"`) so that we can run comparative benchmarks and verify completion rates, accuracy, and error rates before making the compact representation the default.
+* **Pipeline Isolation:** Keep `RefService`, `ContinuityGraph`, `ObservationService`, and `PlannerWorkingSetSelector` completely untouched. Only change the prompt serialization contract.
 
 ---
 
-## 2. Proposed Format Specification: Compact Ref Markup (CRM)
+## 2. Proposed Format Specification: CRM with Semantic Lanes
 
-We define a new serialization format, **Compact Ref Markup (CRM)**, structured line-by-line using HTML/XML-like syntax combined with indentation for hierarchy.
+We define a revised syntax for **Compact Ref Markup (CRM)** that merges element identity and planning affordance lanes:
 
 ### Syntax Rules
 
 1. **Line Structure:**
-   `[ref_id] <tag_name [attributes]>[text]</tag_name>` or a self-closing variant if there is no text.
-   * Format: `[v2ref_N] <role name="accessible name" [modifiers] />`
+   `[ref_id] <tag_name [attributes] />`
+   * Format: `[v2ref_N] <role name="accessible name" lane="interaction|readable|navigation" [modifiers] />`
 2. **Indentation:**
-   Each nesting level (parent-child relationship) adds 2 spaces of indentation.
-3. **Attribute Serialization:**
+   Each nesting level (regions and regional elements) uses indentation (2 spaces) to reflect spatial relationships.
+3. **Attribute Rules:**
+   * **`lane`**: Mandatory attribute indicating the semantic lane categorization of the ref (based on whether it resides in the interactions, readables, or navigation projection view).
    * **Only serialize non-default attributes.**
    * Default Assumptions (implicit, not serialized):
      * `visibility: "visible"`
      * `actionability: "actionable"`
      * `state: "live"`
      * `confidence: 1.0`
-   * Abnormal states are appended as modifiers:
+   * State Modifiers:
      * If `state === 'weakened'`: Add `[weakened]`
      * If `visibility !== 'visible'`: Add `[hidden]` or `[visibility=...]`
      * If `actionability !== 'actionable'`: Add `[disabled]` or `[actionability=...]`
      * If `confidence < 0.7`: Add `[confidence=0.5]`
-4. **Options List (Select Elements):**
-   * If a select box has options, serialize them inline in brackets, capped at 10 items: `options=[Option1|Option2|Option3]`
 
-### Example Serialization
+### Compact WorkingSet Serialization
 
-#### Before (JSON):
+To prevent duplicating metadata already present in the CRM tree, the `workingSet` lists (`primaryRefs`, `secondaryRefs`, `navigationRefs`, `failedRefs`) will only serialize the reference identity and include reasons:
+
 ```json
-{
-  "v2ref_1": {
-    "refId": "v2ref_1",
-    "kind": "input",
-    "role": "textbox",
-    "name": "Search",
-    "visibility": "visible",
-    "actionability": "actionable",
-    "state": "live",
-    "confidence": 1.0
-  },
-  "v2ref_2": {
-    "refId": "v2ref_2",
-    "kind": "button",
-    "role": "button",
-    "name": "Submit",
-    "visibility": "visible",
-    "actionability": "actionable",
-    "state": "live",
-    "confidence": 1.0
+"primaryRefs": [
+  {
+    "refId": "v2ref_81",
+    "reasons": ["goal_keyword_match", "visible_ready"]
   }
-}
-```
-
-#### After (CRM):
-```text
-[v2ref_1] <input role="textbox" name="Search" />
-[v2ref_2] <button name="Submit" />
+]
 ```
 
 ---
 
 ## 3. Proposed Changes
 
-### 3.1. Serializer Implementation
-We will add `serializeToCRM` in `d:\BrowseGent\src\v2\brain1\serializeProjection.ts` (or in a new helper module).
+### 3.1. Serialization Flag Configuration
+Add `plannerSerialization` to the configuration options in `d:\BrowseGent\src\v2\planner\types.ts` and default it to `"json"`.
 
 ```typescript
-export function serializeToCRM(projection: SerializedProjection): string {
-  let output = '';
-  // Traverse and format the elements hierarchically
-  // Filter and format based on selected working set
-  return output;
+export interface PlannerWorkingSetOptions {
+  plannerSerialization?: 'json' | 'crm';
+  // ... other options
 }
 ```
 
-### 3.2. Planner Prompt Updates
-We will modify `buildV2PlannerSystemPrompt()` in `d:\BrowseGent\src\v2\planner\PlannerPrompt.ts` to instruct the Planner on how to read CRM.
+### 3.2. CRM Serializer
+Implement `serializeToCRM` in `d:\BrowseGent\src\v2\brain1\serializeProjection.ts` to build the compact tree grouped by regions, adding `lane` attributes for each element based on its category.
 
-```diff
-- Planner input shape: current.refs contains selected ref facts only.
-+ Planner input shape: current.elements contains elements serialized in Compact Ref Markup (CRM) format:
-+ [ref_id] <role name="accessible name" [modifiers] />
-+ Target elements using their exact [ref_id] (e.g. v2ref_5).
-```
+### 3.3. Prompt Composer
+Update `buildV2PlannerUserMessage` in `d:\BrowseGent\src\v2\planner\PlannerPrompt.ts` to switch representations based on the `plannerSerialization` configuration flag. If `crm` is selected:
+- Replace `current` with a compact representation where `elements` is the CRM tree and `refs` is omitted.
+- Compact `workingSet.primaryRefs`, `workingSet.secondaryRefs`, etc., to only include `refId` and `reasons`.
 
 ---
 
-## 4. Verification Plan
+## 4. Verification & A/B Validation Plan
 
 ### Automated Tests
-1. **Serialization Unit Tests:**
-   * Create a mock `SerializedProjection` containing standard and abnormal elements.
-   * Call `serializeToCRM` and assert that the generated string matches the expected CRM syntax, including indentation and modifier flags.
-   * Verify that default attributes (e.g. `visibility: "visible"`) are correctly omitted.
-2. **Planner Prompt Tests:**
-   * Run the Planner with the new prompt on a mock CRM input and verify that it parses ref IDs and issues correct tool calls.
+1. **CRM Serializer Unit Tests:**
+   * Verify that elements have correct `lane` attributes based on their presence in interactions/readables/navigation views.
+   * Verify that default values are omitted and abnormal state modifiers are appended correctly.
+2. **Compact Working Set Unit Tests:**
+   * Verify that working set reference lists are correctly pruned to contain only `refId` and `reasons`.
 
-### Manual Verification
-* Execute sequential benchmarks on the `balanced30` WebVoyager-lite slice using the CRM serialization adapter to ensure the pass rate remains stable.
+### A/B Benchmark Run
+We will execute the `balanced30` WebVoyager-lite benchmark run:
+1. First, with `plannerSerialization: "json"`. Record success rate, step count, input tokens, and errors.
+2. Second, with `plannerSerialization: "crm"`. Record success rate, step count, input tokens, and errors.
+3. Compare completion metrics side-by-side. CRM will only be promoted to default if success rate is equal or higher and token size is significantly reduced.
