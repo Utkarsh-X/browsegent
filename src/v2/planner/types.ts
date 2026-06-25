@@ -193,3 +193,10 @@ export interface PlannerOutput {
 export type PlannerOutputValidationResult =
   | { ok: true; value: PlannerOutput }
   | { ok: false; errors: string[] };
+
+export type PlannerSerializationMode = 'json' | 'prc';
+
+export interface PlannerSerializationConfig {
+  mode?: PlannerSerializationMode;
+}
+
