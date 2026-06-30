@@ -1,5 +1,5 @@
 import { v2AgentLoopFactory, type V2AgentLoopFactoryInput } from '../agent/createV2AgentLoop';
-import type { V2AgentLoopResult } from '../agent/types';
+import type { V2AgentLoopInput, V2AgentLoopResult } from '../agent/types';
 import type { BrowserAgentRunOptions, BrowserAgentRunResult } from './types';
 
 export interface BrowserAgentRunnerOptions {
@@ -10,7 +10,7 @@ export interface BrowserAgentRunnerOptions {
     loopFactory?: (
       input: V2AgentLoopFactoryInput,
     ) => {
-      run(input: { url: string; goal: string; maxSteps: number; model?: string; plannerMode?: 'current' | 'compact_enforced' }): Promise<V2AgentLoopResult>;
+      run(input: V2AgentLoopInput): Promise<V2AgentLoopResult>;
     };
 }
 
@@ -47,6 +47,7 @@ export class BrowserAgentRunner {
       maxSteps,
       model: options.model ?? this.options.defaultModel,
       ...(options.plannerMode !== undefined ? { plannerMode: options.plannerMode } : {}),
+      ...(options.plannerSerialization !== undefined ? { plannerSerialization: options.plannerSerialization } : {}),
     });
 
     return applyOutputMode(loopResult, options, warnings);

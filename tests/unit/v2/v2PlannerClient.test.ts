@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 import { TraceStore } from '../../../src/v2/trace/TraceStore';
 import { buildV2PlannerSystemPrompt } from '../../../src/v2/planner/PlannerPrompt';
-import type { PlannerInput } from '../../../src/v2/planner/types';
+import type { PlannerInput, PlannerSerializationConfig } from '../../../src/v2/planner/types';
 
 async function loadPlannerClientModule() {
   try {
@@ -829,4 +829,81 @@ test('V2PlannerClient accepts queued launcher plan when first step is compatible
   assert.equal(result.output.plan?.[0].tool, 'click');
   assert.equal(result.output.plan?.[1].tool, 'type');
   assert.equal(result.output.plan?.[2].tool, 'press');
+});
+
+test('V2PlannerClient uses JSON serialization by default and switches to PRC when configured', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+
+  const capturedUserMessages: string[] = [];
+  function makeProvider() {
+    return async (_system: string, user: string) => {
+      capturedUserMessages.push(user);
+      return {
+        text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+        inputTokens: 1,
+        outputTokens: 1,
+      };
+    };
+  }
+
+  // Default client — no plannerSerialization option — must use JSON
+  const defaultClient = new V2PlannerClient({ provider: makeProvider() });
+  await defaultClient.call({ plannerInput: makePlannerInput('episode_prc_default') });
+  assert.match(
+    capturedUserMessages[0],
+    /^Planner input JSON:\n\{/,
+    'default client must send raw JSON to provider',
+  );
+
+  // PRC-configured client — must send structured PRC output
+  const prcConfig: PlannerSerializationConfig = { mode: 'prc' };
+  const prcClient = new V2PlannerClient({
+    provider: makeProvider(),
+    plannerSerialization: prcConfig,
+  });
+  await prcClient.call({ plannerInput: makePlannerInput('episode_prc_opt_in') });
+  assert.match(
+    capturedUserMessages[1],
+    /^Planner input:\nMISSION/,
+    'PRC-configured client must send structured PRC output to provider',
+  );
+  assert.doesNotMatch(
+    capturedUserMessages[1],
+    /"visibility":"visible"/,
+    'PRC output must not contain raw JSON attribute noise',
+  );
+});
+
+test('V2PlannerClient records provider payload byte summaries without raw prompts', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const { traceDir, store } = await freshTraceStore('planner_client_provider_payload');
+  const client = new V2PlannerClient({
+    traceStore: store,
+    plannerSerialization: { mode: 'prc' },
+    provider: async (_system, _user) => ({
+      text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+      inputTokens: 5,
+      outputTokens: 3,
+    }),
+  });
+
+  await client.call({ plannerInput: makePlannerInput('episode_provider_payload') });
+  await store.flush();
+
+  const outputJson = JSON.parse(await readFile(
+    join(traceDir, 'run_planner_client_provider_payload', 'planner', 'episode_provider_payload-output.json'),
+    'utf8',
+  ));
+
+  assert.equal(outputJson.providerPayload.serializationMode, 'prc');
+  assert.equal(outputJson.providerPayload.attempts.length, 1);
+  assert.equal(outputJson.providerPayload.attempts[0].attempt, 1);
+  assert.equal(typeof outputJson.providerPayload.attempts[0].systemBytes, 'number');
+  assert.equal(typeof outputJson.providerPayload.attempts[0].userBytes, 'number');
+  assert.equal(
+    outputJson.providerPayload.attempts[0].totalBytes,
+    outputJson.providerPayload.attempts[0].systemBytes + outputJson.providerPayload.attempts[0].userBytes,
+  );
+  assert.equal(outputJson.providerPayload.rawSystemPrompt, undefined);
+  assert.equal(outputJson.providerPayload.rawUserMessage, undefined);
 });

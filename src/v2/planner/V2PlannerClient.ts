@@ -8,7 +8,7 @@ import {
   buildV2PlannerValidationFeedback,
 } from './PlannerPrompt';
 import { buildV2PlannerResponseSchema } from './V2PlannerResponseSchema';
-import type { PlannerInput, PlannerOutput } from './types';
+import type { PlannerInput, PlannerOutput, PlannerSerializationConfig } from './types';
 
 export interface V2PlannerProviderResult {
   text: string;
@@ -27,6 +27,7 @@ export interface V2PlannerClientOptions {
   provider?: V2PlannerProvider;
   traceStore?: Pick<TraceStore, 'recordPlannerInput' | 'recordPlannerOutput'>;
   schema?: PlannerOutputSchema;
+  plannerSerialization?: PlannerSerializationConfig;
 }
 
 export interface V2PlannerCallInput {
@@ -41,6 +42,13 @@ export interface V2PlannerCallResult {
   inputTokens: number;
   outputTokens: number;
   durationMs: number;
+}
+
+interface ProviderPayloadAttemptSummary {
+  attempt: number;
+  systemBytes: number;
+  userBytes: number;
+  totalBytes: number;
 }
 
 export class V2PlannerClientError extends Error {
@@ -62,27 +70,34 @@ export class V2PlannerClient {
   private readonly provider: V2PlannerProvider;
   private readonly schema: PlannerOutputSchema;
   private readonly traceStore?: Pick<TraceStore, 'recordPlannerInput' | 'recordPlannerOutput'>;
+  private readonly plannerSerialization: PlannerSerializationConfig;
 
   constructor(options: V2PlannerClientOptions = {}) {
     this.provider = options.provider ?? callProvider;
     this.schema = options.schema ?? new PlannerOutputSchema();
     this.traceStore = options.traceStore;
+    this.plannerSerialization = options.plannerSerialization ?? { mode: 'json' };
   }
 
   async call(input: V2PlannerCallInput): Promise<V2PlannerCallResult> {
     const startedAt = Date.now();
     const systemPrompt = buildV2PlannerSystemPrompt();
-    const baseUserMessage = buildV2PlannerUserMessage(input.plannerInput);
+    const baseUserMessage = buildV2PlannerUserMessage(
+      input.plannerInput,
+      this.plannerSerialization,
+    );
     let userMessage = baseUserMessage;
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
     let lastRawText = '';
     let lastErrors: string[] = [];
+    const providerPayloadAttempts: ProviderPayloadAttemptSummary[] = [];
 
     this.traceStore?.recordPlannerInput(input.plannerInput.episodeId, input.plannerInput);
 
     for (let attempt = 1; attempt <= 2; attempt += 1) {
       let providerResult: V2PlannerProviderResult;
+      providerPayloadAttempts.push(summarizeProviderPayloadAttempt(attempt, systemPrompt, userMessage));
       try {
         providerResult = await this.provider(systemPrompt, userMessage, input.model, {
           responseSchema: buildV2PlannerResponseSchema(),
@@ -95,6 +110,7 @@ export class V2PlannerClient {
           attempts: attempt,
           rawText: lastRawText,
           validation: { ok: false, errors },
+          providerPayload: summarizeProviderPayload(this.plannerSerialization, providerPayloadAttempts),
           metrics: {
             inputTokens: totalInputTokens,
             outputTokens: totalOutputTokens,
@@ -131,6 +147,7 @@ export class V2PlannerClient {
           rawText: providerResult.text,
           validation: { ok: true, errors: [] },
           output: validation.output,
+          providerPayload: summarizeProviderPayload(this.plannerSerialization, providerPayloadAttempts),
           metrics: {
             inputTokens: totalInputTokens,
             outputTokens: totalOutputTokens,
@@ -176,6 +193,7 @@ export class V2PlannerClient {
           kind: 'readable_only_click_to_get',
           sourceErrors: lastErrors,
         },
+        providerPayload: summarizeProviderPayload(this.plannerSerialization, providerPayloadAttempts),
         metrics: {
           inputTokens: totalInputTokens,
           outputTokens: totalOutputTokens,
@@ -190,6 +208,7 @@ export class V2PlannerClient {
       attempts: 2,
       rawText: lastRawText,
       validation: { ok: false, errors: lastErrors },
+      providerPayload: summarizeProviderPayload(this.plannerSerialization, providerPayloadAttempts),
       metrics: {
         inputTokens: totalInputTokens,
         outputTokens: totalOutputTokens,
@@ -368,6 +387,48 @@ function firstNonEmpty(...values: Array<string | undefined>): string | undefined
 function truncateForGuidance(value: string, maxLength: number): string {
   if (value.length <= maxLength) return value;
   return `${value.slice(0, Math.max(0, maxLength - 3))}...`;
+}
+
+function summarizeProviderPayloadAttempt(
+  attempt: number,
+  systemPrompt: string,
+  userMessage: string,
+): ProviderPayloadAttemptSummary {
+  const systemBytes = byteLength(systemPrompt);
+  const userBytes = byteLength(userMessage);
+  return {
+    attempt,
+    systemBytes,
+    userBytes,
+    totalBytes: systemBytes + userBytes,
+  };
+}
+
+function summarizeProviderPayload(
+  config: PlannerSerializationConfig,
+  attempts: ProviderPayloadAttemptSummary[],
+) {
+  return {
+    serializationMode: config.mode,
+    attempts,
+    totalSystemBytes: sum(attempts.map(attempt => attempt.systemBytes)),
+    totalUserBytes: sum(attempts.map(attempt => attempt.userBytes)),
+    totalBytes: sum(attempts.map(attempt => attempt.totalBytes)),
+    maxUserBytes: max(attempts.map(attempt => attempt.userBytes)),
+    maxTotalBytes: max(attempts.map(attempt => attempt.totalBytes)),
+  };
+}
+
+function byteLength(value: string): number {
+  return Buffer.byteLength(value, 'utf8');
+}
+
+function max(values: number[]): number {
+  return values.reduce((current, value) => Math.max(current, value), 0);
+}
+
+function sum(values: number[]): number {
+  return values.reduce((total, value) => total + value, 0);
 }
 
 function collectValidationContext(input: PlannerInput): PlannerOutputValidationContext {

@@ -52,6 +52,7 @@ export interface RunBenchmarkOptions {
     expectedToolExecutions: number,
   ) => Promise<BenchmarkTraceScore>;
   plannerMode?: 'current' | 'compact_enforced';
+  plannerSerialization?: BenchmarkRunMetadata['plannerSerialization'];
 }
 
 export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<BenchmarkReport> {
@@ -117,6 +118,7 @@ export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<B
           headed: options.headed ?? false,
           requestMinIntervalMs: rateLimit.mode === 'paced' ? rateLimit.minIntervalMs : undefined,
           plannerMode: options.plannerMode,
+          plannerSerialization: options.plannerSerialization,
         });
         const trace = options.traceAudit
           ? await options.traceAudit(
@@ -141,7 +143,13 @@ export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<B
       startedAt,
       completedAt: new Date().toISOString(),
       model: options.model,
-      runMetadata: buildRunMetadata(geminiKeyDiagnostics, initialGeminiSelection, rateLimit, keyAssignments),
+      runMetadata: buildRunMetadata(
+        geminiKeyDiagnostics,
+        initialGeminiSelection,
+        rateLimit,
+        keyAssignments,
+        options.plannerSerialization,
+      ),
       results: scoredResults,
     });
 
@@ -199,6 +207,7 @@ function buildRunMetadata(
   selection: ReturnType<typeof selectGeminiKeyForRun>,
   rateLimit: ReturnType<typeof resolveBenchmarkRateLimit>,
   assignments: BenchmarkGeminiKeyAssignment[],
+  plannerSerialization: BenchmarkRunMetadata['plannerSerialization'],
 ): BenchmarkRunMetadata {
   return {
     geminiKeyPool: {
@@ -212,6 +221,7 @@ function buildRunMetadata(
       assignments: assignments.length > 0 ? assignments : undefined,
     },
     rateLimit,
+    plannerSerialization,
   };
 }
 
@@ -225,6 +235,7 @@ function renderMarkdownSummary(report: BenchmarkReport): string {
     `Gemini key diagnostics: configured ${report.runMetadata?.geminiKeyPool?.configuredKeyCount ?? 0}, unique ${report.runMetadata?.geminiKeyPool?.uniqueKeyCount ?? 0}, duplicates ${report.runMetadata?.geminiKeyPool?.duplicateKeyCount ?? 0}`,
     `Gemini key assignment: ${report.runMetadata?.geminiKeyPool?.assignmentMode ?? 'none'}${report.runMetadata?.geminiKeyPool?.assignments?.length ? `, ${report.runMetadata.geminiKeyPool.assignments.length} task attempts` : ''}`,
     `Rate limit: ${report.runMetadata?.rateLimit?.mode ?? 'disabled'}${report.runMetadata?.rateLimit?.minIntervalMs ? `, ${report.runMetadata.rateLimit.minIntervalMs}ms minimum interval` : ''}`,
+    `Planner serialization: ${report.runMetadata?.plannerSerialization?.mode ?? 'json'}`,
     `Runs: ${report.summary.totalRuns}`,
     `Pass rate: ${(report.summary.passRate * 100).toFixed(1)}%`,
     `Trace complete rate: ${(report.summary.traceCompleteRate * 100).toFixed(1)}%`,
@@ -271,6 +282,7 @@ function readCliOptions(): RunBenchmarkOptions {
   const requestMinIntervalArg = readFlag('--request-min-interval-ms');
   const partitionArg = readPartitionArg();
   const plannerModeArg = readFlag('--planner-mode');
+  const plannerSerializationArg = readPlannerSerializationArg();
   let plannerMode: 'current' | 'compact_enforced' = 'current';
   if (plannerModeArg === 'current' || plannerModeArg === 'compact_enforced') {
     plannerMode = plannerModeArg;
@@ -288,6 +300,7 @@ function readCliOptions(): RunBenchmarkOptions {
     requestMinIntervalMs: requestMinIntervalArg ? Number(requestMinIntervalArg) : undefined,
     partition: partitionArg,
     plannerMode,
+    plannerSerialization: plannerSerializationArg ? { mode: plannerSerializationArg } : undefined,
   };
 }
 
@@ -308,6 +321,14 @@ function readPartitionArg(): BenchmarkPartitionSelection | undefined {
     return value;
   }
   throw new Error(`Unsupported benchmark partition "${value}". Use all, dev, or holdout.`);
+}
+
+function readPlannerSerializationArg(): NonNullable<BenchmarkRunMetadata['plannerSerialization']>['mode'] | undefined {
+  const value = readFlag('--planner-serialization');
+  if (value === undefined || value === 'json' || value === 'prc') {
+    return value;
+  }
+  throw new Error(`Unsupported --planner-serialization "${value}". Use json or prc.`);
 }
 
 function isFlagValue(args: string[], value: string): boolean {

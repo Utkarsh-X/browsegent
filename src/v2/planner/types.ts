@@ -197,6 +197,6 @@ export type PlannerOutputValidationResult =
 export type PlannerSerializationMode = 'json' | 'prc';
 
 export interface PlannerSerializationConfig {
-  mode?: PlannerSerializationMode;
+  /** @default 'json' */
+  mode: PlannerSerializationMode;
 }
-

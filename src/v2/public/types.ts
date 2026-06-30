@@ -1,4 +1,5 @@
 import type { V2AgentLoopResult } from '../agent/types';
+import type { PlannerSerializationConfig } from '../planner/types';
 
 export type BrowserAgentOutputMode =
   | 'text'
@@ -32,6 +33,7 @@ export interface BrowserAgentRunOptions {
   trace?: boolean | BrowserAgentTraceOptions;
   output?: BrowserAgentOutputMode;
   plannerMode?: 'current' | 'compact_enforced';
+  plannerSerialization?: PlannerSerializationConfig;
 }
 
 export interface BrowserAgentRunResult {

@@ -1,4 +1,6 @@
-import type { PlannerInput } from './types';
+import type { PlannerInput, PlannerSerializationConfig } from './types';
+import { PlannerRepresentationCompiler } from './prc/PlannerRepresentationCompiler';
+import { PromptLayoutEngine } from './prc/PromptLayoutEngine';
 
 export function buildV2PlannerSystemPrompt(): string {
   return `You are the BrowseGent v2 planner.
@@ -48,9 +50,16 @@ When the input workingSet.mode is extract, verify, or done_candidate and useful 
 Use refs from the planner input. Selectors are not valid v2 planner output.`;
 }
 
-export function buildV2PlannerUserMessage(input: PlannerInput): string {
-  return `Planner input JSON:
-${JSON.stringify(input)}`;
+export function buildV2PlannerUserMessage(
+  input: PlannerInput,
+  config: PlannerSerializationConfig = { mode: 'json' },
+): string {
+  if (config.mode === 'prc') {
+    const ir = new PlannerRepresentationCompiler().compile(input);
+    return `Planner input:\n${new PromptLayoutEngine().render(ir)}`;
+  }
+
+  return `Planner input JSON:\n${JSON.stringify(input)}`;
 }
 
 export function buildV2PlannerValidationFeedback(errors: string[]): string {

@@ -29,6 +29,7 @@ export class BrowseGentBenchmarkAdapter implements BenchmarkAdapter {
         trace: { dir: options.traceDir, runId: `${options.runId}_${task.taskId}_a${options.attempt}` },
         output: 'text',
         ...(options.plannerMode !== undefined ? { plannerMode: options.plannerMode } : {}),
+        ...(options.plannerSerialization !== undefined ? { plannerSerialization: options.plannerSerialization } : {}),
       });
 
       return {

@@ -7,7 +7,7 @@ import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
 import { PlannerInputComposer } from '../planner/PlannerInputComposer';
 import { V2PlannerClient } from '../planner/V2PlannerClient';
 import { CompactPlannerClient } from '../planner/CompactPlannerClient';
-import type { PlannerAnswerFeedback, PlannerInput, PlannerOutput } from '../planner/types';
+import type { PlannerAnswerFeedback, PlannerInput, PlannerOutput, PlannerSerializationConfig } from '../planner/types';
 import {
   buildCompactPlannerView,
   buildPlainInteractiveSnapshotBaseline,
@@ -38,7 +38,7 @@ export class V2AgentLoop {
 
   async run(input: V2AgentLoopInput): Promise<V2AgentLoopResult> {
     const harness = this.createHarness();
-    const plannerClient = this.createPlannerClient(harness, input.plannerMode);
+    const plannerClient = this.createPlannerClient(harness, input.plannerMode, input.plannerSerialization);
     const dispatcher = this.options.dispatcherFactory?.(harness) ?? new V2ToolDispatcher(harness);
     const graph = new ContinuityGraph();
     const maxSteps = Math.max(1, input.maxSteps);
@@ -305,7 +305,11 @@ export class V2AgentLoop {
     });
   }
 
-  private createPlannerClient(harness: V2AgentHarnessRuntime, plannerMode?: 'current' | 'compact_enforced'): V2PlannerClientLike {
+  private createPlannerClient(
+    harness: V2AgentHarnessRuntime,
+    plannerMode?: 'current' | 'compact_enforced',
+    plannerSerialization?: PlannerSerializationConfig,
+  ): V2PlannerClientLike {
     if (this.options.plannerClient) {
       return this.options.plannerClient;
     }
@@ -330,6 +334,7 @@ export class V2AgentLoop {
 
     return new V2PlannerClient({
       traceStore,
+      plannerSerialization,
     });
   }
 

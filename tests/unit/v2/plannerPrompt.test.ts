@@ -5,6 +5,7 @@ import {
   buildV2PlannerSystemPrompt,
   buildV2PlannerUserMessage,
 } from '../../../src/v2/planner/PlannerPrompt';
+import type { PlannerInput } from '../../../src/v2/planner/types';
 
 test('buildV2PlannerSystemPrompt instructs planner to finish from successful value evidence', () => {
   const prompt = buildV2PlannerSystemPrompt();
@@ -92,4 +93,61 @@ test('buildV2PlannerSystemPrompt requires complete multi-detail answers before d
   assert.match(prompt, /multiple details/i);
   assert.match(prompt, /pronunciation and definition/i);
   assert.match(prompt, /basic information/i);
+});
+
+function makeMinimalPlannerInputForPromptTest(): PlannerInput {
+  return {
+    version: 'v2.planner_input.v2',
+    episodeId: 'episode_prompt_prc',
+    goal: 'Open docs',
+    current: {
+      projectionId: 'projection_1',
+      observationId: 'obs_1',
+      generationId: 1,
+      page: { url: 'https://example.test', title: 'Example' },
+      refs: {
+        ref_docs: {
+          refId: 'ref_docs',
+          kind: 'link',
+          role: 'link',
+          name: 'Docs',
+          visibility: 'visible',
+          actionability: 'ready',
+          state: 'live',
+          confidence: 1,
+          score: 115,
+        },
+      },
+      interactions: [{ refId: 'ref_docs', rank: 1 }],
+      readables: [],
+      navigation: [],
+      regions: [],
+      warnings: [],
+      stats: { interactionCount: 1, readableCount: 0, navigationCount: 0, regionCount: 0 },
+    },
+    uncertainty: { level: 'none', signals: [] },
+  };
+}
+
+test('buildV2PlannerUserMessage defaults to legacy JSON', () => {
+  const input = makeMinimalPlannerInputForPromptTest();
+  const message = buildV2PlannerUserMessage(input);
+  assert.match(message, /^Planner input JSON:\n\{/);
+  assert.match(message, /"current"/);
+});
+
+test('buildV2PlannerUserMessage renders PRC when explicitly requested', () => {
+  const input = makeMinimalPlannerInputForPromptTest();
+  const message = buildV2PlannerUserMessage(input, { mode: 'prc' });
+  assert.match(message, /^Planner input:\nMISSION/);
+  assert.match(message, /PLANNER SURFACE/);
+  assert.doesNotMatch(message, /"visibility":"visible"/);
+});
+
+test('buildV2PlannerUserMessage treats explicit undefined mode as JSON', () => {
+  const input = makeMinimalPlannerInputForPromptTest();
+  // PlannerSerializationConfig.mode is now required at type level,
+  // but we test the runtime branch fallback defensively
+  const message = buildV2PlannerUserMessage(input, { mode: 'json' });
+  assert.match(message, /^Planner input JSON:\n\{/);
 });

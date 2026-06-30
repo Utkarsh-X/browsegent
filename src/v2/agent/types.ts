@@ -1,4 +1,4 @@
-import type { PlannerInput, PlannerOutput } from '../planner/types';
+import type { PlannerInput, PlannerOutput, PlannerSerializationConfig } from '../planner/types';
 import type { BrowserObservation } from '../runtime/types';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { BrowserSessionOptions } from '../substrate/types';
@@ -11,6 +11,7 @@ export interface V2AgentLoopInput {
   maxSteps: number;
   model?: string;
   plannerMode?: 'current' | 'compact_enforced';
+  plannerSerialization?: PlannerSerializationConfig;
 }
 
 export interface V2AgentLoopResult {

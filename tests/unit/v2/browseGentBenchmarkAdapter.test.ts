@@ -65,3 +65,49 @@ test('BrowseGentBenchmarkAdapter maps benchmark tasks to public task API calls',
     },
   });
 });
+
+test('BrowseGentBenchmarkAdapter forwards planner serialization to the public task API', async () => {
+  const calls: unknown[] = [];
+  const adapter = new BrowseGentBenchmarkAdapter({
+    clientFactory: () => ({
+      run: async (goal: string, options: unknown) => {
+        calls.push({ goal, options });
+        return {
+          success: true,
+          value: 'answer',
+          tracePath: 'logs/v2-runs/trace.json',
+          warnings: [],
+          metrics: {
+            plannerCalls: 1,
+            inputTokens: 8,
+            outputTokens: 4,
+            plannerDurationMs: 10,
+            toolExecutions: 1,
+          },
+        };
+      },
+    }),
+  });
+
+  await adapter.run(task, {
+    runId: 'bench_unit',
+    attempt: 1,
+    maxSteps: 6,
+    traceDir: 'logs/bench',
+    headed: false,
+    plannerSerialization: { mode: 'prc' },
+  });
+
+  assert.deepEqual(calls[0], {
+    goal: 'Read answer',
+    options: {
+      url: 'file:///fixture.html',
+      model: undefined,
+      maxSteps: 6,
+      browser: { headless: true },
+      trace: { dir: 'logs/bench', runId: 'bench_unit_static_read_a1' },
+      output: 'text',
+      plannerSerialization: { mode: 'prc' },
+    },
+  });
+});

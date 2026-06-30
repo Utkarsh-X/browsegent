@@ -68,7 +68,21 @@ test('collectBenchmarkDiagnostics summarizes trace payload sizes and action mark
     lineage: { totalSteps: 2, steps: [{ kind: 'click', targetRef: 'ref_a' }] },
     uncertainty: { level: 'medium', signals: ['signal_a'] },
   }), 'utf8');
-  await writeFile(plannerOutputPath, JSON.stringify({ steps: [{ tool: 'click' }] }), 'utf8');
+  await writeFile(plannerOutputPath, JSON.stringify({
+    steps: [{ tool: 'click' }],
+    providerPayload: {
+      serializationMode: 'prc',
+      attempts: [
+        { attempt: 1, systemBytes: 100, userBytes: 300, totalBytes: 400 },
+        { attempt: 2, systemBytes: 100, userBytes: 360, totalBytes: 460 },
+      ],
+      totalSystemBytes: 200,
+      totalUserBytes: 660,
+      totalBytes: 860,
+      maxUserBytes: 360,
+      maxTotalBytes: 460,
+    },
+  }), 'utf8');
   await writeFile(failurePath, JSON.stringify({ kind: 'target_blocked' }), 'utf8');
   await writeFile(tracePath, JSON.stringify({
     runId: 'run_diagnostics',
@@ -116,6 +130,12 @@ test('collectBenchmarkDiagnostics summarizes trace payload sizes and action mark
   assert.equal(diagnostics.projectionOverlap.maxReadableNavigationOverlap, 1);
   assert.equal(diagnostics.payloads.plannerInputSections.lineage.count, 1);
   assert.equal(diagnostics.payloads.plannerOutputs.count, 1);
+  assert.equal(diagnostics.payloads.providerPayloads.plannerCalls, 1);
+  assert.equal(diagnostics.payloads.providerPayloads.providerAttempts, 2);
+  assert.equal(diagnostics.payloads.providerPayloads.totalBytes, 860);
+  assert.equal(diagnostics.payloads.providerPayloads.totalUserBytes, 660);
+  assert.equal(diagnostics.payloads.providerPayloads.maxTotalBytes, 460);
+  assert.equal(diagnostics.payloads.providerPayloads.serializationModes.prc, 1);
   assert.equal(diagnostics.payloads.failures.count, 1);
   assert.equal(diagnostics.actions.stepCount, 4);
   assert.equal(diagnostics.actions.failedStepCount, 2);
@@ -238,6 +258,16 @@ test('buildBenchmarkReport aggregates diagnostic maxima and action markers', () 
               uncertainty: { count: 1, totalBytes: 15, maxBytes: 15 },
             },
             plannerOutputs: { count: 1, totalBytes: 20, maxBytes: 20 },
+            providerPayloads: {
+              plannerCalls: 1,
+              providerAttempts: 1,
+              totalSystemBytes: 100,
+              totalUserBytes: 300,
+              totalBytes: 400,
+              maxUserBytes: 300,
+              maxTotalBytes: 400,
+              serializationModes: { prc: 1 },
+            },
             failures: { count: 0, totalBytes: 0, maxBytes: 0 },
           },
           actions: {
@@ -283,6 +313,16 @@ test('buildBenchmarkReport aggregates diagnostic maxima and action markers', () 
               uncertainty: { count: 1, totalBytes: 18, maxBytes: 18 },
             },
             plannerOutputs: { count: 1, totalBytes: 30, maxBytes: 30 },
+            providerPayloads: {
+              plannerCalls: 1,
+              providerAttempts: 2,
+              totalSystemBytes: 220,
+              totalUserBytes: 700,
+              totalBytes: 920,
+              maxUserBytes: 400,
+              maxTotalBytes: 510,
+              serializationModes: { prc: 1 },
+            },
             failures: { count: 1, totalBytes: 15, maxBytes: 15 },
           },
           actions: {
@@ -314,6 +354,11 @@ test('buildBenchmarkReport aggregates diagnostic maxima and action markers', () 
   assert.ok(diagnostics);
   assert.equal(diagnostics.maxTraceBytes, 200);
   assert.equal(diagnostics.maxPlannerInputBytes, 150);
+  assert.equal(diagnostics.maxProviderPayloadBytes, 510);
+  assert.equal(diagnostics.maxProviderUserBytes, 400);
+  assert.equal(diagnostics.totalProviderPayloadBytes, 1320);
+  assert.equal(diagnostics.totalProviderUserBytes, 1000);
+  assert.equal(diagnostics.totalProviderAttempts, 3);
   assert.equal(diagnostics.maxProjectionBytes, 120);
   assert.equal(diagnostics.maxReadableProjectionBytes, 80);
   assert.equal(diagnostics.maxInteractionProjectionBytes, 25);

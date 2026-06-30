@@ -27,6 +27,7 @@ export interface RunWebVoyagerLiteOptions {
   traceAudit?: RunBenchmarkOptions['traceAudit'];
   manualAuditPath?: string;
   plannerMode?: 'current' | 'compact_enforced';
+  plannerSerialization?: RunBenchmarkOptions['plannerSerialization'];
 }
 
 export interface WebVoyagerLiteRunResult {
@@ -62,6 +63,7 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
     headed: options.headed,
     traceAudit: options.traceAudit,
     plannerMode: options.plannerMode,
+    plannerSerialization: options.plannerSerialization,
   });
 
   const byTaskId = new Map(tasks.map(task => [task.taskId, task]));
@@ -147,6 +149,7 @@ function readCliOptions(): RunWebVoyagerLiteOptions {
   const taskSlice = readTaskSliceArg();
   const manualAuditPath = readFlag('--manual-audit');
   const plannerModeArg = readFlag('--planner-mode');
+  const plannerSerializationArg = readPlannerSerializationArg();
   let plannerMode: 'current' | 'compact_enforced' = 'current';
   if (plannerModeArg === 'current' || plannerModeArg === 'compact_enforced') {
     plannerMode = plannerModeArg;
@@ -166,6 +169,7 @@ function readCliOptions(): RunWebVoyagerLiteOptions {
     taskSlice,
     manualAuditPath,
     plannerMode,
+    plannerSerialization: plannerSerializationArg ? { mode: plannerSerializationArg } : undefined,
   };
 }
 
@@ -186,6 +190,14 @@ function readTaskSliceArg(): WebVoyagerTaskSlice | undefined {
     return value;
   }
   throw new Error(`Unsupported WebVoyager slice "${value}". Use balanced30, mvr5, or mvr5-stable.`);
+}
+
+function readPlannerSerializationArg(): NonNullable<RunBenchmarkOptions['plannerSerialization']>['mode'] | undefined {
+  const value = readFlag('--planner-serialization');
+  if (value === undefined || value === 'json' || value === 'prc') {
+    return value;
+  }
+  throw new Error(`Unsupported --planner-serialization "${value}". Use json or prc.`);
 }
 
 function isFlagValue(args: string[], value: string): boolean {

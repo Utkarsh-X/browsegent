@@ -18,6 +18,7 @@ export interface PlannerElementIR {
   refId: string;
   kind: string;
   role?: string;
+  /** Guaranteed non-empty by compiler: falls back to text, then refId */
   name: string;
   text?: string;
   lane: PlannerElementLane;
@@ -27,7 +28,7 @@ export interface PlannerElementIR {
   regionId?: string;
   selectOptions?: string[];
   anomalies: string[];
-  failure?: { kind: string; count: number; retryable: boolean; persistence: string };
+  failure?: { kind: string; count: number; retryable: boolean; persistence: 'transient' | 'persistent' | 'unknown' };
 }
 
 export interface PlannerRegionIR {
@@ -68,11 +69,13 @@ export interface WorkingSetIR {
   secondary: Array<{ refId: string; reasons: WorkingSetIncludeReason[] }>;
   navigation: Array<{ refId: string; reasons: WorkingSetIncludeReason[] }>;
   failed: Array<{ refId: string; reasons: WorkingSetIncludeReason[] }>;
+  /** Operational action surface — available for working-set reasoning */
   actionSurface?: PlannerActionSurface;
   omitted?: { observed: number; selected: number; dropped: number; byReason: Partial<Record<WorkingSetDropReason, number>> };
 }
 
 export interface DecisionSignalsIR {
+  /** Rendered in DECISION SIGNALS output block (separate from WORKING SET) */
   actionSurface?: PlannerActionSurface;
   suppressed?: { count: number; byReason: Partial<Record<WorkingSetDropReason, number>> };
 }

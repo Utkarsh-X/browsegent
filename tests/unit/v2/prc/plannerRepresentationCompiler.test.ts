@@ -3,6 +3,9 @@ import test from 'node:test';
 import { PlannerRepresentationCompiler } from '../../../../src/v2/planner/prc/PlannerRepresentationCompiler';
 import type { PlannerInput } from '../../../../src/v2/planner/types';
 
+// PlannerRepresentationCompiler is not yet implemented (Task 2).
+// These tests are expected to fail with MODULE_NOT_FOUND until Task 2 is complete.
+
 function makeInput(): PlannerInput {
   return {
     version: 'v2.planner_input.v2',
@@ -89,4 +92,46 @@ test('PRC compiler preserves selectOptions as full array', () => {
   const ir = new PlannerRepresentationCompiler().compile(makeInput());
   const select = ir.surface.groups.flatMap(group => group.elements).find(el => el.refId === 'v2ref_2');
   assert.deepEqual(select?.selectOptions, ['All fields', 'Title', 'Author', 'Abstract']);
+});
+
+test('PRC compiler keeps selected refs visible when collapsing large regions', () => {
+  const input = makeInput();
+  const refs = Object.fromEntries(
+    Array.from({ length: 10 }, (_, index) => {
+      const refId = `v2ref_${index + 1}`;
+      return [refId, {
+        refId,
+        kind: 'link',
+        role: 'link',
+        name: `Region item ${index + 1}`,
+        visibility: 'visible',
+        actionability: 'ready',
+        state: 'live',
+        confidence: 1,
+        score: index === 9 ? 115 : 80,
+      }];
+    }),
+  ) as PlannerInput['current']['refs'];
+
+  input.current.refs = refs;
+  input.current.interactions = Object.keys(refs).map((refId, index) => ({ refId, rank: index + 1 }));
+  input.current.regions = [{
+    regionId: 'region_large',
+    kind: 'repeated_list',
+    label: 'Large Region',
+    refIds: Object.keys(refs),
+    score: 80,
+  }];
+  input.workingSet!.primaryRefs = [{
+    refId: 'v2ref_10',
+    kind: 'link',
+    name: 'Region item 10',
+    score: 115,
+    reasons: ['goal_keyword_match'],
+  }];
+
+  const ir = new PlannerRepresentationCompiler().compile(input);
+  const visibleRefIds = ir.surface.groups.flatMap(group => group.elements.map(element => element.refId));
+
+  assert.ok(visibleRefIds.includes('v2ref_10'), 'selected primary ref must remain visible in collapsed region');
 });

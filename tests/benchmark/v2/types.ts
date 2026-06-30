@@ -1,3 +1,5 @@
+import type { PlannerSerializationConfig } from '../../../src/v2/planner/types';
+
 export type BenchmarkDifficulty = 'extraction' | 'navigation' | 'interaction' | 'recovery' | 'adversarial';
 export type BenchmarkPartition = 'dev' | 'holdout';
 
@@ -42,6 +44,7 @@ export interface BenchmarkAdapterRunOptions {
   headed: boolean;
   requestMinIntervalMs?: number;
   plannerMode?: 'current' | 'compact_enforced';
+  plannerSerialization?: PlannerSerializationConfig;
 }
 
 export type BenchmarkEvidenceMode = 'browsegent_trace' | 'external_artifact';
@@ -215,6 +218,7 @@ export interface BenchmarkRunMetadata {
     requestRpm?: number;
     minIntervalMs: number;
   };
+  plannerSerialization?: PlannerSerializationConfig;
 }
 
 export interface BenchmarkGeminiKeyAssignment {
