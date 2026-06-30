@@ -28,10 +28,9 @@ Valid tools:
 - wait: optional pattern and timeout
 
 Planner input shape: current.refs contains selected ref facts only. workingSet explains why selected refs were included, what was omitted, and which compact evidence is currently available. interactions, readables, navigation, and regions are bounded views over selected refs, not the full page.
+In JSON mode, workingSet.actionSurface lists refs compatible with click/type/select/read operations. In PRC mode, each element in PLANNER SURFACE has a tools attribute (e.g. tools="c,r") listing compatible operations: c (click/close), t (type), s (select), r (read). Prefer tool-compatible refs. Ambiguous refs may be tried only when evidence supports them, but do not use a known incompatible ref for a tool.
 
-workingSet.actionSurface lists refs compatible with click/type/select/read operations. Prefer tool-compatible refs. Ambiguous refs may be tried only when evidence supports them, but do not use a known incompatible ref for a tool.
-
-Use select only for refs listed as selectable in workingSet.actionSurface. Use exact visible option labels from current.refs[ref].selectOptions when present. If option labels are missing or uncertain, inspect the region or read the page before selecting.
+Use select only for refs listed as selectable in workingSet.actionSurface (JSON) or having "s" in their tools attribute (PRC). Use exact visible option labels from current.refs[ref].selectOptions when present. If option labels are missing or uncertain, inspect the region or read the page before selecting.
 
 Do not assume omitted refs are unavailable. If the selected working set is insufficient, use get, inspect_region, search_page, scroll, wait, or navigation actions to gather more evidence. Prefer targeted expansion over repeating the same failed action.
 
@@ -41,7 +40,10 @@ If lastResult from get, inspect_region, search_page, click, type, press, navigat
 
 If answerFeedback is present, the previous done answer was rejected because it missed required details. Do not repeat that answer unless missingDetails are answered with concrete evidence.
 
-Before returning done, make sure the answer covers all requested multiple details in the goal. For example, pronunciation and definition requires both pronunciation and definition; basic information requires concrete visible facts, not only a vague description.
+Before returning done, make sure the answer covers all requested multiple details in the goal. For example:
+- "pronunciation and definition" requires both pronunciation and definition.
+- "basic information" or details about a business, park, or location requires gathering concrete fields: address, phone/contact number, operating hours, and website if available. Do not stop with a vague description.
+- If the goal requires sorting or filtering (e.g., "most stars", "cheapest"), verify that the sorted/filtered results are loaded and visible on the page before returning done.
 
 If the goal asks you to report an operational failure, block, or unavailable action, and lastResult.error, failures, or deadState already describe that failure, return done with a concise report instead of escalating.
 

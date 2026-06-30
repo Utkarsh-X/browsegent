@@ -93,6 +93,8 @@ test('buildV2PlannerSystemPrompt requires complete multi-detail answers before d
   assert.match(prompt, /multiple details/i);
   assert.match(prompt, /pronunciation and definition/i);
   assert.match(prompt, /basic information/i);
+  assert.match(prompt, /address, phone\/contact number, operating hours/i);
+  assert.match(prompt, /sorting or filtering/i);
 });
 
 function makeMinimalPlannerInputForPromptTest(): PlannerInput {
