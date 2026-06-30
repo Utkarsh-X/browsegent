@@ -576,3 +576,41 @@ test('PlannerWorkingSetSelector quarantines repeated identical read from readabl
     && action.failureKind === 'repeated_read_loop'
   ));
 });
+
+test('PlannerWorkingSetSelector quarantines repeated empty read from readable lane only', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_repeated_row',
+      role: 'row',
+      name: 'Empty data container',
+      text: '',
+      visibility: 'visible',
+      actionability: 'ready',
+      capabilities: { clickable: false, typeable: false, selectable: false, readable: true },
+    }),
+    makeRef({
+      refId: 'ref_alternative',
+      role: 'text',
+      name: 'Nearby facts panel',
+      text: 'Nearby facts panel',
+      visibility: 'visible',
+      actionability: 'ready',
+      capabilities: { clickable: false, typeable: false, selectable: false, readable: true },
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 6, maxSecondaryRefs: 6 }).select({
+    goal: 'Find concrete basic information',
+    projection,
+    uncertaintySignals: ['repeated_value_preview:get:ref_repeated_row:3'],
+  });
+
+  assert.equal(selection.workingSet.actionSurface.readableRefs.includes('ref_repeated_row'), false);
+  assert.ok(selection.workingSet.actionSurface.readableRefs.includes('ref_alternative'));
+  assert.ok(selection.workingSet.quarantinedActions.some(action =>
+    action.refId === 'ref_repeated_row'
+    && action.tool === 'get'
+    && action.failureKind === 'repeated_read_loop'
+  ));
+});
+

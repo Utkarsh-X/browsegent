@@ -825,6 +825,39 @@ test('V2AgentLoop feeds repeated identical read evidence into the next planner i
   assert.ok(planner.inputs[2].uncertainty.signals.includes('repeated_value_preview:get:ref_submit:2'));
 });
 
+test('V2AgentLoop feeds repeated empty read evidence into the next planner input', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'Empty answer' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'get',
+    targetRef: 'ref_submit',
+    value: { text: '' },
+    traceStepId: 'tool_repeated_empty_get',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read the visible text',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs.length, 3);
+  assert.equal(planner.inputs[2].uncertainty.level, 'medium');
+  assert.ok(planner.inputs[2].uncertainty.signals.includes('repeated_value_preview:get:ref_submit:2'));
+});
+
 test('V2AgentLoop does not emit no-progress signals for repeated mutations with real transition evidence', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([

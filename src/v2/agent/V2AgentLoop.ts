@@ -127,17 +127,19 @@ export class V2AgentLoop {
           plannerOutput: plannerResult.output,
           mode: 'normal',
         });
-        harness.recordPlannerOutput?.(plannerInput.episodeId, {
-          attempts: 1,
-          rawText: plannerResult.rawText,
-          validation: { ok: true, errors: [] },
-          output: plannerResult.output,
-          metrics: {
-            inputTokens: plannerResult.inputTokens,
-            outputTokens: plannerResult.outputTokens,
-            durationMs: plannerResult.durationMs,
-          },
-        });
+        if (this.options.plannerClient) {
+          harness.recordPlannerOutput?.(plannerInput.episodeId, {
+            attempts: 1,
+            rawText: plannerResult.rawText,
+            validation: { ok: true, errors: [] },
+            output: plannerResult.output,
+            metrics: {
+              inputTokens: plannerResult.inputTokens,
+              outputTokens: plannerResult.outputTokens,
+              durationMs: plannerResult.durationMs,
+            },
+          });
+        }
 
         metrics.inputTokens += plannerResult.inputTokens;
         metrics.outputTokens += plannerResult.outputTokens;
@@ -383,17 +385,19 @@ export class V2AgentLoop {
         plannerOutput: result.output,
         mode: 'finalization',
       });
-      harness.recordPlannerOutput?.(finalizationInput.episodeId, {
-        attempts: 1,
-        rawText: result.rawText,
-        validation: { ok: true, errors: [] },
-        output: result.output,
-        metrics: {
-          inputTokens: result.inputTokens,
-          outputTokens: result.outputTokens,
-          durationMs: result.durationMs,
-        },
-      });
+      if (this.options.plannerClient) {
+        harness.recordPlannerOutput?.(finalizationInput.episodeId, {
+          attempts: 1,
+          rawText: result.rawText,
+          validation: { ok: true, errors: [] },
+          output: result.output,
+          metrics: {
+            inputTokens: result.inputTokens,
+            outputTokens: result.outputTokens,
+            durationMs: result.durationMs,
+          },
+        });
+      }
       metrics.inputTokens += result.inputTokens;
       metrics.outputTokens += result.outputTokens;
       metrics.plannerDurationMs += result.durationMs;
@@ -644,6 +648,11 @@ function isNoProgressMutation(result: V2ToolResult): boolean {
   return false;
 }
 
+/**
+ * Determines whether a tool result should be recorded in progress memory.
+ * For read tools, we record a fallback placeholder "__empty__" when there is no text
+ * retrieved, ensuring that repeated zero-content reads correctly trigger the loop detector.
+ */
 function progressEntryForResult(result: V2ToolResult): ActionProgressEntry | undefined {
   if (!result.success) {
     return undefined;
@@ -652,9 +661,10 @@ function progressEntryForResult(result: V2ToolResult): ActionProgressEntry | und
   const kind = normalizeSignalToken(result.kind);
   const targetKey = normalizeSignalToken(result.targetRef ?? result.target?.refId ?? 'global');
   const noProgressMutation = isNoProgressMutation(result);
-  const valuePreview = READ_TOOL_KINDS.has(result.kind) ? previewResultValue(result.value) : undefined;
+  const isRead = READ_TOOL_KINDS.has(result.kind);
+  const valuePreview = isRead ? (previewResultValue(result.value) || '__empty__') : undefined;
 
-  if (!noProgressMutation && !valuePreview) {
+  if (!noProgressMutation && valuePreview === undefined) {
     return undefined;
   }
 
