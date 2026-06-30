@@ -1,12 +1,13 @@
 import type { SerializedProjection, SerializedProjectionItem, SerializedProjectionRef } from '../../brain1/projectionTypes';
 import type { PlannerInput, PlannerFailureSummary } from '../types';
 import type { PlannerElementIR, PlannerElementLane, PlannerRepresentationIR, PlannerScoreTier, WorkingSetIR } from './types';
+import type { PlannerActionSurface } from '../workingSetTypes';
 
 export class PlannerRepresentationCompiler {
   compile(input: PlannerInput): PlannerRepresentationIR {
     const failureMap = buildFailureMap(input.failures ?? []);
     const pinnedRefIds = buildPinnedRefIds(input.workingSet);
-    const surface = buildSurface(input.current, failureMap, pinnedRefIds);
+    const surface = buildSurface(input.current, failureMap, pinnedRefIds, input.workingSet?.actionSurface);
     const workingSet = input.workingSet ? buildWorkingSet(input.workingSet) : undefined;
     const decisionSignals = input.workingSet ? buildDecisionSignals(input.workingSet) : undefined;
     const allElements = [...surface.groups.flatMap(group => group.elements), ...surface.remainder];
@@ -44,6 +45,7 @@ function buildSurface(
   current: SerializedProjection,
   failureMap: Map<string, PlannerElementIR['failure']>,
   pinnedRefIds: Set<string>,
+  actionSurface?: PlannerActionSurface,
 ) {
   const laneByRef = new Map<string, { lane: PlannerElementLane; rank: number }>();
   addLane(laneByRef, current.interactions, 'interaction');
@@ -53,7 +55,24 @@ function buildSurface(
   const elementsByRef = new Map<string, PlannerElementIR>();
   for (const [refId, ref] of Object.entries(current.refs)) {
     const laneInfo = laneByRef.get(refId);
-    elementsByRef.set(refId, normalizeElement(ref, laneInfo?.lane ?? 'mixed', laneInfo?.rank, failureMap.get(refId)));
+    const tools: string[] = [];
+    if (actionSurface) {
+      if (actionSurface.clickableRefs.includes(refId)) tools.push('c');
+      if (actionSurface.typeableRefs.includes(refId)) tools.push('t');
+      if (actionSurface.selectableRefs.includes(refId)) tools.push('s');
+      if (actionSurface.readableRefs.includes(refId)) tools.push('r');
+      if (actionSurface.ambiguousRefs.includes(refId)) tools.push('a');
+    }
+    elementsByRef.set(
+      refId,
+      normalizeElement(
+        ref,
+        laneInfo?.lane ?? 'mixed',
+        laneInfo?.rank,
+        failureMap.get(refId),
+        tools.length > 0 ? tools : undefined,
+      ),
+    );
   }
 
   const groupedRefs = new Set<string>();
@@ -115,6 +134,7 @@ function normalizeElement(
   lane: PlannerElementLane,
   rank: number | undefined,
   failure: PlannerElementIR['failure'],
+  tools: string[] | undefined,
 ): PlannerElementIR {
   const anomalies: string[] = [];
   if (ref.visibility !== 'visible') anomalies.push(`visibility=${ref.visibility}`);
@@ -136,6 +156,7 @@ function normalizeElement(
     selectOptions: ref.selectOptions,
     anomalies,
     failure,
+    tools,
   };
 }
 

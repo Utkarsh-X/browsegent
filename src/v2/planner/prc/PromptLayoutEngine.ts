@@ -84,6 +84,7 @@ function renderElement(element: PlannerElementIR): string {
     element.selectOptions?.length ? `options="${escapeAttr(element.selectOptions.join(' | '))}"` : undefined,
     element.anomalies.length ? `state="${escapeAttr(element.anomalies.join(','))}"` : undefined,
     element.failure ? `failed="${element.failure.kind}x${element.failure.count}"` : undefined,
+    element.tools?.length ? `tools="${element.tools.join(',')}"` : undefined,
   ].filter(Boolean);
   return `[${element.refId}] <${element.kind} ${attrs.join(' ')} />`;
 }
@@ -105,9 +106,6 @@ function renderDecisionSignals(ir: PlannerRepresentationIR): string {
   const signals = ir.decisionSignals;
   if (!signals) return '';
   const lines = ['DECISION SIGNALS'];
-  if (signals.actionSurface) {
-    lines.push(`  action surface: click=${signals.actionSurface.clickableRefs.join(',')} type=${signals.actionSurface.typeableRefs.join(',')} select=${signals.actionSurface.selectableRefs.join(',')} read=${signals.actionSurface.readableRefs.join(',')}`);
-  }
   if (signals.suppressed && signals.suppressed.count > 0) {
     const reasons = Object.entries(signals.suppressed.byReason)
       .filter(([, count]) => typeof count === 'number' && count > 0)

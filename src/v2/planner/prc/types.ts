@@ -29,6 +29,7 @@ export interface PlannerElementIR {
   selectOptions?: string[];
   anomalies: string[];
   failure?: { kind: string; count: number; retryable: boolean; persistence: 'transient' | 'persistent' | 'unknown' };
+  tools?: string[];
 }
 
 export interface PlannerRegionIR {

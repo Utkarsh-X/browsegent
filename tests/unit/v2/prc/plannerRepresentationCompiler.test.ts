@@ -135,3 +135,36 @@ test('PRC compiler keeps selected refs visible when collapsing large regions', (
 
   assert.ok(visibleRefIds.includes('v2ref_10'), 'selected primary ref must remain visible in collapsed region');
 });
+
+test('PRC compiler compiles tools attribute for interaction lane ref which is only readable', () => {
+  const input = makeInput();
+  // v2ref_1 is in interactions lane (from makeInput), but actionSurface says it's only readable
+  input.workingSet!.actionSurface = {
+    clickableRefs: [],
+    typeableRefs: [],
+    selectableRefs: [],
+    readableRefs: ['v2ref_1'],
+    ambiguousRefs: [],
+  };
+
+  const ir = new PlannerRepresentationCompiler().compile(input);
+  const el = ir.surface.groups.flatMap(group => group.elements).find(e => e.refId === 'v2ref_1');
+  assert.equal(el?.lane, 'interaction');
+  assert.deepEqual(el?.tools, ['r']);
+});
+
+test('PRC compiler compiles tools attribute based on actionSurface compatibility options', () => {
+  const input = makeInput();
+  input.workingSet!.actionSurface = {
+    clickableRefs: ['v2ref_1'],
+    typeableRefs: ['v2ref_1'],
+    selectableRefs: [],
+    readableRefs: ['v2ref_1'],
+    ambiguousRefs: ['v2ref_1'],
+  };
+
+  const ir = new PlannerRepresentationCompiler().compile(input);
+  const el = ir.surface.groups.flatMap(group => group.elements).find(e => e.refId === 'v2ref_1');
+  assert.deepEqual(el?.tools, ['c', 't', 'r', 'a']);
+});
+

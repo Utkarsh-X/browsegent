@@ -55,7 +55,7 @@ test('PRC trace replay: compact render preserves key planner refs and is smaller
 
   const surface = input.workingSet?.actionSurface;
   if (surface) {
-    // Action-surface refs always appear in DECISION SIGNALS section
+    // Action-surface refs always appear in PLANNER SURFACE section
     for (const refId of [
       ...surface.clickableRefs,
       ...surface.typeableRefs,
@@ -64,7 +64,7 @@ test('PRC trace replay: compact render preserves key planner refs and is smaller
     ]) {
       assert.ok(
         rendered.includes(refId),
-        `action-surface ref ${refId} must appear in PRC render (DECISION SIGNALS section)`,
+        `action-surface ref ${refId} must appear in PRC render (PLANNER SURFACE section)`,
       );
     }
   }
