@@ -11,7 +11,7 @@ const TEXT_INPUT_TYPES = new Set([
   'password',
 ]);
 const BUTTON_INPUT_TYPES = new Set(['button', 'submit', 'reset', 'image']);
-const CLICKABLE_ROLES = new Set(['button', 'link', 'menuitem', 'option', 'checkbox', 'radio', 'switch', 'tab']);
+const CLICKABLE_ROLES = new Set(['button', 'link', 'menuitem', 'menuitemradio', 'menuitemcheckbox', 'option', 'checkbox', 'radio', 'switch', 'tab']);
 
 export function deriveRefCapabilities(ref: Pick<V2Ref,
   'tagName' | 'inputType' | 'role' | 'name' | 'text' | 'isContentEditable' | 'editableKind' | 'ariaAutocomplete' | 'ariaHasPopup'

@@ -54,7 +54,7 @@ function inferProjectionKind(ref: V2Ref, capabilities = ref.capabilities ?? deri
   const tagName = ref.tagName?.toLowerCase();
   const inputType = ref.inputType?.toLowerCase() ?? '';
   if (role === 'link') return 'link';
-  if (role === 'button' || role === 'tab' || role === 'menuitem') return 'button';
+  if (role === 'button' || role === 'tab' || role === 'menuitem' || role === 'menuitemradio' || role === 'menuitemcheckbox') return 'button';
   if (tagName === 'a') return 'link';
   if (tagName === 'button') return 'button';
   if (tagName === 'input' && ['button', 'submit', 'reset', 'image'].includes(inputType)) return 'button';

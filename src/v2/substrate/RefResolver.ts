@@ -370,7 +370,7 @@ const isInteractiveElement = (target) => {
   const targetRole = target.getAttribute('role') && target.getAttribute('role')?.toLowerCase();
   if (
     targetRole
-    && ['button', 'link', 'tab', 'option', 'menuitem', 'checkbox', 'radio', 'switch', 'textbox', 'combobox'].includes(targetRole)
+    && ['button', 'link', 'tab', 'option', 'menuitem', 'menuitemradio', 'menuitemcheckbox', 'checkbox', 'radio', 'switch', 'textbox', 'combobox', 'searchbox'].includes(targetRole)
   ) {
     return true;
   }

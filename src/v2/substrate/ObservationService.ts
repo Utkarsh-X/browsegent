@@ -331,7 +331,7 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
     }
 
     const role = element.getAttribute('role') && element.getAttribute('role').toLowerCase();
-    if (role && ['button', 'link', 'tab', 'option', 'menuitem', 'checkbox', 'radio', 'switch', 'textbox', 'combobox'].includes(role)) {
+    if (role && ['button', 'link', 'tab', 'option', 'menuitem', 'menuitemradio', 'menuitemcheckbox', 'checkbox', 'radio', 'switch', 'textbox', 'combobox', 'searchbox'].includes(role)) {
       return true;
     }
 
