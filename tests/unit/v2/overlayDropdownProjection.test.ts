@@ -58,7 +58,7 @@ test('PlannerWorkingSetSelector includes menuitemradio and menuitemcheckbox in t
     role: 'menuitemcheckbox',
     capabilities: { clickable: true, typeable: false, selectable: false, readable: true },
   });
-  
+
   // A generic hidden ref that should be pruned (not flood working set)
   const refHidden = makeRef({
     refId: 'ref_hidden',

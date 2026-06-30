@@ -20,7 +20,7 @@ Our investigation revealed three distinct architectural gaps that prevent dropdo
 
 ### C. Ranking & Selection Gaps (Projection & Planner Working Set)
 *   **Files:** [rankOperationalItems.ts](file:///D:/BrowseGent/src/v2/brain1/rankOperationalItems.ts#L57) & [PlannerWorkingSetSelector.ts](file:///D:/BrowseGent/src/v2/planner/PlannerWorkingSetSelector.ts#L557)
-*   **Behavior:** 
+*   **Behavior:**
     *   `inferProjectionKind` maps `menuitem` to `'button'`, but falls back to `'generic'` for `menuitemradio`/`menuitemcheckbox`, resulting in poor ranking scores.
     *   `isClickableCandidate` in `PlannerWorkingSetSelector.ts` whitelists `menuitem` but omits the radio/checkbox variants.
 *   **Impact:** Dropdown options are penalized in ranking or completely filtered out of the planner's active working set.
