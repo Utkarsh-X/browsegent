@@ -65,6 +65,12 @@ test('buildBenchmarkComparison carries diagnostic evidence needed for root-cause
     maxWorkingSetSelectedRefs: 20,
     maxWorkingSetDroppedRefs: 60,
     warningCount: 0,
+    maxProviderPayloadBytes: 0,
+    maxProviderUserBytes: 0,
+    totalProviderPayloadBytes: 0,
+    totalProviderUserBytes: 0,
+    totalProviderAttempts: 0,
+    totalPlannerCalls: 0,
   };
 
   const comparison = buildBenchmarkComparison([sourceReport]);

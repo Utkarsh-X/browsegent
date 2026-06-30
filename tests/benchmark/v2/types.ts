@@ -130,6 +130,17 @@ export interface BenchmarkPayloadSizeSummary {
   maxBytes: number;
 }
 
+export interface BenchmarkProviderPayloadsDiagnostics {
+  plannerCalls: number;
+  providerAttempts: number;
+  totalSystemBytes: number;
+  totalUserBytes: number;
+  totalBytes: number;
+  maxUserBytes: number;
+  maxTotalBytes: number;
+  serializationModes: Record<string, number>;
+}
+
 export interface BenchmarkPayloadDiagnostics {
   traceBytes: number;
   observations: BenchmarkPayloadSizeSummary;
@@ -137,6 +148,7 @@ export interface BenchmarkPayloadDiagnostics {
   plannerInputSections: BenchmarkPlannerInputSectionDiagnostics;
   plannerOutputs: BenchmarkPayloadSizeSummary;
   failures: BenchmarkPayloadSizeSummary;
+  providerPayloads: BenchmarkProviderPayloadsDiagnostics;
 }
 
 export interface BenchmarkPlannerInputSectionDiagnostics {
@@ -200,6 +212,12 @@ export interface BenchmarkDiagnosticsSummary {
   maxWorkingSetSelectedRefs: number;
   maxWorkingSetDroppedRefs: number;
   warningCount: number;
+  maxProviderPayloadBytes: number;
+  maxProviderUserBytes: number;
+  totalProviderPayloadBytes: number;
+  totalProviderUserBytes: number;
+  totalProviderAttempts: number;
+  totalPlannerCalls: number;
 }
 
 export interface BenchmarkRunMetadata {

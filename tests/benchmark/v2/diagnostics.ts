@@ -10,6 +10,7 @@ import type {
   BenchmarkProjectionOverlapDiagnostics,
   BenchmarkPlannerInputSectionDiagnostics,
   BenchmarkWorkingSetDiagnostics,
+  BenchmarkProviderPayloadsDiagnostics,
 } from './types';
 import type { TraceArtifact, TraceManifest, TraceStep } from '../../../src/v2/trace/types';
 
@@ -62,9 +63,15 @@ async function collectTraceDiagnostics(tracePath: string): Promise<BenchmarkDiag
       plannerInputs,
       diagnostics.warnings,
     );
+    const plannerOutputs = manifest.artifacts.planner.filter(artifact => artifact.kind === 'planner_output');
     diagnostics.payloads.plannerOutputs = await summarizeArtifacts(
       tracePath,
-      manifest.artifacts.planner.filter(artifact => artifact.kind === 'planner_output'),
+      plannerOutputs,
+      diagnostics.warnings,
+    );
+    diagnostics.payloads.providerPayloads = await summarizeProviderPayloads(
+      tracePath,
+      plannerOutputs,
       diagnostics.warnings,
     );
     diagnostics.payloads.failures = await summarizeArtifacts(tracePath, manifest.artifacts.failures ?? [], diagnostics.warnings);
@@ -365,6 +372,7 @@ function emptyDiagnostics(): BenchmarkDiagnostics {
       plannerInputSections: emptyPlannerInputSections(),
       plannerOutputs: emptyPayloadSummary(),
       failures: emptyPayloadSummary(),
+      providerPayloads: emptyProviderPayloadsDiagnostics(),
     },
     actions: {
       stepCount: 0,
@@ -419,5 +427,51 @@ function emptyPayloadSummary(): BenchmarkPayloadSizeSummary {
     count: 0,
     totalBytes: 0,
     maxBytes: 0,
+  };
+}
+
+async function summarizeProviderPayloads(
+  tracePath: string,
+  artifacts: TraceArtifact[],
+  warnings: string[],
+): Promise<BenchmarkProviderPayloadsDiagnostics> {
+  const summary = emptyProviderPayloadsDiagnostics();
+
+  for (const artifact of artifacts) {
+    const artifactPath = resolveArtifactPath(tracePath, artifact.path);
+    try {
+      const content = await readFile(artifactPath, 'utf8');
+      const output = JSON.parse(content);
+      if (output && output.providerPayload && typeof output.providerPayload === 'object') {
+        const payload = output.providerPayload;
+        summary.plannerCalls += 1;
+        summary.providerAttempts += (payload.attempts?.length ?? payload.providerAttempts ?? 0);
+        summary.totalSystemBytes += (payload.totalSystemBytes ?? 0);
+        summary.totalUserBytes += (payload.totalUserBytes ?? 0);
+        summary.totalBytes += (payload.totalBytes ?? 0);
+        summary.maxUserBytes = Math.max(summary.maxUserBytes, payload.maxUserBytes ?? 0);
+        summary.maxTotalBytes = Math.max(summary.maxTotalBytes, payload.maxTotalBytes ?? 0);
+
+        const mode = payload.serializationMode ?? 'json';
+        summary.serializationModes[mode] = (summary.serializationModes[mode] ?? 0) + 1;
+      }
+    } catch (error) {
+      warnings.push(`provider_payload_unavailable:${artifact.id}:${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  return summary;
+}
+
+function emptyProviderPayloadsDiagnostics(): BenchmarkProviderPayloadsDiagnostics {
+  return {
+    plannerCalls: 0,
+    providerAttempts: 0,
+    totalSystemBytes: 0,
+    totalUserBytes: 0,
+    totalBytes: 0,
+    maxUserBytes: 0,
+    maxTotalBytes: 0,
+    serializationModes: {},
   };
 }

@@ -104,6 +104,12 @@ function summarizeDiagnostics(results: ScoredBenchmarkResult[]): BenchmarkDiagno
     maxWorkingSetSelectedRefs: max(results.map(result => result.diagnostics?.workingSet.maxSelectedRefs ?? 0)),
     maxWorkingSetDroppedRefs: max(results.map(result => result.diagnostics?.workingSet.maxDroppedRefs ?? 0)),
     warningCount: sum(results.map(result => result.diagnostics?.warnings.length ?? 0)),
+    maxProviderPayloadBytes: max(results.map(result => result.diagnostics?.payloads.providerPayloads?.maxTotalBytes ?? 0)),
+    maxProviderUserBytes: max(results.map(result => result.diagnostics?.payloads.providerPayloads?.maxUserBytes ?? 0)),
+    totalProviderPayloadBytes: sum(results.map(result => result.diagnostics?.payloads.providerPayloads?.totalBytes ?? 0)),
+    totalProviderUserBytes: sum(results.map(result => result.diagnostics?.payloads.providerPayloads?.totalUserBytes ?? 0)),
+    totalProviderAttempts: sum(results.map(result => result.diagnostics?.payloads.providerPayloads?.providerAttempts ?? 0)),
+    totalPlannerCalls: sum(results.map(result => result.diagnostics?.payloads.providerPayloads?.plannerCalls ?? 0)),
   };
 }
 

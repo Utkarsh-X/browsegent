@@ -46,6 +46,16 @@ function diagnostics(workingSet: BenchmarkDiagnostics['workingSet']): BenchmarkD
       },
       plannerOutputs: payload,
       failures: payload,
+      providerPayloads: {
+        plannerCalls: 0,
+        providerAttempts: 0,
+        totalSystemBytes: 0,
+        totalUserBytes: 0,
+        totalBytes: 0,
+        maxUserBytes: 0,
+        maxTotalBytes: 0,
+        serializationModes: {},
+      },
     },
     actions: { stepCount: 0, failedStepCount: 0, repeatedActionCount: 0, invalidActionCount: 0 },
     projectionOverlap: {
