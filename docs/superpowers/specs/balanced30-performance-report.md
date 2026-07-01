@@ -20,6 +20,23 @@ Browser-Use was run with our local dynamic timeout scaling fix active, allowing 
 
 Below is the comparative performance and token footprint analysis on the `balanced30` task slice:
 
+### A. Executive Summary Scoreboard
+
+| Metric | BrowseGent v2 (PRC) | Browser Use (Local) | Winner |
+| :--- | :---: | :---: | :---: |
+| **Internal Pass Rate** | 53.3% (16/30 passed) | **90.0% (27/30 passed)** | **Browser Use** |
+| **Strict Auto-Score** | 26.7% (8/30) | **36.7% (11/30)** | **Browser Use** |
+| **Partial Credit Rate** | 30.0% | **40.0%** | **Browser Use** |
+| **Avg. Planner Steps** | **7.57** | 9.56 | **BrowseGent** |
+| **Avg. Input Tokens / Task** | **48,286** | 92,741 | **BrowseGent (1.92x)** |
+| **Avg. Output Tokens / Task** | **298** | 8,539 | **BrowseGent (28.6x)** |
+| **Avg. Duration / Task** | 263.4s* | **205.3s** | **Browser Use** |
+
+> [!NOTE]
+> \* BrowseGent was run at a 30s paced interval, adding ~227s of mandatory sleep delay per task. Browser Use was run at a 20s paced interval, adding ~172s of mandatory sleep delay per task.
+
+### B. Detailed Footprint Breakdown
+
 | Metric | BrowseGent v2 (PRC) | Browser-Use (Local) | Winner | Difference / Savings |
 | :--- | :---: | :---: | :---: | :---: |
 | **Internal Pass Rate** | 53.3% (16/30) | **90.0% (27/30)**\* | **Browser-Use** | +36.7% (higher success) |
