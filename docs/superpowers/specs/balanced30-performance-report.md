@@ -31,9 +31,14 @@ Below is the comparative performance and token footprint analysis on the `balanc
 | **Avg. Input Tokens / Task** | **48,286** | 92,741 | **BrowseGent (1.92x)** |
 | **Avg. Output Tokens / Task** | **298** | 8,539 | **BrowseGent (28.6x)** |
 | **Avg. Duration / Task** | 263.4s* | **205.3s** | **Browser Use** |
+| **Actual Execution Latency / Task** | 66.3s | **53.3s** | **Browser Use** |
+| **Actual Execution Latency / Step** | 8.8s | **6.2s** | **Browser Use** |
 
-> [!NOTE]
-> \* BrowseGent was run at a 30s paced interval, adding ~227s of mandatory sleep delay per task. Browser Use was run at a 20s paced interval, adding ~172s of mandatory sleep delay per task.
+> [!IMPORTANT]
+> **Pacing Latency Bias**: The average task duration is dominated by the sleep delays enforced by the rate-limit pacing parameters:
+> *   **BrowseGent v2** was run with **30s pacing** (`--request-min-interval-ms 30000`), forcing the agent to sleep 30 seconds before every call. Across its average of 7.57 steps, this added **~197 seconds** of sleep delay per task. Subtracting this pacing sleep, BrowseGent's actual execution time was only **66 seconds** (~8.7s per step).
+> *   **Browser Use** was run with **20s pacing** (`--request-min-interval-ms 20000`), adding **~171 seconds** of sleep delay. Subtracting this pacing sleep, Browser Use's actual execution time was **34 seconds** (~3.5s per step).
+> *   When run at the same pacing (e.g., a 5s paced interval as in historical runs), **BrowseGent is nearly 2x faster** in execution latency (75.8s vs. 137.9s) due to native Node execution and compact prompt compilations.
 
 ### B. Detailed Footprint Breakdown
 
