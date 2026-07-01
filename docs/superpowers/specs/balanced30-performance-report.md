@@ -1,6 +1,6 @@
 # Balanced30 Benchmark Performance & Gap Analysis Report
 
-We evaluated the hardened **BrowseGent v2** agent with **PRC (Planner Representation Compiler)** serialization on the full `balanced30` 30-task slice. 
+We evaluated the hardened **BrowseGent v2** agent with **PRC (Planner Representation Compiler)** serialization and the **Browser-Use** agent on the full `balanced30` 30-task slice. 
 
 ---
 
@@ -17,7 +17,24 @@ We evaluated the hardened **BrowseGent v2** agent with **PRC (Planner Representa
 
 ---
 
-## 2. In-Depth Task-by-Task Verdicts
+## 2. Head-to-Head Comparison: BrowseGent v2 (PRC) vs. Browser-Use
+
+Below is the comparative performance and token footprint analysis on the `balanced30` task slice:
+
+| Metric | BrowseGent v2 (PRC) | Browser-Use (Local) | Difference / Savings |
+| :--- | :---: | :---: | :---: |
+| **Internal Pass Rate** | **53.3% (16/30)** | 16.7% (5/30) | **+36.6% (3.2x higher)** |
+| **Avg. Input Tokens / Call** | **6,381.4** | 8,747.6 | **-27.1% (BrowseGent saves)** |
+| **Avg. Output Tokens / Call** | **39.4** | 732.2 | **-94.6% (BrowseGent saves)** |
+| **Timeout / Crash Rate** | **3.3% (1/30)** | 83.3% (25/30)* | **BrowseGent is 25x more reliable** |
+
+> [!NOTE]
+> \* Browser-Use local runner timed out (reached 3-minute hard task limit) on 24 out of 30 tasks due to slow execution overhead.
+> \* Browser-Use average token metrics are computed across its successful runs.
+
+---
+
+## 3. In-Depth Task-by-Task Verdicts
 
 Below is the exhaustive categorization and analysis of all 30 task runs:
 
@@ -91,7 +108,7 @@ These tasks failed to resolve internally due to CAPTCHAs, step exhaustions, or p
 
 ---
 
-## 3. Recommended Focus Areas for Next Work
+## 4. Recommended Focus Areas for Next Work
 
 1.  **Robust Step Economy (Apple, Booking, BBC)**: Investigate why the planner spends steps on redundant actions on complex sites, and optimize transition feedback to shorten search paths.
 2.  **CDP Protocol Error Resiliency (Hugging Face)**: Guard node resolution checks so that if a CDP protocol error occurs due to a detached element, it performs a soft re-fetch rather than failing the execution.
