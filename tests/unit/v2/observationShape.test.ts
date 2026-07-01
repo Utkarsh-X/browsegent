@@ -55,3 +55,71 @@ test('resolveBackendNodeIds returns empty identities when CDP bridge is unavaila
 
   assert.deepEqual(identities, [{}, {}, {}]);
 });
+
+test('resolveBackendNodeIds recovers from querySelectorAll protocol error and succeeds on retry', async () => {
+  const { resolveBackendNodeIds } = await import('../../../src/v2/substrate/ObservationService');
+  const page = {
+    evaluate: async () => undefined,
+  };
+
+  let callCount = 0;
+  const mockBridge = {
+    send: async (method: string, params?: any) => {
+      if (method === 'DOM.getDocument') {
+        return { root: { nodeId: 42 } };
+      }
+      if (method === 'DOM.querySelectorAll') {
+        callCount++;
+        if (callCount === 1) {
+          throw new Error('Protocol error (DOM.querySelectorAll): Could not find node with given id');
+        }
+        return { nodeIds: [100, 101] };
+      }
+      if (method === 'DOM.describeNode') {
+        return {
+          node: {
+            backendNodeId: params.nodeId,
+            attributes: ['data-browsegent-v2-marker', `browsegent-v2-marker-${params.nodeId === 100 ? 0 : 1}`],
+          },
+        };
+      }
+      return {};
+    },
+    dispose: async () => {},
+  };
+
+  const identities = await resolveBackendNodeIds(page as never, 2, async () => mockBridge as any);
+
+  assert.equal(callCount, 2); // Verifies retry was triggered and executed
+  assert.deepEqual(identities, [
+    { backendNodeId: 100, frameId: undefined },
+    { backendNodeId: 101, frameId: undefined },
+  ]);
+});
+
+test('resolveBackendNodeIds returns empty identities on persistent querySelectorAll failure without crashing', async () => {
+  const { resolveBackendNodeIds } = await import('../../../src/v2/substrate/ObservationService');
+  const page = {
+    evaluate: async () => undefined,
+  };
+
+  let callCount = 0;
+  const mockBridge = {
+    send: async (method: string, params?: any) => {
+      if (method === 'DOM.getDocument') {
+        return { root: { nodeId: 42 } };
+      }
+      if (method === 'DOM.querySelectorAll') {
+        callCount++;
+        throw new Error('Protocol error (DOM.querySelectorAll): Could not find node with given id');
+      }
+      return {};
+    },
+    dispose: async () => {},
+  };
+
+  const identities = await resolveBackendNodeIds(page as never, 3, async () => mockBridge as any);
+
+  assert.equal(callCount, 2); // Verifies retry was triggered and failed
+  assert.deepEqual(identities, [{}, {}, {}]);
+});

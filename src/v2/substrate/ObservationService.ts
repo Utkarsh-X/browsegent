@@ -93,17 +93,34 @@ export async function resolveBackendNodeIds(
       return identities;
     }
 
-    const documentResult = await bridge.send<{ root?: { nodeId?: number } }>('DOM.getDocument', { depth: 0 });
-    const rootNodeId = documentResult.root?.nodeId;
-    if (typeof rootNodeId !== 'number') {
-      return identities;
-    }
+    let rootNodeId: number | undefined;
+    let nodeIds: number[] = [];
 
-    const queryResult = await bridge.send<{ nodeIds?: number[] }>('DOM.querySelectorAll', {
-      nodeId: rootNodeId,
-      selector: '[data-browsegent-v2-marker]',
-    });
-    const nodeIds = (queryResult.nodeIds ?? []).slice(0, MAX_CDP_IDENTITY_ELEMENTS);
+    const fetchNodeIds = async () => {
+      const documentResult = await bridge!.send<{ root?: { nodeId?: number } }>('DOM.getDocument', { depth: 0 });
+      rootNodeId = documentResult.root?.nodeId;
+      if (typeof rootNodeId !== 'number') {
+        return;
+      }
+      const queryResult = await bridge!.send<{ nodeIds?: number[] }>('DOM.querySelectorAll', {
+        nodeId: rootNodeId,
+        selector: '[data-browsegent-v2-marker]',
+      });
+      nodeIds = (queryResult.nodeIds ?? []).slice(0, MAX_CDP_IDENTITY_ELEMENTS);
+    };
+
+    try {
+      await fetchNodeIds();
+    } catch (err) {
+      // Retry once after a brief settlement delay
+      await new Promise(resolve => setTimeout(resolve, 30));
+      try {
+        await fetchNodeIds();
+      } catch (retryErr) {
+        console.warn('[ObservationService] CDP DOM querySelectorAll failed persistently:', retryErr);
+        return identities;
+      }
+    }
 
     for (const nodeId of nodeIds) {
       try {
