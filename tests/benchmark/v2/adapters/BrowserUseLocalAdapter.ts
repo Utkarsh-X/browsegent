@@ -100,6 +100,13 @@ export class BrowserUseLocalAdapter implements BenchmarkAdapter {
       BROWSER_USE_CONFIG_DIR: this.env.BROWSER_USE_CONFIG_DIR ?? join(artifactPath, 'browser-use-config'),
     };
 
+    const requestMinIntervalMs = options.requestMinIntervalMs ?? 0;
+    const maxSteps = options.maxSteps ?? task.maxSteps ?? 8;
+    const dynamicTimeoutMs = Math.max(
+      this.timeoutMs,
+      (requestMinIntervalMs * maxSteps) + 180_000
+    );
+
     const processResult = await this.processRunner(this.pythonCommand, [
       this.runnerPath,
       '--input',
@@ -109,7 +116,7 @@ export class BrowserUseLocalAdapter implements BenchmarkAdapter {
     ], {
       cwd: this.cwd,
       env: processEnv,
-      timeoutMs: this.timeoutMs,
+      timeoutMs: dynamicTimeoutMs,
     });
 
     await writeFile(stdoutPath, redactSecrets(processResult.stdout, secrets), 'utf8');

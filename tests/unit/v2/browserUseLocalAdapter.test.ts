@@ -130,3 +130,36 @@ test('BrowserUseLocalAdapter uses corrected Gemini Lite model when no explicit m
   const input = JSON.parse(await readFile(join(result.artifactPath ?? '', 'input.json'), 'utf8'));
   assert.equal(input.model, 'gemini-3.1-flash-lite');
 });
+
+test('BrowserUseLocalAdapter scales timeoutMs dynamically based on requestMinIntervalMs and maxSteps', async () => {
+  const outputRoot = join(process.cwd(), 'logs', 'browser-use-local-adapter-timeout-unit');
+  await rm(outputRoot, { recursive: true, force: true });
+
+  let capturedTimeoutMs: number | undefined;
+
+  const adapter = new BrowserUseLocalAdapter({
+    pythonCommand: 'python',
+    timeoutMs: 180_000,
+    processRunner: async (_command, args, options) => {
+      capturedTimeoutMs = options.timeoutMs;
+      const outputFlag = args.indexOf('--output');
+      const outputPath = args[outputFlag + 1];
+      await writeFile(outputPath, JSON.stringify({
+        success: true,
+        value: 'success',
+        metrics: { plannerCalls: 1, toolExecutions: 1 },
+      }));
+      return { exitCode: 0, stdout: '', stderr: '' };
+    },
+  });
+
+  await adapter.run(task, {
+    runId: 'bench_unit',
+    attempt: 1,
+    traceDir: outputRoot,
+    headed: false,
+    requestMinIntervalMs: 30000,
+  });
+
+  assert.equal(capturedTimeoutMs, 300_000);
+});

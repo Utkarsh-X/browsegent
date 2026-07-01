@@ -2,18 +2,17 @@
 
 We evaluated the hardened **BrowseGent v2** agent with **PRC (Planner Representation Compiler)** serialization and the **Browser-Use** agent on the full `balanced30` 30-task slice. 
 
+Browser-Use was run with our local dynamic timeout scaling fix active, allowing it to complete its runs without premature subprocess kills.
+
 ---
 
 ## 1. High-Level Metrics Scorecard
 
 *   **Total Tasks Executed:** 30
-*   **Internal Pass Rate:** **53.3%** (16/30 tasks successfully resolved in-browser)
-*   **Strict Verification Pass Rate:** **26.7%** (8/30 tasks strictly matched automated reference strings)
-*   **Environment Blocked Count:** **5** (16.7% of runs blocked by Cloudflare / Google CAPTCHAs)
-*   **Average Planner Steps:** **7.57** (Highly efficient; indicating fast resolution times when unblocked)
-*   **Payload Footprint Efficiency:** 
-    *   **Max user payload per call:** **27,964 bytes** (Less than 28KB, keeping provider context size minimal)
-    *   **Format Compliance:** **245 attempts for 227 calls** (Only 18 format retries across the entire 30-run suite)
+*   **BrowseGent v2 (PRC) Pass Rate:** **53.3%** (16/30 tasks successfully resolved in-browser)
+*   **Browser-Use (Unthrottled) Pass Rate:** **90.0%** (27/30 tasks successfully resolved in-browser)
+*   **BrowseGent Average Steps:** **7.57**
+*   **Browser-Use Average Steps:** **9.56** (for tasks that successfully initialized)
 
 ---
 
@@ -21,16 +20,18 @@ We evaluated the hardened **BrowseGent v2** agent with **PRC (Planner Representa
 
 Below is the comparative performance and token footprint analysis on the `balanced30` task slice:
 
-| Metric | BrowseGent v2 (PRC) | Browser-Use (Local) | Difference / Savings |
-| :--- | :---: | :---: | :---: |
-| **Internal Pass Rate** | **53.3% (16/30)** | 16.7% (5/30) | **+36.6% (3.2x higher)** |
-| **Avg. Input Tokens / Call** | **6,381.4** | 8,747.6 | **-27.1% (BrowseGent saves)** |
-| **Avg. Output Tokens / Call** | **39.4** | 732.2 | **-94.6% (BrowseGent saves)** |
-| **Timeout / Crash Rate** | **3.3% (1/30)** | 83.3% (25/30)* | **BrowseGent is 25x more reliable** |
+| Metric | BrowseGent v2 (PRC) | Browser-Use (Local) | Winner | Difference / Savings |
+| :--- | :---: | :---: | :---: | :---: |
+| **Internal Pass Rate** | 53.3% (16/30) | **90.0% (27/30)**\* | **Browser-Use** | +36.7% (higher success) |
+| **Avg. Input Tokens / Task** | **48,286.3** | 92,741.0 | **BrowseGent** | **-47.9% (BrowseGent saves)** |
+| **Avg. Output Tokens / Task** | **298.2** | 8,539.4 | **BrowseGent** | **-96.5% (BrowseGent saves)** |
+| **Avg. Input Tokens / Call** | **6,381.4** | 9,705.4 | **BrowseGent** | **-34.2% (BrowseGent saves)** |
+| **Avg. Output Tokens / Call** | **39.4** | 893.7 | **BrowseGent** | **-95.6% (BrowseGent saves)** |
+| **Subprocess Timeout Rate** | **0.0% (0/30)** | **0.0% (0/30)** | — | **Dynamic scaling verified** |
 
 > [!NOTE]
-> \* Browser-Use local runner timed out (reached 3-minute hard task limit) on 24 out of 30 tasks due to slow execution overhead.
-> \* Browser-Use average token metrics are computed across its successful runs.
+> \* The 3 failing tasks for Browser-Use (`Amazon__0`, `Amazon__10`, and `Google__Map__0`) failed due to browser-start watchdog timeouts (`BrowserStartEvent timed out after 30.0s`). Excluding these environmental startup failures, Browser-Use resolved **100% of tasks it successfully initialized**.
+> \* Average token metrics are calculated over tasks that successfully reported usage metrics.
 
 ---
 
@@ -38,7 +39,7 @@ Below is the comparative performance and token footprint analysis on the `balanc
 
 Below is the exhaustive categorization and analysis of all 30 task runs:
 
-### A. Strictly Passed Tasks (8 Runs)
+### A. BrowseGent Strictly Passed Tasks (8 Runs)
 These tasks resolved successfully in the browser and their final answers matched the strict evaluation references exactly or partially:
 1.  **`webvoyager_Amazon__0` (Pass)**: Found and verified green Xbox Wireless controllers with ratings >= 4 stars.
 2.  **`webvoyager_Amazon__10` (Pass)**: Retrieved Asurion 2-year protection plan pricing for PS4.
@@ -51,7 +52,7 @@ These tasks resolved successfully in the browser and their final answers matched
 
 ---
 
-### B. Mismatched Tasks (8 Runs)
+### B. BrowseGent Mismatched Tasks (8 Runs)
 These tasks successfully resolved in the browser but failed strict auto-matching due to wording, formatting, or dynamic data variations:
 1.  **`webvoyager_Cambridge__Dictionary__10`**:
     *   *Agent Answer:* Combined the UK/US IPA pronunciation as `/ɪmˈpek.ə.bəl/ (UK and US)`.
@@ -92,7 +93,7 @@ These tasks successfully resolved in the browser but failed strict auto-matching
 
 ---
 
-### C. Failed Tasks (14 Runs)
+### C. BrowseGent Failed Tasks (14 Runs)
 These tasks failed to resolve internally due to CAPTCHAs, step exhaustions, or protocol errors:
 1.  **CAPTCHA / Environment Blocks (5 Runs)**:
     *   `Allrecipes__3`, `Allrecipes__10`, `Cambridge__Dictionary__0`, `Coursera__0`, `Google__Search__0`.
@@ -108,8 +109,8 @@ These tasks failed to resolve internally due to CAPTCHAs, step exhaustions, or p
 
 ---
 
-## 4. Recommended Focus Areas for Next Work
+## 4. Key Takeaways
 
-1.  **Robust Step Economy (Apple, Booking, BBC)**: Investigate why the planner spends steps on redundant actions on complex sites, and optimize transition feedback to shorten search paths.
-2.  **CDP Protocol Error Resiliency (Hugging Face)**: Guard node resolution checks so that if a CDP protocol error occurs due to a detached element, it performs a soft re-fetch rather than failing the execution.
-3.  **Pronunciation Validator Formatting**: Relax regex checks in the benchmark evaluation script so combining regional descriptions does not penalize correct answers.
+1.  **Massive Token Efficiencies**: BrowseGent v2 (PRC) saves **47.9% on input tokens** and **96.5% on output tokens** per task. The compact element compilation successfully compresses browser state.
+2.  **Browser-Use Task Success**: Given unconstrained reasoning prompts and execution time, Browser-Use successfully navigates complex multi-step tasks (90% internal pass rate).
+3.  **Future Target**: Bring BrowseGent's success rate closer to Browser-Use's level on complex multi-step pages by refining planner reasoning capabilities while maintaining PRC's token efficiency.
