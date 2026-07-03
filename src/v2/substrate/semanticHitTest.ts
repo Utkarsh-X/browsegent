@@ -124,3 +124,191 @@ export function buildBlockerDiagnostic(input: BuildBlockerDiagnosticInput): Bloc
     isNativeDialog: input.isDialog,
   };
 }
+
+// ── Browser-side hit-test ───────────────────────────────────
+
+export async function semanticHitTest(target: ElementHandle): Promise<HitTestResult> {
+  const raw = await target.evaluate((element) => {
+    const targetElement = element as Element;
+    const rect = targetElement.getBoundingClientRect();
+
+    // 1. Zero-size / hidden check
+    if (rect.width <= 0 || rect.height <= 0) {
+      const style = window.getComputedStyle(targetElement);
+      return {
+        verdict: {
+          outcome: 'zero_size_or_hidden' as const,
+          detail: style.display === 'none' ? 'Element has display:none'
+            : style.visibility === 'hidden' ? 'Element has visibility:hidden'
+            : `Element has zero dimensions (${rect.width}x${rect.height})`,
+        },
+      };
+    }
+
+    // 2. Candidate positions (7-point grid)
+    const insetX = Math.min(8, Math.max(1, rect.width / 4));
+    const insetY = Math.min(8, Math.max(1, rect.height / 4));
+    const candidates = [
+      { x: rect.width / 2, y: rect.height / 2 },
+      { x: insetX, y: insetY },
+      { x: rect.width - insetX, y: insetY },
+      { x: insetX, y: rect.height - insetY },
+      { x: rect.width - insetX, y: rect.height - insetY },
+      { x: rect.width * 0.25, y: rect.height / 2 },
+      { x: rect.width * 0.75, y: rect.height / 2 },
+    ];
+
+    // Shadow-including ancestor walk
+    const up = (n: Node): Node | null =>
+      n.parentNode
+      || (n as unknown as { host?: Node }).host
+      || (n.getRootNode && (n.getRootNode() as unknown as { host?: Node }).host)
+      || null;
+
+    function isDescendantOf(child: Node, ancestor: Node): boolean {
+      for (let n: Node | null = child; n; n = up(n)) {
+        if (n === ancestor) return true;
+      }
+      return false;
+    }
+
+    function checkLabelControl(hit: Element, tgt: Element): boolean {
+      const hitLabel = hit.closest ? hit.closest('label') : null;
+      if (hitLabel && ((hitLabel as HTMLLabelElement).control === tgt || hitLabel.contains(tgt))) {
+        return true;
+      }
+      const targetLabel = tgt.closest ? tgt.closest('label') : null;
+      if (targetLabel && targetLabel.contains(hit)) {
+        return true;
+      }
+      return false;
+    }
+
+    type ProbeOutcome = 'clear_target' | 'semantic_relation' | 'soft_ambiguity' | 'blocker';
+
+    interface ProbeResult {
+      outcome: ProbeOutcome;
+      relation?: string;
+      reason?: string;
+    }
+
+    function classifyHit(hit: Element | null): ProbeResult {
+      if (!hit || hit === targetElement) return { outcome: 'clear_target' };
+
+      if (isDescendantOf(hit, targetElement)) {
+        return { outcome: 'semantic_relation', relation: 'descendant' };
+      }
+      if (isDescendantOf(targetElement, hit)) {
+        return { outcome: 'semantic_relation', relation: 'ancestor' };
+      }
+      if (checkLabelControl(hit, targetElement)) {
+        return { outcome: 'semantic_relation', relation: 'label_control' };
+      }
+
+      const hitStyle = window.getComputedStyle(hit);
+      if (hitStyle.opacity === '0') {
+        return { outcome: 'soft_ambiguity', reason: 'Hit element has opacity:0' };
+      }
+
+      return { outcome: 'blocker' };
+    }
+
+    // 3. Probe all candidate positions
+    let bestClearPosition: { x: number; y: number } | undefined;
+    let bestRelation: { result: ProbeResult; position: { x: number; y: number } } | undefined;
+    let bestSoftAmbiguity: { result: ProbeResult; position: { x: number; y: number } } | undefined;
+    let lastBlockerHit: Element | undefined;
+
+    for (const candidate of candidates) {
+      const vx = Math.max(0, Math.min(window.innerWidth - 1, rect.left + candidate.x));
+      const vy = Math.max(0, Math.min(window.innerHeight - 1, rect.top + candidate.y));
+      const hit = document.elementFromPoint(vx, vy);
+      const probe = classifyHit(hit);
+      const position = {
+        x: Math.max(0, Math.min(rect.width, vx - rect.left)),
+        y: Math.max(0, Math.min(rect.height, vy - rect.top)),
+      };
+
+      if (probe.outcome === 'clear_target') {
+        if (!bestClearPosition) bestClearPosition = position;
+      } else if (probe.outcome === 'semantic_relation' && !bestRelation) {
+        bestRelation = { result: probe, position };
+      } else if (probe.outcome === 'soft_ambiguity' && !bestSoftAmbiguity) {
+        bestSoftAmbiguity = { result: probe, position };
+      } else if (probe.outcome === 'blocker' && hit) {
+        lastBlockerHit = hit;
+      }
+    }
+
+    // 4. Return best result in priority order
+    if (bestClearPosition) {
+      return { verdict: { outcome: 'clear_target' as const }, position: bestClearPosition };
+    }
+    if (bestRelation) {
+      return {
+        verdict: {
+          outcome: 'semantic_relation' as const,
+          relation: bestRelation.result.relation!,
+        },
+        position: bestRelation.position,
+      };
+    }
+    if (bestSoftAmbiguity) {
+      return {
+        verdict: {
+          outcome: 'soft_ambiguity' as const,
+          reason: bestSoftAmbiguity.result.reason!,
+        },
+        position: bestSoftAmbiguity.position,
+      };
+    }
+
+    // 5. All points blocked → build diagnostic
+    if (lastBlockerHit) {
+      const style = window.getComputedStyle(lastBlockerHit);
+      const bRect = lastBlockerHit.getBoundingClientRect();
+      let desc = lastBlockerHit.tagName.toLowerCase();
+      if (lastBlockerHit.id) {
+        desc += '#' + lastBlockerHit.id;
+      } else if (typeof lastBlockerHit.className === 'string' && lastBlockerHit.className.trim()) {
+        desc += '.' + lastBlockerHit.className.trim().split(/\s+/).slice(0, 2).join('.');
+      }
+
+      let anchorDescription: string | undefined;
+      if (!lastBlockerHit.id && lastBlockerHit.closest) {
+        const anchored = lastBlockerHit.closest('[id]');
+        if (anchored && anchored !== lastBlockerHit) {
+          anchorDescription = anchored.tagName.toLowerCase() + '#' + anchored.id;
+        }
+      }
+
+      return {
+        verdict: {
+          outcome: 'hard_blocker' as const,
+          blocker: {
+            description: desc,
+            tagName: lastBlockerHit.tagName.toLowerCase(),
+            id: lastBlockerHit.id || undefined,
+            classList: lastBlockerHit.className
+              ? String(lastBlockerHit.className).trim().split(/\s+/).slice(0, 3) : undefined,
+            anchorDescription,
+            isFixedOrSticky: style.position === 'fixed' || style.position === 'sticky',
+            coversFullViewport: bRect.width >= window.innerWidth * 0.9
+                             && bRect.height >= window.innerHeight * 0.9,
+            isTransparent: style.opacity === '0',
+            isNativeDialog: lastBlockerHit.tagName === 'DIALOG',
+          },
+        },
+      };
+    }
+
+    return {
+      verdict: {
+        outcome: 'zero_size_or_hidden' as const,
+        detail: 'No hit element found at any probe point',
+      },
+    };
+  }) as HitTestResult;
+
+  return raw;
+}
