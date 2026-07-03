@@ -159,71 +159,63 @@ export async function semanticHitTest(target: ElementHandle): Promise<HitTestRes
     ];
 
     // Shadow-including ancestor walk
-    const up = (n: Node): Node | null =>
-      n.parentNode
-      || (n as unknown as { host?: Node }).host
-      || (n.getRootNode && (n.getRootNode() as unknown as { host?: Node }).host)
-      || null;
+    const helpers = {
+      up(n: Node): Node | null {
+        return n.parentNode
+          || (n as unknown as { host?: Node }).host
+          || (n.getRootNode && (n.getRootNode() as unknown as { host?: Node }).host)
+          || null;
+      },
+      isDescendantOf(child: Node, ancestor: Node): boolean {
+        for (let n: Node | null = child; n; n = this.up(n)) {
+          if (n === ancestor) return true;
+        }
+        return false;
+      },
+      checkLabelControl(hit: Element, tgt: Element): boolean {
+        const hitLabel = hit.closest ? hit.closest('label') : null;
+        if (hitLabel && ((hitLabel as HTMLLabelElement).control === tgt || hitLabel.contains(tgt))) {
+          return true;
+        }
+        const targetLabel = tgt.closest ? tgt.closest('label') : null;
+        if (targetLabel && targetLabel.contains(hit)) {
+          return true;
+        }
+        return false;
+      },
+      classifyHit(hit: Element | null, tgt: Element): { outcome: 'clear_target' | 'semantic_relation' | 'soft_ambiguity' | 'blocker'; relation?: string; reason?: string } {
+        if (!hit || hit === tgt) return { outcome: 'clear_target' };
 
-    function isDescendantOf(child: Node, ancestor: Node): boolean {
-      for (let n: Node | null = child; n; n = up(n)) {
-        if (n === ancestor) return true;
+        if (this.isDescendantOf(hit, tgt)) {
+          return { outcome: 'semantic_relation', relation: 'descendant' };
+        }
+        if (this.isDescendantOf(tgt, hit)) {
+          return { outcome: 'semantic_relation', relation: 'ancestor' };
+        }
+        if (this.checkLabelControl(hit, tgt)) {
+          return { outcome: 'semantic_relation', relation: 'label_control' };
+        }
+
+        const hitStyle = window.getComputedStyle(hit);
+        if (hitStyle.opacity === '0') {
+          return { outcome: 'soft_ambiguity', reason: 'Hit element has opacity:0' };
+        }
+
+        return { outcome: 'blocker' };
       }
-      return false;
-    }
-
-    function checkLabelControl(hit: Element, tgt: Element): boolean {
-      const hitLabel = hit.closest ? hit.closest('label') : null;
-      if (hitLabel && ((hitLabel as HTMLLabelElement).control === tgt || hitLabel.contains(tgt))) {
-        return true;
-      }
-      const targetLabel = tgt.closest ? tgt.closest('label') : null;
-      if (targetLabel && targetLabel.contains(hit)) {
-        return true;
-      }
-      return false;
-    }
-
-    type ProbeOutcome = 'clear_target' | 'semantic_relation' | 'soft_ambiguity' | 'blocker';
-
-    interface ProbeResult {
-      outcome: ProbeOutcome;
-      relation?: string;
-      reason?: string;
-    }
-
-    function classifyHit(hit: Element | null): ProbeResult {
-      if (!hit || hit === targetElement) return { outcome: 'clear_target' };
-
-      if (isDescendantOf(hit, targetElement)) {
-        return { outcome: 'semantic_relation', relation: 'descendant' };
-      }
-      if (isDescendantOf(targetElement, hit)) {
-        return { outcome: 'semantic_relation', relation: 'ancestor' };
-      }
-      if (checkLabelControl(hit, targetElement)) {
-        return { outcome: 'semantic_relation', relation: 'label_control' };
-      }
-
-      const hitStyle = window.getComputedStyle(hit);
-      if (hitStyle.opacity === '0') {
-        return { outcome: 'soft_ambiguity', reason: 'Hit element has opacity:0' };
-      }
-
-      return { outcome: 'blocker' };
-    }
+    };
 
     // 3. Probe all candidate positions
     let bestClearPosition: { x: number; y: number } | undefined;
-    let bestRelation: { result: ProbeResult; position: { x: number; y: number } } | undefined;
-    let bestSoftAmbiguity: { result: ProbeResult; position: { x: number; y: number } } | undefined;
+    let bestRelation: { result: { outcome: 'clear_target' | 'semantic_relation' | 'soft_ambiguity' | 'blocker'; relation?: string; reason?: string }; position: { x: number; y: number } } | undefined;
+    let bestSoftAmbiguity: { result: { outcome: 'clear_target' | 'semantic_relation' | 'soft_ambiguity' | 'blocker'; relation?: string; reason?: string }; position: { x: number; y: number } } | undefined;
     let lastBlockerHit: Element | undefined;
 
     for (const candidate of candidates) {
       const vx = Math.max(0, Math.min(window.innerWidth - 1, rect.left + candidate.x));
       const vy = Math.max(0, Math.min(window.innerHeight - 1, rect.top + candidate.y));
       const hit = document.elementFromPoint(vx, vy);
-      const probe = classifyHit(hit);
+      const probe = helpers.classifyHit(hit, targetElement);
       const position = {
         x: Math.max(0, Math.min(rect.width, vx - rect.left)),
         y: Math.max(0, Math.min(rect.height, vy - rect.top)),
