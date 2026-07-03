@@ -145,17 +145,39 @@ function answerIncludesEvidenceLocation(answer: string, evidenceText: string | u
 }
 
 function extractSpecificLocations(value: string): string[] {
-  return [...value.matchAll(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*(?:[A-Z][a-z]+|[A-Z]{2})(?:,\s*(?:USA|United States|United States of America))?/g)]
+  // Remove Plus code lines which contain supplementary geocoding sub-locations
+  const cleaned = value.replace(/Plus\s+code:\s*\S+\s+/gi, '');
+  return [...cleaned.matchAll(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*(?:[A-Z][a-z]+|[A-Z]{2})(?:,\s*(?:USA|United States|United States of America))?/g)]
     .map(match => match[0])
     .filter(location => tokenizePlace(location).length >= 2);
 }
 
 function tokenizePlace(value: string): string[] {
-  return value
+  return expandStateAbbreviations(value)
     .toLowerCase()
     .split(/[^a-z0-9]+/i)
     .map(token => token.trim())
     .filter(token => token.length >= 3 && !['usa', 'united', 'states', 'america'].includes(token));
+}
+
+const US_STATE_ABBREVIATIONS: Record<string, string> = {
+  AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
+  CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia',
+  HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa',
+  KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland',
+  MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri',
+  MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey',
+  NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio',
+  OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina',
+  SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont',
+  VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
+  DC: 'District of Columbia',
+};
+
+function expandStateAbbreviations(value: string): string {
+  return value.replace(/\b([A-Z]{2})\b/g, (match) =>
+    US_STATE_ABBREVIATIONS[match] ?? match,
+  );
 }
 
 function inferRequiredDetails(normalizedGoal: string): AnswerRequiredDetail[] {

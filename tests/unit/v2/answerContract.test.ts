@@ -121,3 +121,46 @@ test('validateAnswerAgainstContract rejects one pronunciation variant when evide
   assert.equal(validation.ok, false);
   assert.ok(validation.reasons.includes('missing_pronunciation_variant_us'));
 });
+
+test('validateAnswerAgainstContract accepts answer with state abbreviation matching evidence full state name', () => {
+  const contract = inferAnswerContract('Find out its Basic Information');
+  const validation = validateAnswerAgainstContract(
+    'Castle Mountains National Monument is located in Barstow, CA 92311. It is open 24 hours. Phone: (760) 252-6100.',
+    contract,
+    {
+      evidenceText:
+        'Castle Mountains National Monument Address: Barstow, CA 92311, United States Plus code: 8V2F+P8 Hart, California, USA Phone: +1 760-252-6100 Open 24 hours',
+    },
+  );
+
+  assert.equal(validation.ok, true, `Unexpected reasons: ${validation.reasons.join(', ')}`);
+});
+
+test('validateAnswerAgainstContract does not false-reject on Plus code sub-location when primary location is included', () => {
+  const contract = inferAnswerContract('Find out its Basic Information');
+  const validation = validateAnswerAgainstContract(
+    'Located in Barstow, CA 92311. Open 24 hours. Phone: (760) 252-6100.',
+    contract,
+    {
+      evidenceText:
+        'Plus code: 8V2F+P8 Hart, California, USA Address: Barstow, CA 92311 Open 24 hours',
+    },
+  );
+
+  assert.equal(validation.ok, true, `Unexpected reasons: ${validation.reasons.join(', ')}`);
+});
+
+test('validateAnswerAgainstContract still rejects when answer truly omits a specific location from evidence', () => {
+  const contract = inferAnswerContract('Find out its Basic Information');
+  const validation = validateAnswerAgainstContract(
+    'Castle Mountains National Monument is open 24 hours and has a 4.4 rating.',
+    contract,
+    {
+      evidenceText:
+        'Castle Mountains National Monument Barstow, California, USA Open 24 hours 4.4 rating',
+    },
+  );
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('missing_basic_information_location'));
+});
