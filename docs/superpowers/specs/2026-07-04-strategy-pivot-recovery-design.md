@@ -30,15 +30,16 @@ From balanced30 audit (`webvoyager_lite_1783065936525`), 9 non-env failures:
 | Repeat Count | Enforcement | What Happens |
 |--------------|-------------|-------------|
 | 1st occurrence | Normal | Action executes normally |
-| 2nd identical | **Soft pivot** | Recovery state + enriched PRC text: "Your last 2 actions were identical. You MUST use a different approach." |
-| 3rd identical | **Hard block** | Action rejected before execution. Error returned: `action_blocked_by_loop_detector`. Planner must pick different tool/ref/value. |
-
-**Reset condition:** Hard block resets when:
-- URL changes (`evidence.urlChanged`)
-- Generation changes (`evidence.generationChanged`)
-- A different action (different tool or different ref) succeeds between repeats
+| 2nd identical | **Soft pivot** | Recovery signal fires. Enriched PRC text warns: "Your last 2 actions were identical. You MUST use a different approach." First legitimate retry is allowed. |
+| 3rd identical (attempt after warning) | **Hard block** | The planner was warned at count 2 and still attempted the same signature. Action rejected before execution. Error returned: `action_blocked_by_loop_detector`. |
 
 **"Identical" definition:** Same `(tool, targetKey, valueKey)` tuple from `ActionProgressMemory`.
+
+**Reset conditions for hard block (per-signature):**
+- URL changes (`evidence.urlChanged`)
+- Generation changes (`evidence.generationChanged`)
+
+When reset triggers, only the hard-block flag for that specific `(tool, targetKey, valueKey)` signature is cleared. Full `ActionProgressMemory` history is preserved for diagnostics and future signal generation. A different action succeeding between repeats does NOT reset the block for the original signature.
 
 ### 2.2 Enriched PRC Recovery Rendering (Phase 1)
 
@@ -53,9 +54,9 @@ recovery: same_action_loop blocked=search_page:global
   BLOCKED: Do NOT repeat search_page. Try: type in site search box, click navigation links, scroll to find content, or use get on visible elements.
 ```
 
-For `zero_result_read_loop`:
+For `repeated_read_same_value` (renamed from `zero_result_read_loop` when content is non-empty):
 ```
-recovery: zero_result_read_loop blocked=get:v2ref_308
+recovery: repeated_read_same_value blocked=get:v2ref_308
   BLOCKED: Do NOT repeat get on v2ref_308. The data was already retrieved. Use it to answer with done, or try a different ref.
 ```
 
@@ -74,7 +75,7 @@ const repeatedReadMatch = signal.match(
 
 ### 2.4 Repeated successful get → force finalization hint (Phase 1)
 
-When `repeated_value_preview:get:*:N` fires with N≥2, and the last `get` returned non-empty content, add recovery mechanism:
+When `repeated_value_preview:get:*:N` fires with N≥2, and the last `get` returned non-empty content, use recovery state `repeated_read_same_value` (not `zero_result_read_loop`). This distinguishes "I read the same data again" from "I read and got nothing."
 
 ```
 nextMechanisms: ['finalize_with_collected_evidence', 'try_different_ref']
@@ -82,17 +83,23 @@ nextMechanisms: ['finalize_with_collected_evidence', 'try_different_ref']
 
 PRC text:
 ```
-recovery: zero_result_read_loop blocked=get:v2ref_X
+recovery: repeated_read_same_value blocked=get:v2ref_X
   BLOCKED: You already retrieved content from v2ref_X. Formulate your answer from the collected evidence and return done.
 ```
+
+**RecoveryState naming:**
+- `zero_result_read_loop` — preserved for repeated reads returning empty/`__empty__`
+- `repeated_read_same_value` — new, for repeated reads returning the same non-empty content
 
 ### 2.5 Finalization mode cannot return plan (Phase 1)
 
 In [V2PlannerClient.ts](file:///D:/BrowseGent/src/v2/planner/V2PlannerClient.ts), during output validation:
 
 **When** `mode === 'finalization'` and the planner output contains a `plan`:
-- Auto-convert to escalation: `{ escalate: 'dead_end', reason: 'finalization_attempted_plan' }`
-- Log a diagnostic warning
+- Return a validation-style controlled failure with reason `finalization_attempted_plan`
+- Preserve any useful read evidence already in trace — do NOT discard trace artifacts
+- Do NOT silently convert to `{ escalate: 'dead_end' }` — the caller (V2AgentLoop `attemptFinalization`) must see the failure and handle it as a non-result, falling through to `max_steps_exhausted` or equivalent
+- Do NOT synthesize a `done` value automatically in this phase
 
 **Current state:** The finalization goal text says "Do not return a plan" but there's no hard validation. Booking_10 showed the planner ignoring this instruction.
 
@@ -125,19 +132,21 @@ if (
 }
 ```
 
-**Transition fallback:** Also return `false` after `type` into any field if the transition produced new appeared refs (indicating a dynamic dropdown opened):
+**Transition fallback:** Also return `false` after `type` into any field if the transition evidence (from `V2ToolResult.evidence: TransitionEvidence`) shows new appeared refs. The `evidence` field is populated by the runtime after each action via `TransitionEvidence.refChanges.appeared: string[]`.
 
 ```typescript
 if (
   input.lastResult.kind === 'type'
   && input.lastResult.evidence
-  && (input.lastResult.evidence.refChanges?.appeared?.length ?? 0) > 0
+  && input.lastResult.evidence.refChanges.appeared.length > 0
 ) {
   return false;
 }
 ```
 
-**Combined effect:** Google Flights' autocomplete fields (role=`combobox`) will always interrupt. Regular textboxes triggering dropdowns will also interrupt. Static form fills unaffected.
+**Source:** `input.lastResult.evidence` is `TransitionEvidence | undefined` (defined in [types.ts:79](file:///D:/BrowseGent/src/v2/runtime/types.ts#L79)). The `refChanges.appeared` array is always present when `evidence` is defined — no optional chaining needed.
+
+**Combined effect:** Google Flights' autocomplete fields (role=`combobox`) will always interrupt via role gate. Regular textboxes triggering dropdowns (where new refs appear) will also interrupt via transition fallback. Static form fills with no new refs are unaffected.
 
 ### 3.2 System prompt guidance for autocomplete (Phase 2)
 
@@ -225,12 +234,19 @@ npm run test:unit
 npm run check:v2
 ```
 
-### Benchmark Validation
-After Phase 1 + Phase 2:
+### Benchmark Validation (tiered)
+
+**Step 1: Regression gate — mvr5-stable**
 ```bash
-npm.cmd run benchmark:webvoyager-lite -- gemini/gemini-3.1-flash-lite \
-  --source-root D:\agent-tools\WebVoyager --slice mvr5-stable \
-  --adapter browsegent --request-min-interval-ms 10000 \
-  --key-index 8 --planner-serialization prc
+npm.cmd run benchmark:webvoyager-lite -- gemini/gemini-3.1-flash-lite --source-root D:\agent-tools\WebVoyager --slice mvr5-stable --adapter browsegent --request-min-interval-ms 10000 --key-index 8 --planner-serialization prc
 ```
-Then balanced30 to measure improvement.
+Must remain ≥ 4/5 pass (current baseline: 5/5). If regression, stop.
+
+**Step 2: Targeted subset — affected tasks**
+Run a targeted subset containing BBC News, Cambridge Dictionary, Google Maps, and Google Flights tasks to verify the specific fixes work. Only proceed to full balanced30 if this subset shows improvement.
+
+**Step 3: Full balanced30 (only after targeted signal is good)**
+```bash
+npm.cmd run benchmark:webvoyager-lite -- gemini/gemini-3.1-flash-lite --source-root D:\agent-tools\WebVoyager --slice balanced30 --adapter browsegent --request-min-interval-ms 10000 --key-index 12 --planner-serialization prc
+```
+Target: internal pass rate > 53.3% (current baseline: 16/30).
