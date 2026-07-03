@@ -3,6 +3,7 @@ import type { ElementHandle, JSHandle, Page } from 'playwright';
 import { V2OperationalError } from '../runtime/errors';
 import type { V2Ref } from '../runtime/types';
 import { RefResolver } from './RefResolver';
+import type { HitTestVerdict } from './semanticHitTest';
 
 export interface InputExecutionResult<TValue = unknown> {
   kind: 'click' | 'type' | 'select';
@@ -10,6 +11,58 @@ export interface InputExecutionResult<TValue = unknown> {
   interactionEvidence?: {
     clickEventObserved: boolean;
     targetConnectedAfterAction: boolean;
+  };
+}
+
+interface ClickErrorFromVerdict {
+  code: 'target_blocked' | 'target_hidden';
+  message: string;
+  retryable: boolean;
+  diagnostics?: Record<string, unknown>;
+}
+
+export function buildClickErrorFromVerdict(
+  verdict: HitTestVerdict,
+  refName: string | undefined,
+  refRole: string | undefined,
+): ClickErrorFromVerdict | undefined {
+  if (verdict.outcome === 'clear_target' || verdict.outcome === 'semantic_relation' || verdict.outcome === 'soft_ambiguity') {
+    return undefined;
+  }
+
+  if (verdict.outcome === 'zero_size_or_hidden') {
+    return {
+      code: 'target_hidden',
+      message: `Target '${refName ?? 'unknown'}' (${refRole ?? 'element'}) is not interactable: ${verdict.detail}.`,
+      retryable: false,
+    };
+  }
+
+  // hard_blocker
+  const b = verdict.blocker;
+  const retryable = b.isFixedOrSticky && !b.coversFullViewport;
+  const positionNote = b.isFixedOrSticky ? ' Position: fixed/sticky.' : '';
+  const actionHint = b.coversFullViewport
+    ? 'Dismiss the full-viewport overlay first.'
+    : 'Dismiss or interact with the covering element first.';
+
+  return {
+    code: 'target_blocked',
+    message: `Target '${refName ?? 'unknown'}' (${refRole ?? 'element'}) is covered by <${b.description}${b.anchorDescription ? ` inside ${b.anchorDescription}` : ''}> at its click point.${positionNote} ${actionHint}`,
+    retryable,
+    diagnostics: {
+      blockerDescription: b.description,
+      blockerTagName: b.tagName,
+      blockerId: b.id,
+      blockerClassList: b.classList,
+      blockerAnchor: b.anchorDescription,
+      blockerIsFixedOrSticky: b.isFixedOrSticky,
+      blockerCoversFullViewport: b.coversFullViewport,
+      blockerIsTransparent: b.isTransparent,
+      blockerIsNativeDialog: b.isNativeDialog,
+      probePointsTested: 7,
+      hitTestOutcome: 'hard_blocker',
+    },
   };
 }
 
