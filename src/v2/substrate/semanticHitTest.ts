@@ -74,3 +74,53 @@ export function classifyHitResult(input: ClassifyHitInput): ClassifyHitOutput {
 
   return null;
 }
+
+// ── Blocker diagnostic builder (testable without browser) ───
+
+export interface BuildBlockerDiagnosticInput {
+  tagName: string;
+  id: string;
+  className: string;
+  position: string;
+  opacity: string;
+  isDialog: boolean;
+  viewportWidth: number;
+  viewportHeight: number;
+  blockerWidth: number;
+  blockerHeight: number;
+  anchorId: string | undefined;
+  anchorTag: string | undefined;
+}
+
+export function buildBlockerDiagnostic(input: BuildBlockerDiagnosticInput): BlockerDiagnostic {
+  const tag = input.tagName.toLowerCase();
+  let description = tag;
+  if (input.id) {
+    description += `#${input.id}`;
+  } else if (input.className.trim()) {
+    const classes = input.className.trim().split(/\s+/).slice(0, 2);
+    description += '.' + classes.join('.');
+  }
+
+  const classList = input.className.trim()
+    ? input.className.trim().split(/\s+/).slice(0, 3)
+    : undefined;
+
+  let anchorDescription: string | undefined;
+  if (!input.id && input.anchorId && input.anchorTag) {
+    anchorDescription = `${input.anchorTag.toLowerCase()}#${input.anchorId}`;
+  }
+
+  return {
+    description,
+    tagName: tag,
+    id: input.id || undefined,
+    classList,
+    anchorDescription,
+    isFixedOrSticky: input.position === 'fixed' || input.position === 'sticky',
+    coversFullViewport: input.blockerWidth >= input.viewportWidth * 0.9
+                     && input.blockerHeight >= input.viewportHeight * 0.9,
+    isTransparent: input.opacity === '0',
+    isNativeDialog: input.isDialog,
+  };
+}
