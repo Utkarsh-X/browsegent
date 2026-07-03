@@ -3,6 +3,7 @@ import type { ElementHandle, JSHandle, Page } from 'playwright';
 import { V2OperationalError } from '../runtime/errors';
 import type { V2Ref } from '../runtime/types';
 import { RefResolver } from './RefResolver';
+import { semanticHitTest } from './semanticHitTest';
 import type { HitTestVerdict } from './semanticHitTest';
 
 export interface InputExecutionResult<TValue = unknown> {
@@ -79,11 +80,21 @@ export class InputService {
       throw new V2OperationalError('stale_ref', 'Target no longer resolves to an attached element.', { retryable: false });
     }
 
-    const clickPosition = await this.findUnblockedClickPosition(target);
-    if (!clickPosition) {
+    const { verdict, position } = await semanticHitTest(target);
+
+    // Check for non-clickable verdicts
+    const clickError = buildClickErrorFromVerdict(verdict, ref.name, ref.role);
+    if (clickError) {
       await target.dispose();
-      throw new V2OperationalError('target_blocked', 'Target center point is covered by another element.', { retryable: false });
+      throw new V2OperationalError(clickError.code, clickError.message, {
+        retryable: clickError.retryable,
+        diagnostics: clickError.diagnostics,
+      });
     }
+
+    // Determine force mode: semantic_relation uses force:true to avoid
+    // Playwright's redundant overlay check that false-positives on label/shadow patterns.
+    const useForce = verdict.outcome === 'semantic_relation';
 
     let clickOutcome: JSHandle<{ clickEventObserved: boolean }> | undefined;
     try {
@@ -94,7 +105,11 @@ export class InputService {
         }, { capture: true, once: true });
         return outcome;
       });
-      await target.click({ timeout: 1_500, position: clickPosition });
+      await target.click({
+        timeout: 1_500,
+        ...(position ? { position } : {}),
+        ...(useForce ? { force: true } : {}),
+      });
       const [clickEventObserved, targetConnectedAfterAction] = await Promise.all([
         clickOutcome.evaluate(outcome => outcome.clickEventObserved),
         target.evaluate(element => element.isConnected),
@@ -199,42 +214,6 @@ export class InputService {
     }
   }
 
-  private async findUnblockedClickPosition(target: ElementHandle): Promise<{ x: number; y: number } | undefined> {
-    const position = await target.evaluate((element) => {
-      const targetElement = element as Element;
-      const rect = targetElement.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) {
-        return undefined;
-      }
-
-      const insetX = Math.min(8, Math.max(1, rect.width / 4));
-      const insetY = Math.min(8, Math.max(1, rect.height / 4));
-      const candidatePositions = [
-        { x: rect.width / 2, y: rect.height / 2 },
-        { x: insetX, y: insetY },
-        { x: rect.width - insetX, y: insetY },
-        { x: insetX, y: rect.height - insetY },
-        { x: rect.width - insetX, y: rect.height - insetY },
-        { x: rect.width * 0.25, y: rect.height / 2 },
-        { x: rect.width * 0.75, y: rect.height / 2 },
-      ];
-
-      for (const candidate of candidatePositions) {
-        const viewportX = Math.max(0, Math.min(window.innerWidth - 1, rect.left + candidate.x));
-        const viewportY = Math.max(0, Math.min(window.innerHeight - 1, rect.top + candidate.y));
-        const topElement = document.elementFromPoint(viewportX, viewportY);
-        if (topElement && (topElement === targetElement || targetElement.contains(topElement))) {
-          return {
-            x: Math.max(0, Math.min(rect.width, viewportX - rect.left)),
-            y: Math.max(0, Math.min(rect.height, viewportY - rect.top)),
-          };
-        }
-      }
-
-      return undefined;
-    }) as { x: number; y: number } | undefined | false;
-    return position === false ? { x: 0, y: 0 } : position;
-  }
 }
 
 function mapPlaywrightError(error: unknown, action: 'click' | 'type' | 'select'): V2OperationalError {

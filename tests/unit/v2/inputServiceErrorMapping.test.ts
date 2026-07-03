@@ -22,7 +22,13 @@ function makeRef(): V2Ref {
 
 function makeFailingClickLocator(message: string, identityKey: string) {
   const handle = {
-    evaluate: async (_fn: unknown, input?: unknown) => input ? { score: 100, identityKey } : false,
+    evaluate: async (fn: unknown, input?: unknown) => {
+      // When called by RefResolver scoring (with input), return score
+      if (input) return { score: 100, identityKey };
+      // When called by semanticHitTest (no input), return clear_target verdict
+      // so the click proceeds and hits the Playwright error
+      return { verdict: { outcome: 'clear_target' }, position: { x: 50, y: 15 } };
+    },
     evaluateHandle: async () => ({
       evaluate: async () => false,
       dispose: async () => undefined,
