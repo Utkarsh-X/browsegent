@@ -96,11 +96,21 @@ In `src/v2/agent/V2AgentLoop.ts`, modify `ActionProgressMemory`:
 // Add to class ActionProgressMemory
 private readonly hardBlockedSignatures = new Set<string>();
 
+/**
+ * Build an action signature from a planner step (before execution).
+ * This avoids constructing a fake V2ToolResult.
+ */
+static actionSignature(step: { tool: string; ref?: string; text?: string; pattern?: string; url?: string }): string {
+  const tool = normalizeSignalToken(step.tool);
+  const target = normalizeSignalToken(step.ref ?? 'global');
+  const value = step.text ?? step.pattern ?? step.url;
+  const valueKey = value ? normalizeProgressValue(value) : '__none__';
+  return `${tool}:${target}:${valueKey}`;
+}
+
 /** Check whether this action signature is hard-blocked. */
-isHardBlocked(result: V2ToolResult): string | undefined {
-  const entry = progressEntryForResult(result);
-  if (!entry) return undefined;
-  const sig = `${entry.kind}:${entry.targetKey}:${entry.valueKey ?? '__none__'}`;
+isHardBlocked(step: { tool: string; ref?: string; text?: string; pattern?: string; url?: string }): string | undefined {
+  const sig = ActionProgressMemory.actionSignature(step);
   return this.hardBlockedSignatures.has(sig) ? sig : undefined;
 }
 
@@ -159,19 +169,11 @@ resetSignatureOnPageChange(evidence: TransitionEvidence | undefined): void {
 }
 ```
 
-Then in the main step execution loop (around line 200-240 where tool results are dispatched), add a pre-execution check:
+Then in the main step execution loop (around line 200-240 where tool results are dispatched), add a pre-execution check using the planner step directly:
 
 ```typescript
-// Before executing the tool step, check hard-block
-const preCheckResult: V2ToolResult = {
-  success: true,
-  kind: step.tool,
-  targetRef: step.ref,
-  target: step.ref ? { refId: step.ref, role: undefined, name: undefined } : undefined,
-  value: step.text ?? step.pattern ?? step.url,
-  traceStepId: `precheck_${stepIndex}`,
-};
-const blockedSig = progressMemory.isHardBlocked(preCheckResult);
+// Before executing the tool step, check hard-block from the planner step shape
+const blockedSig = progressMemory.isHardBlocked(step);
 if (blockedSig) {
   lastResult = {
     success: false,
@@ -179,8 +181,8 @@ if (blockedSig) {
     targetRef: step.ref,
     error: {
       code: 'action_blocked_by_loop_detector',
-      message: `Action ${step.tool} on ${step.ref ?? 'global'} blocked after 3 identical repeats (signature: ${blockedSig})`,
-      retryable: false,
+      message: `Action ${step.tool} on ${step.ref ?? 'global'} blocked after 3 identical repeats (signature: ${blockedSig}). You MUST choose a different action, ref, or value.`,
+      retryable: true,
     },
     traceStepId: `blocked_${stepIndex}`,
   };
@@ -623,7 +625,7 @@ All must pass. Zero regressions.
 - [ ] **Step 2: Regression gate — mvr5-stable**
 
 ```bash
-npm.cmd run benchmark:webvoyager-lite -- gemini/gemini-3.1-flash-lite --source-root D:\agent-tools\WebVoyager --slice mvr5-stable --adapter browsegent --request-min-interval-ms 10000 --key-index 8 --planner-serialization prc
+npm.cmd run benchmark:webvoyager-lite -- gemini/gemini-3.1-flash-lite --source-root D:\agent-tools\WebVoyager --slice mvr5-stable --adapter browsegent --request-min-interval-ms 10000 --key-index 1 --planner-serialization prc
 ```
 
 Must remain ≥ 4/5 pass. If regression, stop and diagnose.
@@ -635,7 +637,7 @@ Run BBC News, Cambridge Dictionary, Google Maps, and Google Flights tasks. Verif
 - [ ] **Step 4: Full balanced30 (only if targeted subset shows improvement)**
 
 ```bash
-npm.cmd run benchmark:webvoyager-lite -- gemini/gemini-3.1-flash-lite --source-root D:\agent-tools\WebVoyager --slice balanced30 --adapter browsegent --request-min-interval-ms 10000 --key-index 12 --planner-serialization prc
+npm.cmd run benchmark:webvoyager-lite -- gemini/gemini-3.1-flash-lite --source-root D:\agent-tools\WebVoyager --slice balanced30 --adapter browsegent --request-min-interval-ms 10000 --key-index 21 --planner-serialization prc
 ```
 
 Target: internal pass rate > 53.3% (current baseline: 16/30).

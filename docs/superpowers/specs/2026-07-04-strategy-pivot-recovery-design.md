@@ -238,7 +238,7 @@ npm run check:v2
 
 **Step 1: Regression gate — mvr5-stable**
 ```bash
-npm.cmd run benchmark:webvoyager-lite -- gemini/gemini-3.1-flash-lite --source-root D:\agent-tools\WebVoyager --slice mvr5-stable --adapter browsegent --request-min-interval-ms 10000 --key-index 8 --planner-serialization prc
+npm.cmd run benchmark:webvoyager-lite -- gemini/gemini-3.1-flash-lite --source-root D:\agent-tools\WebVoyager --slice mvr5-stable --adapter browsegent --request-min-interval-ms 10000 --key-index 1 --planner-serialization prc
 ```
 Must remain ≥ 4/5 pass (current baseline: 5/5). If regression, stop.
 
@@ -247,6 +247,6 @@ Run a targeted subset containing BBC News, Cambridge Dictionary, Google Maps, an
 
 **Step 3: Full balanced30 (only after targeted signal is good)**
 ```bash
-npm.cmd run benchmark:webvoyager-lite -- gemini/gemini-3.1-flash-lite --source-root D:\agent-tools\WebVoyager --slice balanced30 --adapter browsegent --request-min-interval-ms 10000 --key-index 12 --planner-serialization prc
+npm.cmd run benchmark:webvoyager-lite -- gemini/gemini-3.1-flash-lite --source-root D:\agent-tools\WebVoyager --slice balanced30 --adapter browsegent --request-min-interval-ms 10000 --key-index 21 --planner-serialization prc
 ```
 Target: internal pass rate > 53.3% (current baseline: 16/30).
