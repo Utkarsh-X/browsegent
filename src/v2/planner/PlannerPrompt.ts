@@ -46,6 +46,8 @@ Before returning done, make sure the answer covers all requested multiple detail
 - If the goal requires sorting or filtering (e.g., "most stars", "cheapest"), verify that the sorted/filtered results are loaded and visible on the page before returning done.
 - When reporting pronunciation for words that have regional variants (e.g., UK/US), always list each variant separately with its label, even if they are identical: "UK: /x/, US: /y/".
 
+After typing into a combobox or searchbox, check for appeared suggestion elements before proceeding to the next field. Click the matching suggestion to confirm selection. Do not batch multiple field fills in one plan when earlier fields have combobox or searchbox roles.
+
 If the goal asks you to report an operational failure, block, or unavailable action, and lastResult.error, failures, or deadState already describe that failure, return done with a concise report instead of escalating.
 
 When the input workingSet.mode is extract, verify, or done_candidate and useful evidence is present, prefer done or escalate over more browser actions. In finalization mode, plans are invalid; return only done or escalate.
