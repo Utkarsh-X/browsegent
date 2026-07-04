@@ -907,3 +907,39 @@ test('V2PlannerClient records provider payload byte summaries without raw prompt
   assert.equal(outputJson.providerPayload.rawSystemPrompt, undefined);
   assert.equal(outputJson.providerPayload.rawUserMessage, undefined);
 });
+
+test('V2PlannerClient rejects plan output in finalization mode with finalization_attempted_plan error', async () => {
+  const { V2PlannerClient, V2PlannerClientError } = await loadPlannerClientModule();
+  const client = new V2PlannerClient({
+    provider: async () => ({
+      text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+      inputTokens: 5,
+      outputTokens: 3,
+    }),
+  });
+
+  await assert.rejects(
+    () => client.call({ plannerInput: makePlannerInput('episode_finalization_plan'), mode: 'finalization' }),
+    (error: unknown) => {
+      assert.ok(error instanceof V2PlannerClientError);
+      assert.ok(error.errors.some(e => e.includes('finalization_attempted_plan')));
+      return true;
+    },
+  );
+});
+
+test('V2PlannerClient accepts done output in finalization mode', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const client = new V2PlannerClient({
+    provider: async () => ({
+      text: '{"done":true,"val":"Task completed successfully","confidence":"high"}',
+      inputTokens: 5,
+      outputTokens: 3,
+    }),
+  });
+
+  const result = await client.call({ plannerInput: makePlannerInput('episode_finalization_done'), mode: 'finalization' });
+
+  assert.equal(result.output.done, true);
+  assert.equal(result.output.plan, undefined);
+});

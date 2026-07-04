@@ -233,6 +233,10 @@ export class V2PlannerClient {
       return { ok: false, errors: ['Planner response did not contain a valid JSON object'] };
     }
 
+    if (input.mode === 'finalization' && Array.isArray(parsed.plan) && parsed.plan.length > 0) {
+      return { ok: false, errors: ['finalization_attempted_plan: finalization mode cannot return a plan, only done or escalate'] };
+    }
+
     const validationContext = {
       ...collectValidationContext(input.plannerInput),
       mode: input.mode,
