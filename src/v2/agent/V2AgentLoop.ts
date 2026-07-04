@@ -782,6 +782,7 @@ function shouldContinueMiniPlan(input: {
     input.lastResult.kind === 'type'
     && input.lastResult.target?.role
     && (input.lastResult.target.role === 'combobox' || input.lastResult.target.role === 'searchbox')
+    && nextStep.tool !== 'press'
   ) {
     return false;
   }
@@ -791,6 +792,7 @@ function shouldContinueMiniPlan(input: {
     input.lastResult.kind === 'type'
     && input.lastResult.evidence
     && input.lastResult.evidence.refChanges.appeared.length > 0
+    && nextStep.tool !== 'press'
   ) {
     return false;
   }
