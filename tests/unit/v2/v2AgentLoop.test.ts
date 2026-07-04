@@ -1644,3 +1644,192 @@ test('V2AgentLoop hard-block resets after URL change', async () => {
   assert.equal(planner.inputs[6].lastResult?.kind, 'search_page');
   assert.equal(planner.inputs[6].lastResult?.success, true);
 });
+
+test('V2AgentLoop interrupts mini-plan after typing into a combobox', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    {
+      plan: [
+        { tool: 'type', ref: 'ref_origin', text: 'New York' },
+        { tool: 'type', ref: 'ref_dest', text: 'London' },
+      ],
+      confidence: 'high',
+    },
+    // Re-invoked after interruption — planner sees fresh observation
+    { done: true, val: 'Autocomplete selected' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'type',
+    targetRef: 'ref_origin',
+    value: { inputValue: 'New York' },
+    target: { refId: 'ref_origin', role: 'combobox', name: 'Origin', text: 'New York' },
+    evidence: makeNoProgressEvidence(),
+    traceStepId: 'tool_type_combobox',
+  });
+  const harness = new FakeHarness([
+    makeObservation('obs_initial', {
+      refs: [
+        makeRef({ refId: 'ref_origin', role: 'combobox', name: 'Origin' }),
+        makeRef({ refId: 'ref_dest', role: 'textbox', name: 'Destination' }),
+      ],
+    }),
+    makeObservation('obs_after_type', {
+      refs: [
+        makeRef({ refId: 'ref_origin', role: 'combobox', name: 'Origin' }),
+        makeRef({ refId: 'ref_dest', role: 'textbox', name: 'Destination' }),
+      ],
+    }),
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/flights',
+    goal: 'Search flights from New York to London',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  // Mini-plan was interrupted: planner called at least twice (plan was interrupted, planner re-invoked)
+  assert.ok(planner.inputs.length >= 2, `Expected planner to be called at least 2 times, got ${planner.inputs.length}`);
+  // Only the first type step should have been dispatched (second was not executed due to interruption)
+  assert.deepEqual(dispatcher.steps?.map(step => step.tool), ['type']);
+});
+
+test('V2AgentLoop interrupts mini-plan after type when new refs appeared (dropdown opened)', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    {
+      plan: [
+        { tool: 'type', ref: 'ref_input', text: 'search query' },
+        { tool: 'click', ref: 'ref_submit' },
+      ],
+      confidence: 'high',
+    },
+    // Re-invoked after interruption due to appeared refs
+    { done: true, val: 'Dropdown option selected' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'type',
+    targetRef: 'ref_input',
+    value: { inputValue: 'search query' },
+    target: { refId: 'ref_input', role: 'textbox', name: 'Search', text: 'search query' },
+    evidence: {
+      ...makeNoProgressEvidence(),
+      refChanges: {
+        appeared: ['ref_dropdown_1', 'ref_dropdown_2'],
+        disappeared: [],
+        weakened: [],
+        preserved: ['ref_input', 'ref_submit'],
+      },
+    },
+    traceStepId: 'tool_type_with_dropdown',
+  });
+  const harness = new FakeHarness([
+    makeObservation('obs_initial', {
+      refs: [
+        makeRef({ refId: 'ref_input', role: 'textbox', name: 'Search' }),
+        makeRef({ refId: 'ref_submit', role: 'button', name: 'Submit' }),
+      ],
+    }),
+    makeObservation('obs_after_type', {
+      refs: [
+        makeRef({ refId: 'ref_input', role: 'textbox', name: 'Search' }),
+        makeRef({ refId: 'ref_submit', role: 'button', name: 'Submit' }),
+        makeRef({ refId: 'ref_dropdown_1', role: 'option', name: 'Option 1' }),
+        makeRef({ refId: 'ref_dropdown_2', role: 'option', name: 'Option 2' }),
+      ],
+    }),
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/search',
+    goal: 'Search for results',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  // Mini-plan was interrupted: planner called at least twice
+  assert.ok(planner.inputs.length >= 2, `Expected planner to be called at least 2 times, got ${planner.inputs.length}`);
+  // Only the type step was dispatched; the click was not executed
+  assert.deepEqual(dispatcher.steps?.map(step => step.tool), ['type']);
+});
+
+test('V2AgentLoop continues mini-plan after type into regular textbox without new refs', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    {
+      plan: [
+        { tool: 'type', ref: 'ref_first', text: 'Alice' },
+        { tool: 'type', ref: 'ref_second', text: 'Bob' },
+      ],
+      confidence: 'high',
+    },
+    { done: true, val: 'Form filled' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    {
+      success: true,
+      kind: 'type',
+      targetRef: 'ref_first',
+      value: { inputValue: 'Alice' },
+      target: { refId: 'ref_first', role: 'textbox', name: 'First Name', text: 'Alice' },
+      evidence: makeNoProgressEvidence(),
+      traceStepId: 'tool_type_first',
+    },
+    {
+      success: true,
+      kind: 'type',
+      targetRef: 'ref_second',
+      value: { inputValue: 'Bob' },
+      target: { refId: 'ref_second', role: 'textbox', name: 'Last Name', text: 'Bob' },
+      evidence: makeNoProgressEvidence(),
+      traceStepId: 'tool_type_second',
+    },
+  );
+  const harness = new FakeHarness([
+    makeObservation('obs_initial', {
+      refs: [
+        makeRef({ refId: 'ref_first', role: 'textbox', name: 'First Name' }),
+        makeRef({ refId: 'ref_second', role: 'textbox', name: 'Last Name' }),
+      ],
+    }),
+    makeObservation('obs_after_type', {
+      refs: [
+        makeRef({ refId: 'ref_first', role: 'textbox', name: 'First Name' }),
+        makeRef({ refId: 'ref_second', role: 'textbox', name: 'Last Name' }),
+      ],
+    }),
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Fill in the name fields',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  // Mini-plan was NOT interrupted: both type steps dispatched, planner called only once for the plan
+  assert.deepEqual(dispatcher.steps?.map(step => step.tool), ['type', 'type']);
+  // Planner should have been called exactly once for the plan (+ once for done)
+  assert.equal(planner.inputs.length, 2);
+  assert.equal(result.metrics.toolExecutions, 2);
+});

@@ -777,6 +777,24 @@ function shouldContinueMiniPlan(input: {
     return false;
   }
 
+  // Break mini-plan after typing into combobox or searchbox — autocomplete needs re-observation
+  if (
+    input.lastResult.kind === 'type'
+    && input.lastResult.target?.role
+    && (input.lastResult.target.role === 'combobox' || input.lastResult.target.role === 'searchbox')
+  ) {
+    return false;
+  }
+
+  // Break mini-plan after typing into any field if new refs appeared (dropdown opened)
+  if (
+    input.lastResult.kind === 'type'
+    && input.lastResult.evidence
+    && input.lastResult.evidence.refChanges.appeared.length > 0
+  ) {
+    return false;
+  }
+
   return input.lastResult.kind === 'type'
     || input.lastResult.kind === 'select'
     || input.lastResult.kind === 'get'
