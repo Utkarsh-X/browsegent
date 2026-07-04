@@ -4,6 +4,7 @@ import type { V2ToolResult } from './types';
 export type PlannerRecoveryStateKind =
   | 'wrong_target_type'
   | 'same_action_loop'
+  | 'repeated_read_same_value'
   | 'zero_result_read_loop'
   | 'unselected_ref'
   | 'invalid_output_repeat'
@@ -38,6 +39,18 @@ export class RecoveryStateBuilder {
         severity: 'warning',
         blockedAction: blockedActionFromSignal(signals.find(signal => signal.startsWith('repeated_no_progress_transition:'))),
         nextMechanisms: ['avoid_repeating_blocked_action', 'choose_alternative_ref', 'expand_or_reobserve'],
+        signals,
+      };
+    }
+
+    if (signals.some(signal => signal.startsWith('repeated_value_preview:get:') || signal.startsWith('repeated_value_preview:inspect_region:'))) {
+      return {
+        state: 'repeated_read_same_value',
+        severity: 'warning',
+        blockedAction: blockedActionFromSignal(signals.find(signal =>
+          signal.startsWith('repeated_value_preview:get:') || signal.startsWith('repeated_value_preview:inspect_region:')
+        )),
+        nextMechanisms: ['finalize_with_collected_evidence', 'try_different_ref', 'stop_if_dead_end_evidence_is_sufficient'],
         signals,
       };
     }

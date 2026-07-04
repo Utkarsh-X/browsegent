@@ -132,4 +132,45 @@ test('PromptLayoutEngine rendered prompt size is smaller on a high-density fixtu
   assert.match(text, /tools="c"/);
 });
 
+test('PromptLayoutEngine renders enriched recovery with blockedAction and directive', () => {
+  const ir = new PlannerRepresentationCompiler().compile(input);
+  // Inject a recovery state with blockedAction and nextMechanisms
+  ir.execution.recovery = {
+    state: 'repeated_read_same_value',
+    severity: 'warning',
+    blockedAction: { tool: 'get', ref: 'v2ref_308' },
+    nextMechanisms: ['finalize_with_collected_evidence', 'try_different_ref'],
+    signals: ['repeated_value_preview:get:v2ref_308:3'],
+  };
+  const text = new PromptLayoutEngine().render(ir);
+  assert.match(text, /recovery: repeated_read_same_value blocked=get:v2ref_308/);
+  assert.match(text, /BLOCKED: Do NOT repeat the blocked action\. Try: finalize_with_collected_evidence, try_different_ref\./);
+});
 
+test('PromptLayoutEngine renders recovery without blockedAction when absent', () => {
+  const ir = new PlannerRepresentationCompiler().compile(input);
+  ir.execution.recovery = {
+    state: 'invalid_output_repeat',
+    severity: 'critical',
+    nextMechanisms: ['stop_dead_end_with_validation_evidence'],
+    signals: ['invalid_output_repeat'],
+  };
+  const text = new PromptLayoutEngine().render(ir);
+  assert.match(text, /recovery: invalid_output_repeat/);
+  assert.doesNotMatch(text, /blocked=/);
+  assert.match(text, /BLOCKED: Do NOT repeat the blocked action\. Try: stop_dead_end_with_validation_evidence\./);
+});
+
+test('PromptLayoutEngine renders recovery with global ref as just tool name', () => {
+  const ir = new PlannerRepresentationCompiler().compile(input);
+  ir.execution.recovery = {
+    state: 'zero_result_read_loop',
+    severity: 'warning',
+    blockedAction: { tool: 'search_page' },
+    nextMechanisms: ['try_different_evidence_action'],
+    signals: ['repeated_value_preview:search_page:global:3'],
+  };
+  const text = new PromptLayoutEngine().render(ir);
+  assert.match(text, /recovery: zero_result_read_loop blocked=search_page:global/);
+  assert.match(text, /BLOCKED: Do NOT/);
+});

@@ -80,3 +80,41 @@ test('RecoveryStateBuilder blocks persistent target failure as same action pair'
   assert.ok(recovery?.nextMechanisms.includes('choose_alternative_ref'));
   assert.ok(recovery?.nextMechanisms.includes('use_readable_evidence_if_goal_is_answerable'));
 });
+
+test('RecoveryStateBuilder returns repeated_read_same_value for non-empty repeated get reads', () => {
+  const builder = new RecoveryStateBuilder();
+  const result = builder.build({
+    uncertaintySignals: ['repeated_value_preview:get:v2ref_308:3'],
+  });
+  assert.ok(result);
+  assert.equal(result.state, 'repeated_read_same_value');
+  assert.equal(result.severity, 'warning');
+  assert.ok(result.blockedAction);
+  assert.equal(result.blockedAction.tool, 'get');
+  assert.equal(result.blockedAction.ref, 'v2ref_308');
+  assert.ok(result.nextMechanisms.includes('finalize_with_collected_evidence'));
+});
+
+test('RecoveryStateBuilder returns repeated_read_same_value for inspect_region repeats', () => {
+  const builder = new RecoveryStateBuilder();
+  const result = builder.build({
+    uncertaintySignals: ['repeated_value_preview:inspect_region:v2ref_42:2'],
+  });
+  assert.ok(result);
+  assert.equal(result.state, 'repeated_read_same_value');
+  assert.equal(result.severity, 'warning');
+  assert.ok(result.blockedAction);
+  assert.equal(result.blockedAction.tool, 'inspect_region');
+  assert.equal(result.blockedAction.ref, 'v2ref_42');
+  assert.ok(result.nextMechanisms.includes('try_different_ref'));
+});
+
+test('RecoveryStateBuilder returns zero_result_read_loop for search_page repeats', () => {
+  const builder = new RecoveryStateBuilder();
+  const result = builder.build({
+    uncertaintySignals: ['repeated_value_preview:search_page:global:3'],
+  });
+  assert.ok(result);
+  assert.equal(result.state, 'zero_result_read_loop');
+  assert.ok(result.nextMechanisms.includes('try_different_evidence_action'));
+});

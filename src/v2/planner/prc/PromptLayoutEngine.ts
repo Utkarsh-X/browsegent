@@ -52,7 +52,16 @@ function renderProblems(ir: PlannerRepresentationIR): string {
     lines.push(`  failure: ${failure.targetRef ?? 'no_ref'} ${failure.kind} ${failure.persistence} retryable=${failure.retryable}`);
   }
   if (ir.execution.deadState) lines.push(`  dead_state: ${ir.execution.deadState.reasons.join(', ')}`);
-  if (ir.execution.recovery) lines.push(`  recovery: ${ir.execution.recovery.state}`);
+  if (ir.execution.recovery) {
+    const r = ir.execution.recovery;
+    const blockedStr = r.blockedAction
+      ? ` blocked=${r.blockedAction.tool}:${r.blockedAction.ref ?? 'global'}`
+      : '';
+    lines.push(`  recovery: ${r.state}${blockedStr}`);
+    if (r.nextMechanisms.length > 0) {
+      lines.push(`    BLOCKED: Do NOT repeat the blocked action. Try: ${r.nextMechanisms.join(', ')}.`);
+    }
+  }
   if (ir.execution.answerFeedback) lines.push(`  answer_feedback: missing ${ir.execution.answerFeedback.missingDetails.join(', ')}`);
   if (ir.execution.uncertainty.level !== 'none') lines.push(`  uncertainty: ${ir.execution.uncertainty.level} ${ir.execution.uncertainty.signals.join(', ')}`);
   return lines.length > 1 ? lines.join('\n') : '';
