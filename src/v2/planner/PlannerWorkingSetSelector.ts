@@ -318,7 +318,7 @@ function quarantinedActionsFromUncertainty(signals: readonly string[] | undefine
       continue;
     }
 
-    const repeatedReadMatch = signal.match(/^repeated_value_preview:(get|inspect_region):([^:]+):(\d+)$/);
+    const repeatedReadMatch = signal.match(/^repeated_value_preview:(get|inspect_region|search_page):([^:]+):(\d+)$/);
     if (repeatedReadMatch) {
       const [, tool, refId, countText] = repeatedReadMatch;
       const count = Number.parseInt(countText, 10);
@@ -359,7 +359,7 @@ function isQuarantinedForTool(refId: string, tool: 'click' | 'type' | 'select', 
 function isQuarantinedForRead(refId: string, quarantinedActions: PlannerQuarantinedAction[]): boolean {
   return quarantinedActions.some(action =>
     action.refId === refId
-    && (action.tool === 'get' || action.tool === 'inspect_region')
+    && (action.tool === 'get' || action.tool === 'inspect_region' || action.tool === 'search_page')
     && action.retryable === false
     && action.persistence === 'persistent'
   );

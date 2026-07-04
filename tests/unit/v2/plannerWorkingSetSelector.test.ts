@@ -614,3 +614,40 @@ test('PlannerWorkingSetSelector quarantines repeated empty read from readable la
   ));
 });
 
+test('PlannerWorkingSetSelector quarantines repeated search_page from readable lane', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_search_target',
+      role: 'region',
+      name: 'Search results for climate change',
+      text: 'Search results for climate change',
+      visibility: 'visible',
+      actionability: 'ready',
+      capabilities: { clickable: false, typeable: false, selectable: false, readable: true },
+    }),
+    makeRef({
+      refId: 'ref_alternative',
+      role: 'text',
+      name: 'Sidebar content',
+      text: 'Sidebar content',
+      visibility: 'visible',
+      actionability: 'ready',
+      capabilities: { clickable: false, typeable: false, selectable: false, readable: true },
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 6, maxSecondaryRefs: 6 }).select({
+    goal: 'Find climate change news articles',
+    projection,
+    uncertaintySignals: ['repeated_value_preview:search_page:ref_search_target:3'],
+  });
+
+  assert.equal(selection.workingSet.actionSurface.readableRefs.includes('ref_search_target'), false);
+  assert.ok(selection.workingSet.actionSurface.readableRefs.includes('ref_alternative'));
+  assert.ok(selection.current.refs.ref_search_target);
+  assert.ok(selection.workingSet.quarantinedActions.some(action =>
+    action.refId === 'ref_search_target'
+    && action.tool === 'search_page'
+    && action.failureKind === 'repeated_read_loop'
+  ));
+});
