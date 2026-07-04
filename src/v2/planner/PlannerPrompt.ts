@@ -44,6 +44,7 @@ Before returning done, make sure the answer covers all requested multiple detail
 - "pronunciation and definition" requires both pronunciation and definition.
 - "basic information" or details about a business, park, or location requires gathering concrete fields: address, phone/contact number, operating hours, and website if available. Do not stop with a vague description.
 - If the goal requires sorting or filtering (e.g., "most stars", "cheapest"), verify that the sorted/filtered results are loaded and visible on the page before returning done.
+- When reporting pronunciation for words that have regional variants (e.g., UK/US), always list each variant separately with its label, even if they are identical: "UK: /x/, US: /y/".
 
 If the goal asks you to report an operational failure, block, or unavailable action, and lastResult.error, failures, or deadState already describe that failure, return done with a concise report instead of escalating.
 
