@@ -199,6 +199,23 @@ export class V2AgentLoop {
 
         for (let planIndex = 0; planIndex < plan.length; planIndex += 1) {
           const plannedStep = plan[planIndex];
+
+          const blockedSig = progressMemory.isHardBlocked(plannedStep);
+          if (blockedSig) {
+            lastResult = {
+              success: false,
+              kind: plannedStep.tool,
+              targetRef: plannedStep.ref,
+              error: {
+                code: 'action_blocked_by_loop_detector',
+                message: `Action ${plannedStep.tool} on ${plannedStep.ref ?? 'global'} blocked after 3 identical repeats (signature: ${blockedSig}). You MUST choose a different action, ref, or value.`,
+                retryable: true,
+              },
+              traceStepId: `blocked_${stepIndex}`,
+            };
+            continue;
+          }
+
           lastResult = await dispatcher.dispatch(plannedStep, { goal: input.goal });
           metrics.toolExecutions += 1;
           transitionEvidence = lastResult.evidence;
@@ -210,6 +227,7 @@ export class V2AgentLoop {
           lastSuccessfulEvidenceValue = successfulToolEvidencePreview(lastResult) ?? lastSuccessfulEvidenceValue;
           readEvidenceHistory = appendReadEvidenceHistory(readEvidenceHistory, lastResult);
           const progressSignals = progressMemory.record(lastResult);
+          progressMemory.resetSignatureOnPageChange(lastResult.evidence);
 
           if (!lastResult.success) {
             const currentProjection = this.projectionService.project(observation, graphSnapshot);
@@ -579,6 +597,27 @@ interface ActionProgressEntry {
 
 class ActionProgressMemory {
   private readonly entries: ActionProgressEntry[] = [];
+  private readonly hardBlockedSignatures: Set<string> = new Set();
+
+  static actionSignature(step: { tool: string; ref?: string; text?: string; pattern?: string; url?: string }): string {
+    const tool = normalizeSignalToken(step.tool);
+    const target = normalizeSignalToken(step.ref ?? 'global');
+    const value = step.text ?? step.pattern ?? step.url;
+    const valueKey = value ? normalizeProgressValue(value) : '__none__';
+    return `${tool}:${target}:${valueKey}`;
+  }
+
+  isHardBlocked(step: { tool: string; ref?: string; text?: string; pattern?: string; url?: string }): string | undefined {
+    const sig = ActionProgressMemory.actionSignature(step);
+    return this.hardBlockedSignatures.has(sig) ? sig : undefined;
+  }
+
+  resetSignatureOnPageChange(evidence: TransitionEvidence | undefined): void {
+    if (!evidence) return;
+    if (evidence.urlChanged || evidence.generationChanged) {
+      this.hardBlockedSignatures.clear();
+    }
+  }
 
   record(result: V2ToolResult): string[] {
     const entry = progressEntryForResult(result);
@@ -602,6 +641,10 @@ class ActionProgressMemory {
       if (count >= REPEAT_SIGNAL_THRESHOLD) {
         signals.push(`repeated_no_progress_transition:${entry.kind}:${entry.targetKey}:${count}`);
       }
+      if (count >= 3) {
+        const sig = `${entry.kind}:${entry.targetKey}:${entry.valueKey ?? '__none__'}`;
+        this.hardBlockedSignatures.add(sig);
+      }
     }
 
     if (entry.valueKey) {
@@ -612,6 +655,10 @@ class ActionProgressMemory {
       ).length;
       if (count >= REPEAT_SIGNAL_THRESHOLD) {
         signals.push(`repeated_value_preview:${entry.kind}:${entry.targetKey}:${count}`);
+      }
+      if (count >= 3) {
+        const sig = `${entry.kind}:${entry.targetKey}:${entry.valueKey ?? '__none__'}`;
+        this.hardBlockedSignatures.add(sig);
       }
     }
 

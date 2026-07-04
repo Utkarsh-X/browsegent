@@ -1523,3 +1523,124 @@ test('V2AgentLoop routes through compact client and succeeds when mock provider 
     process.env = originalEnv;
   }
 });
+
+test('V2AgentLoop hard-blocks after 3 identical search_page actions', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'search_page', pattern: 'Submit' }], confidence: 'high' },
+    { plan: [{ tool: 'search_page', pattern: 'Submit' }], confidence: 'high' },
+    { plan: [{ tool: 'search_page', pattern: 'Submit' }], confidence: 'high' },
+    // 4th attempt should be blocked before execution
+    { plan: [{ tool: 'search_page', pattern: 'Submit' }], confidence: 'high' },
+    { done: true, val: 'Gave up' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'search_page',
+    value: { matches: 1, preview: ['Submit'] },
+    traceStepId: 'tool_search',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Find submit button',
+    maxSteps: 5,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Gave up');
+  // After 3 successful identical executions, hard-block is registered in record().
+  // The 4th planner call dispatches search_page but it's blocked before dispatch.
+  // The 5th planner call (inputs[4]) receives the blocked error as lastResult.
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+  assert.equal(planner.inputs[4].lastResult?.error?.retryable, true);
+  // The dispatcher should only have been called 3 times (4th was blocked before dispatch)
+  assert.equal(dispatcher.steps?.length, 3);
+});
+
+test('V2AgentLoop hard-block resets after URL change', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const urlChangedEvidence = {
+    ...makeEvidence(),
+    urlChanged: true,
+  };
+  const planner = new FakePlanner([
+    // Steps 1-3: search_page with same pattern (3 successful records → hard-block registered)
+    { plan: [{ tool: 'search_page', pattern: 'Submit' }], confidence: 'high' },
+    { plan: [{ tool: 'search_page', pattern: 'Submit' }], confidence: 'high' },
+    { plan: [{ tool: 'search_page', pattern: 'Submit' }], confidence: 'high' },
+    // Step 4: search_page blocked (4th identical attempt)
+    { plan: [{ tool: 'search_page', pattern: 'Submit' }], confidence: 'high' },
+    // Step 5: navigate, which produces urlChanged evidence and resets the block
+    { plan: [{ tool: 'navigate', url: 'https://example.test/next' }], confidence: 'high' },
+    // Step 6: search_page again — should be allowed (block was reset)
+    { plan: [{ tool: 'search_page', pattern: 'Submit' }], confidence: 'high' },
+    { done: true, val: 'Found after reset' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    // search_page #1
+    {
+      success: true,
+      kind: 'search_page',
+      value: { matches: 1, preview: ['Submit'] },
+      traceStepId: 'tool_search_1',
+    },
+    // search_page #2
+    {
+      success: true,
+      kind: 'search_page',
+      value: { matches: 1, preview: ['Submit'] },
+      traceStepId: 'tool_search_2',
+    },
+    // search_page #3
+    {
+      success: true,
+      kind: 'search_page',
+      value: { matches: 1, preview: ['Submit'] },
+      traceStepId: 'tool_search_3',
+    },
+    // search_page #4 is blocked, so no dispatch result needed
+    // navigate
+    {
+      success: true,
+      kind: 'navigate',
+      value: { url: 'https://example.test/next' },
+      evidence: urlChangedEvidence,
+      traceStepId: 'tool_navigate',
+    },
+    // search_page #5 (after reset)
+    {
+      success: true,
+      kind: 'search_page',
+      value: { matches: 2, preview: ['Submit', 'Other'] },
+      traceStepId: 'tool_search_5',
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Find submit button across pages',
+    maxSteps: 7,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Found after reset');
+  // The 5th planner input (inputs[4]) should contain the blocked error
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+  // After navigate with urlChanged, the 7th planner input (inputs[6]) should have a successful lastResult
+  // (search_page was allowed again after reset)
+  assert.equal(planner.inputs[6].lastResult?.kind, 'search_page');
+  assert.equal(planner.inputs[6].lastResult?.success, true);
+});
