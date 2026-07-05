@@ -60,8 +60,8 @@ export class AlumniumAdapter implements BenchmarkAdapter {
   constructor(options: AlumniumAdapterOptions = {}) {
     this.env = options.env ?? process.env;
     this.pythonCommand = options.pythonCommand
-      ?? this.env.BROWSEGENT_BROWSER_USE_PYTHON
-      ?? this.env.BROWSER_USE_PYTHON
+      ?? this.env.BROWSEGENT_ALUMNIUM_PYTHON
+      ?? this.env.ALUMNIUM_PYTHON
       ?? 'python';
     this.runnerPath = options.runnerPath
       ?? resolve(__dirname, 'alumnium_runner.py');
@@ -97,7 +97,7 @@ export class AlumniumAdapter implements BenchmarkAdapter {
 
     const processEnv: NodeJS.ProcessEnv = {
       ...this.env,
-      BROWSER_USE_CONFIG_DIR: this.env.BROWSER_USE_CONFIG_DIR ?? join(artifactPath, 'alumnium-config'),
+      ALUMNIUM_CONFIG_DIR: this.env.ALUMNIUM_CONFIG_DIR ?? join(artifactPath, 'alumnium-config'),
     };
 
     const requestMinIntervalMs = options.requestMinIntervalMs ?? 0;
