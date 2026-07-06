@@ -23,7 +23,7 @@ export function buildV2PlannerResponseSchema(): Record<string, unknown> {
       ref: { type: 'string' },
       text: { type: 'string' },
       value: { type: 'string' },
-      url: { type: 'string' },
+      url: { type: 'string', maxLength: 2048 },
       direction: { type: 'string', enum: ['down', 'up'] },
       timeout: { type: 'number' },
       pattern: { type: 'string' },

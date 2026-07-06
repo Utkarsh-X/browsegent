@@ -1833,3 +1833,77 @@ test('V2AgentLoop continues mini-plan after type into regular textbox without ne
   assert.equal(planner.inputs.length, 2);
   assert.equal(result.metrics.toolExecutions, 2);
 });
+
+test('V2AgentLoop validates and rejects navigate step with oversized URL', async () => {
+  const { V2AgentLoop, validatePlannerStep } = await loadAgentLoopModule();
+  
+  // Test the validation function directly
+  const oversizedUrl = 'https://example.test/search?' + 'a'.repeat(2048);
+  const error = validatePlannerStep({ tool: 'navigate', url: oversizedUrl });
+  assert.ok(error);
+  assert.equal(error.code, 'invalid_action_payload');
+  assert.match(error.message, /URL too long/);
+  assert.equal(error.retryable, true);
+
+  // Test that the loop processes this validation failure correctly
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'navigate', url: oversizedUrl }], confidence: 'high' },
+    { done: true, val: 'Fellback' },
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Navigate to oversized URL',
+    maxSteps: 3,
+  });
+
+  assert.equal(planner.inputs.length, 2);
+  const lastResultFeed = planner.inputs[1].lastResult;
+  assert.equal(lastResultFeed?.success, false);
+  assert.equal(lastResultFeed?.error?.code, 'invalid_action_payload');
+  assert.equal(lastResultFeed?.error?.retryable, true);
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Fellback');
+});
+
+test('V2AgentLoop validates and rejects navigate step with malformed URL', async () => {
+  const { V2AgentLoop, validatePlannerStep } = await loadAgentLoopModule();
+  
+  // Test the validation function directly
+  const malformedUrl = 'not-a-valid-url';
+  const error = validatePlannerStep({ tool: 'navigate', url: malformedUrl });
+  assert.ok(error);
+  assert.equal(error.code, 'invalid_action_payload');
+  assert.match(error.message, /Malformed URL/);
+  assert.equal(error.retryable, true);
+
+  // Test that the loop processes this validation failure correctly
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'navigate', url: malformedUrl }], confidence: 'high' },
+    { done: true, val: 'Fellback' },
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Navigate to malformed URL',
+    maxSteps: 3,
+  });
+
+  assert.equal(planner.inputs.length, 2);
+  const lastResultFeed = planner.inputs[1].lastResult;
+  assert.equal(lastResultFeed?.success, false);
+  assert.equal(lastResultFeed?.error?.code, 'invalid_action_payload');
+  assert.equal(lastResultFeed?.error?.retryable, true);
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Fellback');
+});

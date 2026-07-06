@@ -7,7 +7,7 @@ import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
 import { PlannerInputComposer } from '../planner/PlannerInputComposer';
 import { V2PlannerClient } from '../planner/V2PlannerClient';
 import { CompactPlannerClient } from '../planner/CompactPlannerClient';
-import type { PlannerAnswerFeedback, PlannerInput, PlannerOutput, PlannerSerializationConfig } from '../planner/types';
+import type { PlannerAnswerFeedback, PlannerInput, PlannerOutput, PlannerSerializationConfig, PlannerOutputStep } from '../planner/types';
 import {
   buildCompactPlannerView,
   buildPlainInteractiveSnapshotBaseline,
@@ -16,7 +16,7 @@ import {
 } from '../planner/CompactPlannerView';
 import { DeadStateDetector, type DeadStateEvidence } from '../runtime/DeadStateDetector';
 import { FailureClassifier, type FailureEvidence } from '../runtime/FailureClassifier';
-import type { BrowserObservation, TransitionEvidence, V2ToolResult } from '../runtime/types';
+import type { BrowserObservation, TransitionEvidence, V2ToolResult, V2ToolError } from '../runtime/types';
 import { UncertaintySignals, type RuntimeUncertainty } from '../runtime/UncertaintySignals';
 import { V2ToolDispatcher } from '../tools/V2ToolDispatcher';
 import type {
@@ -212,6 +212,18 @@ export class V2AgentLoop {
                 retryable: true,
               },
               traceStepId: `blocked_${stepIndex}`,
+            };
+            continue;
+          }
+
+          const stepError = validatePlannerStep(plannedStep);
+          if (stepError) {
+            lastResult = {
+              success: false,
+              kind: plannedStep.tool,
+              targetRef: plannedStep.ref,
+              error: stepError,
+              traceStepId: `invalid_${stepIndex}`,
             };
             continue;
           }
@@ -897,4 +909,26 @@ function compactResultPreview(value: string): string {
 
 function compactRichEvidence(value: string): string {
   return value.replace(/\s+/g, ' ').trim().slice(0, 4_000);
+}
+
+export function validatePlannerStep(step: PlannerOutputStep): V2ToolError | undefined {
+  if (step.tool === 'navigate' && step.url) {
+    if (step.url.length > 2048) {
+      return {
+        code: 'invalid_action_payload',
+        message: `URL too long (${step.url.length} chars, max 2048). Use a shorter URL or navigate via the page.`,
+        retryable: true,
+      };
+    }
+    try {
+      new URL(step.url);
+    } catch {
+      return {
+        code: 'invalid_action_payload',
+        message: `Malformed URL: "${step.url.slice(0, 100)}...". Provide a valid URL.`,
+        retryable: true,
+      };
+    }
+  }
+  return undefined;
 }
