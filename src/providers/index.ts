@@ -129,11 +129,22 @@ async function callGemini(system: string, user: string, model: string, options: 
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       await waitForGeminiRequestSlot();
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-      });
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+        });
+      } catch (fetchError) {
+        if (isTransientNetworkError(fetchError) && attempt < retries) {
+          const wait = Math.min(retryMaxMs, retryBaseMs * Math.pow(2, attempt - 1));
+          logger.warn('providers', `Gemini network error retry ${attempt}/${retries} in ${wait}ms: ${fetchError}`);
+          await new Promise(resolve => setTimeout(resolve, wait));
+          continue;
+        }
+        throw fetchError;
+      }
 
       if (response.ok) {
         const data = await response.json() as {
@@ -191,6 +202,11 @@ async function callGemini(system: string, user: string, model: string, options: 
     });
     throw error;
   }
+}
+
+function isTransientNetworkError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|socket hang up|network|UND_ERR/i.test(message);
 }
 
 function classifyProviderFailure(error: unknown): ProviderFailureType {
