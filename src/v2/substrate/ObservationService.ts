@@ -7,16 +7,36 @@ import type { BuildObservationInput, CapturedElement, ObservationCaptureInput } 
 
 const MAX_CDP_IDENTITY_ELEMENTS = 150;
 
+function isNavigationRaceError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /execution context.*(destroyed|not available)|target closed|navigating/i.test(message);
+}
+
 export class ObservationService {
   private observationCounter = 0;
 
   async capture(input: ObservationCaptureInput): Promise<BrowserObservation> {
     const startedAt = Date.now();
-    const [url, title, captured] = await Promise.all([
-      input.page.url(),
-      input.page.title(),
-      input.page.evaluate<CapturedElement[]>(COLLECT_INTERACTIVE_ELEMENTS_SCRIPT),
-    ]);
+    let url: string;
+    let title: string;
+    let captured: CapturedElement[];
+
+    try {
+      [url, title, captured] = await Promise.all([
+        input.page.url(),
+        input.page.title(),
+        input.page.evaluate<CapturedElement[]>(COLLECT_INTERACTIVE_ELEMENTS_SCRIPT),
+      ]);
+    } catch (error) {
+      if (!isNavigationRaceError(error)) throw error;
+      // Wait for navigation to settle, then retry once
+      await input.page.waitForLoadState('domcontentloaded').catch(() => undefined);
+      [url, title, captured] = await Promise.all([
+        input.page.url(),
+        input.page.title(),
+        input.page.evaluate<CapturedElement[]>(COLLECT_INTERACTIVE_ELEMENTS_SCRIPT),
+      ]);
+    }
 
     const identities = await resolveBackendNodeIds(input.page, captured.length);
     const refs = captured.map((candidate, index): V2Ref => ({

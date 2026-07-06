@@ -123,3 +123,174 @@ test('resolveBackendNodeIds returns empty identities on persistent querySelector
   assert.equal(callCount, 2); // Verifies retry was triggered and failed
   assert.deepEqual(identities, [{}, {}, {}]);
 });
+
+test('ObservationService.capture succeeds on first attempt (no retry, waitForLoadState not called)', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let waitForLoadStateCalled = false;
+  let evaluateCallCount = 0;
+
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => 'Example Title',
+    evaluate: async (script: any) => {
+      evaluateCallCount++;
+      return [] as any[];
+    },
+    waitForLoadState: async (state: string) => {
+      waitForLoadStateCalled = true;
+    },
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  const result = await service.capture({
+    page: mockPage as any,
+    sessionId: 'session_123',
+    generationId: 1,
+  });
+
+  assert.equal(result.url, 'https://example.com');
+  assert.equal(result.title, 'Example Title');
+  assert.equal(waitForLoadStateCalled, false);
+  assert.equal(evaluateCallCount, 2); // 1 for capture, 1 for cleanupBackendMarkers
+});
+
+test('ObservationService.capture throws Execution context was destroyed on first attempt -> retries once after waitForLoadState -> succeeds on second attempt', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let waitForLoadStateCalled = false;
+  let evaluateCallCount = 0;
+
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => 'Example Title',
+    evaluate: async (script: any) => {
+      evaluateCallCount++;
+      if (evaluateCallCount === 1) {
+        throw new Error('Execution context was destroyed, details here...');
+      }
+      if (evaluateCallCount === 2) {
+        return [{ targetId: 'target_1', selectorCandidates: ['#btn'] }] as any[];
+      }
+      return undefined; // for cleanupBackendMarkers
+    },
+    waitForLoadState: async (state: string) => {
+      if (state === 'domcontentloaded') {
+        waitForLoadStateCalled = true;
+      }
+    },
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  const result = await service.capture({
+    page: mockPage as any,
+    sessionId: 'session_123',
+    generationId: 1,
+  });
+
+  assert.equal(result.url, 'https://example.com');
+  assert.equal(result.title, 'Example Title');
+  assert.equal(waitForLoadStateCalled, true);
+  assert.equal(evaluateCallCount, 3); // 1st try (fails), 2nd try (succeeds), 3rd try (cleanupBackendMarkers)
+  assert.equal(result.refs.length, 1);
+});
+
+test('ObservationService.capture throws a non-navigation error -> throws immediately without retrying or calling waitForLoadState', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let waitForLoadStateCalled = false;
+  let evaluateCallCount = 0;
+
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => 'Example Title',
+    evaluate: async (script: any) => {
+      evaluateCallCount++;
+      throw new Error('Some standard evaluation error');
+    },
+    waitForLoadState: async (state: string) => {
+      waitForLoadStateCalled = true;
+    },
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  await assert.rejects(
+    async () => {
+      await service.capture({
+        page: mockPage as any,
+        sessionId: 'session_123',
+        generationId: 1,
+      });
+    },
+    (err: any) => {
+      assert.equal(err.message, 'Some standard evaluation error');
+      return true;
+    }
+  );
+
+  assert.equal(waitForLoadStateCalled, false);
+  assert.equal(evaluateCallCount, 1);
+});
+
+test('ObservationService.capture fails on both attempts with navigation race errors -> throws the second error', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let waitForLoadStateCalled = false;
+  let evaluateCallCount = 0;
+
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => 'Example Title',
+    evaluate: async (script: any) => {
+      evaluateCallCount++;
+      if (evaluateCallCount === 1) {
+        throw new Error('first error: execution context destroyed');
+      } else {
+        throw new Error('second error: target closed');
+      }
+    },
+    waitForLoadState: async (state: string) => {
+      if (state === 'domcontentloaded') {
+        waitForLoadStateCalled = true;
+      }
+    },
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  await assert.rejects(
+    async () => {
+      await service.capture({
+        page: mockPage as any,
+        sessionId: 'session_123',
+        generationId: 1,
+      });
+    },
+    (err: any) => {
+      assert.equal(err.message, 'second error: target closed');
+      return true;
+    }
+  );
+
+  assert.equal(waitForLoadStateCalled, true);
+  assert.equal(evaluateCallCount, 2);
+});
