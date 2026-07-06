@@ -1907,3 +1907,66 @@ test('V2AgentLoop validates and rejects navigate step with malformed URL', async
   assert.equal(result.success, true);
   assert.equal(result.value, 'Fellback');
 });
+
+test('normalizeAnswerValue helper function tests', async () => {
+  const { normalizeAnswerValue } = await loadAgentLoopModule();
+
+  // 1. Pronunciation goal, value '/kæt/, /kæt/' -> returns 'UK: /kæt/ US: /kæt/'
+  assert.equal(
+    normalizeAnswerValue('/kæt/, /kæt/', 'What is the pronunciation of cat?'),
+    'UK: /kæt/ US: /kæt/'
+  );
+  
+  // Variations with different separators (comma, semicolon, newline) and spacing
+  assert.equal(
+    normalizeAnswerValue('/kæt/;\n/kæt/', 'Find pronunciation of cat'),
+    'UK: /kæt/ US: /kæt/'
+  );
+
+  // 2. Pronunciation goal, value already labeled 'UK: /kæt/ US: /kæt/' -> unchanged
+  assert.equal(
+    normalizeAnswerValue('UK: /kæt/ US: /kæt/', 'What is the pronunciation of cat?'),
+    'UK: /kæt/ US: /kæt/'
+  );
+  assert.equal(
+    normalizeAnswerValue('British: /kæt/ American: /kæt/', 'pronunc'),
+    'British: /kæt/ American: /kæt/'
+  );
+
+  // 3. Non-pronunciation goal -> value unchanged
+  assert.equal(
+    normalizeAnswerValue('/kæt/, /kæt/', 'What is the meaning of cat?'),
+    '/kæt/, /kæt/'
+  );
+
+  // 4. Pronunciation goal, single IPA '/kæt/' -> unchanged (not a pair)
+  assert.equal(
+    normalizeAnswerValue('/kæt/', 'Find the pronunciation of cat'),
+    '/kæt/'
+  );
+  assert.equal(
+    normalizeAnswerValue('/kæt/ /kæt/ /kæt/', 'pronunciation'),
+    '/kæt/ /kæt/ /kæt/'
+  );
+});
+
+test('V2AgentLoop integration - returns normalized answer in successful completion result', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { done: true, val: '/kæt/, /kæt/' },
+  ]);
+  const harness = new FakeHarness();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Find the pronunciation of cat',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'UK: /kæt/ US: /kæt/');
+});

@@ -146,7 +146,7 @@ export class V2AgentLoop {
         metrics.plannerDurationMs += plannerResult.durationMs;
 
         if (plannerResult.output.done === true) {
-          const value = plannerResult.output.val ?? '';
+          const value = normalizeAnswerValue(plannerResult.output.val ?? '', input.goal);
           const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(input.goal), {
             evidenceText: buildValidationEvidence(lastSuccessfulEvidenceValue ?? '', readEvidenceHistory),
           });
@@ -931,4 +931,21 @@ export function validatePlannerStep(step: PlannerOutputStep): V2ToolError | unde
     }
   }
   return undefined;
+}
+
+export function normalizeAnswerValue(value: string, goal: string): string {
+  // Only apply pronunciation normalization if the goal asks for pronunciation
+  if (!/pronunc/i.test(goal)) return value;
+
+  // If already labeled (contains UK/US or similar), return as-is
+  if (/\b(UK|US|British|American)\b/i.test(value)) return value;
+
+  // Match IPA patterns like /.../ separated by comma, semicolon, or newline
+  const ipaPattern = /^(\/[^/]+\/)\s*[,;\n]\s*(\/[^/]+\/)$/;
+  const match = value.trim().match(ipaPattern);
+  if (match) {
+    return `UK: ${match[1]} US: ${match[2]}`;
+  }
+
+  return value;
 }
