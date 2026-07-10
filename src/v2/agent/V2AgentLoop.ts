@@ -199,7 +199,9 @@ export class V2AgentLoop {
 
         for (let planIndex = 0; planIndex < plan.length; planIndex += 1) {
           const plannedStep = plan[planIndex];
+          let preExecutionRejected = false;
 
+          // Guard 1: hard-block
           const blockedSig = progressMemory.isHardBlocked(plannedStep);
           if (blockedSig) {
             lastResult = {
@@ -213,41 +215,52 @@ export class V2AgentLoop {
               },
               traceStepId: `blocked_${stepIndex}`,
             };
-            continue;
+            preExecutionRejected = true;
           }
 
-          const stepError = validatePlannerStep(plannedStep);
-          if (stepError) {
-            lastResult = {
-              success: false,
-              kind: plannedStep.tool,
-              targetRef: plannedStep.ref,
-              error: stepError,
-              traceStepId: `invalid_${stepIndex}`,
-            };
-            continue;
+          // Guard 2: step validation (only if guard 1 didn't fire)
+          if (!preExecutionRejected) {
+            const stepError = validatePlannerStep(plannedStep);
+            if (stepError) {
+              lastResult = {
+                success: false,
+                kind: plannedStep.tool,
+                targetRef: plannedStep.ref,
+                error: stepError,
+                traceStepId: `invalid_${stepIndex}`,
+              };
+              preExecutionRejected = true;
+            }
           }
 
-          lastResult = await dispatcher.dispatch(plannedStep, { goal: input.goal });
-          metrics.toolExecutions += 1;
-          transitionEvidence = lastResult.evidence;
-          observation = await harness.observe();
-          graphSnapshot = graph.applyObservation(observation);
-          if (transitionEvidence) {
-            graphSnapshot = graph.applyTransition(transitionEvidence);
+          // Dispatch (only if no pre-execution rejection)
+          if (!preExecutionRejected) {
+            lastResult = await dispatcher.dispatch(plannedStep, { goal: input.goal });
+            metrics.toolExecutions += 1;
+            transitionEvidence = lastResult.evidence;
+            observation = await harness.observe();
+            graphSnapshot = graph.applyObservation(observation);
+            if (transitionEvidence) {
+              graphSnapshot = graph.applyTransition(transitionEvidence);
+            }
+            lastSuccessfulEvidenceValue = successfulToolEvidencePreview(lastResult) ?? lastSuccessfulEvidenceValue;
+            readEvidenceHistory = appendReadEvidenceHistory(readEvidenceHistory, lastResult);
           }
-          lastSuccessfulEvidenceValue = successfulToolEvidencePreview(lastResult) ?? lastSuccessfulEvidenceValue;
-          readEvidenceHistory = appendReadEvidenceHistory(readEvidenceHistory, lastResult);
-          const progressSignals = progressMemory.record(lastResult);
-          progressMemory.resetSignatureOnPageChange(lastResult.evidence);
 
-          if (!lastResult.success) {
+          // Record progress for ALL outcomes (dispatched and pre-execution)
+          const progressSignals = progressMemory.record(lastResult!);
+          if (!preExecutionRejected) {
+            progressMemory.resetSignatureOnPageChange(lastResult!.evidence);
+          }
+
+          // Unified failure pipeline — handles BOTH pre-execution rejections AND dispatched failures
+          if (!lastResult!.success) {
             const currentProjection = this.projectionService.project(observation, graphSnapshot);
-            const failure = this.failureClassifier.classify(lastResult, {
+            const failure = this.failureClassifier.classify(lastResult!, {
               observationId: observation.observationId,
               projection: currentProjection,
-              targetRef: lastResult.targetRef,
-              source: 'v2_agent_loop',
+              targetRef: lastResult!.targetRef,
+              source: preExecutionRejected ? 'pre_execution_guard' : 'v2_agent_loop',
             });
             harness.recordFailureEvidence?.(failure);
             failureEvidence = appendBoundedFailure(failureEvidence, failure);
@@ -271,9 +284,10 @@ export class V2AgentLoop {
               failures: failureEvidence,
               deadStateEvidence,
             });
-            break;
+            break; // break mini-plan → replan
           }
 
+          // Success path — only reachable from dispatched actions
           runtimeUncertainty = undefined;
           if (progressSignals.length > 0) {
             const currentProjection = this.projectionService.project(observation, graphSnapshot);
@@ -288,11 +302,11 @@ export class V2AgentLoop {
           }
 
           const nextStep = plan[planIndex + 1];
-          // observation is the fresh post-action observation. Use it to validate queued refs.
-          if (!shouldContinueMiniPlan({ lastResult, nextStep, freshObservation: observation })) {
+          if (!shouldContinueMiniPlan({ lastResult: lastResult!, nextStep, freshObservation: observation })) {
             break;
           }
         }
+
       }
 
       if (lastSuccessfulEvidenceValue) {

@@ -17,6 +17,8 @@ export const V2_OPERATIONAL_ERROR_CODES = [
   'navigation_blocked',
   'captcha_or_access_block',
   'trace_write_failed',
+  'invalid_action_payload',
+  'action_blocked_by_loop_detector',
 ] as const;
 
 export type V2OperationalErrorCode = (typeof V2_OPERATIONAL_ERROR_CODES)[number];

@@ -1970,3 +1970,148 @@ test('V2AgentLoop integration - returns normalized answer in successful completi
   assert.equal(result.success, true);
   assert.equal(result.value, 'UK: /kæt/ US: /kæt/');
 });
+
+test('URL guard rejection routes through failure classifier and replans', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const oversizedUrl = 'https://example.test/search?' + 'a'.repeat(3000);
+  const planner = new FakePlanner([
+    // Step 1: navigate with oversized URL (should be rejected by validatePlannerStep),
+    //         followed by a click that should NOT be dispatched (mini-plan breaks)
+    {
+      plan: [
+        { tool: 'navigate', url: oversizedUrl },
+        { tool: 'click', ref: 'ref_submit' },
+      ],
+      confidence: 'high',
+    },
+    // Step 2: planner receives the error and gives up
+    { done: true, val: 'Recovered' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Navigate to oversized URL',
+    maxSteps: 3,
+  });
+
+  // Step 2 (click) was NOT dispatched — mini-plan broke after pre-execution rejection
+  assert.deepEqual(dispatcher.steps?.map(step => step.tool), []);
+
+  // failureClassifier.classify() was called — harness.failures should have the evidence
+  assert.ok(harness.failures.length >= 1, 'harness.recordFailureEvidence should have been called');
+  assert.equal(harness.failures[0].kind, 'invalid_action_payload');
+
+  // Planner was called again with the error in lastResult (replan happened)
+  assert.equal(planner.inputs.length, 2);
+  assert.equal(planner.inputs[1].lastResult?.success, false);
+  assert.equal(planner.inputs[1].lastResult?.error?.code, 'invalid_action_payload');
+
+  // Failures array is fed into the next planner input
+  assert.ok(planner.inputs[1].failures && planner.inputs[1].failures.length >= 1);
+  assert.equal(planner.inputs[1].failures![0].kind, 'invalid_action_payload');
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Recovered');
+});
+
+test('hard-block rejection routes through failure classifier and replans', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    // Steps 1-3: identical click on ref_submit with no-progress evidence (builds up to hard-block)
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    // Step 4: same click again — this should trigger hard-block (3 identical repeats registered)
+    //         followed by a second click that should NOT be dispatched
+    {
+      plan: [
+        { tool: 'click', ref: 'ref_submit' },
+        { tool: 'click', ref: 'ref_submit' },
+      ],
+      confidence: 'high',
+    },
+    // Step 5: planner receives the blocked error and escalates
+    { done: true, val: 'Changed strategy' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    evidence: makeNoProgressEvidence(),
+    traceStepId: 'tool_click',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit button',
+    maxSteps: 5,
+  });
+
+  // The 4th planner step's second click was NOT dispatched — mini-plan broke
+  // Dispatcher received 3 clicks (steps 1-3), NOT 4
+  assert.equal(dispatcher.steps?.length, 3);
+
+  // failureClassifier.classify() was called with the blocked error
+  assert.ok(harness.failures.length >= 1, 'harness.recordFailureEvidence should have been called');
+
+  // Planner received the blocked error with failure evidence
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+
+  // Failure evidence was recorded and passed to planner
+  assert.ok(planner.inputs[4].failures && planner.inputs[4].failures.length >= 1);
+  assert.equal(planner.inputs[4].failures![planner.inputs[4].failures!.length - 1].kind, 'action_blocked_by_loop_detector');
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Changed strategy');
+});
+
+test('pre-execution rejection records progress memory', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const oversizedUrl = 'https://example.test/search?' + 'a'.repeat(3000);
+  const planner = new FakePlanner([
+    // Step 1: navigate with oversized URL — pre-execution rejection
+    { plan: [{ tool: 'navigate', url: oversizedUrl }], confidence: 'high' },
+    // Step 2: planner should receive error and recover
+    { done: true, val: 'Recovered' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Navigate to oversized URL',
+    maxSteps: 3,
+  });
+
+  // The synthetic lastResult should have been fed to the planner
+  assert.equal(planner.inputs[1].lastResult?.success, false);
+  assert.equal(planner.inputs[1].lastResult?.error?.code, 'invalid_action_payload');
+
+  // Failure evidence should be recorded
+  assert.ok(harness.failures.length >= 1);
+
+  // Uncertainty signals should be present (from failure pipeline)
+  assert.ok(planner.inputs[1].uncertainty !== undefined);
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Recovered');
+});

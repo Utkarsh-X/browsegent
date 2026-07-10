@@ -159,6 +159,8 @@ function toFailureKind(code: string | undefined): FailureEvidenceKind {
     case 'navigation_blocked':
     case 'captcha_or_access_block':
     case 'trace_write_failed':
+    case 'invalid_action_payload':
+    case 'action_blocked_by_loop_detector':
       return code;
     default:
       return 'unknown_failure';
@@ -206,6 +208,9 @@ function categoryFor(kind: FailureEvidenceKind): FailureEvidenceCategory {
     case 'environment_block':
     case 'captcha_or_access_block':
       return 'environment';
+    case 'invalid_action_payload':
+    case 'action_blocked_by_loop_detector':
+      return 'target';
     default:
       return 'unknown';
   }
