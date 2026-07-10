@@ -51,6 +51,7 @@ export interface V2AgentHarnessRuntime extends V2ToolRuntime {
   recordCompactPlannerView?(episodeId: string, payload: unknown): TraceArtifact;
   setLatencyLedger?(ledger: import('../trace/LatencyLedger').LatencyLedger): void;
   recordLatencyLedger?(summary: import('../trace/LatencyLedger').LedgerSummary): void;
+  recordActionOutcomes?(summary: unknown): void;
 }
 
 export interface V2AgentLoopOptions {
