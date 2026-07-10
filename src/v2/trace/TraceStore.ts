@@ -34,6 +34,7 @@ export class TraceStore {
   private readonly refResolutionAudits = new Map<string, TracePlannerRecord>();
   private readonly steps: TraceStep[] = [];
   private ledgerSummary?: unknown;
+  private outcomeSummary?: unknown;
 
   constructor(options: TraceStoreOptions) {
     this.runId = options.runId;
@@ -203,6 +204,10 @@ export class TraceStore {
         const ledgerPath = join(runRoot, 'latency_ledger.json');
         await writeFile(ledgerPath, stringifyTraceJson(this.ledgerSummary), 'utf8');
       }
+      if (this.outcomeSummary) {
+        const outcomePath = join(runRoot, 'action_outcomes.json');
+        await writeFile(outcomePath, stringifyTraceJson(this.outcomeSummary), 'utf8');
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       throw new V2OperationalError('trace_write_failed', `Failed to write v2 trace artifacts: ${message}`, { retryable: false });
@@ -229,6 +234,9 @@ export class TraceStore {
         refResolutionAudits: [...this.refResolutionAudits.values()].map((record) => record.artifact),
         latencyLedger: this.ledgerSummary
           ? this.createArtifact('trace', 'latency_ledger', 'latency_ledger.json')
+          : undefined,
+        actionOutcomes: this.outcomeSummary
+          ? this.createArtifact('trace', 'action_outcomes', 'action_outcomes.json')
           : undefined,
       },
     };
@@ -262,6 +270,10 @@ export class TraceStore {
 
   recordLedgerSummary(summary: unknown): void {
     this.ledgerSummary = summary;
+  }
+
+  recordOutcomeSummary(summary: unknown): void {
+    this.outcomeSummary = summary;
   }
 }
 

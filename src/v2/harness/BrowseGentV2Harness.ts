@@ -70,6 +70,10 @@ export class BrowseGentV2Harness {
     this.traceStore.recordLedgerSummary(summary);
   }
 
+  recordActionOutcomes(summary: unknown): void {
+    this.traceStore.recordOutcomeSummary(summary);
+  }
+
   async click(refId: string): Promise<V2ToolResult> {
     return this.executeMutation('click', refId, async (ref) => this.inputService.click(ref, this.session.currentPage()));
   }
