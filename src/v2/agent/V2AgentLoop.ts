@@ -20,6 +20,7 @@ import type { BrowserObservation, TransitionEvidence, V2ToolResult, V2ToolError 
 import { UncertaintySignals, type RuntimeUncertainty } from '../runtime/UncertaintySignals';
 import { V2ToolDispatcher } from '../tools/V2ToolDispatcher';
 import { LatencyLedger } from '../trace/LatencyLedger';
+import { ActionOutcomeRecorder } from '../trace/ActionOutcomeRecord';
 import type {
   V2AgentHarnessRuntime,
   V2AgentLoopInput,
@@ -54,6 +55,7 @@ export class V2AgentLoop {
 
     try {
       const ledger = new LatencyLedger();
+      const outcomeRecorder = new ActionOutcomeRecorder();
       harness.setLatencyLedger?.(ledger);
       let observation = await harness.open(input.url);
       let graphSnapshot = graph.applyObservation(observation);
@@ -111,7 +113,7 @@ export class V2AgentLoop {
               failureReason: 'compact_planner_input_ineligible',
               steps: metrics.plannerCalls,
               metrics,
-            }, ledger);
+            }, ledger, outcomeRecorder);
           }
           if (isPlannerInvalidOutputError(error)) {
             return await this.complete(harness, {
@@ -120,7 +122,7 @@ export class V2AgentLoop {
               failureReason: 'planner_invalid_output_dead_end',
               steps: metrics.plannerCalls,
               metrics,
-            }, ledger);
+            }, ledger, outcomeRecorder);
           }
           return await this.complete(harness, {
             success: false,
@@ -128,7 +130,7 @@ export class V2AgentLoop {
             failureReason: `planner_client_error:${formatErrorMessage(error)}`,
             steps: metrics.plannerCalls,
             metrics,
-          }, ledger);
+          }, ledger, outcomeRecorder);
         }
         recordCompactPlannerTelemetry({
           harness,
@@ -174,7 +176,7 @@ export class V2AgentLoop {
               failureReason: `answer_contract_failed:${answerValidation.reasons.join('|')}`,
               steps: metrics.plannerCalls,
               metrics,
-            }, ledger);
+            }, ledger, outcomeRecorder);
           }
           answerFeedback = undefined;
           return await this.complete(harness, {
@@ -182,7 +184,7 @@ export class V2AgentLoop {
             value,
             steps: metrics.plannerCalls,
             metrics,
-          }, ledger);
+          }, ledger, outcomeRecorder);
         }
 
         if (plannerResult.output.escalate) {
@@ -192,7 +194,7 @@ export class V2AgentLoop {
             failureReason: formatPlannerEscalation(plannerResult.output.escalate, plannerResult.output.reason),
             steps: metrics.plannerCalls,
             metrics,
-          }, ledger);
+          }, ledger, outcomeRecorder);
         }
 
         const plan = plannerResult.output.plan ?? [];
@@ -203,7 +205,7 @@ export class V2AgentLoop {
             failureReason: 'planner_no_action',
             steps: metrics.plannerCalls,
             metrics,
-          }, ledger);
+          }, ledger, outcomeRecorder);
         }
 
         for (let planIndex = 0; planIndex < plan.length; planIndex += 1) {
@@ -225,6 +227,11 @@ export class V2AgentLoop {
               traceStepId: `blocked_${stepIndex}`,
             };
             preExecutionRejected = true;
+            outcomeRecorder.record({
+              stepIndex, tool: plannedStep.tool, targetRef: plannedStep.ref,
+              source: 'hard_block', success: false, errorCode: 'action_blocked_by_loop_detector',
+              stateChanged: false, readEvidenceProduced: false,
+            });
           }
 
           // Guard 2: step validation (only if guard 1 didn't fire)
@@ -239,6 +246,11 @@ export class V2AgentLoop {
                 traceStepId: `invalid_${stepIndex}`,
               };
               preExecutionRejected = true;
+              outcomeRecorder.record({
+                stepIndex, tool: plannedStep.tool, targetRef: plannedStep.ref,
+                source: 'pre_execution_guard', success: false, errorCode: stepError.code,
+                stateChanged: false, readEvidenceProduced: false,
+              });
             }
           }
 
@@ -254,6 +266,12 @@ export class V2AgentLoop {
             }
             lastSuccessfulEvidenceValue = successfulToolEvidencePreview(lastResult) ?? lastSuccessfulEvidenceValue;
             readEvidenceHistory = appendReadEvidenceHistory(readEvidenceHistory, lastResult);
+            outcomeRecorder.record({
+              stepIndex, tool: plannedStep.tool, targetRef: plannedStep.ref,
+              source: 'dispatch', success: lastResult.success, errorCode: lastResult.error?.code,
+              stateChanged: !!(lastResult.evidence?.urlChanged || lastResult.evidence?.generationChanged),
+              readEvidenceProduced: isReadEvidence(lastResult),
+            });
           }
 
           // Record progress for ALL outcomes (dispatched and pre-execution)
@@ -331,7 +349,7 @@ export class V2AgentLoop {
           failureReason: 'v2_max_steps_exhausted',
           steps: metrics.plannerCalls,
           metrics,
-        }, ledger);
+        }, ledger, outcomeRecorder);
       }
 
       return await this.complete(harness, {
@@ -340,7 +358,7 @@ export class V2AgentLoop {
         failureReason: 'v2_max_steps_exhausted',
         steps: metrics.plannerCalls,
         metrics,
-      }, ledger);
+      }, ledger, outcomeRecorder);
     } finally {
       await harness.close();
     }
@@ -397,11 +415,15 @@ export class V2AgentLoop {
     harness: V2AgentHarnessRuntime,
     result: Omit<V2AgentLoopResult, 'tracePath'>,
     ledger?: LatencyLedger,
+    outcomeRecorder?: ActionOutcomeRecorder,
   ): Promise<V2AgentLoopResult> {
     if (ledger) {
       ledger.closeActiveStep();
       const summary = ledger.summarize();
       harness.recordLatencyLedger?.(summary);
+    }
+    if (outcomeRecorder) {
+      harness.recordActionOutcomes?.(outcomeRecorder.toJSON());
     }
     const manifest = await harness.flushTrace();
     return {
@@ -474,14 +496,14 @@ export class V2AgentLoop {
             failureReason: `answer_contract_failed:${answerValidation.reasons.join('|')}`,
             steps: metrics.plannerCalls,
             metrics,
-          }, ledger);
+          }, ledger, outcomeRecorder);
         }
         return await this.complete(harness, {
           success: true,
           value,
           steps: metrics.plannerCalls,
           metrics,
-        }, ledger);
+        }, ledger, outcomeRecorder);
       }
     } catch {
       recordCompactPlannerTelemetry({
