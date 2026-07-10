@@ -943,3 +943,65 @@ test('V2PlannerClient accepts done output in finalization mode', async () => {
   assert.equal(result.output.done, true);
   assert.equal(result.output.plan, undefined);
 });
+
+// --- Truncated navigate URL detection tests ---
+
+test('isTruncatedNavigateOutput detects truncated navigate URL', async () => {
+  const { isTruncatedNavigateOutput } = await loadPlannerClientModule();
+
+  // Truncated: navigate + url + long unfinished string, no closing braces
+  const truncated = '{"plan":[{"tool":"navigate","url":"https://www.amazon.com/s?k=foo' + '%2B'.repeat(500);
+  assert.equal(isTruncatedNavigateOutput(truncated), true);
+});
+
+test('isTruncatedNavigateOutput rejects non-truncated valid JSON', async () => {
+  const { isTruncatedNavigateOutput } = await loadPlannerClientModule();
+
+  // Valid JSON — ends with structural close
+  const valid = '{"plan":[{"tool":"navigate","url":"https://example.com"}]}';
+  assert.equal(isTruncatedNavigateOutput(valid), false);
+});
+
+test('isTruncatedNavigateOutput rejects non-navigate truncated JSON', async () => {
+  const { isTruncatedNavigateOutput } = await loadPlannerClientModule();
+
+  // Truncated, but no navigate/url — should not trigger
+  const noNavigate = '{"plan":[{"tool":"click","ref":"v2ref_' + 'a'.repeat(600);
+  assert.equal(isTruncatedNavigateOutput(noNavigate), false);
+});
+
+test('isTruncatedNavigateOutput rejects short truncated navigate', async () => {
+  const { isTruncatedNavigateOutput } = await loadPlannerClientModule();
+
+  // Has navigate + url but URL is short (< 500 chars) — not truncation, just malformed
+  const shortTrunc = '{"plan":[{"tool":"navigate","url":"https://example.com/short';
+  assert.equal(isTruncatedNavigateOutput(shortTrunc), false);
+});
+
+test('isTruncatedNavigateOutput rejects non-JSON garbage', async () => {
+  const { isTruncatedNavigateOutput } = await loadPlannerClientModule();
+  assert.equal(isTruncatedNavigateOutput('not json at all'), false);
+});
+
+test('V2PlannerClient returns url_truncated error for truncated navigate and retries with feedback', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const truncatedText = '{"plan":[{"tool":"navigate","url":"https://www.amazon.com/s?k=' + 'x'.repeat(600);
+  const validText = '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}';
+
+  let callCount = 0;
+  const client = new V2PlannerClient({
+    provider: async (_system, user) => {
+      callCount += 1;
+      if (callCount === 1) {
+        return { text: truncatedText, inputTokens: 5, outputTokens: 3 };
+      }
+      // Verify retry feedback contains url_truncated guidance
+      assert.match(user, /url_truncated/);
+      return { text: validText, inputTokens: 5, outputTokens: 3 };
+    },
+  });
+
+  const result = await client.call({ plannerInput: makePlannerInput('episode_truncated') });
+  assert.equal(callCount, 2);
+  assert.equal(result.output.plan?.[0].tool, 'click');
+});

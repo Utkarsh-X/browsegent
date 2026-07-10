@@ -228,6 +228,19 @@ export class V2PlannerClient {
   }
 
   private parseAndValidate(rawText: string, input: V2PlannerCallInput): { ok: true; output: PlannerOutput } | { ok: false; errors: string[] } {
+    // Detect truncated navigate URL before attempting JSON parse.
+    // When the LLM generates an oversized URL consuming the entire output budget,
+    // the JSON is irrecoverably truncated. Detect this pattern and return actionable feedback.
+    if (isTruncatedNavigateOutput(rawText)) {
+      return {
+        ok: false,
+        errors: [
+          'url_truncated: The navigate URL consumed the entire output budget and was truncated. ' +
+          'Use a short URL (under 200 characters) or navigate via page elements instead of constructing URLs.',
+        ],
+      };
+    }
+
     const parsed = robustJsonParse(rawText);
     if (!parsed) {
       return { ok: false, errors: ['Planner response did not contain a valid JSON object'] };
@@ -464,4 +477,19 @@ function collectValidationContext(input: PlannerInput): PlannerOutputValidationC
 
 function formatErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/**
+ * Detect planner output truncated mid-URL.
+ * Conditions: mentions "navigate" and "url", text does NOT end with valid JSON
+ * structural closure, and has a long unfinished string value (500+ chars without
+ * closing quote) at the end.
+ */
+export function isTruncatedNavigateOutput(rawText: string): boolean {
+  if (!rawText.includes('"navigate"') || !rawText.includes('"url"')) return false;
+  const trimmed = rawText.trimEnd();
+  // If text ends with } or ], JSON structure might be intact — not truncated
+  if (trimmed.endsWith('}') || trimmed.endsWith(']')) return false;
+  // Long unfinished URL value at end of text
+  return /"url"\s*:\s*"[^"]{500,}$/.test(trimmed);
 }
