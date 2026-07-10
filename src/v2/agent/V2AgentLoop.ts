@@ -19,6 +19,7 @@ import { FailureClassifier, type FailureEvidence } from '../runtime/FailureClass
 import type { BrowserObservation, TransitionEvidence, V2ToolResult, V2ToolError } from '../runtime/types';
 import { UncertaintySignals, type RuntimeUncertainty } from '../runtime/UncertaintySignals';
 import { V2ToolDispatcher } from '../tools/V2ToolDispatcher';
+import { LatencyLedger } from '../trace/LatencyLedger';
 import type {
   V2AgentHarnessRuntime,
   V2AgentLoopInput,
@@ -52,6 +53,8 @@ export class V2AgentLoop {
     };
 
     try {
+      const ledger = new LatencyLedger();
+      harness.setLatencyLedger?.(ledger);
       let observation = await harness.open(input.url);
       let graphSnapshot = graph.applyObservation(observation);
       let lastResult: V2ToolResult | undefined;
@@ -64,6 +67,9 @@ export class V2AgentLoop {
       let answerFeedback: PlannerAnswerFeedback | undefined;
 
       for (let stepIndex = 0; stepIndex < maxSteps; stepIndex += 1) {
+        ledger.beginStep(stepIndex);
+        const stepStartMs = Date.now();
+        const composeStart = Date.now();
         const projection = this.projectionService.project(observation, graphSnapshot);
         const plannerInput = this.plannerInputComposer.compose({
           episodeId: `episode_${stepIndex + 1}_${observation.observationId}`,
@@ -78,13 +84,16 @@ export class V2AgentLoop {
           answerFeedback,
         });
         harness.recordPlannerInput?.(plannerInput.episodeId, plannerInput);
+        ledger.recordPhase('local_compute', Date.now() - composeStart);
         metrics.plannerCalls += 1;
         let plannerResult: Awaited<ReturnType<V2PlannerClientLike['call']>>;
         try {
+          const providerStart = Date.now();
           plannerResult = await plannerClient.call({
             plannerInput,
             model: input.model,
           });
+          ledger.recordPhase('provider', Date.now() - providerStart);
         } catch (error) {
           recordCompactPlannerTelemetry({
             harness,
@@ -102,7 +111,7 @@ export class V2AgentLoop {
               failureReason: 'compact_planner_input_ineligible',
               steps: metrics.plannerCalls,
               metrics,
-            });
+            }, ledger);
           }
           if (isPlannerInvalidOutputError(error)) {
             return await this.complete(harness, {
@@ -111,7 +120,7 @@ export class V2AgentLoop {
               failureReason: 'planner_invalid_output_dead_end',
               steps: metrics.plannerCalls,
               metrics,
-            });
+            }, ledger);
           }
           return await this.complete(harness, {
             success: false,
@@ -119,7 +128,7 @@ export class V2AgentLoop {
             failureReason: `planner_client_error:${formatErrorMessage(error)}`,
             steps: metrics.plannerCalls,
             metrics,
-          });
+          }, ledger);
         }
         recordCompactPlannerTelemetry({
           harness,
@@ -165,7 +174,7 @@ export class V2AgentLoop {
               failureReason: `answer_contract_failed:${answerValidation.reasons.join('|')}`,
               steps: metrics.plannerCalls,
               metrics,
-            });
+            }, ledger);
           }
           answerFeedback = undefined;
           return await this.complete(harness, {
@@ -173,7 +182,7 @@ export class V2AgentLoop {
             value,
             steps: metrics.plannerCalls,
             metrics,
-          });
+          }, ledger);
         }
 
         if (plannerResult.output.escalate) {
@@ -183,7 +192,7 @@ export class V2AgentLoop {
             failureReason: formatPlannerEscalation(plannerResult.output.escalate, plannerResult.output.reason),
             steps: metrics.plannerCalls,
             metrics,
-          });
+          }, ledger);
         }
 
         const plan = plannerResult.output.plan ?? [];
@@ -194,7 +203,7 @@ export class V2AgentLoop {
             failureReason: 'planner_no_action',
             steps: metrics.plannerCalls,
             metrics,
-          });
+          }, ledger);
         }
 
         for (let planIndex = 0; planIndex < plan.length; planIndex += 1) {
@@ -312,7 +321,7 @@ export class V2AgentLoop {
       if (lastSuccessfulEvidenceValue) {
         const finalizationResult = await this.attemptFinalization(
           harness, plannerClient, observation, graphSnapshot,
-          input.goal, lastSuccessfulEvidenceValue, readEvidenceHistory, metrics,
+          input.goal, lastSuccessfulEvidenceValue, readEvidenceHistory, metrics, ledger,
         );
         if (finalizationResult) return finalizationResult;
 
@@ -322,7 +331,7 @@ export class V2AgentLoop {
           failureReason: 'v2_max_steps_exhausted',
           steps: metrics.plannerCalls,
           metrics,
-        });
+        }, ledger);
       }
 
       return await this.complete(harness, {
@@ -331,7 +340,7 @@ export class V2AgentLoop {
         failureReason: 'v2_max_steps_exhausted',
         steps: metrics.plannerCalls,
         metrics,
-      });
+      }, ledger);
     } finally {
       await harness.close();
     }
@@ -387,7 +396,13 @@ export class V2AgentLoop {
   private async complete(
     harness: V2AgentHarnessRuntime,
     result: Omit<V2AgentLoopResult, 'tracePath'>,
+    ledger?: LatencyLedger,
   ): Promise<V2AgentLoopResult> {
+    if (ledger) {
+      ledger.closeActiveStep();
+      const summary = ledger.summarize();
+      harness.recordLatencyLedger?.(summary);
+    }
     const manifest = await harness.flushTrace();
     return {
       ...result,
@@ -404,6 +419,7 @@ export class V2AgentLoop {
     evidenceValue: string,
     readEvidenceHistory: ReadEvidenceHistoryEntry[],
     metrics: { plannerCalls: number; inputTokens: number; outputTokens: number; plannerDurationMs: number; toolExecutions: number },
+    ledger?: LatencyLedger,
   ): Promise<V2AgentLoopResult | undefined> {
     const projection = this.projectionService.project(observation, graphSnapshot);
     const finalizationEvidence = buildFinalizationEvidence({
@@ -458,14 +474,14 @@ export class V2AgentLoop {
             failureReason: `answer_contract_failed:${answerValidation.reasons.join('|')}`,
             steps: metrics.plannerCalls,
             metrics,
-          });
+          }, ledger);
         }
         return await this.complete(harness, {
           success: true,
           value,
           steps: metrics.plannerCalls,
           metrics,
-        });
+        }, ledger);
       }
     } catch {
       recordCompactPlannerTelemetry({

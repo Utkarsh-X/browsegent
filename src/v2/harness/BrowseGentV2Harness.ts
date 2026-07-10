@@ -11,6 +11,7 @@ import { KeyboardService } from '../substrate/KeyboardService';
 import { ObservationService } from '../substrate/ObservationService';
 import { TraceStore } from '../trace/TraceStore';
 import type { TraceArtifact, TraceManifest } from '../trace/types';
+import type { LatencyLedger, LedgerSummary } from '../trace/LatencyLedger';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { BrowseGentV2HarnessOptions } from './types';
 import { buildRefResolutionAudit } from '../runtime/RefResolutionAudit';
@@ -30,6 +31,7 @@ export class BrowseGentV2Harness {
   private readonly sessionId: string;
   private generationId = 0;
   private current?: BrowserObservation;
+  private ledger?: LatencyLedger;
 
   constructor(options: BrowseGentV2HarnessOptions = {}) {
     const runId = options.runId ?? `v2run_${Date.now()}`;
@@ -54,7 +56,18 @@ export class BrowseGentV2Harness {
 
   async observe(): Promise<BrowserObservation> {
     this.assertOpened();
-    return this.captureCurrentObservation();
+    const start = Date.now();
+    const obs = await this.captureCurrentObservation();
+    this.ledger?.recordPhase('observation_capture', Date.now() - start);
+    return obs;
+  }
+
+  setLatencyLedger(ledger: LatencyLedger): void {
+    this.ledger = ledger;
+  }
+
+  recordLatencyLedger(summary: LedgerSummary): void {
+    this.traceStore.recordLedgerSummary(summary);
   }
 
   async click(refId: string): Promise<V2ToolResult> {
@@ -78,9 +91,15 @@ export class BrowseGentV2Harness {
     });
 
     try {
+      const actionStart = Date.now();
       const execution = await this.keyboardService.press(key, this.session.currentPage());
+      this.ledger?.recordPhase('browser_interaction', Date.now() - actionStart);
+      const stabStart = Date.now();
       await this.stabilizationService.waitForSettledState(this.session.currentPage());
+      this.ledger?.recordPhase('stabilization_wait', Date.now() - stabStart);
+      const obsStart = Date.now();
       const after = await this.captureCurrentObservation();
+      this.ledger?.recordPhase('observation_capture', Date.now() - obsStart);
       const evidence = this.transitionService.compare(before, after);
       const result: V2ToolResult<{ key: PlannerPressKey }> = {
         success: true,
@@ -130,9 +149,15 @@ export class BrowseGentV2Harness {
 
     try {
       this.generationId += 1;
+      const actionStart = Date.now();
       await this.session.open(url);
+      this.ledger?.recordPhase('browser_interaction', Date.now() - actionStart);
+      const stabStart = Date.now();
       await this.stabilizationService.waitForSettledState(this.session.currentPage());
+      this.ledger?.recordPhase('stabilization_wait', Date.now() - stabStart);
+      const obsStart = Date.now();
       const after = await this.captureCurrentObservation();
+      this.ledger?.recordPhase('observation_capture', Date.now() - obsStart);
       const evidence = this.transitionService.compare(before, after);
       const result: V2ToolResult<{ url: string }> = {
         success: true,
@@ -362,7 +387,9 @@ export class BrowseGentV2Harness {
     }
 
     try {
+      const actionStart = Date.now();
       const execution = await run(ref);
+      this.ledger?.recordPhase('browser_interaction', Date.now() - actionStart);
       let result = await this.buildSuccessfulMutationResult(kind, refId, ref, before, stepId, execution);
       if (resolution.state !== 'live' && decision.allow) {
         this.recordRefResolutionAudit({
@@ -446,8 +473,12 @@ export class BrowseGentV2Harness {
     stepId: string,
     execution: InputExecutionResult<TValue>,
   ): Promise<V2ToolResult<TValue>> {
+    const stabStart = Date.now();
     await this.stabilizationService.waitForSettledState(this.session.currentPage());
+    this.ledger?.recordPhase('stabilization_wait', Date.now() - stabStart);
+    const obsStart = Date.now();
     const after = await this.captureCurrentObservation();
+    this.ledger?.recordPhase('observation_capture', Date.now() - obsStart);
     const evidence = this.transitionService.compare(before, after);
     return {
       success: true,

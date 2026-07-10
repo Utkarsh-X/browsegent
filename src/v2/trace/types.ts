@@ -40,6 +40,7 @@ export interface TraceManifest {
     screenshots: TraceArtifact[];
     compactPlannerViews?: TraceArtifact[];
     refResolutionAudits?: TraceArtifact[];
+    latencyLedger?: TraceArtifact;
   };
 }
 
