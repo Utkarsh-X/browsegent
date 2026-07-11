@@ -339,7 +339,7 @@ export class V2AgentLoop {
       if (lastSuccessfulEvidenceValue) {
         const finalizationResult = await this.attemptFinalization(
           harness, plannerClient, observation, graphSnapshot,
-          input.goal, lastSuccessfulEvidenceValue, readEvidenceHistory, metrics, ledger,
+          input.goal, lastSuccessfulEvidenceValue, readEvidenceHistory, metrics, ledger, outcomeRecorder,
         );
         if (finalizationResult) return finalizationResult;
 
@@ -442,6 +442,7 @@ export class V2AgentLoop {
     readEvidenceHistory: ReadEvidenceHistoryEntry[],
     metrics: { plannerCalls: number; inputTokens: number; outputTokens: number; plannerDurationMs: number; toolExecutions: number },
     ledger?: LatencyLedger,
+    outcomeRecorder?: ActionOutcomeRecorder,
   ): Promise<V2AgentLoopResult | undefined> {
     const projection = this.projectionService.project(observation, graphSnapshot);
     const finalizationEvidence = buildFinalizationEvidence({
@@ -648,6 +649,20 @@ function numberOrZero(value: unknown): number {
 
 const READ_TOOL_KINDS = new Set(['get', 'inspect_region', 'search_page']);
 const MUTATION_EVIDENCE_KINDS = new Set(['click', 'type', 'select', 'press', 'navigate']);
+
+/**
+ * Determine if a tool result produced read evidence.
+ * Only successful get, inspect_region, or search_page with non-empty text qualify.
+ * Mutation previews (click/type/press/select/navigate) are NOT read evidence.
+ */
+function isReadEvidence(result: V2ToolResult): boolean {
+  if (!result.success || !READ_TOOL_KINDS.has(result.kind)) return false;
+  if (result.kind === 'search_page') {
+    const val = result.value as { text?: string } | undefined;
+    return !!val?.text;
+  }
+  return true; // get and inspect_region always produce read evidence when successful
+}
 const PROGRESS_HISTORY_LIMIT = 8;
 const READ_EVIDENCE_HISTORY_LIMIT = 8;
 const REPEAT_SIGNAL_THRESHOLD = 2;
