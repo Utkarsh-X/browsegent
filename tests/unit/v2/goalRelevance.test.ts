@@ -81,3 +81,42 @@ test('empty name/text produces zero score', () => {
   const result = scoreGoalRelevance('find something', { name: '', text: '', kind: 'button' as ProjectionItemKind });
   assert.equal(result.score, 0);
 });
+
+// --- Bug regression tests ---
+
+test('BUG: repeated goal tokens are deduplicated — count each distinct token once', () => {
+  // "climate climate data" has "climate" twice — should count as 1 match, not 2
+  const result = scoreGoalRelevance('climate climate data', named('Climate data portal'));
+  assert.equal(result.tokenMatches, 2); // "climate" and "data", not 3
+});
+
+test('BUG: substring matching must use word boundaries — "art" must not match "article"', () => {
+  // Token "art" should NOT match the word "article" in the haystack
+  const result = scoreGoalRelevance('find art gallery', named('Article about galleries'));
+  assert.equal(result.tokenMatches, 0); // "art" is a substring of "article", but not a word match
+  // "gallery" vs "galleries" — different tokens, no match
+});
+
+test('BUG: nested phrases do not receive compounded bonuses', () => {
+  // "climate data visualization" as a 3-token phrase should produce 1 phraseMatch,
+  // NOT also count "climate data" and "data visualization" as separate phrase matches
+  const result = scoreGoalRelevance('find climate data visualization', named('Climate data visualization'));
+  // Should be exactly 1 phrase match (the longest), not 1+2 = 3
+  assert.equal(result.phraseMatches, 1);
+});
+
+test('longest phrase match subsumes shorter overlapping phrases', () => {
+  // If "climate data" matches but "climate data visualization" does not,
+  // that is 1 phrase match for "climate data" only
+  const result = scoreGoalRelevance('find climate data visualization', named('Climate data portal'));
+  assert.equal(result.phraseMatches, 1); // "climate data" only
+});
+
+test('non-overlapping shorter phrases each count', () => {
+  // "open account settings" has tokens [open, account, settings]
+  // If haystack is "open the account settings panel":
+  //   "account settings" matches (2-gram), "open" is a separate token
+  //   There's no 3-gram match. One phrase match.
+  const result = scoreGoalRelevance('open account settings', named('Open the account settings panel'));
+  assert.equal(result.phraseMatches, 1); // "account settings" only, not also "open account"
+});
