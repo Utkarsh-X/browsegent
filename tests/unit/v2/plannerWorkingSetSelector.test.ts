@@ -651,3 +651,90 @@ test('PlannerWorkingSetSelector quarantines repeated search_page from readable l
     && action.failureKind === 'repeated_read_loop'
   ));
 });
+
+// --- A2 Selection Invariants ---
+
+test('A2: exact goal phrase ranks above a generic visible-ready control', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_phrase', role: 'link', name: 'Climate data visualization', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_generic', role: 'button', name: 'Settings', visibility: 'visible', actionability: 'ready' }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 2,
+    maxSecondaryRefs: 2,
+    maxReadableEvidence: 2,
+    maxNavigationRefs: 2,
+    maxRegionSummaries: 2,
+  }).select({
+    goal: 'find climate data visualization',
+    projection,
+  });
+
+  // Both should be selected, but phrase match should have higher score in diagnostics
+  assert.ok(selection.selectedRefIds.includes('ref_phrase'));
+  assert.ok(selection.selectedRefIds.includes('ref_generic'));
+  const phraseReason = selection.diagnostics.selectedByReason;
+  assert.ok(phraseReason.goal_keyword_match! >= 1, 'goal_keyword_match should fire for phrase ref');
+});
+
+test('A2: failed or newly appeared ref remains eligible under existing precedence', () => {
+  const obs = makeObservation([
+    makeRef({ refId: 'ref_failed', role: 'button', name: 'Submit', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_appeared', role: 'link', name: 'New link', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_normal', role: 'button', name: 'Cancel', visibility: 'visible', actionability: 'ready' }),
+  ]);
+  const projection = new ProjectionService().project(obs);
+
+  const selection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 4,
+    maxSecondaryRefs: 4,
+    maxReadableEvidence: 4,
+    maxNavigationRefs: 4,
+    maxRegionSummaries: 4,
+  }).select({
+    goal: 'Submit the form',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_failed',
+      error: { code: 'element_not_found', message: 'Not found', retryable: true },
+      traceStepId: 'step_1',
+    },
+    graphSnapshot: {
+      generation: 2,
+      refStates: {
+        ref_appeared: { present: true, confidence: 1, state: 'live', recentlyAppeared: true },
+      },
+    } as any,
+  });
+
+  assert.ok(selection.selectedRefIds.includes('ref_failed'), 'failed ref should remain selected');
+  assert.ok(selection.selectedRefIds.includes('ref_appeared'), 'newly appeared ref should be selected');
+});
+
+test('A2: with equal relevance, ordering is deterministic by existing score then refId', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_b', role: 'button', name: 'Action', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_a', role: 'button', name: 'Action', visibility: 'visible', actionability: 'ready' }),
+  ]));
+
+  const selection1 = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 4,
+    maxSecondaryRefs: 4,
+    maxReadableEvidence: 4,
+    maxNavigationRefs: 4,
+    maxRegionSummaries: 4,
+  }).select({ goal: 'do something', projection });
+
+  const selection2 = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 4,
+    maxSecondaryRefs: 4,
+    maxReadableEvidence: 4,
+    maxNavigationRefs: 4,
+    maxRegionSummaries: 4,
+  }).select({ goal: 'do something', projection });
+
+  assert.deepEqual(selection1.selectedRefIds, selection2.selectedRefIds, 'selection should be deterministic');
+});

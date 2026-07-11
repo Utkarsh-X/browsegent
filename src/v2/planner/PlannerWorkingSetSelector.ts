@@ -7,6 +7,7 @@ import type {
 import type { ContinuityGraphSnapshot } from '../graph/types';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { TransitionEvidence, V2ToolResult } from '../runtime/types';
+import { scoreGoalRelevance } from './GoalRelevance';
 import type {
   PlannerQuarantinedAction,
   PlannerWorkingSetDiagnostics,
@@ -168,9 +169,14 @@ function scoreCandidate(
     reasons.add('visible_ready');
     score += 100;
   }
-  if (goalMatchesItem(goal, item)) {
+  const goalRelevance = scoreGoalRelevance(goal, item);
+  if (goalRelevance.tokenMatches > 0) {
     reasons.add('goal_keyword_match');
-    score += 60;
+    score += Math.min(goalRelevance.score * 10, 60);
+  }
+  if (goalRelevance.phraseMatches > 0) {
+    reasons.add('goal_phrase_match');
+    score += 30;
   }
   if (isGoalRelevantRole(goal, item)) {
     reasons.add('role_relevant_to_goal');

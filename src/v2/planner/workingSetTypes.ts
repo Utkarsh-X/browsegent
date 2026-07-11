@@ -8,6 +8,7 @@ export type WorkingSetMode = 'explore' | 'act' | 'verify' | 'recover' | 'extract
 export type WorkingSetIncludeReason =
   | 'visible_ready'
   | 'goal_keyword_match'
+  | 'goal_phrase_match'
   | 'role_relevant_to_goal'
   | 'near_focus'
   | 'recently_appeared'
