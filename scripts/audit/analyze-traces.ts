@@ -1,4 +1,16 @@
-import { readFileSync, existsSync } from 'node:fs';
+/**
+ * Phase A2 trace analysis script.
+ *
+ * Classifies failures into 5 categories:
+ *   target-selection  — planner chose wrong ref or couldn't find target
+ *   recovery-loop     — repeated failed actions or step exhaustion from loops
+ *   wrong-evidence    — completed but wrong answer (completion_mismatch) or wrong evidence collected
+ *   execution         — planner invalid output, provider errors, pre-execution rejection
+ *   environment       — Cloudflare, CAPTCHA, site unavailability
+ *
+ * Usage: npx tsx scripts/audit/analyze-traces.ts <run-dir>
+ */
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 
 const runDir = process.argv[2];
@@ -9,6 +21,7 @@ const report = JSON.parse(readFileSync(join(runDir, 'report.json'), 'utf8'));
 interface TaskAudit {
   taskId: string;
   success: boolean;
+  strictPassed: boolean;
   failureReason?: string;
   failureCategory: string;
   hasLedger: boolean;
@@ -17,14 +30,58 @@ interface TaskAudit {
   outcomes?: { summary: Record<string, number> };
 }
 
+function classifyFailure(result: any, outcomes?: { summary: Record<string, number> }): string {
+  // 1. Environment — site-level blocks
+  const reason = result.failureReason || '';
+  if (/environment|cloudflare|captcha/i.test(reason)) return 'environment';
+
+  // 2. Completion mismatch — internal success, strict fail
+  if (result.success && result.passed !== true) return 'wrong-evidence';
+
+  // 3. Pure success
+  if (result.success && result.passed === true) return 'success';
+
+  // 4. Step exhaustion — check if it's a recovery loop (high failed/hardBlocked ratio)
+  if (/max_steps/i.test(reason)) {
+    if (outcomes?.summary) {
+      const failed = outcomes.summary.failed ?? 0;
+      const hardBlocked = outcomes.summary.hardBlocked ?? 0;
+      const total = outcomes.summary.total ?? 1;
+      const failRatio = (failed + hardBlocked) / total;
+      if (failRatio > 0.4 || hardBlocked > 0) return 'recovery-loop';
+    }
+    return 'recovery-loop'; // step exhaustion without evidence defaults to loop
+  }
+
+  // 5. Planner escalation (not environment) — check reason for target vs execution
+  if (/escalat/i.test(reason)) {
+    if (/not found|cannot find|no .* element|target/i.test(reason)) return 'target-selection';
+    return 'execution';
+  }
+
+  // 6. Planner invalid output / dead end
+  if (/dead_end|invalid_output/i.test(reason)) return 'execution';
+
+  // 7. Provider / client errors
+  if (/client_error|provider/i.test(reason)) return 'execution';
+
+  // 8. Pre-execution rejection
+  if (/pre_execution/i.test(reason)) return 'execution';
+
+  // 9. Answer contract
+  if (/answer_contract/i.test(reason)) return 'wrong-evidence';
+
+  return 'execution';
+}
+
 const audits: TaskAudit[] = [];
 
 for (const result of report.results) {
   const taskId = result.taskId;
+  const strictPassed = result.passed === true;
   let hasLedger = false, hasOutcomes = false;
   let ledger: TaskAudit['ledger'], outcomes: TaskAudit['outcomes'];
 
-  // tracePath points to trace.json — ledger and outcomes are siblings
   if (result.tracePath) {
     const traceRoot = dirname(result.tracePath);
     const ledgerPath = join(traceRoot, 'latency_ledger.json');
@@ -39,50 +96,34 @@ for (const result of report.results) {
     }
   }
 
-  // Classify failure category
-  let failureCategory = 'success';
-  if (!result.success) {
-    const reason = result.failureReason || '';
-    if (/environment|cloudflare|captcha/i.test(reason)) failureCategory = 'environment';
-    else if (/dead_end|invalid_output/i.test(reason)) failureCategory = 'planner_failure';
-    else if (/escalat/i.test(reason)) failureCategory = 'planner_failure';
-    else if (/max_steps/i.test(reason)) failureCategory = 'step_exhaustion';
-    else if (/answer_contract/i.test(reason)) failureCategory = 'wrong_evidence';
-    else if (/client_error|provider/i.test(reason)) failureCategory = 'provider_error';
-    else if (/pre_execution/i.test(reason)) failureCategory = 'pre_execution_rejection';
-    else failureCategory = 'other';
-  }
+  const failureCategory = classifyFailure(result, outcomes);
 
-  audits.push({ taskId, success: result.success, failureReason: result.failureReason,
+  audits.push({ taskId, success: result.success, strictPassed, failureReason: result.failureReason,
     failureCategory, hasLedger, hasOutcomes, ledger, outcomes });
 }
 
 // --- Report ---
-console.log('# Phase A1 Truth Audit Report\n');
+console.log('# Corrected Trace Analysis Report\n');
 
 // Trace completeness
 const complete = audits.filter(a => a.hasLedger && a.hasOutcomes).length;
-const ledgerCount = audits.filter(a => a.hasLedger).length;
-const outcomeCount = audits.filter(a => a.hasOutcomes).length;
-console.log(`## Trace Completeness: ${complete}/${audits.length}`);
-console.log(`- Latency ledger: ${ledgerCount}/${audits.length}`);
-console.log(`- Action outcomes: ${outcomeCount}/${audits.length}\n`);
+console.log(`## Trace Completeness: ${complete}/${audits.length}\n`);
 
-// Failure categories
+// 5-category failure distribution
 const categories = new Map<string, number>();
 for (const a of audits) categories.set(a.failureCategory, (categories.get(a.failureCategory) ?? 0) + 1);
 const sorted = [...categories.entries()].sort((a, b) => b[1] - a[1]);
-console.log('## Failure Categories (ranked by frequency)');
+console.log('## Failure Distribution (5-category)');
 for (const [cat, count] of sorted) {
   console.log(`- ${cat}: ${count}/${audits.length} (${(100 * count / audits.length).toFixed(1)}%)`);
 }
 const controllable = sorted.filter(([c]) => c !== 'success' && c !== 'environment');
-console.log(`\n**Top 2 controllable:** ${controllable.slice(0, 2).map(([c, n]) => `${c} (${n})`).join(', ')}\n`);
+console.log(`\n**Controllable failures:** ${controllable.map(([c, n]) => `${c} (${n})`).join(', ')}\n`);
 
-// Latency summary (aggregate, all 5 independent categories + unaccounted)
+// Latency summary
 const ledgerTasks = audits.filter(a => a.ledger);
 if (ledgerTasks.length > 0) {
-  console.log('## Latency Summary (across instrumented tasks)\n');
+  console.log('## Latency Summary\n');
   const agg: Record<string, number> = {};
   for (const a of ledgerTasks) {
     for (const [phase, ms] of Object.entries(a.ledger!.totals)) {
@@ -96,31 +137,32 @@ if (ledgerTasks.length > 0) {
   }
 }
 
-// Action economy summary
+// Action economy
 const outcomeTasks = audits.filter(a => a.outcomes);
 if (outcomeTasks.length > 0) {
-  console.log('\n## Action Economy Summary\n');
+  console.log('\n## Action Economy\n');
   const agg: Record<string, number> = {};
   for (const a of outcomeTasks) {
     for (const [key, val] of Object.entries(a.outcomes!.summary)) {
       agg[key] = (agg[key] ?? 0) + (val as number);
     }
   }
-  const keys = ['total', 'dispatched', 'preExecutionRejected', 'hardBlocked', 'stateChanging', 'evidenceProducing', 'failed', 'noEffect'];
+  const keys = ['total', 'dispatched', 'preExecutionRejected', 'hardBlocked', 'stateChanging', 'evidenceProducing', 'inputApplied', 'failed', 'noEffect'];
   for (const key of keys) {
     const total = agg[key] ?? 0;
     console.log(`- ${key}: ${total} total, ${(total / outcomeTasks.length).toFixed(1)} avg/task`);
   }
 }
 
-// Per-task detail (failed tasks only)
-const failedTasks = audits.filter(a => !a.success);
+// Per-task detail (non-success only)
+const failedTasks = audits.filter(a => a.failureCategory !== 'success');
 if (failedTasks.length > 0) {
-  console.log('\n## Failed Task Details\n');
+  console.log('\n## Non-Success Task Details\n');
   for (const a of failedTasks) {
-    const ledgerNote = a.hasLedger ? '✅' : '❌';
-    const outcomeNote = a.hasOutcomes ? '✅' : '❌';
-    console.log(`- **${a.taskId}**: ${a.failureCategory} | ledger:${ledgerNote} outcomes:${outcomeNote}`);
-    if (a.failureReason) console.log(`  reason: ${a.failureReason.slice(0, 120)}`);
+    const outcomeDetail = a.outcomes?.summary
+      ? ` | failed:${a.outcomes.summary.failed ?? 0} hardBlocked:${a.outcomes.summary.hardBlocked ?? 0} noEffect:${a.outcomes.summary.noEffect ?? 0}`
+      : '';
+    console.log(`- **${a.taskId}**: ${a.failureCategory}${outcomeDetail}`);
+    if (a.failureReason) console.log(`  reason: ${a.failureReason.slice(0, 150)}`);
   }
 }
