@@ -56,6 +56,17 @@ test('validateAnswerAgainstContract rejects empty answer', () => {
   assert.ok(validation.reasons.includes('empty_answer'));
 });
 
+test('validateAnswerAgainstContract rejects an answer that explicitly reports an unfinished result', () => {
+  const contract = inferAnswerContract('Find the lowest round-trip flight price');
+  const validation = validateAnswerAgainstContract(
+    'The search has not been executed yet, so the lowest price option is not currently available.',
+    contract,
+  );
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('incomplete_answer'));
+});
+
 test('validateAnswerAgainstContract rejects non-numeric answer for numeric goal', () => {
   const contract = inferAnswerContract('How many reviews does the recipe have');
   const validation = validateAnswerAgainstContract('a lot of reviews', contract);

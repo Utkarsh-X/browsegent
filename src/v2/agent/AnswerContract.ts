@@ -51,6 +51,7 @@ export function validateAnswerAgainstContract(
   const compact = answer.replace(/\s+/g, ' ').trim();
   const reasons: string[] = [];
   if (compact.length === 0) reasons.push('empty_answer');
+  if (hasExplicitIncompleteResult(compact)) reasons.push('incomplete_answer');
   if (contract.requiresNonUrlText && isUrlOnly(compact)) reasons.push('url_only_answer_for_named_entity_goal');
   if (contract.kind === 'number' && !/[0-9]/.test(compact)) reasons.push('numeric_goal_without_number');
   if (contract.requiredDetails.includes('pronunciation')) {
@@ -80,6 +81,14 @@ export function validateAnswerAgainstContract(
 function isUrlOnly(value: string): boolean {
   const withoutUrls = value.replace(/https?:\/\/\S+/gi, '').replace(/www\.\S+/gi, '').trim();
   return withoutUrls.length === 0 || /^[/:?=&._#%a-z0-9-]+$/i.test(withoutUrls);
+}
+
+function hasExplicitIncompleteResult(value: string): boolean {
+  return [
+    /\b(?:has|have) not been (?:executed|completed|found|loaded)\b/i,
+    /\b(?:unable to|cannot|can't) (?:find|provide|extract|determine|complete|answer)\b/i,
+    /\b(?:lowest|cheapest|requested|search|result|answer|option|price|information|details?)\b[^.]{0,60}\bnot currently available\b/i,
+  ].some(pattern => pattern.test(value));
 }
 
 function hasConcretePronunciation(value: string): boolean {
