@@ -310,6 +310,33 @@ test('V2AgentLoop replans once when done output misses required answer details',
   assert.deepEqual(planner.inputs[1].answerFeedback?.missingDetails, ['missing_pronunciation_detail']);
 });
 
+test('V2AgentLoop replans when done output explicitly reports an unfinished result', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    {
+      done: true,
+      val: 'The search has not been executed yet, so the lowest price option is not currently available.',
+    },
+    { done: true, val: 'The lowest round-trip price is 412 USD.' },
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => new FakeDispatcher(),
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/flights',
+    goal: 'Find the lowest round-trip flight price',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'The lowest round-trip price is 412 USD.');
+  assert.equal(result.metrics.plannerCalls, 2);
+  assert.deepEqual(planner.inputs[1].answerFeedback?.missingDetails, ['incomplete_answer']);
+});
+
 test('V2AgentLoop replans when done output omits a pronunciation variant present in evidence', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const harness = new FakeHarness();
@@ -1561,6 +1588,87 @@ test('V2AgentLoop hard-blocks after 3 identical search_page actions', async () =
   assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
   assert.equal(planner.inputs[4].lastResult?.error?.retryable, true);
   // The dispatcher should only have been called 3 times (4th was blocked before dispatch)
+  assert.equal(dispatcher.steps?.length, 3);
+});
+
+test('V2AgentLoop hard-blocks repeated press when the runtime result omits targetRef and transition evidence', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'press', ref: 'ref_submit', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_submit', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_submit', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_submit', key: 'Enter' }], confidence: 'high' },
+    { done: true, val: 'Gave up' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'press',
+    value: { key: 'Enter' },
+    traceStepId: 'tool_press',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Submit the form',
+    maxSteps: 5,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Gave up');
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+  assert.equal(dispatcher.steps?.length, 3);
+});
+
+test('V2AgentLoop hard-blocks no-progress actions when refs churn around one stable target identity', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const targetId = 'target_shared';
+  const observations = [
+    makeObservation('obs_initial', { refs: [makeRef({ refId: 'ref_a', targetId })] }),
+    makeObservation('obs_after_a', { refs: [makeRef({ refId: 'ref_b', targetId })] }),
+    makeObservation('obs_after_b', { refs: [makeRef({ refId: 'ref_c', targetId })] }),
+    makeObservation('obs_after_c', { refs: [makeRef({ refId: 'ref_d', targetId })] }),
+  ];
+  class RotatingHarness extends FakeHarness {
+    private cursor = 0;
+
+    override async observe(): Promise<BrowserObservation> {
+      return this.observations[Math.min(++this.cursor, this.observations.length - 1)];
+    }
+  }
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_a' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_b' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_c' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_d' }], confidence: 'high' },
+    { done: true, val: 'Gave up' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'click',
+    traceStepId: 'tool_click',
+  };
+  const harness = new RotatingHarness(observations);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Submit the form',
+    maxSteps: 5,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
   assert.equal(dispatcher.steps?.length, 3);
 });
 

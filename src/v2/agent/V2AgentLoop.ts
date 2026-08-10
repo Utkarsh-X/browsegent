@@ -168,6 +168,7 @@ export class V2AgentLoop {
                 runtimeUncertainty,
                 answerValidation.reasons.map(reason => `answer_contract:${reason}`),
               );
+              ledger.endStep(stepIndex, Date.now() - stepStartMs);
               continue;
             }
             return await this.complete(harness, {
@@ -210,10 +211,11 @@ export class V2AgentLoop {
 
         for (let planIndex = 0; planIndex < plan.length; planIndex += 1) {
           const plannedStep = plan[planIndex];
+          const actionObservation = observation;
           let preExecutionRejected = false;
 
           // Guard 1: hard-block
-          const blockedSig = progressMemory.isHardBlocked(plannedStep);
+          const blockedSig = progressMemory.isHardBlocked(plannedStep, actionObservation);
           if (blockedSig) {
             lastResult = {
               success: false,
@@ -271,17 +273,19 @@ export class V2AgentLoop {
               source: 'dispatch', success: lastResult.success, errorCode: lastResult.error?.code,
               stateChanged: !!(lastResult.evidence?.urlChanged || lastResult.evidence?.generationChanged),
               readEvidenceProduced: isReadEvidence(lastResult),
+              inputApplied: lastResult.success && (plannedStep.tool === 'type' || plannedStep.tool === 'select'),
             });
           }
 
           // Record progress for ALL outcomes (dispatched and pre-execution)
-          const progressSignals = progressMemory.record(lastResult!);
+          const progressSignals = progressMemory.record(lastResult!, plannedStep, actionObservation);
           if (!preExecutionRejected) {
             progressMemory.resetSignatureOnPageChange(lastResult!.evidence);
           }
 
           // Unified failure pipeline — handles BOTH pre-execution rejections AND dispatched failures
           if (!lastResult!.success) {
+            if (preExecutionRejected) transitionEvidence = undefined;
             const currentProjection = this.projectionService.project(observation, graphSnapshot);
             const failure = this.failureClassifier.classify(lastResult!, {
               observationId: observation.observationId,
@@ -333,6 +337,8 @@ export class V2AgentLoop {
             break;
           }
         }
+
+        ledger.endStep(stepIndex, Date.now() - stepStartMs);
 
       }
 
@@ -672,34 +678,54 @@ interface ActionProgressEntry {
   targetKey: string;
   valueKey?: string;
   noProgressMutation: boolean;
+  actionSignature: string;
+  semanticActionSignature?: string;
 }
 
 class ActionProgressMemory {
   private readonly entries: ActionProgressEntry[] = [];
   private readonly hardBlockedSignatures: Set<string> = new Set();
+  private readonly hardBlockedSemanticSignatures: Set<string> = new Set();
 
-  static actionSignature(step: { tool: string; ref?: string; text?: string; pattern?: string; url?: string }): string {
+  static actionSignature(
+    step: { tool: string; ref?: string; text?: string; value?: string; pattern?: string; url?: string; key?: string },
+    targetOverride?: string,
+  ): string {
     const tool = normalizeSignalToken(step.tool);
-    const target = normalizeSignalToken(step.ref ?? 'global');
-    const value = step.text ?? step.pattern ?? step.url;
+    const target = normalizeSignalToken(targetOverride ?? step.ref ?? 'global');
+    const value = step.text ?? step.value ?? step.pattern ?? step.url ?? step.key;
     const valueKey = value ? normalizeProgressValue(value) : '__none__';
     return `${tool}:${target}:${valueKey}`;
   }
 
-  isHardBlocked(step: { tool: string; ref?: string; text?: string; pattern?: string; url?: string }): string | undefined {
+  isHardBlocked(
+    step: { tool: string; ref?: string; text?: string; value?: string; pattern?: string; url?: string; key?: string },
+    observation?: BrowserObservation,
+  ): string | undefined {
     const sig = ActionProgressMemory.actionSignature(step);
-    return this.hardBlockedSignatures.has(sig) ? sig : undefined;
+    if (this.hardBlockedSignatures.has(sig)) return sig;
+
+    if (observation && step.ref) {
+      const ref = observation.refs.find(candidate => candidate.refId === step.ref);
+      if (ref?.targetId) {
+        const semanticSig = ActionProgressMemory.actionSignature(step, ref.targetId);
+        if (this.hardBlockedSemanticSignatures.has(semanticSig)) return semanticSig;
+      }
+    }
+
+    return undefined;
   }
 
   resetSignatureOnPageChange(evidence: TransitionEvidence | undefined): void {
     if (!evidence) return;
     if (evidence.urlChanged || evidence.generationChanged) {
       this.hardBlockedSignatures.clear();
+      this.hardBlockedSemanticSignatures.clear();
     }
   }
 
-  record(result: V2ToolResult): string[] {
-    const entry = progressEntryForResult(result);
+  record(result: V2ToolResult, plannedStep?: PlannerOutputStep, actionObservation?: BrowserObservation): string[] {
+    const entry = progressEntryForResult(result, plannedStep, actionObservation);
     if (!entry) {
       return [];
     }
@@ -721,8 +747,20 @@ class ActionProgressMemory {
         signals.push(`repeated_no_progress_transition:${entry.kind}:${entry.targetKey}:${count}`);
       }
       if (count >= 3) {
-        const sig = `${entry.kind}:${entry.targetKey}:${entry.valueKey ?? '__none__'}`;
-        this.hardBlockedSignatures.add(sig);
+        this.hardBlockedSignatures.add(entry.actionSignature);
+      }
+
+      const semanticCount = entry.semanticActionSignature
+        ? this.entries.filter(existing =>
+          existing.noProgressMutation
+          && existing.semanticActionSignature === entry.semanticActionSignature,
+        ).length
+        : 0;
+      if (semanticCount >= REPEAT_SIGNAL_THRESHOLD) {
+        signals.push(`repeated_no_progress_target:${entry.semanticActionSignature}:${semanticCount}`);
+      }
+      if (semanticCount >= 3 && entry.semanticActionSignature) {
+        this.hardBlockedSemanticSignatures.add(entry.semanticActionSignature);
       }
     }
 
@@ -736,8 +774,7 @@ class ActionProgressMemory {
         signals.push(`repeated_value_preview:${entry.kind}:${entry.targetKey}:${count}`);
       }
       if (count >= 3) {
-        const sig = `${entry.kind}:${entry.targetKey}:${entry.valueKey ?? '__none__'}`;
-        this.hardBlockedSignatures.add(sig);
+        this.hardBlockedSignatures.add(entry.actionSignature);
       }
     }
 
@@ -746,8 +783,14 @@ class ActionProgressMemory {
 }
 
 function isNoProgressMutation(result: V2ToolResult): boolean {
-  if (!MUTATION_EVIDENCE_KINDS.has(result.kind) || !result.evidence) {
+  if (!MUTATION_EVIDENCE_KINDS.has(result.kind) || result.kind === 'type' || result.kind === 'select') {
     return false;
+  }
+
+  // A mutation without transition evidence has no proof of progress. Track it
+  // for bounded exact-action recovery, but never treat it as a state change.
+  if (!result.evidence) {
+    return true;
   }
 
   const evidence = result.evidence;
@@ -779,16 +822,23 @@ function isNoProgressMutation(result: V2ToolResult): boolean {
  * For read tools, we record a fallback placeholder "__empty__" when there is no text
  * retrieved, ensuring that repeated zero-content reads correctly trigger the loop detector.
  */
-function progressEntryForResult(result: V2ToolResult): ActionProgressEntry | undefined {
+function progressEntryForResult(
+  result: V2ToolResult,
+  plannedStep?: PlannerOutputStep,
+  actionObservation?: BrowserObservation,
+): ActionProgressEntry | undefined {
   if (!result.success) {
     return undefined;
   }
 
-  const kind = normalizeSignalToken(result.kind);
-  const targetKey = normalizeSignalToken(result.targetRef ?? result.target?.refId ?? 'global');
+  const kind = normalizeSignalToken(plannedStep?.tool ?? result.kind);
+  const targetKey = normalizeSignalToken(plannedStep?.ref ?? result.targetRef ?? result.target?.refId ?? 'global');
   const noProgressMutation = isNoProgressMutation(result);
   const isRead = READ_TOOL_KINDS.has(result.kind);
   const valuePreview = isRead ? (previewResultValue(result.value) || '__empty__') : undefined;
+  const semanticTargetId = plannedStep?.ref
+    ? actionObservation?.refs.find(ref => ref.refId === plannedStep.ref)?.targetId
+    : undefined;
 
   if (!noProgressMutation && valuePreview === undefined) {
     return undefined;
@@ -799,6 +849,12 @@ function progressEntryForResult(result: V2ToolResult): ActionProgressEntry | und
     targetKey,
     valueKey: valuePreview ? normalizeProgressValue(valuePreview) : undefined,
     noProgressMutation,
+    actionSignature: plannedStep
+      ? ActionProgressMemory.actionSignature(plannedStep)
+      : `${kind}:${targetKey}:${valuePreview ? normalizeProgressValue(valuePreview) : '__none__'}`,
+    semanticActionSignature: plannedStep && semanticTargetId
+      ? ActionProgressMemory.actionSignature(plannedStep, semanticTargetId)
+      : undefined,
   };
 }
 
