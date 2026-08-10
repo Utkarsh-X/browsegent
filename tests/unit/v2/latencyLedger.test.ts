@@ -46,6 +46,17 @@ test('LatencyLedger aggregates across steps', () => {
   assert.equal(s.totals.total, 2100);
 });
 
+test('LatencyLedger rejects a new step while the previous step is still active', () => {
+  const ledger = new LatencyLedger();
+  ledger.beginStep(0);
+  ledger.recordPhase('provider', 1000);
+
+  assert.throws(() => ledger.beginStep(1), /active latency step 0/);
+
+  ledger.endStep(0, 1100);
+  assert.equal(ledger.summarize().stepCount, 1);
+});
+
 test('LatencyLedger.closeActiveStep finalizes dangling step on early return', () => {
   const ledger = new LatencyLedger();
   ledger.beginStep(0);

@@ -67,6 +67,22 @@ test('summary counts are correct', () => {
   assert.equal(summary.noEffect, 1); // step 3: dispatched + success + no state change + no evidence
 });
 
+test('successful input actions are not classified as no-effect when the page does not navigate', () => {
+  const recorder = new ActionOutcomeRecorder();
+  recorder.record({
+    stepIndex: 0,
+    tool: 'type',
+    source: 'dispatch',
+    success: true,
+    stateChanged: false,
+    readEvidenceProduced: false,
+  });
+
+  const summary = recorder.summary();
+  assert.equal(summary.inputApplied, 1);
+  assert.equal(summary.noEffect, 0);
+});
+
 test('toJSON returns serializable summary', () => {
   const recorder = new ActionOutcomeRecorder();
   recorder.record({ stepIndex: 0, tool: 'click', source: 'dispatch', success: true, stateChanged: false, readEvidenceProduced: false });

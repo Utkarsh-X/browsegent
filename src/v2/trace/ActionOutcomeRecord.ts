@@ -9,6 +9,7 @@ export interface ActionOutcome {
   errorCode?: string;
   stateChanged: boolean;         // transition evidence: urlChanged || generationChanged
   readEvidenceProduced: boolean;  // ONLY for successful get | inspect_region | nonempty search_page
+  inputApplied?: boolean;         // successful type/select action accepted by the browser
 }
 
 export interface ActionOutcomeSummary {
@@ -18,6 +19,7 @@ export interface ActionOutcomeSummary {
   hardBlocked: number;
   stateChanging: number;
   evidenceProducing: number;
+  inputApplied: number;
   failed: number;
   noEffect: number;
 }
@@ -40,10 +42,16 @@ export class ActionOutcomeRecorder {
       hardBlocked: this.outcomes.filter(o => o.source === 'hard_block').length,
       stateChanging: this.outcomes.filter(o => o.stateChanged).length,
       evidenceProducing: this.outcomes.filter(o => o.readEvidenceProduced).length,
+      inputApplied: dispatched.filter(o => isSuccessfulInputAction(o)).length,
       failed: this.outcomes.filter(o => !o.success).length,
-      noEffect: dispatched.filter(o => o.success && !o.stateChanged && !o.readEvidenceProduced).length,
+      noEffect: dispatched.filter(o => o.success && !o.stateChanged && !o.readEvidenceProduced && !isSuccessfulInputAction(o)).length,
     };
   }
 
   toJSON(): unknown { return { outcomes: this.outcomes, summary: this.summary() }; }
+}
+
+function isSuccessfulInputAction(outcome: ActionOutcome): boolean {
+  return outcome.success
+    && (outcome.inputApplied === true || outcome.tool === 'type' || outcome.tool === 'select');
 }

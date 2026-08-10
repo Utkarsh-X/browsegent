@@ -28,6 +28,9 @@ export class LatencyLedger {
   private currentStepStartedAt: number | undefined;
 
   beginStep(stepIndex: number): void {
+    if (this.currentStep) {
+      throw new Error(`Cannot begin latency step ${stepIndex}: active latency step ${this.currentStep.stepIndex} must be ended first`);
+    }
     this.currentStep = { stepIndex, phases: {}, totalMs: 0 };
     this.currentStepStartedAt = Date.now();
   }
