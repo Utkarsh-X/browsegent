@@ -16,3 +16,7 @@ skills/
 skills-lock.json
 discussion/
 new-keys.yaml
+
+# Temporary & Runtime files
+.alumnium/
+*.pid
