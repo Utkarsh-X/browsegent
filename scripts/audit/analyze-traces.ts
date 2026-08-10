@@ -12,11 +12,25 @@
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import {
+  joinBenchmarkEvaluation,
+  type EvaluatorVerdict,
+  type RuntimeBenchmarkResult,
+} from './evaluationJoin';
 
 const runDir = process.argv[2];
 if (!runDir) { console.error('Usage: npx tsx scripts/audit/analyze-traces.ts <run-dir>'); process.exit(1); }
 
 const report = JSON.parse(readFileSync(join(runDir, 'report.json'), 'utf8'));
+const evaluationPath = join(runDir, 'webvoyager_evaluation.json');
+const evaluation = existsSync(evaluationPath)
+  ? JSON.parse(readFileSync(evaluationPath, 'utf8'))
+  : { verdicts: [] };
+const joinedResults = joinBenchmarkEvaluation(
+  report.results as RuntimeBenchmarkResult[],
+  (evaluation.verdicts ?? []) as EvaluatorVerdict[],
+);
+const joinedByTaskId = new Map(joinedResults.map(result => [result.taskId, result]));
 
 interface TaskAudit {
   taskId: string;
@@ -30,7 +44,16 @@ interface TaskAudit {
   outcomes?: { summary: Record<string, number> };
 }
 
-function classifyFailure(result: any, outcomes?: { summary: Record<string, number> }): string {
+function classifyFailure(
+  result: any,
+  outcomes: { summary: Record<string, number> } | undefined,
+  joinedCategory: string,
+): string {
+  if (joinedCategory === 'evaluation_missing') return 'evaluation_missing';
+  if (joinedCategory === 'environment') return 'environment';
+  if (joinedCategory === 'internal_complete_strict_reject') return 'wrong-evidence';
+  if (joinedCategory === 'success') return 'success';
+
   // 1. Environment — site-level blocks
   const reason = result.failureReason || '';
   if (/environment|cloudflare|captcha/i.test(reason)) return 'environment';
@@ -78,7 +101,8 @@ const audits: TaskAudit[] = [];
 
 for (const result of report.results) {
   const taskId = result.taskId;
-  const strictPassed = result.passed === true;
+  const joined = joinedByTaskId.get(taskId);
+  const strictPassed = joined?.strictPassed === true;
   let hasLedger = false, hasOutcomes = false;
   let ledger: TaskAudit['ledger'], outcomes: TaskAudit['outcomes'];
 
@@ -96,7 +120,7 @@ for (const result of report.results) {
     }
   }
 
-  const failureCategory = classifyFailure(result, outcomes);
+  const failureCategory = classifyFailure(result, outcomes, joined?.category ?? 'evaluation_missing');
 
   audits.push({ taskId, success: result.success, strictPassed, failureReason: result.failureReason,
     failureCategory, hasLedger, hasOutcomes, ledger, outcomes });
@@ -104,6 +128,9 @@ for (const result of report.results) {
 
 // --- Report ---
 console.log('# Corrected Trace Analysis Report\n');
+
+const evaluatorJoined = joinedResults.filter(result => result.evaluator).length;
+console.log(`## Evaluator Join: ${evaluatorJoined}/${joinedResults.length} runtime results matched to evaluator verdicts\n`);
 
 // Trace completeness
 const complete = audits.filter(a => a.hasLedger && a.hasOutcomes).length;
