@@ -43,6 +43,15 @@ export class RecoveryStateBuilder {
       };
     }
 
+    if (signals.some(signal => signal.startsWith('repeated_no_progress_target:'))) {
+      return {
+        state: 'same_action_loop',
+        severity: 'warning',
+        nextMechanisms: ['avoid_repeating_blocked_action', 'choose_alternative_ref', 'expand_or_reobserve'],
+        signals,
+      };
+    }
+
     if (signals.some(signal => signal.startsWith('repeated_value_preview:get:') || signal.startsWith('repeated_value_preview:inspect_region:'))) {
       return {
         state: 'repeated_read_same_value',

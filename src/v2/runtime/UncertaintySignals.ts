@@ -94,6 +94,7 @@ function chooseLevel(signals: string[]): RuntimeUncertainty['level'] {
       || signal.startsWith('low_confidence_ref:')
       || signal.startsWith('weakened_refs:')
       || signal.startsWith('repeated_no_progress_transition:')
+      || signal.startsWith('repeated_no_progress_target:')
       || signal.startsWith('repeated_value_preview:')
       || signal === 'transition_class:hard_reset',
     )
