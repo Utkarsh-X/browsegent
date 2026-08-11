@@ -1,6 +1,10 @@
 import { inferAnswerContract, validateAnswerAgainstContract } from './AnswerContract';
 import { ProjectionService } from '../brain1/ProjectionService';
-import { buildFinalizationEvidence, type ReadEvidenceHistoryEntry } from './FinalizationEvidence';
+import {
+  buildAnswerValidationEvidence,
+  buildFinalizationEvidence,
+  type ReadEvidenceHistoryEntry,
+} from './FinalizationEvidence';
 import { ContinuityGraph } from '../graph/ContinuityGraph';
 import type { ContinuityGraphSnapshot } from '../graph/types';
 import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
@@ -157,10 +161,10 @@ export class V2AgentLoop {
         metrics.plannerDurationMs += plannerResult.durationMs;
 
         if (plannerResult.output.done === true) {
-          const value = normalizeAnswerValue(plannerResult.output.val ?? '', input.goal);
-          const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(input.goal), {
-            evidenceText: buildValidationEvidence(lastSuccessfulEvidenceValue ?? '', readEvidenceHistory),
-          });
+            const value = normalizeAnswerValue(plannerResult.output.val ?? '', input.goal);
+            const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(input.goal), {
+              evidenceText: buildAnswerValidationEvidence(readEvidenceHistory),
+            });
           if (!answerValidation.ok) {
             if (stepIndex < maxSteps - 1) {
               answerFeedback = buildAnswerFeedback(value, answerValidation.reasons);
@@ -457,7 +461,7 @@ export class V2AgentLoop {
       lastSuccessfulEvidenceValue: evidenceValue,
       readEvidenceHistory,
     });
-    const validationEvidence = buildValidationEvidence(evidenceValue, readEvidenceHistory);
+    const validationEvidence = buildAnswerValidationEvidence(readEvidenceHistory);
     const finalizationInput = this.plannerInputComposer.compose({
       episodeId: `episode_finalization_${observation.observationId}`,
       goal: `${goal}\n\nFinalization evidence:\n${finalizationEvidence}\n\nReturn done with the best answer if the evidence answers the goal. Otherwise escalate with a concise reason. Do not return a plan.`,
@@ -581,13 +585,6 @@ function appendReadEvidenceHistory(
   );
 
   return [...withoutDuplicate, entry].slice(-READ_EVIDENCE_HISTORY_LIMIT);
-}
-
-function buildValidationEvidence(lastEvidence: string, readEvidenceHistory: ReadEvidenceHistoryEntry[]): string {
-  return [
-    lastEvidence,
-    ...readEvidenceHistory.map(entry => entry.text),
-  ].filter(text => text.trim().length > 0).join('\n');
 }
 
 function formatErrorMessage(error: unknown): string {

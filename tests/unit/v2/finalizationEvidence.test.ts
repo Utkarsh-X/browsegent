@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildFinalizationEvidence } from '../../../src/v2/agent/FinalizationEvidence';
+import {
+  buildAnswerValidationEvidence,
+  buildFinalizationEvidence,
+} from '../../../src/v2/agent/FinalizationEvidence';
 import type { OperationalProjection, ProjectionItem } from '../../../src/v2/brain1/projectionTypes';
 
 function makeProjection(): OperationalProjection {
@@ -57,7 +60,7 @@ test('buildFinalizationEvidence includes last value and compact readable evidenc
     lastSuccessfulEvidenceValue: 'Compute input button',
   });
 
-  assert.match(evidence, /Last successful evidence:/);
+  assert.match(evidence, /Last successful action preview:/);
   assert.match(evidence, /Compute input button/);
   assert.match(evidence, /Readable evidence:/);
   assert.match(evidence, /Derivative is 11\.2/);
@@ -124,4 +127,13 @@ test('buildFinalizationEvidence preserves late details from explicit read eviden
   });
 
   assert.match(evidence, new RegExp(lateMarker));
+});
+
+test('buildAnswerValidationEvidence accepts only explicit read evidence', () => {
+  const evidence = buildAnswerValidationEvidence([
+    { kind: 'get', targetRef: 'ref_result', text: 'Verified result: 11.2' },
+    { kind: 'inspect_region', targetRef: 'ref_details', text: 'Verified details: open daily' },
+  ]);
+
+  assert.equal(evidence, 'Verified result: 11.2\nVerified details: open daily');
 });

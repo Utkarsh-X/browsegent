@@ -17,6 +17,17 @@ export interface ReadEvidenceHistoryEntry {
   text: string;
 }
 
+/**
+ * Answer validation may only use text returned by an explicit read operation.
+ * Action targets and input previews describe the control, not the page fact.
+ */
+export function buildAnswerValidationEvidence(readEvidenceHistory: ReadEvidenceHistoryEntry[]): string {
+  return readEvidenceHistory
+    .map(entry => entry.text.replace(/\s+/g, ' ').trim())
+    .filter(text => text.length > 0)
+    .join('\n');
+}
+
 export function buildFinalizationEvidence(input: FinalizationEvidenceInput): string {
   const maxReadableItems = input.maxReadableItems ?? 12;
   const maxReadEvidenceItems = input.maxReadEvidenceItems ?? 8;
@@ -24,7 +35,7 @@ export function buildFinalizationEvidence(input: FinalizationEvidenceInput): str
   const sections: string[] = [];
 
   if (input.lastSuccessfulEvidenceValue?.trim()) {
-    sections.push(`Last successful evidence: ${compactText(input.lastSuccessfulEvidenceValue, maxTextLength)}`);
+    sections.push(`Last successful action preview: ${compactText(input.lastSuccessfulEvidenceValue, maxTextLength)}`);
   }
 
   const readEvidence = (input.readEvidenceHistory ?? [])
