@@ -20,3 +20,4 @@ new-keys.yaml
 # Temporary & Runtime files
 .alumnium/
 *.pid
+docs/
