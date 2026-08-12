@@ -11,6 +11,7 @@ import { ContinuityInterpreter } from '../../../src/v2/brain2/ContinuityInterpre
 import { TraceStore } from '../../../src/v2/trace/TraceStore';
 import { buildBrowserObservation } from '../../../src/v2/substrate/ObservationService';
 import type { BrowserObservation, TransitionEvidence, V2Ref, V2ToolResult } from '../../../src/v2';
+import type { FailureEvidence } from '../../../src/v2/runtime/FailureClassifier';
 import type { TraceJsonValue, TraceManifest, TraceStep } from '../../../src/v2/trace/types';
 
 function makeRef(overrides: Partial<V2Ref> = {}): V2Ref {
@@ -314,6 +315,68 @@ test('PlannerInputComposer includes compact recovery state from runtime signals'
   assert.equal(input.recovery?.state, 'wrong_target_type');
   assert.equal(input.recovery?.blockedAction?.ref, 'ref_primary');
   assert.ok(input.recovery?.nextMechanisms.includes('choose_typeable_ref'));
+});
+
+test('PlannerInputComposer promotes repeated same-blocker evidence into persistent recovery', () => {
+  const observation = makeObservation({ observationId: 'obs_persistent_blocker' });
+  const projection = new ProjectionService().project(observation);
+  const blocker = {
+    blockerDescription: 'div#consent-overlay',
+    blockerTagName: 'div',
+    hitTestOutcome: 'hard_blocker',
+    blockerIsFixedOrSticky: true,
+  };
+  const failureEvidence: FailureEvidence[] = [
+    {
+      failureId: 'failure_ref_a',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'Target was blocked.',
+      source: 'test',
+      observationId: 'obs_persistent_blocker_1',
+      generationId: 1,
+      url: 'https://example.test/app',
+      targetRef: 'ref_a',
+      signals: ['error:target_blocked'],
+      diagnostics: blocker,
+    },
+    {
+      failureId: 'failure_ref_b',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'Target was blocked.',
+      source: 'test',
+      observationId: 'obs_persistent_blocker_2',
+      generationId: 1,
+      url: 'https://example.test/app',
+      targetRef: 'ref_b',
+      signals: ['error:target_blocked'],
+      diagnostics: blocker,
+    },
+  ];
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_persistent_blocker',
+    goal: 'Submit the form',
+    projection,
+    failureEvidence,
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_b',
+      error: { code: 'target_blocked', message: 'Target was blocked.', retryable: false, diagnostics: blocker },
+      traceStepId: 'step_blocked_b',
+    },
+  });
+
+  assert.equal(input.recovery?.state, 'persistent_target_blocker');
+  assert.equal(input.recovery?.blockedAction?.ref, 'ref_b');
+  assert.ok(input.recovery?.nextMechanisms.includes('find_dismiss_or_close_control'));
 });
 
 test('LineageCompressor keeps bounded recent execution lineage without raw result payloads', () => {

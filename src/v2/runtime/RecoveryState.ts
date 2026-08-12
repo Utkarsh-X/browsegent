@@ -3,6 +3,7 @@ import type { V2ToolResult } from './types';
 
 export type PlannerRecoveryStateKind =
   | 'wrong_target_type'
+  | 'persistent_target_blocker'
   | 'same_action_loop'
   | 'repeated_read_same_value'
   | 'zero_result_read_loop'
@@ -30,6 +31,9 @@ export interface RecoveryStateBuilderInput {
 export class RecoveryStateBuilder {
   build(input: RecoveryStateBuilderInput): PlannerRecoveryState | undefined {
     const signals = collectRecoverySignals(input);
+    const persistentBlocker = buildPersistentBlockerRecovery(input, signals);
+    if (persistentBlocker) return persistentBlocker;
+
     const wrongTarget = buildWrongTargetRecovery(input.lastResult, signals);
     if (wrongTarget) return wrongTarget;
 
@@ -38,6 +42,16 @@ export class RecoveryStateBuilder {
         state: 'same_action_loop',
         severity: 'warning',
         blockedAction: blockedActionFromSignal(signals.find(signal => signal.startsWith('repeated_no_progress_transition:'))),
+        nextMechanisms: ['avoid_repeating_blocked_action', 'choose_alternative_ref', 'expand_or_reobserve'],
+        signals,
+      };
+    }
+
+    if (signals.some(signal => signal.startsWith('repeated_no_progress_kind:'))) {
+      return {
+        state: 'same_action_loop',
+        severity: 'warning',
+        blockedAction: blockedActionFromSignal(signals.find(signal => signal.startsWith('repeated_no_progress_kind:'))),
         nextMechanisms: ['avoid_repeating_blocked_action', 'choose_alternative_ref', 'expand_or_reobserve'],
         signals,
       };
@@ -94,6 +108,87 @@ export class RecoveryStateBuilder {
 
     return undefined;
   }
+}
+
+function buildPersistentBlockerRecovery(
+  input: RecoveryStateBuilderInput,
+  signals: string[],
+): PlannerRecoveryState | undefined {
+  if (input.lastResult?.error?.code !== 'target_blocked') {
+    return undefined;
+  }
+
+  const blockedFailures = (input.failures ?? []).filter(failure =>
+    failure.kind === 'target_blocked'
+    && Boolean(failure.targetRef)
+    && typeof failure.generationId === 'number'
+    && typeof failure.url === 'string'
+    && blockerFingerprint(failure) !== undefined,
+  );
+  const currentFailure = [...blockedFailures].reverse().find(failure =>
+    failure.targetRef === input.lastResult?.targetRef,
+  );
+  if (!currentFailure) return undefined;
+
+  const sameEpoch = blockedFailures.filter(failure =>
+    failure.generationId === currentFailure.generationId
+    && failure.url === currentFailure.url,
+  );
+  const groups = new Map<string, Set<string>>();
+  for (const failure of sameEpoch) {
+    const fingerprint = blockerFingerprint(failure);
+    if (!fingerprint || !failure.targetRef) continue;
+    const refs = groups.get(fingerprint) ?? new Set<string>();
+    refs.add(failure.targetRef);
+    groups.set(fingerprint, refs);
+  }
+
+  const matchingGroup = [...groups.values()].find(refs => refs.size >= 2);
+  if (!matchingGroup) return undefined;
+
+  return {
+    state: 'persistent_target_blocker',
+    severity: 'warning',
+    blockedAction: {
+      tool: input.lastResult.kind,
+      ref: input.lastResult.targetRef,
+    },
+    nextMechanisms: [
+      'avoid_repeating_blocked_action',
+      'reobserve_current_surface',
+      'inspect_region_or_scroll',
+      'find_dismiss_or_close_control',
+      'choose_unblocked_alternative',
+    ],
+    signals: [
+      ...signals,
+      `persistent_blocker:${matchingGroup.size}`,
+    ],
+  };
+}
+
+function blockerFingerprint(failure: FailureEvidence): string | undefined {
+  const diagnostics = failure.diagnostics;
+  const description = diagnostics?.blockerDescription;
+  if (typeof description !== 'string' || description.trim().length === 0) {
+    return undefined;
+  }
+
+  return [
+    normalizeBlockerPart(description),
+    normalizeBlockerPart(diagnostics?.blockerTagName),
+    normalizeBlockerPart(diagnostics?.hitTestOutcome),
+    String(diagnostics?.blockerIsFixedOrSticky === true),
+    String(diagnostics?.blockerIsNativeDialog === true),
+    String(diagnostics?.blockerIsTransparent === true),
+    String(diagnostics?.blockerCoversFullViewport === true),
+  ].join('|');
+}
+
+function normalizeBlockerPart(value: unknown): string {
+  return typeof value === 'string'
+    ? value.trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 160)
+    : '';
 }
 
 function buildWrongTargetRecovery(
@@ -154,6 +249,9 @@ function collectRecoverySignals(input: RecoveryStateBuilderInput): string[] {
 function blockedActionFromSignal(signal: string | undefined): PlannerRecoveryState['blockedAction'] {
   if (!signal) return undefined;
   const parts = signal.split(':');
+  if (signal.startsWith('repeated_no_progress_kind:')) {
+    return { tool: parts[1] || 'unknown' };
+  }
   return {
     tool: parts[1] || 'unknown',
     ref: parts[2] && parts[2] !== 'global' ? parts[2] : undefined,

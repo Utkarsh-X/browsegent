@@ -42,6 +42,8 @@ test('FailureClassifier maps blocked target results to persistent mechanical evi
 
   const evidence = new FailureClassifier().classify(result, {
     observationId: 'obs_blocked',
+    generationId: 7,
+    url: 'https://example.test/form',
   });
 
   assert.equal(evidence.kind, 'target_blocked');
@@ -49,6 +51,8 @@ test('FailureClassifier maps blocked target results to persistent mechanical evi
   assert.equal(evidence.persistence, 'persistent');
   assert.equal(evidence.retryable, false);
   assert.equal(evidence.targetRef, 'ref_blocked');
+  assert.equal(evidence.generationId, 7);
+  assert.equal(evidence.url, 'https://example.test/form');
   assert.ok(evidence.signals.includes('error:target_blocked'));
   assert.doesNotMatch(evidence.message, /try another|strategy|not useful|task/i);
 });

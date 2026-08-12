@@ -19,6 +19,8 @@ export type FailureEvidenceCategory =
 
 export interface FailureClassificationContext {
   observationId?: string;
+  generationId?: number;
+  url?: string;
   projection?: OperationalProjection;
   targetRef?: string;
   source?: string;
@@ -34,6 +36,8 @@ export interface FailureEvidence {
   message: string;
   source: string;
   observationId?: string;
+  generationId?: number;
+  url?: string;
   targetRef?: string;
   signals: string[];
   diagnostics?: Record<string, unknown>;
@@ -101,6 +105,8 @@ function createFailureEvidence(
     message: input.message,
     source: input.source,
     observationId: input.context.observationId,
+    generationId: input.context.generationId,
+    url: input.context.url,
     targetRef: input.context.targetRef,
     signals: input.signals,
     ...(input.diagnostics ? { diagnostics: input.diagnostics } : {}),

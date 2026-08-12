@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { RecoveryStateBuilder } from '../../../src/v2/runtime/RecoveryState';
+import type { FailureEvidence } from '../../../src/v2/runtime/FailureClassifier';
 
 test('RecoveryStateBuilder detects wrong target type for non-editable type failures', () => {
   const recovery = new RecoveryStateBuilder().build({
@@ -40,6 +41,181 @@ test('RecoveryStateBuilder detects repeated no-progress mutations', () => {
 
   assert.equal(recovery?.state, 'same_action_loop');
   assert.ok(recovery?.nextMechanisms.includes('avoid_repeating_blocked_action'));
+});
+
+test('RecoveryStateBuilder treats repeated no-progress tool use as a strategy pivot', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    failures: [],
+    uncertaintySignals: ['repeated_no_progress_kind:press:3'],
+  });
+
+  assert.equal(recovery?.state, 'same_action_loop');
+  assert.equal(recovery?.blockedAction?.tool, 'press');
+  assert.equal(recovery?.blockedAction?.ref, undefined);
+  assert.ok(recovery?.nextMechanisms.includes('choose_alternative_ref'));
+});
+
+test('RecoveryStateBuilder aggregates the same blocker across distinct refs within one page epoch', () => {
+  const blocker = {
+    blockerDescription: 'div#consent-overlay',
+    blockerTagName: 'div',
+    hitTestOutcome: 'hard_blocker',
+    blockerIsFixedOrSticky: true,
+  };
+  const failures: FailureEvidence[] = [
+    {
+      failureId: 'failure_target_blocked_ref_a',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'blocked',
+      source: 'test',
+      observationId: 'obs_1_2',
+      targetRef: 'ref_a',
+      signals: ['error:target_blocked'],
+      diagnostics: blocker,
+      generationId: 1,
+      url: 'https://example.test/form',
+    },
+    {
+      failureId: 'failure_target_blocked_ref_b',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'blocked',
+      source: 'test',
+      observationId: 'obs_1_4',
+      targetRef: 'ref_b',
+      signals: ['error:target_blocked'],
+      diagnostics: blocker,
+      generationId: 1,
+      url: 'https://example.test/form',
+    },
+  ];
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_b',
+      error: { code: 'target_blocked', message: 'blocked', retryable: false, diagnostics: blocker },
+      traceStepId: 'step_b',
+    },
+    failures,
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery?.state, 'persistent_target_blocker');
+  assert.equal(recovery?.blockedAction?.ref, 'ref_b');
+  assert.ok(recovery?.nextMechanisms.includes('find_dismiss_or_close_control'));
+});
+
+test('RecoveryStateBuilder does not aggregate blockers across page epochs', () => {
+  const blocker = {
+    blockerDescription: 'div#consent-overlay',
+    blockerTagName: 'div',
+    hitTestOutcome: 'hard_blocker',
+    blockerIsFixedOrSticky: true,
+  };
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_b',
+      error: { code: 'target_blocked', message: 'blocked', retryable: false, diagnostics: blocker },
+      traceStepId: 'step_b',
+    },
+    failures: [
+      {
+        failureId: 'failure_target_blocked_ref_a',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'blocked',
+        source: 'test',
+        targetRef: 'ref_a',
+        signals: ['error:target_blocked'],
+        diagnostics: blocker,
+        generationId: 1,
+        url: 'https://example.test/old-page',
+      },
+      {
+        failureId: 'failure_target_blocked_ref_b',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'blocked',
+        source: 'test',
+        targetRef: 'ref_b',
+        signals: ['error:target_blocked'],
+        diagnostics: blocker,
+        generationId: 2,
+        url: 'https://example.test/new-page',
+      },
+    ],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery?.state, 'wrong_target_type');
+});
+
+test('RecoveryStateBuilder does not aggregate different blockers in one page epoch', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_b',
+      error: {
+        code: 'target_blocked',
+        message: 'blocked',
+        retryable: false,
+        diagnostics: { blockerDescription: 'div#other-overlay', blockerTagName: 'div', hitTestOutcome: 'hard_blocker' },
+      },
+      traceStepId: 'step_b',
+    },
+    failures: [
+      {
+        failureId: 'failure_target_blocked_ref_a',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'blocked',
+        source: 'test',
+        targetRef: 'ref_a',
+        signals: ['error:target_blocked'],
+        diagnostics: { blockerDescription: 'div#consent-overlay', blockerTagName: 'div', hitTestOutcome: 'hard_blocker' },
+        generationId: 1,
+        url: 'https://example.test/form',
+      },
+      {
+        failureId: 'failure_target_blocked_ref_b',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'blocked',
+        source: 'test',
+        targetRef: 'ref_b',
+        signals: ['error:target_blocked'],
+        diagnostics: { blockerDescription: 'div#other-overlay', blockerTagName: 'div', hitTestOutcome: 'hard_blocker' },
+        generationId: 1,
+        url: 'https://example.test/form',
+      },
+    ],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery?.state, 'wrong_target_type');
 });
 
 test('RecoveryStateBuilder returns undefined when no recovery signal is present', () => {
