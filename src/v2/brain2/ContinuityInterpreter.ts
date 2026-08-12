@@ -4,18 +4,17 @@ import { calculateProgressStrength, type RefChangeSummary } from './progressEvid
 
 export class ContinuityInterpreter {
   interpret(before: BrowserObservation, after: BrowserObservation): TransitionEvidence {
-    const beforeById = new Map(before.refs.map(ref => [ref.refId, ref]));
-    const afterById = new Map(after.refs.map(ref => [ref.refId, ref]));
-    const refChanges = summarizeRefChanges(before, after, beforeById);
+    const matches = matchRefs(before, after);
+    const refChanges = summarizeRefChanges(matches);
     const changedRefs = after.refs
       .filter(ref => {
-        const previous = beforeById.get(ref.refId);
+        const previous = matches.matched.get(ref.refId);
         return previous !== undefined && hasStructuralRefChange(previous, ref);
       })
       .map(ref => ref.refId);
     const boxChangedRefs = after.refs
       .filter(ref => {
-        const previous = beforeById.get(ref.refId);
+        const previous = matches.matched.get(ref.refId);
         return previous !== undefined && hasBoxChange(previous.box, ref.box);
       })
       .map(ref => ref.refId);
@@ -46,27 +45,78 @@ export class ContinuityInterpreter {
 }
 
 function summarizeRefChanges(
-  before: BrowserObservation,
-  after: BrowserObservation,
-  beforeById: Map<string, V2Ref>,
+  matches: RefMatches,
 ): RefChangeSummary {
-  const afterById = new Map(after.refs.map(ref => [ref.refId, ref]));
-
   return {
-    appeared: after.refs.filter(ref => !beforeById.has(ref.refId)).map(ref => ref.refId),
-    disappeared: before.refs.filter(ref => !afterById.has(ref.refId)).map(ref => ref.refId),
-    weakened: after.refs
-      .filter(ref => beforeById.has(ref.refId) && ref.state === 'weakened')
-      .map(ref => ref.refId),
-    preserved: after.refs
-      .filter(ref => beforeById.has(ref.refId) && ref.state !== 'weakened')
-      .map(ref => ref.refId),
+    appeared: matches.appeared.map(ref => ref.refId),
+    disappeared: matches.disappeared.map(ref => ref.refId),
+    weakened: [...matches.matchedAfter.entries()]
+      .filter(([refId, current]) =>
+        current.state === 'weakened'
+        && matches.matched.get(refId)?.state !== 'weakened',
+      )
+      .map(([refId]) => refId),
+    preserved: [...matches.matched.keys()]
+      .filter(refId => {
+        const current = matches.matchedAfter.get(refId);
+        return current?.state !== 'weakened';
+      }),
   };
 }
 
+interface RefMatches {
+  matched: Map<string, V2Ref>;
+  matchedAfter: Map<string, V2Ref>;
+  appeared: V2Ref[];
+  disappeared: V2Ref[];
+}
+
+/**
+ * Ref ids are observation-scoped and can be regenerated on every scan. Match
+ * by stable substrate identity first so bookkeeping reflects page changes,
+ * not the serializer's allocation order.
+ */
+function matchRefs(before: BrowserObservation, after: BrowserObservation): RefMatches {
+  const unmatchedBefore = new Set(before.refs);
+  const matched = new Map<string, V2Ref>();
+  const matchedAfter = new Map<string, V2Ref>();
+  const appeared: V2Ref[] = [];
+
+  for (const current of after.refs) {
+    const previous = findMatch(current, unmatchedBefore);
+    if (!previous) {
+      appeared.push(current);
+      continue;
+    }
+
+    unmatchedBefore.delete(previous);
+    matched.set(current.refId, previous);
+    matchedAfter.set(current.refId, current);
+  }
+
+  return {
+    matched,
+    matchedAfter,
+    appeared,
+    disappeared: [...unmatchedBefore],
+  };
+}
+
+function findMatch(current: V2Ref, candidates: Set<V2Ref>): V2Ref | undefined {
+  if (current.targetId) {
+    const stableMatch = [...candidates].find(candidate =>
+      candidate.targetId === current.targetId,
+    );
+    if (stableMatch) return stableMatch;
+  }
+
+  // Ref ids are the stable fallback for scans where the substrate regenerated
+  // target ids without changing the represented control.
+  return [...candidates].find(candidate => candidate.refId === current.refId);
+}
+
 function hasStructuralRefChange(before: V2Ref, after: V2Ref): boolean {
-  return before.targetId !== after.targetId
-    || before.role !== after.role
+  return before.role !== after.role
     || before.name !== after.name
     || before.text !== after.text
     || before.regionId !== after.regionId

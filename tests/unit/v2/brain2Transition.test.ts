@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { ContinuityInterpreter } from '../../../src/v2/brain2/ContinuityInterpreter';
+import { TransitionService } from '../../../src/v2/runtime/TransitionService';
 import { buildBrowserObservation } from '../../../src/v2/substrate/ObservationService';
 import type { BrowserObservation, V2Ref } from '../../../src/v2';
 
@@ -156,4 +157,93 @@ test('ContinuityInterpreter emits no progress strength when only observation met
   assert.equal(evidence.transitionClass, 'microstate');
   assert.equal(evidence.strength, 'none');
   assert.deepEqual(evidence.notes, []);
+});
+
+test('ContinuityInterpreter ignores ref-id churn when stable target identity is preserved', () => {
+  const before = makeObservation({ observationId: 'obs_rebind_before' });
+  const after = makeObservation({
+    observationId: 'obs_rebind_after',
+    refs: [makeRef({ refId: 'ref_rebound', selectorCandidates: ['[data-target="primary"]'] })],
+  });
+
+  const evidence = new ContinuityInterpreter().interpret(before, after);
+
+  assert.equal(evidence.transitionClass, 'microstate');
+  assert.equal(evidence.strength, 'none');
+  assert.deepEqual(evidence.refChanges.appeared, []);
+  assert.deepEqual(evidence.refChanges.disappeared, []);
+  assert.deepEqual(evidence.refChanges.preserved, ['ref_rebound']);
+  assert.deepEqual(evidence.notes, []);
+});
+
+test('ContinuityInterpreter treats ref-id continuity as fallback when target ids regenerate', () => {
+  const before = makeObservation({ observationId: 'obs_target_reseed_before' });
+  const after = makeObservation({
+    observationId: 'obs_target_reseed_after',
+    refs: [makeRef({ targetId: 'target_reseeded' })],
+  });
+
+  const evidence = new ContinuityInterpreter().interpret(before, after);
+
+  assert.equal(evidence.transitionClass, 'microstate');
+  assert.equal(evidence.strength, 'none');
+  assert.deepEqual(evidence.refChanges.appeared, []);
+  assert.deepEqual(evidence.refChanges.disappeared, []);
+});
+
+test('TransitionService uses semantic continuity instead of treating ref-id churn as progress', () => {
+  const before = makeObservation({ observationId: 'obs_service_before' });
+  const after = makeObservation({
+    observationId: 'obs_service_after',
+    refs: [makeRef({ refId: 'ref_rebound', selectorCandidates: ['[data-target="primary"]'] })],
+  });
+
+  const evidence = new TransitionService().compare(before, after);
+
+  assert.equal(evidence.transitionClass, 'microstate');
+  assert.equal(evidence.strength, 'none');
+});
+
+test('ContinuityInterpreter preserves real semantic changes across ref-id churn', () => {
+  const before = makeObservation({ observationId: 'obs_change_before' });
+  const after = makeObservation({
+    observationId: 'obs_change_after',
+    refs: [
+      makeRef({
+        refId: 'ref_rebound',
+        selectorCandidates: ['[data-target="primary"]'],
+        text: 'Expanded primary',
+      }),
+    ],
+  });
+
+  const evidence = new ContinuityInterpreter().interpret(before, after);
+
+  assert.equal(evidence.transitionClass, 'structural_local');
+  assert.equal(evidence.strength, 'moderate');
+  assert.deepEqual(evidence.refChanges.appeared, []);
+  assert.deepEqual(evidence.refChanges.disappeared, []);
+  assert.deepEqual(evidence.refChanges.preserved, ['ref_rebound']);
+  assert.ok(evidence.notes.includes('ref_changed:ref_rebound'));
+});
+
+test('ContinuityInterpreter reports weakened only on a real state transition', () => {
+  const before = makeObservation({ observationId: 'obs_weaken_before' });
+  const weakened = makeObservation({
+    observationId: 'obs_weaken_after',
+    refs: [makeRef({ state: 'weakened' })],
+  });
+  const stillWeakened = makeObservation({
+    observationId: 'obs_still_weakened',
+    refs: [makeRef({ state: 'weakened' })],
+  });
+
+  assert.deepEqual(
+    new ContinuityInterpreter().interpret(before, weakened).refChanges.weakened,
+    ['ref_primary'],
+  );
+  assert.deepEqual(
+    new ContinuityInterpreter().interpret(weakened, stillWeakened).refChanges.weakened,
+    [],
+  );
 });

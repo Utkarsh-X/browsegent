@@ -135,6 +135,29 @@ test('ContinuityGraph keeps disappeared refs as stale topology evidence', () => 
   assert.equal(removed?.lastSeenObservationId, 'obs_disappear_before');
 });
 
+test('ContinuityGraph rebinds ref-id churn to the existing stable target node', () => {
+  const graph = new ContinuityGraph();
+  const before = makeObservation({
+    observationId: 'obs_rebind_before',
+    refs: [makeRef({ refId: 'ref_primary', targetId: 'target_primary' })],
+  });
+  const after = makeObservation({
+    observationId: 'obs_rebind_after',
+    refs: [makeRef({ refId: 'ref_rebound', targetId: 'target_primary' })],
+  });
+
+  graph.applyObservation(before);
+  graph.applyObservation(after);
+  const snapshot = graph.snapshot();
+
+  assert.equal(snapshot.refs.length, 1);
+  assert.equal(snapshot.refs[0]?.refId, 'ref_rebound');
+  assert.equal(snapshot.refs[0]?.targetId, 'target_primary');
+  assert.equal(snapshot.refs[0]?.present, true);
+  assert.equal(snapshot.refs[0]?.firstSeenObservationId, 'obs_rebind_before');
+  assert.equal(snapshot.refs[0]?.lastSeenObservationId, 'obs_rebind_after');
+});
+
 test('ContinuityGraph bounds transition history after repeated transitions', () => {
   const graph = new ContinuityGraph({ maxTransitions: 3 });
   const interpreter = new ContinuityInterpreter();
