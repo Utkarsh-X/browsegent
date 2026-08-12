@@ -83,6 +83,24 @@ test('successful input actions are not classified as no-effect when the page doe
   assert.equal(summary.noEffect, 0);
 });
 
+test('structural transition is not classified as no-effect without URL or generation change', () => {
+  const recorder = new ActionOutcomeRecorder();
+  recorder.record({
+    stepIndex: 0,
+    tool: 'click',
+    source: 'dispatch',
+    success: true,
+    stateChanged: false,
+    observableEffect: true,
+    readEvidenceProduced: false,
+  });
+
+  const summary = recorder.summary();
+  assert.equal(summary.stateChanging, 0);
+  assert.equal(summary.observableEffect, 1);
+  assert.equal(summary.noEffect, 0);
+});
+
 test('toJSON returns serializable summary', () => {
   const recorder = new ActionOutcomeRecorder();
   recorder.record({ stepIndex: 0, tool: 'click', source: 'dispatch', success: true, stateChanged: false, readEvidenceProduced: false });

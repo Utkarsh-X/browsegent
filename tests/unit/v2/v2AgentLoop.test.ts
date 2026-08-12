@@ -1672,6 +1672,51 @@ test('V2AgentLoop hard-blocks no-progress actions when refs churn around one sta
   assert.equal(dispatcher.steps?.length, 3);
 });
 
+test('V2AgentLoop pivots after 3 no-progress actions using the same tool across ref churn', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const observations = [
+    makeObservation('obs_initial', {
+      refs: [
+        makeRef({ refId: 'ref_a', targetId: 'target_a' }),
+        makeRef({ refId: 'ref_b', targetId: 'target_b' }),
+        makeRef({ refId: 'ref_c', targetId: 'target_c' }),
+        makeRef({ refId: 'ref_d', targetId: 'target_d' }),
+      ],
+    }),
+  ];
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'press', ref: 'ref_a', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_b', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_c', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_d', key: 'Enter' }], confidence: 'high' },
+    { done: true, val: 'Changed strategy' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'press',
+    evidence: makeNoProgressEvidence(),
+    traceStepId: 'tool_press',
+  };
+  const harness = new FakeHarness(observations);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Submit the form',
+    maxSteps: 5,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Changed strategy');
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+  assert.equal(dispatcher.steps?.length, 3);
+});
+
 test('V2AgentLoop hard-block resets after URL change', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const urlChangedEvidence = {

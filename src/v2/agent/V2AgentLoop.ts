@@ -221,13 +221,16 @@ export class V2AgentLoop {
           // Guard 1: hard-block
           const blockedSig = progressMemory.isHardBlocked(plannedStep, actionObservation);
           if (blockedSig) {
+            const blockDescription = blockedSig.startsWith('tool:')
+              ? `the ${plannedStep.tool} tool produced no progress three times`
+              : `3 identical repeats (signature: ${blockedSig})`;
             lastResult = {
               success: false,
               kind: plannedStep.tool,
               targetRef: plannedStep.ref,
               error: {
                 code: 'action_blocked_by_loop_detector',
-                message: `Action ${plannedStep.tool} on ${plannedStep.ref ?? 'global'} blocked after 3 identical repeats (signature: ${blockedSig}). You MUST choose a different action, ref, or value.`,
+                message: `Action ${plannedStep.tool} on ${plannedStep.ref ?? 'global'} blocked after ${blockDescription}. You MUST choose a different action, ref, or value.`,
                 retryable: true,
               },
               traceStepId: `blocked_${stepIndex}`,
@@ -276,6 +279,7 @@ export class V2AgentLoop {
               stepIndex, tool: plannedStep.tool, targetRef: plannedStep.ref,
               source: 'dispatch', success: lastResult.success, errorCode: lastResult.error?.code,
               stateChanged: !!(lastResult.evidence?.urlChanged || lastResult.evidence?.generationChanged),
+              observableEffect: hasObservableEffect(lastResult.evidence),
               readEvidenceProduced: isReadEvidence(lastResult),
               inputApplied: lastResult.success && (plannedStep.tool === 'type' || plannedStep.tool === 'select'),
             });
@@ -293,6 +297,8 @@ export class V2AgentLoop {
             const currentProjection = this.projectionService.project(observation, graphSnapshot);
             const failure = this.failureClassifier.classify(lastResult!, {
               observationId: observation.observationId,
+              generationId: graphSnapshot.generationId,
+              url: graphSnapshot.url,
               projection: currentProjection,
               targetRef: lastResult!.targetRef,
               source: preExecutionRejected ? 'pre_execution_guard' : 'v2_agent_loop',
@@ -666,6 +672,16 @@ function isReadEvidence(result: V2ToolResult): boolean {
   }
   return true; // get and inspect_region always produce read evidence when successful
 }
+
+/**
+ * Keep URL/generation changes separate from any observable page transition.
+ * Local structural changes and weak geometry changes are still useful outcome
+ * facts even when the page remains on the same URL and generation.
+ */
+function hasObservableEffect(evidence: TransitionEvidence | undefined): boolean {
+  return evidence?.strength !== undefined && evidence.strength !== 'none';
+}
+
 const PROGRESS_HISTORY_LIMIT = 8;
 const READ_EVIDENCE_HISTORY_LIMIT = 8;
 const REPEAT_SIGNAL_THRESHOLD = 2;
@@ -683,6 +699,8 @@ class ActionProgressMemory {
   private readonly entries: ActionProgressEntry[] = [];
   private readonly hardBlockedSignatures: Set<string> = new Set();
   private readonly hardBlockedSemanticSignatures: Set<string> = new Set();
+  private readonly hardBlockedKinds: Set<string> = new Set();
+  private readonly noProgressCountsByKind: Map<string, number> = new Map();
 
   static actionSignature(
     step: { tool: string; ref?: string; text?: string; value?: string; pattern?: string; url?: string; key?: string },
@@ -702,6 +720,9 @@ class ActionProgressMemory {
     const sig = ActionProgressMemory.actionSignature(step);
     if (this.hardBlockedSignatures.has(sig)) return sig;
 
+    const kind = normalizeSignalToken(step.tool);
+    if (this.hardBlockedKinds.has(kind)) return `tool:${kind}`;
+
     if (observation && step.ref) {
       const ref = observation.refs.find(candidate => candidate.refId === step.ref);
       if (ref?.targetId) {
@@ -718,6 +739,8 @@ class ActionProgressMemory {
     if (evidence.urlChanged || evidence.generationChanged) {
       this.hardBlockedSignatures.clear();
       this.hardBlockedSemanticSignatures.clear();
+      this.hardBlockedKinds.clear();
+      this.noProgressCountsByKind.clear();
     }
   }
 
@@ -735,6 +758,15 @@ class ActionProgressMemory {
     const signals: string[] = [];
 
     if (entry.noProgressMutation) {
+      const kindCount = (this.noProgressCountsByKind.get(entry.kind) ?? 0) + 1;
+      this.noProgressCountsByKind.set(entry.kind, kindCount);
+      if (kindCount >= REPEAT_SIGNAL_THRESHOLD) {
+        signals.push(`repeated_no_progress_kind:${entry.kind}:${kindCount}`);
+      }
+      if (kindCount >= 3) {
+        this.hardBlockedKinds.add(entry.kind);
+      }
+
       const count = this.entries.filter(existing =>
         existing.noProgressMutation
         && existing.kind === entry.kind

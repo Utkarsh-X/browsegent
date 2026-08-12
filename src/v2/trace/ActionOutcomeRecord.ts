@@ -8,6 +8,7 @@ export interface ActionOutcome {
   success: boolean;
   errorCode?: string;
   stateChanged: boolean;         // transition evidence: urlChanged || generationChanged
+  observableEffect?: boolean;    // any transition with non-none strength
   readEvidenceProduced: boolean;  // ONLY for successful get | inspect_region | nonempty search_page
   inputApplied?: boolean;         // successful type/select action accepted by the browser
 }
@@ -18,6 +19,7 @@ export interface ActionOutcomeSummary {
   preExecutionRejected: number;
   hardBlocked: number;
   stateChanging: number;
+  observableEffect: number;
   evidenceProducing: number;
   inputApplied: number;
   failed: number;
@@ -41,10 +43,11 @@ export class ActionOutcomeRecorder {
       preExecutionRejected: this.outcomes.filter(o => o.source === 'pre_execution_guard').length,
       hardBlocked: this.outcomes.filter(o => o.source === 'hard_block').length,
       stateChanging: this.outcomes.filter(o => o.stateChanged).length,
+      observableEffect: dispatched.filter(o => hasObservableEffect(o)).length,
       evidenceProducing: this.outcomes.filter(o => o.readEvidenceProduced).length,
       inputApplied: dispatched.filter(o => isSuccessfulInputAction(o)).length,
       failed: this.outcomes.filter(o => !o.success).length,
-      noEffect: dispatched.filter(o => o.success && !o.stateChanged && !o.readEvidenceProduced && !isSuccessfulInputAction(o)).length,
+      noEffect: dispatched.filter(o => o.success && !hasObservableEffect(o) && !o.readEvidenceProduced && !isSuccessfulInputAction(o)).length,
     };
   }
 
@@ -54,4 +57,8 @@ export class ActionOutcomeRecorder {
 function isSuccessfulInputAction(outcome: ActionOutcome): boolean {
   return outcome.success
     && (outcome.inputApplied === true || outcome.tool === 'type' || outcome.tool === 'select');
+}
+
+function hasObservableEffect(outcome: ActionOutcome): boolean {
+  return outcome.observableEffect === true || outcome.stateChanged;
 }
