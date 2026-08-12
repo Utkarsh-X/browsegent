@@ -308,6 +308,20 @@ function buildActionCompatibilityGuidance(
     }
   }
 
+  if (
+    errors.some(error => error.includes(' is not compatible with tool '))
+    && input.lastResult?.success === true
+    && input.lastResult.evidence?.strength === 'none'
+    && input.lastResult.targetRef
+  ) {
+    const previousRef = input.current.refs?.[input.lastResult.targetRef];
+    const previousRole = previousRef?.role ?? previousRef?.kind ?? 'target';
+    lines.push(
+      `Previous ${input.lastResult.kind} on ${input.lastResult.targetRef} produced no observable transition. `
+      + `Do not assume the ${previousRole} became a text field or changed action lane; use a currently compatible ref or reobserve.`,
+    );
+  }
+
   return lines.length > 0 ? [...new Set(lines)].join('\n') : undefined;
 }
 

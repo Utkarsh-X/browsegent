@@ -541,6 +541,16 @@ test('V2PlannerClient includes action-compatible ref alternatives in retry feedb
       droppedByReason: {},
     },
   };
+  plannerInput.lastResult = {
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_button',
+    evidence: {
+      transitionClass: 'microstate',
+      strength: 'none',
+    },
+    traceStepId: 'step_no_effect_click',
+  };
 
   const providerUsers: string[] = [];
   const responses = [
@@ -564,6 +574,8 @@ test('V2PlannerClient includes action-compatible ref alternatives in retry feedb
   assert.equal(providerUsers.length, 2);
   assert.match(providerUsers[1], /not compatible with tool "type"/);
   assert.match(providerUsers[1], /ref_input/);
+  assert.match(providerUsers[1], /previous click on ref_button produced no observable transition/i);
+  assert.match(providerUsers[1], /do not assume the button became a text field/i);
 });
 
 test('V2PlannerClient gives labeled recovery guidance for click-on-readable-only evidence', async () => {
