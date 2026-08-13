@@ -16,6 +16,7 @@ import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { BrowseGentV2HarnessOptions } from './types';
 import { buildRefResolutionAudit } from '../runtime/RefResolutionAudit';
 import { shouldAttemptWeakenedRefSelfHeal } from '../runtime/RefSelfHealingPolicy';
+import { buildBoundedReadEvidenceText } from './ReadEvidence';
 
 const READ_EVIDENCE_TEXT_LIMIT = 4_000;
 
@@ -183,8 +184,8 @@ export class BrowseGentV2Harness {
   }
 
   async get(refId: string): Promise<V2ToolResult<{ text: string; value?: string }>> {
-    return this.executeRefRead('get', refId, (ref) => ({
-      text: compactText(joinUniqueText([ref.name, ref.text]), READ_EVIDENCE_TEXT_LIMIT),
+    return this.executeRefRead('get', refId, (ref, observation) => ({
+      text: compactText(buildBoundedReadEvidenceText(ref, observation.refs), READ_EVIDENCE_TEXT_LIMIT),
       value: ref.role === 'textbox' && ref.name ? compactText(ref.name, READ_EVIDENCE_TEXT_LIMIT) : undefined,
     }));
   }
@@ -192,7 +193,7 @@ export class BrowseGentV2Harness {
   async inspectRegion(refId: string): Promise<V2ToolResult<{ refId: string; text: string; nearbyRefs: string[] }>> {
     return this.executeRefRead('inspect_region', refId, (ref, observation) => ({
       refId: ref.refId,
-      text: compactText(joinUniqueText([ref.name, ref.text]), READ_EVIDENCE_TEXT_LIMIT),
+      text: compactText(buildBoundedReadEvidenceText(ref, observation.refs), READ_EVIDENCE_TEXT_LIMIT),
       nearbyRefs: observation.refs
         .filter(candidate => candidate.refId !== ref.refId && candidate.visibility !== 'hidden')
         .slice(0, 5)
