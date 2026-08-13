@@ -786,6 +786,120 @@ test('V2AgentLoop feeds failed runtime evidence into the next planner input', as
   assert.ok(planner.inputs[1].deadState?.reasons.includes('high_uncertainty'));
 });
 
+test('V2AgentLoop replans after a timeout when post-action transition proves progress', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'The page changed and the task is complete.' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: false,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    traceStepId: 'tool_timeout_after_transition',
+    error: {
+      code: 'timeout',
+      message: 'Click exceeded its bounded wait.',
+      retryable: true,
+    },
+    evidence: makeEvidence(),
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit and report the result',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.metrics.toolExecutions, 1);
+  assert.equal(harness.failures.length, 1);
+  assert.equal(harness.failures[0].kind, 'timeout');
+  assert.equal(planner.inputs[1].failures, undefined);
+  assert.equal(planner.inputs[1].deadState, undefined);
+  assert.ok(planner.inputs[1].uncertainty.signals.includes('progress_after_error:timeout'));
+  assert.equal(planner.inputs[1].lastResult?.error?.code, 'timeout');
+  assert.equal(planner.inputs[1].transition?.strength, 'moderate');
+});
+
+test('V2AgentLoop keeps a timeout without transition on the failure path', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { escalate: 'dead_end', reason: 'timeout requires recovery' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: false,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    traceStepId: 'tool_timeout_without_transition',
+    error: {
+      code: 'timeout',
+      message: 'Click exceeded its bounded wait.',
+      retryable: true,
+    },
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(planner.inputs[1].failures?.[0].kind, 'timeout');
+  assert.equal(planner.inputs[1].uncertainty.signals.includes('progress_after_error:timeout'), false);
+});
+
+test('V2AgentLoop does not reconcile target blockers with transition evidence', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { escalate: 'dead_end', reason: 'blocked target requires recovery' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: false,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    traceStepId: 'tool_blocked_with_transition',
+    error: {
+      code: 'target_blocked',
+      message: 'Target is covered by another element.',
+      retryable: false,
+    },
+    evidence: makeEvidence(),
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(planner.inputs[1].failures?.[0].kind, 'target_blocked');
+  assert.equal(planner.inputs[1].uncertainty.signals.includes('progress_after_error:target_blocked'), false);
+});
+
 test('V2AgentLoop feeds repeated no-progress mutation evidence into the next planner input', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([

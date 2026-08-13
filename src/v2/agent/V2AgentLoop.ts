@@ -294,6 +294,7 @@ export class V2AgentLoop {
           // Unified failure pipeline — handles BOTH pre-execution rejections AND dispatched failures
           if (!lastResult!.success) {
             if (preExecutionRejected) transitionEvidence = undefined;
+            const progressAfterError = hasProgressAfterError(lastResult!);
             const currentProjection = this.projectionService.project(observation, graphSnapshot);
             const failure = this.failureClassifier.classify(lastResult!, {
               observationId: observation.observationId,
@@ -304,6 +305,16 @@ export class V2AgentLoop {
               source: preExecutionRejected ? 'pre_execution_guard' : 'v2_agent_loop',
             });
             harness.recordFailureEvidence?.(failure);
+
+            if (progressAfterError) {
+              runtimeUncertainty = appendRuntimeUncertaintySignals(
+                runtimeUncertainty,
+                [`progress_after_error:${lastResult!.error?.code ?? 'unknown'}`],
+              );
+              deadStateEvidence = undefined;
+              break; // Replan from the fresh observation; preserve the raw failure in telemetry.
+            }
+
             failureEvidence = appendBoundedFailure(failureEvidence, failure);
             const uncertainty = this.uncertaintySignals.fromRuntimeState({
               projection: currentProjection,
@@ -680,6 +691,18 @@ function isReadEvidence(result: V2ToolResult): boolean {
  */
 function hasObservableEffect(evidence: TransitionEvidence | undefined): boolean {
   return evidence?.strength !== undefined && evidence.strength !== 'none';
+}
+
+const PROGRESS_AFTER_ERROR_CODES = new Set(['timeout', 'navigation_interrupted', 'element_detached']);
+
+function hasProgressAfterError(result: V2ToolResult): boolean {
+  const errorCode = result.error?.code;
+  if (result.success || !errorCode) return false;
+  if (!PROGRESS_AFTER_ERROR_CODES.has(errorCode)) {
+    return false;
+  }
+
+  return result.evidence?.strength === 'moderate' || result.evidence?.strength === 'strong';
 }
 
 const PROGRESS_HISTORY_LIMIT = 8;
