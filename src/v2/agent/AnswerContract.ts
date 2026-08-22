@@ -91,7 +91,7 @@ function hasExplicitIncompleteResult(value: string): boolean {
   ].some(pattern => pattern.test(value));
 }
 
-function hasConcretePronunciation(value: string): boolean {
+export function hasConcretePronunciation(value: string): boolean {
   return /\/[^/\s][^/]{2,}\//.test(value)
     || /\bpronounced\s+["']?[^"',.;]{3,}/i.test(value)
     || /\b(uk|us|british|american)\s*:\s*\/[^/]{2,}\//i.test(value);
@@ -125,11 +125,15 @@ function hasRegionalPronunciation(value: string, region: 'uk' | 'us'): boolean {
     || new RegExp(`/[^/]{2,}/[^a-z]{0,40}\\b${label}\\b`, 'i').test(value);
 }
 
-function hasDefinitionDetail(value: string): boolean {
-  return /\b(definition|defined as|meaning|means|is a noun|is an adjective|is a verb)\b/i.test(value);
+export function hasDefinitionDetail(value: string): boolean {
+  return [
+    /\b(definition|defined as|meaning|means|is a noun|is an adjective|is a verb)\b/i,
+    /\bthe (?:quality|ability|act|state|capacity|process|practice|condition|property|concept|measure) of\b/i,
+    /\bis (?:the|a|an) (?:quality|ability|act|state|capacity|process|practice|condition|property|concept|measure|noun|adjective|verb|term|word)\b/i,
+  ].some(pattern => pattern.test(value));
 }
 
-function hasConcreteBasicInformation(value: string): boolean {
+export function hasConcreteBasicInformation(value: string): boolean {
   const signals = [
     /\b(open|closed|hours?|24 hours?)\b/i,
     /\b(phone|contact|call)\b|\+?\d[\d\s().-]{6,}\d/,

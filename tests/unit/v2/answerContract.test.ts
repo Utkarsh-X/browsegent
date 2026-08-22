@@ -95,6 +95,24 @@ test('validateAnswerAgainstContract accepts concrete pronunciation and definitio
   assert.equal(validation.ok, true);
 });
 
+test('validateAnswerAgainstContract does not treat generic is-a prose as a definition', () => {
+  const contract = inferAnswerContract('Give the definition of sustainability');
+  const validation = validateAnswerAgainstContract('This is a result from the search.', contract);
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('missing_definition_detail'));
+});
+
+test('validateAnswerAgainstContract accepts a semantic is-the definition sentence', () => {
+  const contract = inferAnswerContract('Give the definition of sustainability');
+  const validation = validateAnswerAgainstContract(
+    'Sustainability is the ability to continue over time.',
+    contract,
+  );
+
+  assert.equal(validation.ok, true);
+});
+
 test('validateAnswerAgainstContract requires concrete fields for basic information goals', () => {
   const contract = inferAnswerContract('Find out its Basic Information');
   const validation = validateAnswerAgainstContract('It is a beautiful national monument with desert grassland.', contract);
