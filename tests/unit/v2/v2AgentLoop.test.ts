@@ -315,6 +315,39 @@ test('V2AgentLoop reuses the harness post-action observation instead of recaptur
   assert.equal(result.metrics.postActionObservationRecaptureCount, 0);
 });
 
+test('V2AgentLoop refreshes after a low-information click transition', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'The opened control is visible.' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    evidence: makeNoProgressEvidence('obs_initial', 'obs_after_action'),
+    traceStepId: 'fake_click',
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Open the control and read the visible result',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(harness.observeCount, 1);
+  assert.equal(result.metrics.postActionObservationReuseCount, 0);
+  assert.equal(result.metrics.postActionObservationRecaptureCount, 1);
+});
+
 test('V2AgentLoop replans once when done output misses required answer details', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const harness = new FakeHarness();
