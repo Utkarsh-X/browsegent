@@ -88,6 +88,7 @@ function summarizePartition(
 }
 
 function summarizeDiagnostics(results: ScoredBenchmarkResult[]): BenchmarkDiagnosticsSummary {
+  const evidenceCoverage = summarizeEvidenceCoverage(results);
   return {
     maxTraceBytes: max(results.map(result => result.diagnostics?.payloads.traceBytes ?? 0)),
     maxPlannerInputBytes: max(results.map(result => result.diagnostics?.payloads.plannerInputs.maxBytes ?? 0)),
@@ -110,7 +111,32 @@ function summarizeDiagnostics(results: ScoredBenchmarkResult[]): BenchmarkDiagno
     totalProviderUserBytes: sum(results.map(result => result.diagnostics?.payloads.providerPayloads?.totalUserBytes ?? 0)),
     totalProviderAttempts: sum(results.map(result => result.diagnostics?.payloads.providerPayloads?.providerAttempts ?? 0)),
     totalPlannerCalls: sum(results.map(result => result.diagnostics?.payloads.providerPayloads?.plannerCalls ?? 0)),
+    evidenceCoverage,
   };
+}
+
+function summarizeEvidenceCoverage(results: ScoredBenchmarkResult[]) {
+  const summary = {
+    plannerInputCount: 0,
+    states: {} as Record<string, number>,
+    requirementStatuses: {} as Record<string, number>,
+  };
+
+  for (const result of results) {
+    const coverage = result.diagnostics?.evidenceCoverage;
+    if (!coverage) continue;
+    summary.plannerInputCount += coverage.plannerInputCount;
+    mergeCounts(summary.states, coverage.states);
+    mergeCounts(summary.requirementStatuses, coverage.requirementStatuses);
+  }
+
+  return summary;
+}
+
+function mergeCounts(target: Record<string, number>, source: Record<string, number>): void {
+  for (const [key, value] of Object.entries(source)) {
+    target[key] = (target[key] ?? 0) + value;
+  }
 }
 
 function max(values: number[]): number {

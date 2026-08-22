@@ -37,6 +37,15 @@ test('collectBenchmarkDiagnostics summarizes trace payload sizes and action mark
   };
   await writeFile(plannerInputPath, JSON.stringify({
     goal: 'Find evidence',
+    evidenceCoverage: {
+      contractKind: 'description',
+      status: 'incomplete',
+      readCount: 2,
+      requirements: [
+        { key: 'concrete_basic_information', status: 'missing', supportingReadIndexes: [] },
+        { key: 'definition', status: 'proven', supportingReadIndexes: [0] },
+      ],
+    },
     current: plannerCurrent,
     workingSet: {
       primaryRefs: [{ refId: 'ref_a', reasons: ['visible_ready'] }],
@@ -146,6 +155,10 @@ test('collectBenchmarkDiagnostics summarizes trace payload sizes and action mark
   assert.equal(diagnostics.workingSet.maxDroppedRefs, 9);
   assert.equal(diagnostics.workingSet.selectedByReason.visible_ready, 1);
   assert.equal(diagnostics.workingSet.droppedByReason.hidden_low_value, 9);
+  assert.equal(diagnostics.evidenceCoverage?.plannerInputCount, 1);
+  assert.equal(diagnostics.evidenceCoverage?.states.incomplete, 1);
+  assert.equal(diagnostics.evidenceCoverage?.requirementStatuses.concrete_basic_information_missing, 1);
+  assert.equal(diagnostics.evidenceCoverage?.requirementStatuses.definition_proven, 1);
   assert.deepEqual(diagnostics.warnings, []);
 });
 

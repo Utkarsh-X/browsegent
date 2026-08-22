@@ -5,6 +5,7 @@ import type {
   BenchmarkAdapterResult,
   BenchmarkActionDiagnostics,
   BenchmarkDiagnostics,
+  BenchmarkEvidenceCoverageDiagnostics,
   BenchmarkPayloadDiagnostics,
   BenchmarkPayloadSizeSummary,
   BenchmarkProjectionOverlapDiagnostics,
@@ -59,6 +60,11 @@ async function collectTraceDiagnostics(tracePath: string): Promise<BenchmarkDiag
       diagnostics.warnings,
     );
     diagnostics.workingSet = await summarizeWorkingSetDiagnostics(
+      tracePath,
+      plannerInputs,
+      diagnostics.warnings,
+    );
+    diagnostics.evidenceCoverage = await summarizeEvidenceCoverage(
       tracePath,
       plannerInputs,
       diagnostics.warnings,
@@ -207,6 +213,48 @@ async function summarizeWorkingSetDiagnostics(
     summary.maxDroppedRefs = Math.max(summary.maxDroppedRefs, dropped);
     mergeCounts(summary.selectedByReason, section(record, 'selectedByReason'));
     mergeCounts(summary.droppedByReason, section(record, 'droppedByReason'));
+  }
+
+  return summary;
+}
+
+async function summarizeEvidenceCoverage(
+  tracePath: string,
+  artifacts: TraceArtifact[],
+  warnings: string[],
+): Promise<BenchmarkEvidenceCoverageDiagnostics> {
+  const summary = emptyEvidenceCoverageDiagnostics();
+
+  for (const artifact of artifacts) {
+    const artifactPath = resolveArtifactPath(tracePath, artifact.path);
+    let input: unknown;
+    try {
+      input = JSON.parse(await readFile(artifactPath, 'utf8'));
+    } catch (error) {
+      warnings.push(`evidence_coverage_unavailable:${artifact.id}:${error instanceof Error ? error.message : String(error)}`);
+      continue;
+    }
+
+    const coverage = section(input, 'evidenceCoverage');
+    if (!coverage || typeof coverage !== 'object' || Array.isArray(coverage)) continue;
+    const record = coverage as Record<string, unknown>;
+    const status = record.status;
+    if (typeof status !== 'string' || status.length === 0) continue;
+
+    summary.plannerInputCount += 1;
+    summary.states[status] = (summary.states[status] ?? 0) + 1;
+
+    const requirements = record.requirements;
+    if (!Array.isArray(requirements)) continue;
+    for (const requirement of requirements) {
+      if (!requirement || typeof requirement !== 'object' || Array.isArray(requirement)) continue;
+      const requirementRecord = requirement as Record<string, unknown>;
+      const key = requirementRecord.key;
+      const requirementStatus = requirementRecord.status;
+      if (typeof key !== 'string' || typeof requirementStatus !== 'string') continue;
+      const counterKey = `${key}_${requirementStatus}`;
+      summary.requirementStatuses[counterKey] = (summary.requirementStatuses[counterKey] ?? 0) + 1;
+    }
   }
 
   return summary;
@@ -382,7 +430,16 @@ function emptyDiagnostics(): BenchmarkDiagnostics {
     },
     projectionOverlap: emptyProjectionOverlap(),
     workingSet: emptyWorkingSetDiagnostics(),
+    evidenceCoverage: emptyEvidenceCoverageDiagnostics(),
     warnings: [],
+  };
+}
+
+function emptyEvidenceCoverageDiagnostics(): BenchmarkEvidenceCoverageDiagnostics {
+  return {
+    plannerInputCount: 0,
+    states: {},
+    requirementStatuses: {},
   };
 }
 

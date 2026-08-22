@@ -128,3 +128,34 @@ test('buildBenchmarkReport aggregates planner working-set diagnostics', () => {
   assert.equal(report.summary.diagnostics?.maxWorkingSetSelectedRefs, 20);
   assert.equal(report.summary.diagnostics?.maxWorkingSetDroppedRefs, 60);
 });
+
+test('buildBenchmarkReport aggregates evidence coverage diagnostics', () => {
+  const report = buildBenchmarkReport({
+    runId: 'bench_evidence_coverage',
+    adapterId: 'browsegent',
+    startedAt: '2026-05-24T00:00:00.000Z',
+    completedAt: '2026-05-24T00:00:01.000Z',
+    results: [
+      result({
+        diagnostics: {
+          ...diagnostics({
+            maxObservedRefs: 0,
+            maxSelectedRefs: 0,
+            maxDroppedRefs: 0,
+            selectedByReason: {},
+            droppedByReason: {},
+          }),
+          evidenceCoverage: {
+            plannerInputCount: 3,
+            states: { incomplete: 2, ready: 1 },
+            requirementStatuses: { definition_missing: 2, definition_proven: 1 },
+          },
+        },
+      }),
+    ],
+  });
+
+  assert.equal(report.summary.diagnostics?.evidenceCoverage?.plannerInputCount, 3);
+  assert.equal(report.summary.diagnostics?.evidenceCoverage?.states.incomplete, 2);
+  assert.equal(report.summary.diagnostics?.evidenceCoverage?.requirementStatuses.definition_missing, 2);
+});

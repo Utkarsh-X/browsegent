@@ -180,7 +180,14 @@ export interface BenchmarkDiagnostics {
   actions: BenchmarkActionDiagnostics;
   projectionOverlap: BenchmarkProjectionOverlapDiagnostics;
   workingSet: BenchmarkWorkingSetDiagnostics;
+  evidenceCoverage?: BenchmarkEvidenceCoverageDiagnostics;
   warnings: string[];
+}
+
+export interface BenchmarkEvidenceCoverageDiagnostics {
+  plannerInputCount: number;
+  states: Record<string, number>;
+  requirementStatuses: Record<string, number>;
 }
 
 export interface BenchmarkProjectionOverlapDiagnostics {
@@ -220,6 +227,7 @@ export interface BenchmarkDiagnosticsSummary {
   totalProviderUserBytes: number;
   totalProviderAttempts: number;
   totalPlannerCalls: number;
+  evidenceCoverage?: BenchmarkEvidenceCoverageDiagnostics;
 }
 
 export interface BenchmarkRunMetadata {

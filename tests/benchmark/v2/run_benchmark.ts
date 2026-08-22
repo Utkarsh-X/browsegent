@@ -251,10 +251,21 @@ function renderMarkdownSummary(report: BenchmarkReport): string {
     `Max observation artifact: ${report.summary.diagnostics?.maxObservationBytes ?? 0} bytes`,
     `Max projection multi-section refs: ${report.summary.diagnostics?.maxProjectionMultiSectionRefs ?? 0}`,
     `Repeated/invalid action markers: ${report.summary.diagnostics?.totalRepeatedActions ?? 0}/${report.summary.diagnostics?.totalInvalidActions ?? 0}`,
+    `Evidence coverage planner inputs: ${report.summary.diagnostics?.evidenceCoverage?.plannerInputCount ?? 0}`,
+    `Evidence coverage states: ${formatCounterMap(report.summary.diagnostics?.evidenceCoverage?.states)}`,
+    `Evidence requirement statuses: ${formatCounterMap(report.summary.diagnostics?.evidenceCoverage?.requirementStatuses)}`,
     `Dev pass rate: ${(report.summary.partitions.dev.passRate * 100).toFixed(1)}% (${report.summary.partitions.dev.passedRuns}/${report.summary.partitions.dev.totalRuns})`,
     `Holdout pass rate: ${(report.summary.partitions.holdout.passRate * 100).toFixed(1)}% (${report.summary.partitions.holdout.passedRuns}/${report.summary.partitions.holdout.totalRuns})`,
     '',
   ].join('\n');
+}
+
+function formatCounterMap(values: Record<string, number> | undefined): string {
+  if (!values || Object.keys(values).length === 0) return 'none';
+  return Object.entries(values)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}=${value}`)
+    .join(',');
 }
 
 export function selectBenchmarkTasks(
