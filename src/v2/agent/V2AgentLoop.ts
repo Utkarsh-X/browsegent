@@ -276,8 +276,16 @@ export class V2AgentLoop {
             // Mutation tools already capture the observation named by their
             // transition evidence. Avoid a second immediate capture, which
             // can observe a transient loading shell and add avoidable cost.
+            // Low-information click/press transitions are the exception:
+            // delayed menus and comboboxes may not exist in the captured
+            // snapshot yet, so one fresh capture is required before planning.
+            const refreshLowInformationAction = shouldRefreshAfterLowInformationAction(
+              plannedStep,
+              transitionEvidence,
+            );
             if (capturedAfterAction !== undefined
-              && capturedAfterAction.observationId === transitionEvidence?.afterObservationId) {
+              && capturedAfterAction.observationId === transitionEvidence?.afterObservationId
+              && !refreshLowInformationAction) {
               metrics.postActionObservationReuseCount += 1;
               observation = capturedAfterAction;
             } else {
@@ -847,6 +855,20 @@ class ActionProgressMemory {
 
     return signals;
   }
+}
+
+function shouldRefreshAfterLowInformationAction(
+  step: PlannerOutputStep,
+  evidence: TransitionEvidence | undefined,
+): boolean {
+  if (evidence?.transitionClass !== 'microstate' || evidence.strength !== 'none') {
+    return false;
+  }
+
+  // Clicks and key presses can open delayed overlays without producing a
+  // structural transition in the first post-action capture. Keep this rule
+  // tied to runtime evidence rather than a site or benchmark.
+  return step.tool === 'click' || step.tool === 'press';
 }
 
 function isNoProgressMutation(result: V2ToolResult): boolean {
