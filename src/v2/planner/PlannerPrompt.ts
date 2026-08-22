@@ -40,6 +40,8 @@ If lastResult from get, inspect_region, search_page, click, type, press, navigat
 
 If answerFeedback is present, the previous done answer was rejected because it missed required details. Do not repeat that answer unless missingDetails are answered with concrete evidence.
 
+If evidenceCoverage is present, treat it as a bounded summary of explicit read evidence. Missing or conflicting requirements need another targeted read or an honest escalation before done. Uncertain ranking evidence must be verified; do not claim an ordering that was not observed.
+
 Before returning done, make sure the answer covers all requested multiple details in the goal. For example:
 - "pronunciation and definition" requires both pronunciation and definition.
 - "basic information" or details about a business, park, or location requires gathering concrete fields: address, phone/contact number, operating hours, and website if available. Do not stop with a vague description.

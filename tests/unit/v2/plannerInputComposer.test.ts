@@ -585,3 +585,27 @@ test('PlannerInputComposer passes repeated no-progress uncertainty into working 
   assert.equal(input.workingSet.actionSurface.clickableRefs.includes('ref_compute'), false);
   assert.ok(input.workingSet.actionSurface.typeableRefs.includes('ref_input'));
 });
+
+test('PlannerInputComposer carries compact task evidence coverage without raw read text', () => {
+  const observation = makeObservation({ observationId: 'obs_coverage' });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_coverage',
+    goal: 'Give the pronunciation and definition',
+    projection,
+    evidenceCoverage: {
+      contractKind: 'description',
+      status: 'incomplete',
+      readCount: 1,
+      requirements: [{ key: 'definition', status: 'missing', supportingReadIndexes: [] }],
+    },
+  });
+
+  assert.deepEqual(input.evidenceCoverage, {
+    contractKind: 'description',
+    status: 'incomplete',
+    readCount: 1,
+    requirements: [{ key: 'definition', status: 'missing', supportingReadIndexes: [] }],
+  });
+  assert.equal(JSON.stringify(input).includes('raw read text'), false);
+});

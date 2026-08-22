@@ -24,6 +24,7 @@ export class PlannerRepresentationCompiler {
         deadState: input.deadState,
         recovery: input.recovery,
         answerFeedback: input.answerFeedback,
+        evidenceCoverage: input.evidenceCoverage,
         uncertainty: input.uncertainty,
         lineage: input.lineage,
       },

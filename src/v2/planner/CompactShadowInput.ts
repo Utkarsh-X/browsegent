@@ -11,6 +11,7 @@ export interface CompactShadowPlannerInput {
   lastResult?: CompactPlannerView['lastResult'];
   recovery?: CompactPlannerView['recovery'];
   answerFeedback?: CompactPlannerView['answerFeedback'];
+  evidenceCoverage?: CompactPlannerView['evidenceCoverage'];
   uncertainty?: CompactPlannerView['uncertainty'];
   validationFeedback?: {
     previousErrors: string[];
@@ -114,6 +115,7 @@ export function buildCompactShadowInput(
     lastResult: view.lastResult,
     recovery: view.recovery,
     answerFeedback: view.answerFeedback,
+    evidenceCoverage: view.evidenceCoverage,
     uncertainty: view.uncertainty,
     actions: actionsInput,
     reads: readsInput,

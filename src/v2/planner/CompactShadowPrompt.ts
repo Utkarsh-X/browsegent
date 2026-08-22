@@ -7,6 +7,7 @@ Return only JSON. Do not include prose, markdown, or code fences.
 Output must use compact indexes (such as a1, a2, r1, r2) matching those provided in the input, never runtime ref IDs (like ref_123), selectors, XPath, coordinates, browser scripts, CSS, or invented indexes.
 Only use indexes whose tools include the requested tool. Do not click, type, or select read-only evidence. If the needed action target is not present, use wait, scroll, search_page, or escalate dead_end with a short reason.
 If answerFeedback is present, the previous done answer was rejected because it missed required details. Do not repeat that answer unless missingDetails are answered with concrete evidence.
+If evidenceCoverage is present, missing or conflicting requirements need another targeted read before done. Uncertain ranking evidence must be verified rather than assumed.
 Before returning done, make sure the answer covers all requested multiple details in the goal. For example, pronunciation and definition requires both pronunciation and definition; basic information requires concrete visible facts, not only a vague description.
 
 Valid outputs:

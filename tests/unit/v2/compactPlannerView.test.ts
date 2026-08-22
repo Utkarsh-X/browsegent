@@ -34,6 +34,27 @@ test('buildCompactPlannerView keeps compact actions and readable evidence', () =
   assert.equal(view.omitted.originalCurrentRefs, 2);
 });
 
+test('buildCompactPlannerView preserves evidence coverage as a compact summary', () => {
+  const view = buildCompactPlannerView({
+    episodeId: 'episode_coverage',
+    goal: 'Give the definition',
+    current: { refs: {} },
+    evidenceCoverage: {
+      contractKind: 'description',
+      status: 'incomplete',
+      readCount: 2,
+      requirements: [{ key: 'definition', status: 'missing', supportingReadIndexes: [] }],
+    },
+  } as any);
+
+  assert.deepEqual(view.evidenceCoverage, {
+    contractKind: 'description',
+    status: 'incomplete',
+    readCount: 2,
+    requirements: [{ key: 'definition', status: 'missing', supportingReadIndexes: [] }],
+  });
+});
+
 test('buildCompactPlannerView preserves visible typeable search inputs ahead of distractors', () => {
   const distractors = Object.fromEntries(
     Array.from({ length: 40 }, (_, index) => [

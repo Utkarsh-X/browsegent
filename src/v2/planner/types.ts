@@ -43,6 +43,7 @@ export interface PlannerInputComposerInput {
   deadStateEvidence?: DeadStateEvidence;
   runtimeUncertainty?: RuntimeUncertainty;
   answerFeedback?: PlannerAnswerFeedback;
+  evidenceCoverage?: PlannerEvidenceCoverage;
 }
 
 export interface PlannerInput {
@@ -59,6 +60,7 @@ export interface PlannerInput {
   deadState?: PlannerDeadStateSummary;
   recovery?: PlannerRecoveryState;
   answerFeedback?: PlannerAnswerFeedback;
+  evidenceCoverage?: PlannerEvidenceCoverage;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
   sizeDiagnostics?: ProjectionSizeDiagnostics;
@@ -68,6 +70,27 @@ export interface PlannerAnswerFeedback {
   previousAnswer: string;
   missingDetails: string[];
   instruction: string;
+}
+
+export type PlannerEvidenceCoverageKey =
+  | 'pronunciation'
+  | 'definition'
+  | 'concrete_basic_information'
+  | 'ranking_evidence';
+export type PlannerEvidenceCoverageStatus = 'proven' | 'missing' | 'uncertain' | 'conflicting';
+export type PlannerEvidenceCoverageState = 'ready' | 'incomplete' | 'uncertain';
+
+export interface PlannerEvidenceCoverageRequirement {
+  key: PlannerEvidenceCoverageKey;
+  status: PlannerEvidenceCoverageStatus;
+  supportingReadIndexes: number[];
+}
+
+export interface PlannerEvidenceCoverage {
+  contractKind: string;
+  status: PlannerEvidenceCoverageState;
+  readCount: number;
+  requirements: PlannerEvidenceCoverageRequirement[];
 }
 
 export interface PlannerContinuitySummary {

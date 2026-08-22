@@ -59,6 +59,7 @@ export interface ExecutionContextIR {
   deadState?: PlannerDeadStateSummary;
   recovery?: PlannerRecoveryState;
   answerFeedback?: PlannerAnswerFeedback;
+  evidenceCoverage?: import('../types').PlannerEvidenceCoverage;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
 }

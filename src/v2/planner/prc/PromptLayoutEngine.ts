@@ -6,6 +6,7 @@ export class PromptLayoutEngine {
       renderMission(ir),
       renderState(ir),
       renderRecentEvents(ir),
+      renderEvidenceCoverage(ir),
       renderProblems(ir),
       renderSurface(ir),
       renderWorkingSet(ir),
@@ -65,6 +66,19 @@ function renderProblems(ir: PlannerRepresentationIR): string {
   if (ir.execution.answerFeedback) lines.push(`  answer_feedback: missing ${ir.execution.answerFeedback.missingDetails.join(', ')}`);
   if (ir.execution.uncertainty.level !== 'none') lines.push(`  uncertainty: ${ir.execution.uncertainty.level} ${ir.execution.uncertainty.signals.join(', ')}`);
   return lines.length > 1 ? lines.join('\n') : '';
+}
+
+function renderEvidenceCoverage(ir: PlannerRepresentationIR): string {
+  const coverage = ir.execution.evidenceCoverage;
+  if (!coverage || coverage.requirements.length === 0) return '';
+  const lines = [`EVIDENCE COVERAGE\n  state: ${coverage.status} reads=${coverage.readCount}`];
+  for (const requirement of coverage.requirements) {
+    const reads = requirement.supportingReadIndexes.length > 0
+      ? ` reads=${requirement.supportingReadIndexes.join(',')}`
+      : '';
+    lines.push(`  ${requirement.key}: ${requirement.status}${reads}`);
+  }
+  return lines.join('\n');
 }
 
 function renderSurface(ir: PlannerRepresentationIR): string {

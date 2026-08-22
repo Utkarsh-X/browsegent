@@ -20,6 +20,7 @@ export interface CompactPlannerView {
   lastResult?: PlannerLastResultSummary;
   recovery?: PlannerRecoveryState;
   answerFeedback?: PlannerInput['answerFeedback'];
+  evidenceCoverage?: PlannerInput['evidenceCoverage'];
   uncertainty?: PlannerUncertainty;
   actions: CompactActionRef[];
   reads: CompactReadRef[];
@@ -121,6 +122,7 @@ export function buildCompactPlannerView(input: Partial<PlannerInput>, options: {
     lastResult: input.lastResult,
     recovery: input.recovery,
     answerFeedback: input.answerFeedback,
+    evidenceCoverage: input.evidenceCoverage,
     uncertainty: input.uncertainty,
     actions,
     reads,
