@@ -382,6 +382,48 @@ test('V2AgentLoop replans once when done output misses required answer details',
   assert.deepEqual(planner.inputs[1].answerFeedback?.missingDetails, ['missing_pronunciation_detail']);
 });
 
+test('V2AgentLoop replans when answer text passes but explicit evidence is incomplete', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'UK: /səˌsteɪ.nəˈbɪl.ə.ti/, US: /səˌsteɪ.nəˈbɪl.ə.t̬i/; definition: the quality of being able to continue.' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'UK: /səˌsteɪ.nəˈbɪl.ə.ti/, US: /səˌsteɪ.nəˈbɪl.ə.t̬i/; definition: the quality of being able to continue.' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      traceStepId: 'fake_get_partial',
+      value: { text: 'UK pronunciation /səˌsteɪ.nəˈbɪl.ə.ti/ US pronunciation /səˌsteɪ.nəˈbɪl.ə.t̬i/' },
+    },
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      traceStepId: 'fake_get_complete',
+      value: { text: 'UK pronunciation /səˌsteɪ.nəˈbɪl.ə.ti/ US pronunciation /səˌsteɪ.nəˈbɪl.ə.t̬i/ definition: the quality of being able to continue.' },
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/dictionary',
+    goal: 'Look up the pronunciation and definition of sustainability',
+    maxSteps: 4,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs[1].evidenceCoverage?.requirements[1]?.status, 'missing');
+  assert.equal(planner.inputs[3].evidenceCoverage?.status, 'ready');
+});
+
 test('V2AgentLoop replans when done output explicitly reports an unfinished result', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([
@@ -1802,6 +1844,41 @@ test('V2AgentLoop hard-blocks repeated press when the runtime result omits targe
   const result = await loop.run({
     url: 'https://example.test/form',
     goal: 'Submit the form',
+    maxSteps: 5,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Gave up');
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+  assert.equal(dispatcher.steps?.length, 3);
+});
+
+test('V2AgentLoop hard-blocks an identical repeated type value', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'same value' }], confidence: 'high' },
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'same value' }], confidence: 'high' },
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'same value' }], confidence: 'high' },
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'same value' }], confidence: 'high' },
+    { done: true, val: 'Gave up' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'type',
+    targetRef: 'ref_submit',
+    value: { inputValue: 'same value' },
+    traceStepId: 'tool_type',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Fill the form field',
     maxSteps: 5,
   });
 

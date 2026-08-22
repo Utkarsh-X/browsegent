@@ -5,6 +5,7 @@ import {
   buildFinalizationEvidence,
   type ReadEvidenceHistoryEntry,
 } from './FinalizationEvidence';
+import { buildTaskEvidenceCoverage } from './TaskEvidenceCoverage';
 import { ContinuityGraph } from '../graph/ContinuityGraph';
 import type { ContinuityGraphSnapshot } from '../graph/types';
 import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
@@ -79,6 +80,7 @@ export class V2AgentLoop {
         const stepStartMs = Date.now();
         const composeStart = Date.now();
         const projection = this.projectionService.project(observation, graphSnapshot);
+        const evidenceCoverage = buildTaskEvidenceCoverage(input.goal, readEvidenceHistory);
         const plannerInput = this.plannerInputComposer.compose({
           episodeId: `episode_${stepIndex + 1}_${observation.observationId}`,
           goal: input.goal,
@@ -90,6 +92,7 @@ export class V2AgentLoop {
           deadStateEvidence,
           runtimeUncertainty,
           answerFeedback,
+          evidenceCoverage,
         });
         harness.recordPlannerInput?.(plannerInput.episodeId, plannerInput);
         ledger.recordPhase('local_compute', Date.now() - composeStart);
@@ -167,12 +170,14 @@ export class V2AgentLoop {
             const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(input.goal), {
               evidenceText: buildAnswerValidationEvidence(readEvidenceHistory),
             });
-          if (!answerValidation.ok) {
+          const coverageReasons = answerValidation.ok ? missingCoverageReasons(evidenceCoverage) : [];
+          const validationReasons = [...answerValidation.reasons, ...coverageReasons];
+          if (validationReasons.length > 0) {
             if (stepIndex < maxSteps - 1) {
-              answerFeedback = buildAnswerFeedback(value, answerValidation.reasons);
+              answerFeedback = buildAnswerFeedback(value, validationReasons);
               runtimeUncertainty = appendRuntimeUncertaintySignals(
                 runtimeUncertainty,
-                answerValidation.reasons.map(reason => `answer_contract:${reason}`),
+                validationReasons.map(reason => `answer_contract:${reason}`),
               );
               ledger.endStep(stepIndex, Date.now() - stepStartMs);
               continue;
@@ -180,7 +185,7 @@ export class V2AgentLoop {
             return await this.complete(harness, {
               success: false,
               value,
-              failureReason: `answer_contract_failed:${answerValidation.reasons.join('|')}`,
+              failureReason: `answer_contract_failed:${validationReasons.join('|')}`,
               steps: metrics.plannerCalls,
               metrics,
             }, ledger, outcomeRecorder);
@@ -495,11 +500,13 @@ export class V2AgentLoop {
     outcomeRecorder?: ActionOutcomeRecorder,
   ): Promise<V2AgentLoopResult | undefined> {
     const projection = this.projectionService.project(observation, graphSnapshot);
+    const evidenceCoverage = buildTaskEvidenceCoverage(goal, readEvidenceHistory);
     const finalizationEvidence = buildFinalizationEvidence({
       goal,
       projection,
       lastSuccessfulEvidenceValue: evidenceValue,
       readEvidenceHistory,
+      evidenceCoverage,
     });
     const validationEvidence = buildAnswerValidationEvidence(readEvidenceHistory);
     const finalizationInput = this.plannerInputComposer.compose({
@@ -507,6 +514,7 @@ export class V2AgentLoop {
       goal: `${goal}\n\nFinalization evidence:\n${finalizationEvidence}\n\nReturn done with the best answer if the evidence answers the goal. Otherwise escalate with a concise reason. Do not return a plan.`,
       projection,
       graphSnapshot,
+      evidenceCoverage,
     });
     harness.recordPlannerInput?.(finalizationInput.episodeId, finalizationInput);
     metrics.plannerCalls += 1;
@@ -540,11 +548,15 @@ export class V2AgentLoop {
         const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(goal), {
           evidenceText: validationEvidence,
         });
-        if (!answerValidation.ok) {
+        const validationReasons = [
+          ...answerValidation.reasons,
+          ...(answerValidation.ok ? missingCoverageReasons(evidenceCoverage) : []),
+        ];
+        if (validationReasons.length > 0) {
           return await this.complete(harness, {
             success: false,
             value,
-            failureReason: `answer_contract_failed:${answerValidation.reasons.join('|')}`,
+            failureReason: `answer_contract_failed:${validationReasons.join('|')}`,
             steps: metrics.plannerCalls,
             metrics,
           }, ledger, outcomeRecorder);
@@ -705,6 +717,12 @@ function isReadEvidence(result: V2ToolResult): boolean {
     return !!val?.text;
   }
   return true; // get and inspect_region always produce read evidence when successful
+}
+
+function missingCoverageReasons(coverage: ReturnType<typeof buildTaskEvidenceCoverage>): string[] {
+  return coverage.requirements
+    .filter(requirement => requirement.status === 'missing' || requirement.status === 'conflicting')
+    .map(requirement => `missing_evidence_${requirement.key}`);
 }
 
 /**
@@ -925,22 +943,28 @@ function progressEntryForResult(
   const noProgressMutation = isNoProgressMutation(result);
   const isRead = READ_TOOL_KINDS.has(result.kind);
   const valuePreview = isRead ? (previewResultValue(result.value) || '__empty__') : undefined;
+  const mutationValue = plannedStep?.tool === 'type'
+    ? plannedStep.text
+    : plannedStep?.tool === 'select'
+      ? plannedStep.value
+      : undefined;
+  const valueKey = valuePreview ?? (mutationValue ? normalizeProgressValue(mutationValue) : undefined);
   const semanticTargetId = plannedStep?.ref
     ? actionObservation?.refs.find(ref => ref.refId === plannedStep.ref)?.targetId
     : undefined;
 
-  if (!noProgressMutation && valuePreview === undefined) {
+  if (!noProgressMutation && valueKey === undefined) {
     return undefined;
   }
 
   return {
     kind,
     targetKey,
-    valueKey: valuePreview ? normalizeProgressValue(valuePreview) : undefined,
+    valueKey,
     noProgressMutation,
     actionSignature: plannedStep
       ? ActionProgressMemory.actionSignature(plannedStep)
-      : `${kind}:${targetKey}:${valuePreview ? normalizeProgressValue(valuePreview) : '__none__'}`,
+      : `${kind}:${targetKey}:${valueKey ?? '__none__'}`,
     semanticActionSignature: plannedStep && semanticTargetId
       ? ActionProgressMemory.actionSignature(plannedStep, semanticTargetId)
       : undefined,

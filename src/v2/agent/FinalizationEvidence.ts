@@ -1,11 +1,13 @@
 import type { OperationalProjection, ProjectionItem } from '../brain1/projectionTypes';
 import { inferAnswerContract } from './AnswerContract';
+import type { PlannerEvidenceCoverage } from '../planner/types';
 
 export interface FinalizationEvidenceInput {
   goal: string;
   projection: OperationalProjection;
   lastSuccessfulEvidenceValue?: string;
   readEvidenceHistory?: ReadEvidenceHistoryEntry[];
+  evidenceCoverage?: PlannerEvidenceCoverage;
   maxReadEvidenceItems?: number;
   maxReadableItems?: number;
   maxTextLength?: number;
@@ -49,6 +51,15 @@ export function buildFinalizationEvidence(input: FinalizationEvidenceInput): str
         const ref = entry.targetRef ? ` ${entry.targetRef}` : '';
         return `- read_${index + 1} [${entry.kind}${ref}]: ${compactText(entry.text, maxTextLength)}`;
       }),
+    ].join('\n'));
+  }
+
+  if (input.evidenceCoverage && input.evidenceCoverage.requirements.length > 0) {
+    sections.push([
+      `Evidence coverage: ${input.evidenceCoverage.status}; reads=${input.evidenceCoverage.readCount}`,
+      ...input.evidenceCoverage.requirements.map(requirement =>
+        `- ${requirement.key}: ${requirement.status}${requirement.supportingReadIndexes.length > 0 ? ` (reads ${requirement.supportingReadIndexes.join(', ')})` : ''}`,
+      ),
     ].join('\n'));
   }
 
