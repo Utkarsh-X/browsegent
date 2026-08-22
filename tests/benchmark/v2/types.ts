@@ -65,6 +65,8 @@ export interface BenchmarkAdapterResult {
     durationMs: number;
     inputTokens?: number;
     outputTokens?: number;
+    postActionObservationReuseCount?: number;
+    postActionObservationRecaptureCount?: number;
   };
   diagnostics?: BenchmarkDiagnostics;
 }

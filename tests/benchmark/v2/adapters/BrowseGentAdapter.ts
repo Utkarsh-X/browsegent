@@ -46,6 +46,8 @@ export class BrowseGentBenchmarkAdapter implements BenchmarkAdapter {
           durationMs: Date.now() - startedAt,
           inputTokens: result.metrics.inputTokens,
           outputTokens: result.metrics.outputTokens,
+          postActionObservationReuseCount: result.metrics.postActionObservationReuseCount,
+          postActionObservationRecaptureCount: result.metrics.postActionObservationRecaptureCount,
         },
       };
     } catch (error) {

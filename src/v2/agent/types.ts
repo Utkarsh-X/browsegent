@@ -26,6 +26,8 @@ export interface V2AgentLoopResult {
     outputTokens: number;
     plannerDurationMs: number;
     toolExecutions: number;
+    postActionObservationReuseCount?: number;
+    postActionObservationRecaptureCount?: number;
   };
 }
 
@@ -42,6 +44,7 @@ export interface V2PlannerClientLike {
 export interface V2AgentHarnessRuntime extends V2ToolRuntime {
   open(url: string): Promise<BrowserObservation>;
   observe(): Promise<BrowserObservation>;
+  getCurrentObservation?(): BrowserObservation | undefined;
   close(): Promise<void>;
   flushTrace(): Promise<TraceManifest>;
   recordPlannerInput?(episodeId: string, input: unknown): TraceArtifact;

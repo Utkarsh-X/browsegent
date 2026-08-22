@@ -87,6 +87,7 @@ class FakeHarness {
   openedUrl?: string;
   navigatedUrl?: string;
   closed = false;
+  observeCount = 0;
   observations: BrowserObservation[];
   plannerInputs: Array<{ episodeId: string; input: unknown }> = [];
   plannerOutputs: Array<{ episodeId: string; output: unknown }> = [];
@@ -104,6 +105,11 @@ class FakeHarness {
   }
 
   async observe(): Promise<BrowserObservation> {
+    this.observeCount += 1;
+    return this.observations[Math.min(1, this.observations.length - 1)];
+  }
+
+  getCurrentObservation(): BrowserObservation {
     return this.observations[Math.min(1, this.observations.length - 1)];
   }
 
@@ -274,6 +280,39 @@ test('V2AgentLoop returns done output without executing tools', async () => {
   assert.equal(result.metrics.toolExecutions, 0);
   assert.equal(harness.openedUrl, 'https://example.test/form');
   assert.equal(harness.closed, true);
+});
+
+test('V2AgentLoop reuses the harness post-action observation instead of recapturing it', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'navigate', url: 'https://example.test/results' }], confidence: 'high' },
+    { done: true, val: 'The result is visible.' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'navigate',
+    value: { url: 'https://example.test/results' },
+    evidence: makeEvidence('obs_initial', 'obs_after_action'),
+    traceStepId: 'fake_navigate',
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read the visible result',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(harness.observeCount, 0);
+  assert.equal(result.metrics.postActionObservationReuseCount, 1);
+  assert.equal(result.metrics.postActionObservationRecaptureCount, 0);
 });
 
 test('V2AgentLoop replans once when done output misses required answer details', async () => {

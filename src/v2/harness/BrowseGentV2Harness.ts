@@ -63,6 +63,10 @@ export class BrowseGentV2Harness {
     return obs;
   }
 
+  getCurrentObservation(): BrowserObservation | undefined {
+    return this.current;
+  }
+
   setLatencyLedger(ledger: LatencyLedger): void {
     this.ledger = ledger;
   }

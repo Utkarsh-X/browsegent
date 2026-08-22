@@ -55,6 +55,8 @@ export class V2AgentLoop {
       outputTokens: 0,
       plannerDurationMs: 0,
       toolExecutions: 0,
+      postActionObservationReuseCount: 0,
+      postActionObservationRecaptureCount: 0,
     };
 
     try {
@@ -268,7 +270,20 @@ export class V2AgentLoop {
             lastResult = await dispatcher.dispatch(plannedStep, { goal: input.goal });
             metrics.toolExecutions += 1;
             transitionEvidence = lastResult.evidence;
-            observation = await harness.observe();
+            const capturedAfterAction = transitionEvidence?.afterObservationId
+              ? harness.getCurrentObservation?.()
+              : undefined;
+            // Mutation tools already capture the observation named by their
+            // transition evidence. Avoid a second immediate capture, which
+            // can observe a transient loading shell and add avoidable cost.
+            if (capturedAfterAction !== undefined
+              && capturedAfterAction.observationId === transitionEvidence?.afterObservationId) {
+              metrics.postActionObservationReuseCount += 1;
+              observation = capturedAfterAction;
+            } else {
+              metrics.postActionObservationRecaptureCount += 1;
+              observation = await harness.observe();
+            }
             graphSnapshot = graph.applyObservation(observation);
             if (transitionEvidence) {
               graphSnapshot = graph.applyTransition(transitionEvidence);
