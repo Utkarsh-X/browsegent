@@ -52,6 +52,17 @@ test('bounded read evidence leaves rich targets unchanged', () => {
   assert.equal(result, 'Submit');
 });
 
+test('bounded read evidence prefers an accessible name over a generic visible label', () => {
+  const target = ref({
+    refId: 'button',
+    role: 'button',
+    name: 'Open Item 1',
+    text: 'Open',
+  });
+
+  assert.equal(buildBoundedReadEvidenceText(target, [target]), 'Open Item 1');
+});
+
 test('bounded read evidence obeys item and character caps', () => {
   const target = ref({ refId: 'marker', name: 'results', box: { x: 100, y: 100, width: 1, height: 1 } });
   const neighbors = Array.from({ length: 5 }, (_, index) => ref({

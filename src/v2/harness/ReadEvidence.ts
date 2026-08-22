@@ -22,7 +22,7 @@ export function buildBoundedReadEvidenceText(
   options: ReadEvidenceOptions = {},
 ): string {
   const limits = { ...DEFAULT_OPTIONS, ...options };
-  const ownText = joinUniqueText([target.name, target.text]);
+  const ownText = readText(target);
   if (!shouldEnrichTarget(target, ownText)) {
     return compactText(ownText, limits.maxCharacters);
   }
@@ -35,7 +35,7 @@ export function buildBoundedReadEvidenceText(
     .filter(candidate => candidate.refId !== target.refId)
     .filter(candidate => candidate.visibility === 'visible' && candidate.state !== 'stale')
     .filter(candidate => sameFrame(target, candidate))
-    .filter(candidate => Boolean(joinUniqueText([candidate.name, candidate.text])))
+    .filter(candidate => Boolean(readText(candidate)))
     .filter(candidate => {
       if (!candidate.box) return false;
       return candidate.box.y >= targetBox.y - 8
@@ -49,7 +49,7 @@ export function buildBoundedReadEvidenceText(
       return left.refId.localeCompare(right.refId);
     })
     .slice(0, limits.maxNearbyRefs)
-    .map(candidate => joinUniqueText([candidate.name, candidate.text]));
+    .map(candidate => readText(candidate));
 
   return compactText(joinUniqueText([ownText, ...nearby]), limits.maxCharacters);
 }
@@ -63,15 +63,31 @@ function sameFrame(left: V2Ref, right: V2Ref): boolean {
   return !left.frameId || !right.frameId || left.frameId === right.frameId;
 }
 
+function readText(ref: V2Ref): string {
+  const name = normalizeText(ref.name);
+  const text = normalizeText(ref.text);
+  if (!name) return text;
+  if (!text) return name;
+
+  // An aria name that contains the visible caption is the more useful
+  // identity; avoid repeating a generic button label in read evidence.
+  if (ref.role && name.toLowerCase().includes(text.toLowerCase())) return name;
+  return joinUniqueText([name, text]);
+}
+
 function joinUniqueText(values: Array<string | undefined>): string {
   const unique: string[] = [];
   for (const value of values) {
-    const normalized = value?.replace(/\s+/g, ' ').trim();
+    const normalized = normalizeText(value);
     if (!normalized) continue;
     if (unique.some(existing => existing.toLowerCase() === normalized.toLowerCase())) continue;
     unique.push(normalized);
   }
   return unique.join(' ');
+}
+
+function normalizeText(value: string | undefined): string {
+  return value?.replace(/\s+/g, ' ').trim() ?? '';
 }
 
 function compactText(value: string, maxCharacters: number): string {
