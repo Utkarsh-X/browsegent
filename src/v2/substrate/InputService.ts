@@ -107,6 +107,9 @@ export class InputService {
       });
       await target.click({
         timeout: 1_500,
+        // BrowseGent settles and observes the page after every mutation;
+        // avoid Playwright waiting on the same navigation a second time.
+        noWaitAfter: true,
         ...(position ? { position } : {}),
         ...(useForce ? { force: true } : {}),
       });

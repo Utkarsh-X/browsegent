@@ -114,6 +114,39 @@ test('InputService keeps pointer interception classified as target_blocked', asy
   );
 });
 
+test('InputService leaves navigation settling to the post-action observation path', async () => {
+  let clickOptions: Record<string, unknown> | undefined;
+  const handle = {
+    evaluate: async (fn: unknown, input?: unknown) => {
+      if (input) return { score: 100, identityKey: 'navigation-button' };
+      return { verdict: { outcome: 'clear_target' }, position: { x: 50, y: 15 } };
+    },
+    evaluateHandle: async () => ({
+      evaluate: async () => true,
+      dispose: async () => undefined,
+    }),
+    click: async (options: Record<string, unknown>) => {
+      clickOptions = options;
+    },
+    dispose: async () => undefined,
+  };
+  const locator = {
+    scrollIntoViewIfNeeded: async () => undefined,
+    evaluate: handle.evaluate,
+    elementHandle: async () => handle,
+  };
+  const page = {
+    locator: () => ({
+      count: async () => 1,
+      nth: () => locator,
+    }),
+  };
+
+  await new InputService().click(makeRef(), page as never);
+
+  assert.equal(clickOptions?.noWaitAfter, true);
+});
+
 test('InputService maps select on non-selectable refs to target_not_selectable', async () => {
   const service = new InputService();
   await assert.rejects(
