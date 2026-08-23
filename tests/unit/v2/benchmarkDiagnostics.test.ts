@@ -243,6 +243,51 @@ test('collectBenchmarkDiagnostics handles canonical refs with lightweight projec
   assert.deepEqual(diagnostics.warnings, []);
 });
 
+test('collectBenchmarkDiagnostics reads evidence coverage from compact-only planner traces', async () => {
+  const runRoot = await mkdtemp(join(tmpdir(), 'browsegent-compact-coverage-diagnostics-'));
+  const compactInputPath = join(runRoot, 'planner', 'episode_1-compact-input.json');
+  const tracePath = join(runRoot, 'trace.json');
+
+  await mkdir(join(runRoot, 'planner'), { recursive: true });
+  await writeFile(compactInputPath, JSON.stringify({
+    evidenceCoverage: {
+      contractKind: 'ranked_entity',
+      status: 'uncertain',
+      readCount: 1,
+      requirements: [{ key: 'ranking_evidence', status: 'uncertain', supportingReadIndexes: [] }],
+    },
+  }), 'utf8');
+  await writeFile(tracePath, JSON.stringify({
+    runId: 'compact_coverage',
+    runtimeMode: 'agent',
+    startTime: 123,
+    steps: [],
+    artifacts: {
+      trace: { kind: 'trace', id: 'trace', path: tracePath },
+      observations: [],
+      transitions: [],
+      graph: [],
+      planner: [{ kind: 'compact_planner_input', id: 'episode_1-compact-input', path: compactInputPath }],
+      failures: [],
+      screenshots: [],
+    },
+  }), 'utf8');
+
+  const diagnostics = await collectBenchmarkDiagnostics({
+    adapterId: 'browsegent',
+    taskId: 'task_compact_coverage',
+    attempt: 1,
+    success: false,
+    value: '',
+    tracePath,
+    metrics: { plannerCalls: 1, toolExecutions: 0, durationMs: 1 },
+  });
+
+  assert.equal(diagnostics.evidenceCoverage?.plannerInputCount, 1);
+  assert.equal(diagnostics.evidenceCoverage?.states.uncertain, 1);
+  assert.equal(diagnostics.evidenceCoverage?.requirementStatuses.ranking_evidence_uncertain, 1);
+});
+
 test('buildBenchmarkReport aggregates diagnostic maxima and action markers', () => {
   const report = buildBenchmarkReport({
     runId: 'diagnostics_report',

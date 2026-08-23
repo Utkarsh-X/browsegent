@@ -66,7 +66,7 @@ async function collectTraceDiagnostics(tracePath: string): Promise<BenchmarkDiag
     );
     diagnostics.evidenceCoverage = await summarizeEvidenceCoverage(
       tracePath,
-      plannerInputs,
+      plannerInputs.length > 0 ? plannerInputs : compactInputs,
       diagnostics.warnings,
     );
     const plannerOutputs = manifest.artifacts.planner.filter(artifact => artifact.kind === 'planner_output');
