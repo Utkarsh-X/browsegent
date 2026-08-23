@@ -16,7 +16,10 @@ export async function callCompactShadowPlanner(
   input: CompactShadowPlannerInput,
   indexToRef: Record<string, string>,
   model?: string,
-  options?: { mode?: 'normal' | 'finalization' },
+  options?: {
+    mode?: 'normal' | 'finalization';
+    onPacingWait?: (durationMs: number) => void;
+  },
 ): Promise<CompactShadowPlannerResult> {
   const startedAt = Date.now();
   let inputTokens = 0;
@@ -30,6 +33,7 @@ export async function callCompactShadowPlanner(
     // 2. Call provider exactly once
     const providerResult = await provider(systemPrompt, userMessage, model, {
       responseSchema: buildV2PlannerResponseSchema(),
+      onPacingWait: options?.onPacingWait,
     });
 
     inputTokens = providerResult.inputTokens;

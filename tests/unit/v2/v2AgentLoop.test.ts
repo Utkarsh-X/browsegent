@@ -94,6 +94,7 @@ class FakeHarness {
   compactPlannerViews: Array<{ episodeId: string; payload: unknown }> = [];
   failures: FailureEvidence[] = [];
   flushCount = 0;
+  latencySummary?: { totals: Record<string, number> };
 
   constructor(observations = [makeObservation('obs_initial'), makeObservation('obs_after_action')]) {
     this.observations = [...observations];
@@ -160,6 +161,10 @@ class FakeHarness {
   recordFailureEvidence(failure: FailureEvidence): TraceArtifact {
     this.failures.push(failure);
     return { kind: 'failure', id: failure.failureId, path: `${failure.failureId}.json` };
+  }
+
+  recordLatencyLedger(summary: { totals: Record<string, number> }): void {
+    this.latencySummary = summary;
   }
 
   async click(refId: string): Promise<V2ToolResult> {
@@ -1716,6 +1721,37 @@ test('V2AgentLoop routes through default planner when plannerMode is undefined o
   assert.equal(result.success, true);
   assert.equal(result.value, 'Default mode works');
   assert.equal(planner.inputs.length, 1);
+});
+
+test('V2AgentLoop records provider pacing separately from provider latency', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: {
+      call: async input => {
+        input.onPacingWait?.(37);
+        return {
+          output: { done: true, val: 'Pacing recorded' },
+          rawText: '{"done":true,"val":"Pacing recorded"}',
+          inputTokens: 1,
+          outputTokens: 1,
+          durationMs: 1,
+        };
+      },
+    },
+    dispatcherFactory: () => new FakeDispatcher(),
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 1,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(harness.latencySummary?.totals.provider_pacing_wait, 37);
+  assert.ok((harness.latencySummary?.totals.provider ?? 0) >= 0);
 });
 
 test('V2AgentLoop routes through compact client and returns ineligible when first ref is not represented', async () => {

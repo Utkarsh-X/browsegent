@@ -1,6 +1,7 @@
 export type LedgerPhase =
   | 'local_compute'
   | 'provider'
+  | 'provider_pacing_wait'
   | 'browser_interaction'
   | 'stabilization_wait'
   | 'observation_capture';
@@ -18,7 +19,7 @@ export interface LedgerSummary {
 }
 
 const ALL_PHASES: LedgerPhase[] = [
-  'local_compute', 'provider', 'browser_interaction',
+  'local_compute', 'provider', 'provider_pacing_wait', 'browser_interaction',
   'stabilization_wait', 'observation_capture',
 ];
 

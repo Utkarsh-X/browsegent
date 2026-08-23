@@ -23,6 +23,19 @@ test('LatencyLedger records 5 independent categories plus unaccounted', () => {
   assert.equal(summary.totals.hasOwnProperty('browsegent_owned'), false);
 });
 
+test('LatencyLedger keeps provider pacing separate from provider time', () => {
+  const ledger = new LatencyLedger();
+  ledger.beginStep(0);
+  ledger.recordPhase('provider', 120);
+  ledger.recordPhase('provider_pacing_wait', 5000);
+  ledger.endStep(0, 5200);
+
+  const summary = ledger.summarize();
+  assert.equal(summary.totals.provider, 120);
+  assert.equal(summary.totals.provider_pacing_wait, 5000);
+  assert.equal(summary.totals.unaccounted, 80);
+});
+
 test('LatencyLedger accumulates multiple phases within a step', () => {
   const ledger = new LatencyLedger();
   ledger.beginStep(0);

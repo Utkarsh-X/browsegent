@@ -22,6 +22,7 @@ export interface ProviderResult {
 
 export interface ProviderCallOptions {
   responseSchema?: Record<string, unknown>;
+  onPacingWait?: (durationMs: number) => void;
 }
 
 export function detectProvider(model: string): LlmProvider {
@@ -128,7 +129,8 @@ async function callGemini(system: string, user: string, model: string, options: 
     const retryCodes = new Set([429, 500, 502, 503]);
 
     for (let attempt = 1; attempt <= retries; attempt++) {
-      await waitForGeminiRequestSlot();
+      const pacingWaitMs = await waitForGeminiRequestSlot();
+      if (pacingWaitMs > 0) options.onPacingWait?.(pacingWaitMs);
       let response: Response;
       try {
         response = await fetch(url, {

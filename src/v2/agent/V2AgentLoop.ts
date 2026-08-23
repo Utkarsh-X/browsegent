@@ -98,14 +98,19 @@ export class V2AgentLoop {
         ledger.recordPhase('local_compute', Date.now() - composeStart);
         metrics.plannerCalls += 1;
         let plannerResult: Awaited<ReturnType<V2PlannerClientLike['call']>>;
+        const providerStart = Date.now();
+        let pacingWaitMs = 0;
         try {
-          const providerStart = Date.now();
           plannerResult = await plannerClient.call({
             plannerInput,
             model: input.model,
+            onPacingWait: durationMs => {
+              pacingWaitMs += durationMs;
+              ledger.recordPhase('provider_pacing_wait', durationMs);
+            },
           });
-          ledger.recordPhase('provider', Date.now() - providerStart);
         } catch (error) {
+          ledger.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
           recordCompactPlannerTelemetry({
             harness,
             plannerInput,
@@ -141,6 +146,7 @@ export class V2AgentLoop {
             metrics,
           }, ledger, outcomeRecorder);
         }
+        ledger.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
         recordCompactPlannerTelemetry({
           harness,
           plannerInput,
@@ -518,8 +524,18 @@ export class V2AgentLoop {
     });
     harness.recordPlannerInput?.(finalizationInput.episodeId, finalizationInput);
     metrics.plannerCalls += 1;
+    const providerStart = Date.now();
+    let pacingWaitMs = 0;
     try {
-      const result = await plannerClient.call({ plannerInput: finalizationInput, mode: 'finalization' });
+      const result = await plannerClient.call({
+        plannerInput: finalizationInput,
+        mode: 'finalization',
+        onPacingWait: durationMs => {
+          pacingWaitMs += durationMs;
+          ledger?.recordPhase('provider_pacing_wait', durationMs);
+        },
+      });
+      ledger?.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
       recordCompactPlannerTelemetry({
         harness,
         plannerInput: finalizationInput,
@@ -569,6 +585,7 @@ export class V2AgentLoop {
         }, ledger, outcomeRecorder);
       }
     } catch {
+      ledger?.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
       recordCompactPlannerTelemetry({
         harness,
         plannerInput: finalizationInput,

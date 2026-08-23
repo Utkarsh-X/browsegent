@@ -32,7 +32,12 @@ export interface V2AgentLoopResult {
 }
 
 export interface V2PlannerClientLike {
-  call(input: { plannerInput: PlannerInput; model?: string; mode?: 'normal' | 'finalization' }): Promise<{
+  call(input: {
+    plannerInput: PlannerInput;
+    model?: string;
+    mode?: 'normal' | 'finalization';
+    onPacingWait?: (durationMs: number) => void;
+  }): Promise<{
     output: PlannerOutput;
     rawText: string;
     inputTokens: number;

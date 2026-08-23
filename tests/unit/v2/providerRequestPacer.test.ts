@@ -20,11 +20,20 @@ test('RequestPacer spaces consecutive request starts', async () => {
     },
   });
 
-  await pacer.wait(5000);
+  assert.equal(await pacer.wait(5000), 0);
   now += 1000;
-  await pacer.wait(5000);
+  assert.equal(await pacer.wait(5000), 4000);
 
   assert.deepEqual(waits, [4000]);
+});
+
+test('RequestPacer reports no pacing wait when disabled', async () => {
+  const pacer = new RequestPacer({
+    now: () => 1000,
+    sleep: async () => undefined,
+  });
+
+  assert.equal(await pacer.wait(0), 0);
 });
 
 test('RequestPacer does not wait when pacing is disabled', async () => {

@@ -34,6 +34,7 @@ export interface V2PlannerCallInput {
   plannerInput: PlannerInput;
   model?: string;
   mode?: 'normal' | 'finalization';
+  onPacingWait?: (durationMs: number) => void;
 }
 
 export interface V2PlannerCallResult {
@@ -101,6 +102,7 @@ export class V2PlannerClient {
       try {
         providerResult = await this.provider(systemPrompt, userMessage, input.model, {
           responseSchema: buildV2PlannerResponseSchema(),
+          onPacingWait: input.onPacingWait,
         });
       } catch (error) {
         const durationMs = Date.now() - startedAt;
@@ -277,15 +279,31 @@ function buildActionCompatibilityGuidance(
 
   const lines: string[] = [];
   for (const error of errors) {
+    const unknownRefMatch = error.match(/ref "([^"]+)" is not present in selected planner refs(?: for tool "([^"]+)")?/);
+    if (unknownRefMatch) {
+      const invalidRef = unknownRefMatch[1];
+      const tool = unknownRefMatch[2] ?? 'the requested tool';
+      const candidates = compatibleRefIdsForTool(tool, surface);
+      const observationId = input.current.observationId;
+      lines.push(
+        `Invalid planner ref: ${invalidRef} is not a current ref for tool "${tool}". `
+        + `Observation IDs${observationId ? ` such as ${observationId}` : ''} are not ref IDs. `
+        + `Use a ref from the current observation${candidates.length > 0 ? `: ${formatRefAlternatives(candidates, input)}` : '.'}`,
+      );
+    }
+
     const typeMatch = error.match(/ref "([^"]+)" is not compatible with tool "type"/);
     if (typeMatch) {
       lines.push(formatInvalidRefDetail(typeMatch[1], input, surface));
       if (surface.typeableRefs.length > 0) {
         lines.push(`Typeable refs available: ${formatRefAlternatives(surface.typeableRefs, input)}`);
       } else {
+        const launcherCandidates = surface.clickableRefs.length > 0
+          ? ` Clickable launcher candidates: ${formatRefAlternatives(surface.clickableRefs, input)}.`
+          : '';
         lines.push(
           'No typeable refs are currently available. Do not type into a button or readable ref. '
-          + 'Click a compatible launcher and reobserve before typing; otherwise use wait, scroll, search_page, or escalate.',
+          + `Click a compatible launcher and reobserve before typing; otherwise use wait, scroll, search_page, or escalate.${launcherCandidates}`,
         );
       }
     }
@@ -381,6 +399,26 @@ function formatInvalidRefDetail(
 
 function formatRefAlternatives(refIds: string[], input: PlannerInput): string {
   return refIds.slice(0, 5).map(refId => formatRefAlternative(refId, input)).join(', ');
+}
+
+function compatibleRefIdsForTool(
+  tool: string,
+  surface: NonNullable<PlannerOutputValidationContext['actionSurface']>,
+): string[] {
+  switch (tool) {
+    case 'type':
+      return surface.typeableRefs;
+    case 'click':
+    case 'close':
+      return surface.clickableRefs;
+    case 'select':
+      return surface.selectableRefs;
+    case 'get':
+    case 'inspect_region':
+      return surface.readableRefs;
+    default:
+      return [...surface.clickableRefs, ...surface.typeableRefs, ...surface.selectableRefs, ...surface.readableRefs];
+  }
 }
 
 function formatRefAlternative(refId: string, input: PlannerInput): string {
