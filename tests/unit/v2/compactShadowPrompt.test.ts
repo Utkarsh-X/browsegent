@@ -31,6 +31,13 @@ test('compact shadow prompt tells planner not to use read-only refs for mutation
   assert.match(prompt, /Do not click, type, or select read-only evidence/i);
 });
 
+test('compact shadow prompt pivots when no typeable index is available', () => {
+  const prompt = buildCompactShadowSystemPrompt();
+  assert.match(prompt, /if no index has type/i);
+  assert.match(prompt, /never emit type/i);
+  assert.match(prompt, /click a compatible launcher and reobserve/i);
+});
+
 test('buildCompactShadowUserMessage assertions', () => {
   const input: CompactShadowPlannerInput = {
     version: 'compact_shadow_input.v1',

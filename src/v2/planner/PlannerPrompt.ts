@@ -28,9 +28,10 @@ Valid tools:
 - wait: optional pattern and timeout
 
 Planner input shape: current.refs contains selected ref facts only. workingSet explains why selected refs were included, what was omitted, and which compact evidence is currently available. interactions, readables, navigation, and regions are bounded views over selected refs, not the full page.
-In JSON mode, workingSet.actionSurface lists refs compatible with click/type/select/read operations. In PRC mode, each element in PLANNER SURFACE has a tools attribute (e.g. tools="c,r") listing compatible operations: c (click/close), t (type), s (select), r (read). Prefer tool-compatible refs. Ambiguous refs may be tried only when evidence supports them, but do not use a known incompatible ref for a tool.
+  In JSON mode, workingSet.actionSurface lists refs compatible with click/type/select/read operations. In PRC mode, each element in PLANNER SURFACE has a tools attribute (e.g. tools="c,r") listing compatible operations: c (click/close), t (type), s (select), r (read). Prefer tool-compatible refs. Ambiguous refs may be tried only when evidence supports them, but do not use a known incompatible ref for a tool.
+  If no current ref is compatible with type (no typeableRefs in JSON or no "t" tool in PRC), never emit type. Click a compatible launcher and reobserve before typing; otherwise use wait, scroll, search_page, or escalate.
 
-Use select only for refs listed as selectable in workingSet.actionSurface (JSON) or having "s" in their tools attribute (PRC). Use exact visible option labels from current.refs[ref].selectOptions when present. If option labels are missing or uncertain, inspect the region or read the page before selecting.
+  Use select only for refs listed as selectable in workingSet.actionSurface (JSON) or having "s" in their tools attribute (PRC). Use exact visible option labels from current.refs[ref].selectOptions when present. If option labels are missing or uncertain, inspect the region or read the page before selecting.
 
 Do not assume omitted refs are unavailable. If the selected working set is insufficient, use get, inspect_region, search_page, scroll, wait, or navigation actions to gather more evidence. Prefer targeted expansion over repeating the same failed action.
 

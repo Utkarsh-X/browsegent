@@ -30,6 +30,14 @@ test('buildV2PlannerSystemPrompt describes working set and targeted expansion', 
   assert.match(prompt, /search_page/i);
 });
 
+test('buildV2PlannerSystemPrompt forbids typing when no typeable ref is exposed', () => {
+  const prompt = buildV2PlannerSystemPrompt();
+
+  assert.match(prompt, /no current ref is compatible with type/i);
+  assert.match(prompt, /click a compatible launcher and reobserve/i);
+  assert.match(prompt, /never emit type/i);
+});
+
 test('buildV2PlannerSystemPrompt describes recovery state', () => {
   const prompt = buildV2PlannerSystemPrompt();
 
