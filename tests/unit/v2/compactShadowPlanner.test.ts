@@ -23,7 +23,9 @@ const mockIndexToRef: Record<string, string> = {
 };
 
 test('callCompactShadowPlanner normalizes provider output using indexToRef', async () => {
+  let pacingWaitMs = 0;
   const mockProvider: V2PlannerProvider = async (system, user, model, options) => {
+    options?.onPacingWait?.(17);
     return {
       text: JSON.stringify({
         plan: [{ tool: 'click', ref: 'a1' }],
@@ -38,7 +40,8 @@ test('callCompactShadowPlanner normalizes provider output using indexToRef', asy
     mockProvider,
     mockInput,
     mockIndexToRef,
-    'mock-model'
+    'mock-model',
+    { onPacingWait: durationMs => { pacingWaitMs += durationMs; } },
   );
 
   assert.equal(result.status, 'valid');
@@ -55,6 +58,7 @@ test('callCompactShadowPlanner normalizes provider output using indexToRef', asy
     assert.equal(result.outputTokens, 20);
     assert.ok(result.durationMs >= 0);
   }
+  assert.equal(pacingWaitMs, 17);
 });
 
 test('callCompactShadowPlanner returns invalid_output for unknown compact index', async () => {
