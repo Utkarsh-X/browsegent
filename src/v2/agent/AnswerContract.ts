@@ -74,7 +74,13 @@ export function validateAnswerAgainstContract(
   ) {
     reasons.push('missing_basic_information_location');
   }
-  // TODO: Validate requiresRankingEvidence when ranking evidence is available in finalization context.
+  if (
+    contract.requiresRankingEvidence
+    && options.evidenceText?.trim()
+    && !hasRankingEvidence(options.evidenceText)
+  ) {
+    reasons.push('missing_ranking_evidence');
+  }
   return { ok: reasons.length === 0, reasons };
 }
 
@@ -131,6 +137,13 @@ export function hasDefinitionDetail(value: string): boolean {
     /\bthe (?:quality|ability|act|state|capacity|process|practice|condition|property|concept|measure) of\b/i,
     /\bis (?:the|a|an) (?:quality|ability|act|state|capacity|process|practice|condition|property|concept|measure|noun|adjective|verb|term|word)\b/i,
   ].some(pattern => pattern.test(value));
+}
+
+export function hasRankingEvidence(value: string): boolean {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  const hasOrderSignal = /\b(?:sorted|rank(?:ed|ing)?|ordered|top\s+\d+|#\d+|first|second|highest|lowest|most|least|cheapest|latest|newest|oldest|best)\b/i.test(normalized);
+  const hasDimensionSignal = /\b(?:stars?|rating|reviews?|price|cost|date|score|position|result|rank)\b/i.test(normalized);
+  return hasOrderSignal && hasDimensionSignal;
 }
 
 export function hasConcreteBasicInformation(value: string): boolean {

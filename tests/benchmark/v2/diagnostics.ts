@@ -6,6 +6,7 @@ import type {
   BenchmarkActionDiagnostics,
   BenchmarkDiagnostics,
   BenchmarkEvidenceCoverageDiagnostics,
+  BenchmarkLatencyDiagnostics,
   BenchmarkPayloadDiagnostics,
   BenchmarkPayloadSizeSummary,
   BenchmarkProjectionOverlapDiagnostics,
@@ -64,6 +65,13 @@ async function collectTraceDiagnostics(tracePath: string): Promise<BenchmarkDiag
       plannerInputs,
       diagnostics.warnings,
     );
+    if (manifest.artifacts.latencyLedger) {
+      diagnostics.latency = await summarizeLatencyLedger(
+        tracePath,
+        manifest.artifacts.latencyLedger,
+        diagnostics.warnings,
+      );
+    }
     diagnostics.evidenceCoverage = await summarizeEvidenceCoverage(
       tracePath,
       plannerInputs.length > 0 ? plannerInputs : compactInputs,
@@ -430,6 +438,7 @@ function emptyDiagnostics(): BenchmarkDiagnostics {
     },
     projectionOverlap: emptyProjectionOverlap(),
     workingSet: emptyWorkingSetDiagnostics(),
+    latency: emptyLatencyDiagnostics(),
     evidenceCoverage: emptyEvidenceCoverageDiagnostics(),
     warnings: [],
   };
@@ -441,6 +450,48 @@ function emptyEvidenceCoverageDiagnostics(): BenchmarkEvidenceCoverageDiagnostic
     states: {},
     requirementStatuses: {},
   };
+}
+
+function emptyLatencyDiagnostics(): BenchmarkLatencyDiagnostics {
+  return {
+    stepCount: 0,
+    totalMs: 0,
+    unaccountedMs: 0,
+    phaseTotals: {},
+  };
+}
+
+async function summarizeLatencyLedger(
+  tracePath: string,
+  artifact: TraceArtifact,
+  warnings: string[],
+): Promise<BenchmarkLatencyDiagnostics> {
+  try {
+    const payload = JSON.parse(await readFile(resolveArtifactPath(tracePath, artifact.path), 'utf8')) as Record<string, unknown>;
+    const totals = section(payload, 'totals');
+    if (!totals || typeof totals !== 'object' || Array.isArray(totals)) {
+      throw new Error('latency ledger has no totals object');
+    }
+
+    const totalRecord = totals as Record<string, unknown>;
+    const phaseTotals: Record<string, number> = {};
+    for (const [phase, value] of Object.entries(totalRecord)) {
+      if (phase === 'total' || phase === 'unaccounted') continue;
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        phaseTotals[phase] = value;
+      }
+    }
+
+    return {
+      stepCount: numberField(payload, 'stepCount'),
+      totalMs: numberField(totalRecord, 'total'),
+      unaccountedMs: numberField(totalRecord, 'unaccounted'),
+      phaseTotals,
+    };
+  } catch (error) {
+    warnings.push(`latency_ledger_unavailable:${artifact.id}:${error instanceof Error ? error.message : String(error)}`);
+    return emptyLatencyDiagnostics();
+  }
 }
 
 function emptyProjectionOverlap(): BenchmarkProjectionOverlapDiagnostics {

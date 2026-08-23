@@ -180,8 +180,16 @@ export interface BenchmarkDiagnostics {
   actions: BenchmarkActionDiagnostics;
   projectionOverlap: BenchmarkProjectionOverlapDiagnostics;
   workingSet: BenchmarkWorkingSetDiagnostics;
+  latency?: BenchmarkLatencyDiagnostics;
   evidenceCoverage?: BenchmarkEvidenceCoverageDiagnostics;
   warnings: string[];
+}
+
+export interface BenchmarkLatencyDiagnostics {
+  stepCount: number;
+  totalMs: number;
+  unaccountedMs: number;
+  phaseTotals: Record<string, number>;
 }
 
 export interface BenchmarkEvidenceCoverageDiagnostics {
@@ -227,7 +235,17 @@ export interface BenchmarkDiagnosticsSummary {
   totalProviderUserBytes: number;
   totalProviderAttempts: number;
   totalPlannerCalls: number;
+  latency?: BenchmarkLatencySummary;
   evidenceCoverage?: BenchmarkEvidenceCoverageDiagnostics;
+}
+
+export interface BenchmarkLatencySummary {
+  runCount: number;
+  totalMs: number;
+  p50Ms: number;
+  p95Ms: number;
+  unaccountedMs: number;
+  phaseTotals: Record<string, number>;
 }
 
 export interface BenchmarkRunMetadata {

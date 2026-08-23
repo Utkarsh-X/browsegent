@@ -2,6 +2,7 @@ import {
   hasConcreteBasicInformation,
   hasConcretePronunciation,
   hasDefinitionDetail,
+  hasRankingEvidence,
   inferAnswerContract,
 } from './AnswerContract';
 import type {
@@ -17,8 +18,6 @@ export interface TaskEvidenceRead {
 }
 
 const EXPLICIT_CONFLICT = /\b(?:contradict(?:s|ory)?|conflicting|inconsistent|disagrees? with)\b/i;
-const RANKING_ORDER = /\b(?:sorted|rank(?:ed|ing)?|ordered|top\s+\d+|#\d+|first|second|highest|lowest|most|least|cheapest|latest|newest|oldest|best)\b/i;
-const RANKING_DIMENSION = /\b(?:stars?|rating|reviews?|price|cost|date|score|position|result|rank)\b/i;
 
 export function buildTaskEvidenceCoverage(
   goal: string,
@@ -96,7 +95,7 @@ function matchesRequirement(key: PlannerEvidenceCoverageKey, text: string): bool
     case 'concrete_basic_information':
       return hasConcreteBasicInformation(normalized);
     case 'ranking_evidence':
-      return RANKING_ORDER.test(normalized) && RANKING_DIMENSION.test(normalized);
+      return hasRankingEvidence(normalized);
     default:
       return false;
   }

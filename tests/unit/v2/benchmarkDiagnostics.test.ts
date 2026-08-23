@@ -14,6 +14,7 @@ test('collectBenchmarkDiagnostics summarizes trace payload sizes and action mark
   const plannerInputPath = join(runRoot, 'planner', 'episode_1-input.json');
   const plannerOutputPath = join(runRoot, 'planner', 'episode_1-output.json');
   const failurePath = join(runRoot, 'failures', 'failure_1.json');
+  const latencyPath = join(runRoot, 'latency_ledger.json');
   const tracePath = join(runRoot, 'trace.json');
 
   await mkdir(join(runRoot, 'observations'), { recursive: true });
@@ -93,6 +94,18 @@ test('collectBenchmarkDiagnostics summarizes trace payload sizes and action mark
     },
   }), 'utf8');
   await writeFile(failurePath, JSON.stringify({ kind: 'target_blocked' }), 'utf8');
+  await writeFile(latencyPath, JSON.stringify({
+    stepCount: 2,
+    totals: {
+      local_compute: 10,
+      provider: 50,
+      browser_interaction: 20,
+      stabilization_wait: 10,
+      observation_capture: 5,
+      unaccounted: 5,
+      total: 100,
+    },
+  }), 'utf8');
   await writeFile(tracePath, JSON.stringify({
     runId: 'run_diagnostics',
     runtimeMode: 'agent',
@@ -114,6 +127,7 @@ test('collectBenchmarkDiagnostics summarizes trace payload sizes and action mark
       ],
       failures: [{ kind: 'failure', id: 'failure_1', path: failurePath }],
       screenshots: [],
+      latencyLedger: { kind: 'trace', id: 'latency_ledger', path: latencyPath },
     },
   }), 'utf8');
 
@@ -159,6 +173,10 @@ test('collectBenchmarkDiagnostics summarizes trace payload sizes and action mark
   assert.equal(diagnostics.evidenceCoverage?.states.incomplete, 1);
   assert.equal(diagnostics.evidenceCoverage?.requirementStatuses.concrete_basic_information_missing, 1);
   assert.equal(diagnostics.evidenceCoverage?.requirementStatuses.definition_proven, 1);
+  assert.equal(diagnostics.latency?.stepCount, 2);
+  assert.equal(diagnostics.latency?.totalMs, 100);
+  assert.equal(diagnostics.latency?.unaccountedMs, 5);
+  assert.equal(diagnostics.latency?.phaseTotals.provider, 50);
   assert.deepEqual(diagnostics.warnings, []);
 });
 
@@ -347,6 +365,12 @@ test('buildBenchmarkReport aggregates diagnostic maxima and action markers', () 
             selectedByReason: { visible_ready: 2 },
             droppedByReason: { hidden_low_value: 8 },
           },
+          latency: {
+            stepCount: 2,
+            totalMs: 100,
+            unaccountedMs: 5,
+            phaseTotals: { local_compute: 10, provider: 50, browser_interaction: 20, stabilization_wait: 10, observation_capture: 5 },
+          },
           warnings: [],
         },
       }),
@@ -402,6 +426,12 @@ test('buildBenchmarkReport aggregates diagnostic maxima and action markers', () 
             selectedByReason: { visible_ready: 5 },
             droppedByReason: { hidden_low_value: 15 },
           },
+          latency: {
+            stepCount: 3,
+            totalMs: 200,
+            unaccountedMs: 5,
+            phaseTotals: { local_compute: 20, provider: 100, browser_interaction: 40, stabilization_wait: 20, observation_capture: 10 },
+          },
           warnings: ['missing_artifact_size:one'],
         },
       }),
@@ -430,6 +460,12 @@ test('buildBenchmarkReport aggregates diagnostic maxima and action markers', () 
   assert.equal(diagnostics.maxWorkingSetSelectedRefs, 5);
   assert.equal(diagnostics.maxWorkingSetDroppedRefs, 15);
   assert.equal(diagnostics.warningCount, 1);
+  assert.equal(diagnostics.latency?.runCount, 2);
+  assert.equal(diagnostics.latency?.totalMs, 300);
+  assert.equal(diagnostics.latency?.p50Ms, 100);
+  assert.equal(diagnostics.latency?.p95Ms, 200);
+  assert.equal(diagnostics.latency?.unaccountedMs, 10);
+  assert.equal(diagnostics.latency?.phaseTotals.provider, 150);
 });
 
 function actionStep(

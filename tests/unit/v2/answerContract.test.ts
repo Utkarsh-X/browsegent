@@ -193,3 +193,36 @@ test('validateAnswerAgainstContract still rejects when answer truly omits a spec
   assert.equal(validation.ok, false);
   assert.ok(validation.reasons.includes('missing_basic_information_location'));
 });
+
+test('validateAnswerAgainstContract requires ranking evidence when explicit reads exist', () => {
+  const contract = inferAnswerContract('Find the repository with the most stars');
+  const validation = validateAnswerAgainstContract(
+    'climate-tools is the repository with the most stars.',
+    contract,
+    { evidenceText: 'Repository: climate-tools. Stars: 40. It is a repository.' },
+  );
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('missing_ranking_evidence'));
+});
+
+test('validateAnswerAgainstContract accepts ranking evidence with order and dimension signals', () => {
+  const contract = inferAnswerContract('Find the repository with the most stars');
+  const validation = validateAnswerAgainstContract(
+    'climate-tools is the repository with the most stars.',
+    contract,
+    { evidenceText: 'Repositories sorted by stars: climate-tools has 40 stars and other-repo has 12 stars.' },
+  );
+
+  assert.equal(validation.ok, true, `Unexpected reasons: ${validation.reasons.join(', ')}`);
+});
+
+test('validateAnswerAgainstContract preserves direct ranked answers when no read evidence exists', () => {
+  const contract = inferAnswerContract('Find the repository with the most stars');
+  const validation = validateAnswerAgainstContract(
+    'climate-tools is the repository with the most stars.',
+    contract,
+  );
+
+  assert.equal(validation.ok, true, `Unexpected reasons: ${validation.reasons.join(', ')}`);
+});
