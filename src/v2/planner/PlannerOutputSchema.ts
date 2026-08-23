@@ -216,7 +216,7 @@ function validateRequiredFields(
     && context.allowedRefs !== undefined
     && !isAllowedRef(step.ref, context)
   ) {
-    errors.push(`Step ${stepNumber} ref "${step.ref}" is not present in selected planner refs`);
+    errors.push(`Step ${stepNumber} ref "${step.ref}" is not present in selected planner refs for tool "${tool}"`);
   }
 
   if (tool === 'type' && !isNonEmptyString(step.text)) {

@@ -217,27 +217,33 @@ test('CompactPlannerClient retry feedback pivots when no compact index supports 
   assert.equal(calls.length, 2);
   assert.match(calls[1], /no compact index supports type/i);
   assert.match(calls[1], /click a compatible launcher and reobserve/i);
+  assert.match(calls[1], /clickable launcher candidates/i);
+  assert.match(calls[1], /a1/);
   assert.match(calls[1], /never emit type/i);
 });
 
-test('CompactPlannerClient does not retry unknown compact index errors', async () => {
-  let calls = 0;
+test('CompactPlannerClient retries unknown compact indexes with bounded index guidance', async () => {
+  const calls: string[] = [];
   const client = new CompactPlannerClient({
-    provider: async () => {
-      calls += 1;
+    provider: async (_system, user) => {
+      calls.push(user);
       return {
-        text: JSON.stringify({
-          plan: [{ tool: 'click', ref: 'a99' }],
-          confidence: 'high',
-        }),
+        text: calls.length === 1
+          ? '{"plan":[{"tool":"click","ref":"a99"}],"confidence":"high"}'
+          : '{"plan":[{"tool":"click","ref":"a1"}],"confidence":"high"}',
         inputTokens: 10,
         outputTokens: 5,
       };
     },
   });
 
-  await assert.rejects(() => client.call({ plannerInput: mockPlannerInput, model: 'mock-model' }));
-  assert.equal(calls, 1);
+  const result = await client.call({ plannerInput: mockPlannerInput, model: 'mock-model' });
+  assert.deepEqual(result.output.plan, [{ tool: 'click', ref: 'ref_submit' }]);
+  assert.equal(calls.length, 2);
+  assert.match(calls[1], /unknown compact index/i);
+  assert.match(calls[1], /use only indexes listed/i);
+  assert.match(calls[1], /a1/);
+  assert.doesNotMatch(calls[1], /ref_submit/);
 });
 
 test('CompactPlannerClient proceeds when legacy primary ref is absent from compact surface', async () => {

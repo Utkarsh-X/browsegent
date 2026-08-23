@@ -578,6 +578,100 @@ test('V2PlannerClient includes action-compatible ref alternatives in retry feedb
   assert.match(providerUsers[1], /do not assume the button became a text field/i);
 });
 
+test('V2PlannerClient explains ref versus observation identity after an unknown ref', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_unknown_ref_guidance');
+  plannerInput.current.refs = {
+    ref_submit: {
+      ...plannerInput.current.refs.ref_submit,
+      refId: 'ref_submit',
+      kind: 'button',
+      role: 'button',
+      name: 'Submit',
+    },
+  };
+  plannerInput.current.interactions = [{ refId: 'ref_submit', rank: 1 }];
+  plannerInput.workingSet = {
+    mode: 'act',
+    modeReason: 'test',
+    primaryRefs: [],
+    secondaryRefs: [],
+    readableEvidence: [],
+    navigationRefs: [],
+    actionSurface: {
+      clickableRefs: ['ref_submit'],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+    changedRefs: {
+      appearedCount: 0,
+      weakenedCount: 0,
+      preservedCount: 0,
+      topRefs: [],
+      omittedCount: 0,
+    },
+    failedRefs: [],
+    quarantinedActions: [],
+    regionSummaries: [],
+    omitted: {
+      observedRefCount: 1,
+      selectedRefCount: 1,
+      droppedRefCount: 0,
+      droppedByReason: {},
+    },
+  };
+
+  const providerUsers: string[] = [];
+  const responses = [
+    '{"plan":[{"tool":"click","ref":"obs_1_5"}],"confidence":"high"}',
+    '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+  ];
+  const client = new V2PlannerClient({
+    provider: async (_system, user) => {
+      providerUsers.push(user);
+      return {
+        text: responses.shift() ?? '{}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.equal(result.output.plan?.[0].ref, 'ref_submit');
+  assert.equal(providerUsers.length, 2);
+  assert.match(providerUsers[1], /ref "obs_1_5" is not present/i);
+  assert.match(providerUsers[1], /tool "click"/i);
+  assert.match(providerUsers[1], /observation id.*not.*ref/i);
+  assert.match(providerUsers[1], /ref_submit/);
+});
+
+test('V2PlannerClient forwards provider pacing telemetry without changing the plan', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  let pacingWaitMs = 0;
+  const client = new V2PlannerClient({
+    provider: async (_system, _user, _model, options) => {
+      options?.onPacingWait?.(37);
+      return {
+        text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({
+    plannerInput: makePlannerInput('episode_pacing_telemetry'),
+    onPacingWait: durationMs => { pacingWaitMs += durationMs; },
+  });
+
+  assert.equal(result.output.plan?.[0].ref, 'ref_submit');
+  assert.equal(pacingWaitMs, 37);
+});
+
 test('V2PlannerClient tells the planner to open a launcher and reobserve when no typeable refs exist', async () => {
   const { V2PlannerClient } = await loadPlannerClientModule();
   const plannerInput = makePlannerInput('episode_no_typeable_refs');
@@ -636,6 +730,8 @@ test('V2PlannerClient tells the planner to open a launcher and reobserve when no
   assert.equal(providerUsers.length, 2);
   assert.match(providerUsers[1], /no typeable refs are currently available/i);
   assert.match(providerUsers[1], /click a compatible launcher and reobserve/i);
+  assert.match(providerUsers[1], /clickable launcher candidates/i);
+  assert.match(providerUsers[1], /ref_submit/);
   assert.match(providerUsers[1], /do not type into a button/i);
 });
 

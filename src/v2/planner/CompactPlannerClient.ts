@@ -28,6 +28,7 @@ export class CompactPlannerClient implements V2PlannerClientLike {
     plannerInput: PlannerInput;
     model?: string;
     mode?: 'normal' | 'finalization';
+    onPacingWait?: (durationMs: number) => void;
   }): Promise<{
     output: PlannerOutput;
     rawText: string;
@@ -54,7 +55,7 @@ export class CompactPlannerClient implements V2PlannerClientLike {
       compactInput,
       indexToRef,
       model,
-      { mode }
+      { mode, onPacingWait: input.onPacingWait }
     );
     let attempts = 1;
     let totalInputTokens = result.inputTokens;
@@ -71,7 +72,7 @@ export class CompactPlannerClient implements V2PlannerClientLike {
         retryInput,
         indexToRef,
         model,
-        { mode }
+        { mode, onPacingWait: input.onPacingWait }
       );
       attempts = 2;
       totalInputTokens += result.inputTokens;
@@ -151,7 +152,7 @@ export class CompactPlannerClient implements V2PlannerClientLike {
 }
 
 function isRecoverableCompatibilityError(errors: readonly string[]): boolean {
-  return errors.some(error => /not compatible with tool|read-only|action compatibility/i.test(error));
+  return errors.some(error => /not compatible with tool|read-only|action compatibility|unknown compact index/i.test(error));
 }
 
 function buildCompatibilityRetryInput(
@@ -160,16 +161,34 @@ function buildCompatibilityRetryInput(
   previousOutput: string,
 ): CompactShadowPlannerInput {
   const hasTypeableIndex = input.actions.some(action => action.tools.includes('type'));
+  const hasUnknownIndex = errors.some(error => /unknown compact index/i.test(error));
   return {
     ...input,
     validationFeedback: {
       previousErrors: errors.slice(0, 3),
       previousOutput,
-      instruction: hasTypeableIndex
+      instruction: hasUnknownIndex
+        ? `The previous output used an unknown compact index. Use only indexes listed in this input; never emit runtime refs, observation IDs, or invented indexes. Available indexes: ${formatCompactAvailableIndexes(input)}.`
+        : hasTypeableIndex
         ? 'Choose an index whose tools include the requested tool. For typing, choose an index with type. Use read-only indexes only for get or inspect_region.'
-        : 'No compact index supports type. Never emit type; click a compatible launcher and reobserve before typing, otherwise use a non-mutating alternative.',
+        : `No compact index supports type. Clickable launcher candidates: ${formatCompactClickCandidates(input)}. Never emit type; click a compatible launcher and reobserve before typing, otherwise use a non-mutating alternative.`,
     },
   };
+}
+
+function formatCompactAvailableIndexes(input: CompactShadowPlannerInput): string {
+  const actionIndexes = input.actions.slice(0, 5).map(action => `${action.index} (${action.tools.join('|')})`);
+  const readIndexes = input.reads.slice(0, 3).map(read => `${read.index} (read)`);
+  const indexes = [...actionIndexes, ...readIndexes];
+  return indexes.length > 0 ? indexes.join(', ') : 'none exposed';
+}
+
+function formatCompactClickCandidates(input: CompactShadowPlannerInput): string {
+  const candidates = input.actions
+    .filter(action => action.tools.includes('click'))
+    .slice(0, 5)
+    .map(action => `${action.index} ("${action.label.replace(/\s+/g, ' ').trim().slice(0, 80)}")`);
+  return candidates.length > 0 ? candidates.join(', ') : 'none exposed';
 }
 
 function toCompactValidationErrors(
