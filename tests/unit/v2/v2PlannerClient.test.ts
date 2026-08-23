@@ -578,6 +578,67 @@ test('V2PlannerClient includes action-compatible ref alternatives in retry feedb
   assert.match(providerUsers[1], /do not assume the button became a text field/i);
 });
 
+test('V2PlannerClient tells the planner to open a launcher and reobserve when no typeable refs exist', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_no_typeable_refs');
+  plannerInput.version = 'v2.planner_input.v2';
+  plannerInput.workingSet = {
+    mode: 'act',
+    modeReason: 'test',
+    primaryRefs: [],
+    secondaryRefs: [],
+    readableEvidence: [],
+    navigationRefs: [],
+    actionSurface: {
+      clickableRefs: ['ref_submit'],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+    changedRefs: {
+      appearedCount: 0,
+      weakenedCount: 0,
+      preservedCount: 0,
+      topRefs: [],
+      omittedCount: 0,
+    },
+    failedRefs: [],
+    quarantinedActions: [],
+    regionSummaries: [],
+    omitted: {
+      observedRefCount: 1,
+      selectedRefCount: 1,
+      droppedRefCount: 0,
+      droppedByReason: {},
+    },
+  };
+
+  const providerUsers: string[] = [];
+  const responses = [
+    '{"plan":[{"tool":"type","ref":"ref_submit","text":"hello"}],"confidence":"high"}',
+    '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"medium"}',
+  ];
+  const client = new V2PlannerClient({
+    provider: async (_system, user) => {
+      providerUsers.push(user);
+      return {
+        text: responses.shift() ?? '{}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.equal(result.output.plan?.[0].tool, 'click');
+  assert.equal(providerUsers.length, 2);
+  assert.match(providerUsers[1], /no typeable refs are currently available/i);
+  assert.match(providerUsers[1], /click a compatible launcher and reobserve/i);
+  assert.match(providerUsers[1], /do not type into a button/i);
+});
+
 test('V2PlannerClient gives labeled recovery guidance for click-on-readable-only evidence', async () => {
   const { V2PlannerClient } = await loadPlannerClientModule();
   const plannerInput = makePlannerInput('episode_click_readable_guidance');

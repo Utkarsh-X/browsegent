@@ -159,12 +159,15 @@ function buildCompatibilityRetryInput(
   errors: readonly string[],
   previousOutput: string,
 ): CompactShadowPlannerInput {
+  const hasTypeableIndex = input.actions.some(action => action.tools.includes('type'));
   return {
     ...input,
     validationFeedback: {
       previousErrors: errors.slice(0, 3),
       previousOutput,
-      instruction: 'Choose an index whose tools include the requested tool. For typing, choose an index with type. Use read-only indexes only for get or inspect_region.',
+      instruction: hasTypeableIndex
+        ? 'Choose an index whose tools include the requested tool. For typing, choose an index with type. Use read-only indexes only for get or inspect_region.'
+        : 'No compact index supports type. Never emit type; click a compatible launcher and reobserve before typing, otherwise use a non-mutating alternative.',
     },
   };
 }

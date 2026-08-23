@@ -726,6 +726,40 @@ test('V2AgentLoop executes planner plan and feeds runtime evidence into next pla
   assert.equal(planner.inputs[1].transition?.transitionClass, 'structural_local');
 });
 
+test('V2AgentLoop retries an incompatible type through the real planner client before dispatch', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const { V2PlannerClient } = await import('../../../src/v2/planner/V2PlannerClient');
+  const providerTexts = [
+    '{"plan":[{"tool":"type","ref":"ref_submit","text":"hello"}],"confidence":"high"}',
+    '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"medium"}',
+    '{"done":true,"val":"Clicked"}',
+  ];
+  const planner = new V2PlannerClient({
+    provider: async () => ({
+      text: providerTexts.shift() ?? '{"escalate":"dead_end","reason":"missing fixture output"}',
+      inputTokens: 5,
+      outputTokens: 3,
+    }),
+  });
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Clicked');
+  assert.deepEqual(dispatcher.steps, [{ tool: 'click', ref: 'ref_submit' }]);
+  assert.equal(providerTexts.length, 0);
+});
+
 test('V2AgentLoop interrupts a mini-plan after a mutating transition before executing stale follow-up refs', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([

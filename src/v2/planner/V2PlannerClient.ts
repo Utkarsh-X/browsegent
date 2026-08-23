@@ -282,6 +282,11 @@ function buildActionCompatibilityGuidance(
       lines.push(formatInvalidRefDetail(typeMatch[1], input, surface));
       if (surface.typeableRefs.length > 0) {
         lines.push(`Typeable refs available: ${formatRefAlternatives(surface.typeableRefs, input)}`);
+      } else {
+        lines.push(
+          'No typeable refs are currently available. Do not type into a button or readable ref. '
+          + 'Click a compatible launcher and reobserve before typing; otherwise use wait, scroll, search_page, or escalate.',
+        );
       }
     }
 

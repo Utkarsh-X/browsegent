@@ -196,6 +196,30 @@ test('CompactPlannerClient retries once when first compact output fails action c
   assert.equal(result.outputTokens, 11);
 });
 
+test('CompactPlannerClient retry feedback pivots when no compact index supports type', async () => {
+  const calls: string[] = [];
+  const client = new CompactPlannerClient({
+    provider: async (_system, user) => {
+      calls.push(user);
+      return {
+        text: calls.length === 1
+          ? '{"plan":[{"tool":"type","ref":"a1","text":"hello"}],"confidence":"high"}'
+          : '{"plan":[{"tool":"click","ref":"a1"}],"confidence":"medium"}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({ plannerInput: mockPlannerInput, model: 'mock-model' });
+
+  assert.deepEqual(result.output.plan, [{ tool: 'click', ref: 'ref_submit' }]);
+  assert.equal(calls.length, 2);
+  assert.match(calls[1], /no compact index supports type/i);
+  assert.match(calls[1], /click a compatible launcher and reobserve/i);
+  assert.match(calls[1], /never emit type/i);
+});
+
 test('CompactPlannerClient does not retry unknown compact index errors', async () => {
   let calls = 0;
   const client = new CompactPlannerClient({
