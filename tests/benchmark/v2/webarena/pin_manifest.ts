@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import type { WebArenaTaskConfig } from './webarenaTypes';
 
 /**
@@ -106,6 +107,7 @@ async function main(): Promise<void> {
     shortfalls,
     tasks: picked,
   };
+  await mkdir(dirname(options.outPath), { recursive: true });
   await writeFile(options.outPath, JSON.stringify(manifest, null, 2));
   console.log(`Pinned ${picked.length} tasks (${presetName}) -> ${options.outPath}`);
   if (shortfalls.length > 0) console.warn(`Shortfall warning: ${shortfalls.join(', ')}`);
