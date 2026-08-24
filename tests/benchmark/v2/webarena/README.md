@@ -69,16 +69,24 @@ test.raw.json ──pin_manifest.ts──▶ manifests/*.json (sha256-pinned, ne
 
 ## Bringing up the shopping stack locally
 
-The official images are ~60 GB tars (shopping ≈ 62.9 GB). `tmp_shopping_bringup.ts`
-(git-excluded, resumable/idempotent) automates: Docker Desktop start → tar download
-(CMU mirror, Range-resume) → `docker load` → container on :7770 → magento base-url
-config. Requires ≥110 GB free headroom on the target drive.
+The official shopping image is ~63 GB. `tmp_shopping_bringup.ts`
+(git-excluded, resumable/idempotent) automates: Docker Desktop start → **stream-load
+from the CMU mirror straight into `docker load` stdin** (the tar never touches local
+disk; interrupted transfers resume via byte ranges into the running load) → container
+on :7770 → magento base-url config. The only space required is the loaded image in
+Docker Desktop's data root — point its "Disk image location" at whichever drive has
+~65 GB free.
 
 ```powershell
 npx tsx tests/benchmark/v2/webarena/tmp_shopping_bringup.ts   # resumable
 # then the end-to-end smoke:
 powershell -File <job-tmp>\run_pilot5_smoke.ps1
 ```
+
+No partial/slim image exists upstream (tars or a pre-baked AWS AMI are the only
+distribution modes), and scoring against a reconstructed subset of the seeded
+database would fabricate reference answers rather than measure anything — the full
+official stack is the only honest target.
 
 ## Running a pilot
 
