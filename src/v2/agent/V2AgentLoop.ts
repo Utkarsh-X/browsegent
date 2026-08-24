@@ -1,4 +1,5 @@
 import { inferAnswerContract, validateAnswerAgainstContract } from './AnswerContract';
+import { detectAnswerEvidenceConflicts } from './AnswerGrounding';
 import { ProjectionService } from '../brain1/ProjectionService';
 import {
   buildAnswerValidationEvidence,
@@ -577,9 +578,22 @@ export class V2AgentLoop {
             metrics,
           }, ledger, outcomeRecorder);
         }
+        const groundedValue = await this.reconcileAnswerGrounding({
+          harness,
+          plannerClient,
+          observation,
+          graphSnapshot,
+          evidenceCoverage,
+          goal,
+          draftAnswer: value,
+          validationEvidence,
+          metrics,
+          ledger,
+          outcomeRecorder,
+        });
         return await this.complete(harness, {
           success: true,
-          value,
+          value: groundedValue,
           steps: metrics.plannerCalls,
           metrics,
         }, ledger, outcomeRecorder);
@@ -594,6 +608,110 @@ export class V2AgentLoop {
       // Finalization planner call failed — fall through to max_steps_exhausted
     }
     return undefined;
+  }
+
+  /**
+   * Bounded grounding reconciliation: when deterministic claim-vs-read checks find
+   * draft-answer values absent from captured read evidence, give the planner exactly
+   * one opportunity to correct them from page facts. Any failure or escalation keeps
+   * the original draft, so this can only refine — never block — an accepted answer.
+   */
+  private async reconcileAnswerGrounding(input: {
+    harness: V2AgentHarnessRuntime;
+    plannerClient: V2PlannerClientLike;
+    observation: BrowserObservation;
+    graphSnapshot: ContinuityGraphSnapshot | undefined;
+    evidenceCoverage: ReturnType<typeof buildTaskEvidenceCoverage>;
+    goal: string;
+    draftAnswer: string;
+    validationEvidence: string;
+    metrics: { plannerCalls: number; inputTokens: number; outputTokens: number; plannerDurationMs: number; toolExecutions: number };
+    ledger?: LatencyLedger;
+    outcomeRecorder?: ActionOutcomeRecorder;
+  }): Promise<string> {
+    const grounding = detectAnswerEvidenceConflicts(input.draftAnswer, input.validationEvidence);
+    if (grounding.conflicts.length === 0) {
+      return input.draftAnswer;
+    }
+    const conflictBlock = [
+      'Answer grounding check found draft-answer values that do not appear in the captured read evidence:',
+      ...grounding.conflicts.map(conflict =>
+        `- draft states ${conflict.claim}; read evidence contains ${conflict.evidenceValue} (${conflict.dimension})`,
+      ),
+    ].join('\n');
+    const projection = this.projectionService.project(input.observation, input.graphSnapshot);
+    const reconciliationInput = this.plannerInputComposer.compose({
+      episodeId: `episode_finalization_grounding_${input.observation.observationId}`,
+      goal: [
+        input.goal,
+        `Draft answer: ${input.draftAnswer}`,
+        conflictBlock,
+        'Reconcile using only facts present in the read evidence and return done with the corrected best answer. If no read supports a value, use the value the reads contain.',
+      ].join('\n\n'),
+      projection,
+      graphSnapshot: input.graphSnapshot,
+      evidenceCoverage: input.evidenceCoverage,
+    });
+    input.harness.recordPlannerInput?.(reconciliationInput.episodeId, reconciliationInput);
+    input.metrics.plannerCalls += 1;
+    const providerStart = Date.now();
+    let pacingWaitMs = 0;
+    try {
+      const result = await input.plannerClient.call({
+        plannerInput: reconciliationInput,
+        mode: 'finalization',
+        onPacingWait: durationMs => {
+          pacingWaitMs += durationMs;
+          input.ledger?.recordPhase('provider_pacing_wait', durationMs);
+        },
+      });
+      input.ledger?.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
+      recordCompactPlannerTelemetry({
+        harness: input.harness,
+        plannerInput: reconciliationInput,
+        plannerOutput: result.output,
+        mode: 'finalization',
+      });
+      if (this.options.plannerClient) {
+        input.harness.recordPlannerOutput?.(reconciliationInput.episodeId, {
+          attempts: 1,
+          rawText: result.rawText,
+          validation: { ok: true, errors: [] },
+          output: result.output,
+          metrics: {
+            inputTokens: result.inputTokens,
+            outputTokens: result.outputTokens,
+            durationMs: result.durationMs,
+          },
+        });
+      }
+      input.metrics.inputTokens += result.inputTokens;
+      input.metrics.outputTokens += result.outputTokens;
+      input.metrics.plannerDurationMs += result.durationMs;
+      const corrected = result.output.done === true ? result.output.val?.trim() : undefined;
+      if (corrected) {
+        // Shape and coverage are re-validated; grounding is not re-run so this is bounded.
+        const validation = validateAnswerAgainstContract(corrected, inferAnswerContract(input.goal), {
+          evidenceText: input.validationEvidence,
+        });
+        const reasons = [
+          ...validation.reasons,
+          ...(validation.ok ? missingCoverageReasons(input.evidenceCoverage) : []),
+        ];
+        if (reasons.length === 0) {
+          return corrected;
+        }
+      }
+    } catch {
+      input.ledger?.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
+      recordCompactPlannerTelemetry({
+        harness: input.harness,
+        plannerInput: reconciliationInput,
+        mode: 'finalization',
+      });
+      // Reconciliation is best-effort; keep the original draft on provider failure.
+    }
+    return input.draftAnswer;
   }
 }
 
