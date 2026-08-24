@@ -51,9 +51,10 @@ export function toBenchmarkTask(config: WebArenaTaskConfig, options: ResolveWebA
 }
 
 /**
- * Loads and validates official task configs. Tasks whose evaluation relies on
- * program_html or login-gated sites are reported separately so the pilot can
- * exclude them explicitly instead of silently dropping them.
+ * Loads and validates official task configs. Login-gated tasks are kept: the
+ * runner satisfies `require_login` with an official storage state (bootstrapAuth),
+ * matching upstream semantics. Only predicate misses are excluded, with explicit
+ * reasons so nothing is silently dropped.
  */
 export function selectPilotTasks(
   configs: WebArenaTaskConfig[],
@@ -66,8 +67,6 @@ export function selectPilotTasks(
     if (!predicate(config)) {
       reasons.push('pilot_predicate');
     }
-    if ((config.program_html?.length ?? 0) > 0) reasons.push('program_html_evaluation_unsupported');
-    if (config.require_login) reasons.push('require_login_unsupported');
     if (reasons.length === 0) {
       selected.push(config);
     } else {

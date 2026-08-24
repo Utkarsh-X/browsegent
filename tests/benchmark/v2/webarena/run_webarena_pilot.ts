@@ -8,7 +8,13 @@ import type { DiagnosisRecord } from './diagnosis';
 import { OfficialEvaluatorBridge } from './OfficialEvaluatorBridge';
 import { applyProfileToEnv, resolveRunProfile } from './runProfiles';
 import { selectPilotTasks, toBenchmarkTask } from './WebArenaTaskSource';
-import type { WebArenaTaskConfig, WebArenaTrajectoryArtifact } from './webarenaTypes';
+import { extractFinalUrl } from './traceFinalUrl';
+import {
+  WEBARENA_SITE_ENV_VARS,
+  type WebArenaSitePlaceholder,
+  type WebArenaTaskConfig,
+  type WebArenaTrajectoryArtifact,
+} from './webarenaTypes';
 
 interface PilotOptions {
   manifestPath: string;
@@ -21,6 +27,8 @@ interface PilotOptions {
   /** Executed between tasks when the official config sets require_reset. */
   resetCommand?: string;
   evaluatorRepoPath?: string;
+  /** Playwright storage state satisfying require_login tasks (bootstrapAuth output). */
+  storageState?: string;
 }
 
 interface PinnedManifest {
@@ -56,6 +64,7 @@ async function main(): Promise<void> {
     headed: hasFlag('headed'),
     resetCommand: readFlag('reset-command'),
     evaluatorRepoPath: readFlag('evaluator-repo'),
+    storageState: readFlag('storage-state'),
   };
 
   // Resolve and apply the run profile BEFORE any client is constructed: pacing
@@ -69,6 +78,10 @@ async function main(): Promise<void> {
     },
   });
   applyProfileToEnv(profile);
+  // Opt-in authenticated sessions for require_login tasks (official storage states).
+  if (options.storageState?.trim()) {
+    process.env.BROWSEGENT_STORAGE_STATE = options.storageState.trim();
+  }
 
   const raw = await readFile(options.manifestPath, 'utf8');
   const { configs, provenance } = loadTaskConfigs(raw);
@@ -76,9 +89,16 @@ async function main(): Promise<void> {
   if (selected.length === 0) throw new Error('webarena_pilot_empty_selection');
   await mkdir(join(options.outDir, 'artifacts'), { recursive: true });
 
+  const traceDir = join(options.outDir, 'traces');
   const bridge = options.evaluatorRepoPath
     ? new OfficialEvaluatorBridge({
-        evaluatorScriptPath: join(options.evaluatorRepoPath, 'evaluation_harness', 'evaluate.py'),
+        bridgeScriptPath: join(process.cwd(), 'tests', 'benchmark', 'v2', 'webarena', 'webarena_official_eval.py'),
+        webarenaRepoPath: options.evaluatorRepoPath,
+        siteBaseUrls: resolveSiteBaseUrlsFromEnv(),
+        // Prefer an explicit evaluator venv (official deps rarely match system python).
+        ...(process.env.WEBARENA_EVAL_PYTHON?.trim()
+          ? { pythonExecutable: process.env.WEBARENA_EVAL_PYTHON.trim() }
+          : {}),
       })
     : undefined;
   if (!bridge) {
@@ -108,13 +128,19 @@ async function main(): Promise<void> {
           maxSteps: profile.maxSteps,
           browser: { headless: !options.headed },
           output: 'text',
+          trace: { dir: traceDir, runId: artifactId },
         };
         const runStartedAt = Date.now();
         const result = await client.run(task.goal, runOptions);
         const durationMs = Date.now() - runStartedAt;
+        // The v2 loop records every observation (with URL) into the trace; the
+        // last one is the episode's final page, which url_match/program_html
+        // checks are defined against.
+        const finalUrl = await extractFinalUrl(traceDir, artifactId);
         const artifact: WebArenaTrajectoryArtifact = {
           taskId: config.task_id,
           answer: result.value,
+          ...(finalUrl ? { finalUrl } : {}),
           success: result.success,
           failureReason: result.failureReason,
         };
@@ -210,6 +236,17 @@ function execCapture(command: string): Promise<string> {
       else resolve(String(stdout));
     });
   });
+}
+
+function resolveSiteBaseUrlsFromEnv(): Partial<Record<WebArenaSitePlaceholder, string>> {
+  const resolved: Partial<Record<WebArenaSitePlaceholder, string>> = {};
+  for (
+    const [placeholder, envVar] of Object.entries(WEBARENA_SITE_ENV_VARS) as Array<[WebArenaSitePlaceholder, string]>
+  ) {
+    const value = process.env[envVar]?.trim();
+    if (value) resolved[placeholder] = value;
+  }
+  return resolved;
 }
 
 main().catch(error => {

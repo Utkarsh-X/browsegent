@@ -21,3 +21,8 @@ new-keys.yaml
 .alumnium/
 *.pid
 docs/
+
+# WebArena: official dataset download + login storage states stay local;
+# manifests record their sha256 provenance instead.
+tests/benchmark/v2/webarena/source/
+tests/benchmark/v2/webarena/auth/

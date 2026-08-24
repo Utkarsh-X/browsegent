@@ -2,7 +2,12 @@ import { spawn } from 'node:child_process';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { WebArenaTaskConfig, WebArenaTrajectoryArtifact } from './webarenaTypes';
+import {
+  OFFICIAL_SITE_ENV_VARS,
+  WEBARENA_SITE_ENV_VARS,
+  type WebArenaSitePlaceholder,
+  type WebArenaTaskConfig,
+} from './webarenaTypes';
 
 export interface WebArenaEvaluatorScore {
   taskId: number;
@@ -11,22 +16,26 @@ export interface WebArenaEvaluatorScore {
 }
 
 export interface OfficialEvaluatorBridgeOptions {
-  /** Python executable used to invoke the official evaluator. Defaults to `python`. */
+  /** Python executable of the evaluator venv. Defaults to `python`. */
   pythonExecutable?: string;
+  /** Our bridge script that imports the OFFICIAL evaluation_harness from `webarenaRepoPath`. */
+  bridgeScriptPath: string;
+  /** Cloned web-arena-x/webarena checkout supplying the official evaluator code. */
+  webarenaRepoPath: string;
   /**
-   * Path to the official evaluator entry script inside the cloned
-   * WebArena repository.
+   * Resolved local site base URLs (placeholder → base). Mapped onto the official
+   * SHOPPING/REDDIT/... env vars upstream's browser_env.env_config asserts on.
    */
-  evaluatorScriptPath: string;
+  siteBaseUrls?: Partial<Record<WebArenaSitePlaceholder, string>>;
   /** Hard kill threshold for one evaluator invocation. */
   timeoutMs?: number;
   spawnImpl?: typeof spawn;
 }
 
 /**
- * Thin bridge to the OFFICIAL upstream evaluator. This module never interprets
- * correctness itself — it hands the audited upstream pipeline a config file plus
- * a trajectory artifact and relays the score it prints.
+ * Thin bridge to the OFFICIAL upstream evaluator pipeline. This module never
+ * interprets correctness itself — it stages the task config, hands our Python
+ * bridge the artifact, and relays the officially computed score.
  */
 export class OfficialEvaluatorBridge {
   constructor(private readonly options: OfficialEvaluatorBridgeOptions) {}
@@ -35,16 +44,17 @@ export class OfficialEvaluatorBridge {
     config: WebArenaTaskConfig,
     artifactPath: string,
   ): Promise<WebArenaEvaluatorScore> {
-    // Upstream CLIs take file paths, and inline JSON breaks Windows argv length
+    // Upstream opens the config by path; inline JSON breaks Windows argv length
     // limits — always stage the config on disk.
     const stagingDir = await mkdtemp(join(tmpdir(), 'webarena-eval-'));
     const configPath = join(stagingDir, 'task_config.json');
     try {
       await writeFile(configPath, JSON.stringify(config), 'utf8');
       const args = [
-        this.options.evaluatorScriptPath,
-        '--config_file', configPath,
-        '--trajectory', artifactPath,
+        this.options.bridgeScriptPath,
+        '--config-file', configPath,
+        '--artifact', artifactPath,
+        '--repo-path', this.options.webarenaRepoPath,
       ];
       const stdout = await this.spawnCapture(this.options.pythonExecutable ?? 'python', args);
       return { taskId: config.task_id, score: parseEvaluatorScore(stdout), rawStdout: stdout };
@@ -56,7 +66,10 @@ export class OfficialEvaluatorBridge {
   private spawnCapture(command: string, args: string[]): Promise<string> {
     const spawnImpl = this.options.spawnImpl ?? spawn;
     return new Promise((resolve, reject) => {
-      const child = spawnImpl(command, args, { shell: false });
+      const child = spawnImpl(command, args, {
+        shell: false,
+        env: buildOfficialEnv(process.env, this.options.siteBaseUrls),
+      });
       let stdout = '';
       let stderr = '';
       let settled = false;
@@ -85,18 +98,41 @@ export class OfficialEvaluatorBridge {
   }
 }
 
-const EVALUATOR_TIMEOUT_MS = 120_000;
+const EVALUATOR_TIMEOUT_MS = 240_000;
+
+/** Maps resolved site URLs onto the official env names upstream asserts on import. */
+export function buildOfficialEnv(
+  base: NodeJS.ProcessEnv,
+  siteBaseUrls?: Partial<Record<WebArenaSitePlaceholder, string>>,
+): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...base };
+  for (const placeholder of Object.keys(WEBARENA_SITE_ENV_VARS) as WebArenaSitePlaceholder[]) {
+    const resolved = siteBaseUrls?.[placeholder] ?? base[WEBARENA_SITE_ENV_VARS[placeholder]];
+    if (resolved?.trim()) {
+      env[OFFICIAL_SITE_ENV_VARS[placeholder]] = resolved.trim();
+    }
+  }
+  return env;
+}
 
 /**
- * Strictly parses the evaluator's reported score. Accepts a standalone numeric
- * line or an explicit "score: X"/"result = X" label; anything else throws rather
- * than silently coercing to zero. Deliberately does NOT scan arbitrary numbers —
- * log noise must never become a score.
+ * Strictly parses the bridge's single machine-readable result line
+ * (`WEBARENA_EVAL_RESULT:{"score": X}`); anything else throws rather than
+ * silently coercing to zero. Log noise must never become a score.
  */
 export function parseEvaluatorScore(stdout: string): number {
-  const labeled = stdout.match(/(?:^|\n)\s*(?:score|result)\s*[:=]\s*(\d(?:\.\d+)?)\s*(?:\n|$)/i);
-  if (labeled) return Number.parseFloat(labeled[1]);
-  const bare = stdout.match(/(?:^|\n)\s*(\d(?:\.\d+)?)\s*(?:\n|$)/);
-  if (bare) return Number.parseFloat(bare[1]);
+  for (const line of stdout.split(/\r?\n/)) {
+    const match = line.match(/^WEBARENA_EVAL_RESULT:(.+)$/);
+    if (match) {
+      try {
+        const parsed = JSON.parse(match[1]) as { score?: unknown };
+        if (typeof parsed.score === 'number' && Number.isFinite(parsed.score)) {
+          return parsed.score;
+        }
+      } catch {
+        // fall through to the throw below
+      }
+    }
+  }
   throw new Error(`unparsable_evaluator_output:${stdout.slice(0, 200)}`);
 }
