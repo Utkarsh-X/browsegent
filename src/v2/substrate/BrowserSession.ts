@@ -1,9 +1,10 @@
-import { chromium, type Browser, type Page } from 'playwright';
+import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
 
 import type { BrowserSessionOptions } from './types';
 
 export class BrowserSession {
   private browser?: Browser;
+  private context?: BrowserContext;
   private page?: Page;
   private readonly options: Required<BrowserSessionOptions>;
 
@@ -21,9 +22,26 @@ export class BrowserSession {
 
     if (this.page) {
       await this.page.close();
+      this.page = undefined;
+    }
+    if (this.context) {
+      await this.context.close();
+      this.context = undefined;
     }
 
-    this.page = await this.browser.newPage({ viewport: this.options.viewport });
+    // Opt-in authenticated sessions: benchmark runs against WebArena need the
+    // official storage states (require_login tasks). Unset env var keeps the
+    // previous behavior byte-for-byte.
+    const storageStatePath = process.env.BROWSEGENT_STORAGE_STATE?.trim();
+    if (storageStatePath) {
+      this.context = await this.browser.newContext({
+        storageState: storageStatePath,
+        viewport: this.options.viewport,
+      });
+      this.page = await this.context.newPage();
+    } else {
+      this.page = await this.browser.newPage({ viewport: this.options.viewport });
+    }
 
     let attempts = 0;
     while (attempts < 3) {
@@ -50,6 +68,12 @@ export class BrowserSession {
     this.page = undefined;
     if (page && !page.isClosed()) {
       await page.close();
+    }
+
+    const context = this.context;
+    this.context = undefined;
+    if (context) {
+      await context.close();
     }
 
     const browser = this.browser;
