@@ -4,13 +4,14 @@ import type { V2RuntimeMode } from '../v2/runtime/types';
 
 loadDotEnv();
 
-export type LlmProvider = 'gemini' | 'cerebras' | 'ollama' | 'openai';
+export type LlmProvider = 'gemini' | 'cerebras' | 'ollama' | 'openai' | 'openrouter';
 
 const DEFAULT_PROVIDER: LlmProvider = 'gemini';
 const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
 const DEFAULT_CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
 const DEFAULT_OLLAMA_MODEL = 'qwen3.5:4b';
 const DEFAULT_OPENAI_MODEL = 'gpt-4o-mini';
+const DEFAULT_OPENROUTER_MODEL = 'stealth/ox-alpha';
 
 export interface LlmSelection {
   provider: LlmProvider;
@@ -27,9 +28,11 @@ export interface RuntimeConfig {
     cerebrasModel: string;
     ollamaModel: string;
     openaiModel: string;
+    openrouterModel: string;
     geminiApiKey?: string;
     cerebrasApiKey?: string;
     openaiApiKey?: string;
+    openrouterApiKey?: string;
     ollamaBaseUrl: string;
   };
   browser: {
@@ -71,11 +74,13 @@ export function getRuntimeConfig(): RuntimeConfig {
   const cerebrasModel = getEnvString('BROWSEGENT_CEREBRAS_MODEL', DEFAULT_CEREBRAS_MODEL);
   const ollamaModel = getEnvString('BROWSEGENT_OLLAMA_MODEL', DEFAULT_OLLAMA_MODEL);
   const openaiModel = getEnvString('BROWSEGENT_OPENAI_MODEL', DEFAULT_OPENAI_MODEL);
+  const openrouterModel = getEnvString('BROWSEGENT_OPENROUTER_MODEL', DEFAULT_OPENROUTER_MODEL);
   const activeModel = getConfiguredModelForProvider(provider, {
     geminiModel,
     cerebrasModel,
     ollamaModel,
     openaiModel,
+    openrouterModel,
   });
 
   return {
@@ -87,9 +92,11 @@ export function getRuntimeConfig(): RuntimeConfig {
       cerebrasModel,
       ollamaModel,
       openaiModel,
+      openrouterModel,
       geminiApiKey: readEnv('GEMINI_API_KEY'),
       cerebrasApiKey: readEnv('CEREBRAS_API_KEY'),
       openaiApiKey: readEnv('OPENAI_API_KEY'),
+      openrouterApiKey: readEnv('OPENROUTER_API_KEY'),
       ollamaBaseUrl: getEnvString('BROWSEGENT_OLLAMA_BASE_URL', 'http://127.0.0.1:11434'),
     },
     browser: {
@@ -137,6 +144,7 @@ export function getConfiguredModelForProvider(
     cerebrasModel?: string;
     ollamaModel?: string;
     openaiModel?: string;
+    openrouterModel?: string;
   } = {},
 ): string {
   switch (provider) {
@@ -148,6 +156,8 @@ export function getConfiguredModelForProvider(
       return models.ollamaModel ?? getEnvString('BROWSEGENT_OLLAMA_MODEL', DEFAULT_OLLAMA_MODEL);
     case 'openai':
       return models.openaiModel ?? getEnvString('BROWSEGENT_OPENAI_MODEL', DEFAULT_OPENAI_MODEL);
+    case 'openrouter':
+      return models.openrouterModel ?? getEnvString('BROWSEGENT_OPENROUTER_MODEL', DEFAULT_OPENROUTER_MODEL);
   }
 }
 
@@ -214,12 +224,15 @@ function normalizeProvider(value: string): LlmProvider {
       return 'ollama';
     case 'openai':
       return 'openai';
+    case 'openrouter':
+      return 'openrouter';
     default:
-      throw new Error(`Unsupported BROWSEGENT_LLM_PROVIDER "${value}". Use gemini, cerebras, ollama, or openai.`);
+      throw new Error(`Unsupported BROWSEGENT_LLM_PROVIDER "${value}". Use gemini, cerebras, ollama, openai, or openrouter.`);
   }
 }
 
 function parsePrefixedModel(model: string): { provider: LlmProvider; model: string } | null {
+  if (model.startsWith('openrouter/')) return { provider: 'openrouter', model: model.slice('openrouter/'.length) };
   if (model.startsWith('gemini/')) return { provider: 'gemini', model: model.slice('gemini/'.length) };
   if (model.startsWith('google/gemini/')) return { provider: 'gemini', model: model.slice('google/gemini/'.length) };
   if (model.startsWith('cerebras/')) return { provider: 'cerebras', model: model.slice('cerebras/'.length) };
@@ -229,6 +242,7 @@ function parsePrefixedModel(model: string): { provider: LlmProvider; model: stri
 }
 
 function inferProviderFromModel(model: string): LlmProvider | null {
+  if (model.startsWith('stealth/') || model.startsWith('anthropic/') || model.startsWith('meta-llama/') || model.startsWith('deepseek/')) return 'openrouter';
   if (model.startsWith('gemini')) return 'gemini';
   if (model.startsWith('gpt')) return 'openai';
   if (model.startsWith('qwen')) return 'cerebras';

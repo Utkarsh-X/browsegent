@@ -26,6 +26,7 @@ export interface ProviderCallOptions {
 }
 
 export function detectProvider(model: string): LlmProvider {
+  if (model.startsWith('openrouter/') || model.startsWith('stealth/') || model.startsWith('anthropic/') || model.startsWith('meta-llama/') || model.startsWith('deepseek/')) return 'openrouter';
   if (model.startsWith('gemini') || model.startsWith('google/gemini')) return 'gemini';
   if (model.startsWith('cerebras/') || model.startsWith('qwen')) return 'cerebras';
   if (model.startsWith('ollama/')) return 'ollama';
@@ -45,6 +46,8 @@ export async function callProvider(
   const selection = resolveLlmSelection(modelOverride);
 
   switch (selection.provider) {
+    case 'openrouter':
+      return callOpenRouter(system, user, selection.model, options);
     case 'gemini':
       return callGemini(system, user, selection.model, options);
     case 'cerebras':
@@ -302,6 +305,81 @@ async function callCerebras(system: string, user: string, model: string): Promis
   }
 
   throw new Error('Cerebras API: all retries exhausted');
+}
+
+async function callOpenRouter(
+  system: string,
+  user: string,
+  model: string,
+  options: ProviderCallOptions = {},
+): Promise<ProviderResult> {
+  const apiKey = getRuntimeConfig().llm.openrouterApiKey ?? process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error('OPENROUTER_API_KEY not set in .env');
+
+  const retries = readPositiveIntEnv('BROWSEGENT_OPENROUTER_RETRIES', 6);
+  const retryBaseMs = readPositiveIntEnv('BROWSEGENT_OPENROUTER_RETRY_BASE_MS', 3000);
+  const retryMaxMs = readPositiveIntEnv('BROWSEGENT_OPENROUTER_RETRY_MAX_MS', 30000);
+  const retryCodes = new Set([429, 500, 502, 503]);
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const pacingWaitMs = await waitForGeminiRequestSlot();
+    if (pacingWaitMs > 0) options.onPacingWait?.(pacingWaitMs);
+
+    let response: Response;
+    try {
+      response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://browsegent.ai',
+          'X-Title': 'BrowseGent Benchmark',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: user },
+          ],
+          temperature: 0.1,
+          response_format: { type: 'json_object' },
+        }),
+      });
+    } catch (fetchError) {
+      if (isTransientNetworkError(fetchError) && attempt < retries) {
+        const wait = Math.min(retryMaxMs, retryBaseMs * Math.pow(2, attempt - 1));
+        logger.warn('providers', `OpenRouter network error retry ${attempt}/${retries} in ${wait}ms: ${fetchError}`);
+        await new Promise(resolve => setTimeout(resolve, wait));
+        continue;
+      }
+      throw fetchError;
+    }
+
+    if (response.ok) {
+      const data = (await response.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number };
+      };
+      const text = data.choices?.[0]?.message?.content ?? '';
+      return {
+        text,
+        inputTokens: data.usage?.prompt_tokens ?? countTokens(system + user),
+        outputTokens: data.usage?.completion_tokens ?? countTokens(text),
+      };
+    }
+
+    if (retryCodes.has(response.status) && attempt < retries) {
+      const wait = Math.min(retryMaxMs, retryBaseMs * Math.pow(2, attempt - 1));
+      logger.warn('providers', `OpenRouter ${response.status} retry ${attempt}/${retries} in ${wait}ms`);
+      await new Promise(resolve => setTimeout(resolve, wait));
+      continue;
+    }
+
+    const errorBody = await response.text().catch(() => '');
+    throw new Error(`OpenRouter API error: ${response.status}${errorBody ? ` - ${errorBody}` : ''}`);
+  }
+
+  throw new Error('OpenRouter API: all retries exhausted');
 }
 
 function readPositiveIntEnv(name: string, fallback: number): number {
