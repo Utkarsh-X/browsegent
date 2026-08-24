@@ -190,6 +190,11 @@ async function main(): Promise<void> {
           attempt,
           internalSuccess: false,
           failureReason: reason,
+          // The v2 loop throws before completing only when no scorable episode
+          // exists (e.g. browser open failed) — there is no trajectory to join
+          // against the official evaluator, so the skip is recorded explicitly
+          // rather than left as an ambiguous absent score.
+          evaluationSkipped: 'no_scorable_episode',
         });
         diagnosisRecords.push(diagnose(task.taskId, {
           site: config.sites[0] ?? 'unknown',
