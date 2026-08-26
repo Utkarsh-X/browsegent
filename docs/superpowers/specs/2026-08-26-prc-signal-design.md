@@ -4,7 +4,7 @@
 **Status:** Proposal v2 — revised per battle-test verdict, zero-compromise
 **Scope:** PRC secondary long-jump only. Primary levers (cognitive data plane `src/v2/agent/TaskEvidenceCoverage.ts:22`, outcomes `src/v2/trace/ActionOutcomeRecord.ts:30`, latency `src/v2/trace/LatencyLedger.ts:21` with `provider_pacing_wait` `src/v2/agent/V2AgentLoop.ts:108`, conditional re-observation `src/v2/agent/V2AgentLoop.ts:298`, safe multi-action `src/v2/agent/V2AgentLoop.ts:1118`) already shipped. Substrate `ObservationService.ts:41` single-evaluate and `StabilizationService.ts:13` MutationObserver are deferred to separate substrate spec. No isolated prompt patches, no Brain1/Brain2 merge.
 
-**Goal:** SOTA-range by reducing signal-to-noise. `browser-control` `D:\agent-tools\browser-control` 17,986 in/task via 12k `@e1` `src/js.rs:5`. v2 PRC v1.1.2 54,401 in/task `tests/benchmark/v2/report` with `PromptLayoutEngine.ts:98` `~140B/elem × 80`. Gap 3.06×. Verified `Wrong-Evidence 23.3%`.
+**Goal:** Improve signal-to-noise without sacrificing planner evidence. Competitor figures and wrong-evidence rates are comparison signals only, not acceptance gates; they must not drive benchmark-specific behavior or a fixed byte target.
 
 ---
 
@@ -29,39 +29,39 @@ Independent flags/commits. No pillar depends on another.
 P4/P5 rejected, substrate backlog.
 
 **Flag wiring (previously inert, now explicit):**
-*   `V2PlannerClient.ts:86` `buildV2PlannerSystemPrompt(this.plannerSerialization)` — pass `prcTierOmitted` + `compactDataPlane`.
+*   `V2PlannerClient.ts:85` `buildV2PlannerSystemPrompt(this.plannerSerialization)` — pass `prcTierOmitted` + `compactDataPlane`.
 *   `PlannerPrompt.ts:61` `buildV2PlannerUserMessage(input, config)` — when `config.mode==='prc'` pass `prcTierOmitted` and `compactDataPlane` to `new PromptLayoutEngine().render(ir, opts)`.
-*   `PlannerInputComposer.ts:22` add `workingSetOptions?: PlannerWorkingSetOptions` to `PlannerInputComposerInput`, construct `new PlannerWorkingSetSelector(input.workingSetOptions ?? this.workingSetOptions ?? {})` — no default selector that ignores options. `V2AgentLoop.ts:83` compose call passes `workingSetOptions` from `V2AgentLoopOptions` `src/v2/agent/types.ts`.
-*   Runtime enable: `V2AgentLoopOptions.plannerSerialization` and `workingSetOptions` `src/v2/agent/types.ts` → `BrowseGentV2Harness` non-hardcoded; replay tests pass `plannerSerialization:{mode:'prc', prcTierOmitted:true, compactDataPlane:true}` and `workingSetOptions:{readablePhraseBonus:60}` explicitly. No hardcoded `true` in renderer.
+*   `PlannerInputComposer.ts:27` add `workingSetOptions?: PlannerWorkingSetOptions` to `PlannerInputComposerInput`, and select with those per-call options without mutating shared selector state.
+*   Runtime enable: `plannerSerialization` already enters through `V2AgentLoopInput` and is forwarded by `BrowserAgentRunOptions`/`BrowserAgentRunner`. Add `workingSetOptions` to those same per-run input types and forward it through every `PlannerInputComposer.compose` call in `V2AgentLoop.ts`, including reconciliation/finalization. Do not add these controls to `V2AgentLoopOptions`; that type contains construction dependencies, not per-run planner configuration. No hardcoded `true` in renderer.
 
 ### P1 — Tier Only (lane and remainder region preserved)
 
 Per-element `PromptLayoutEngine.ts:98` ` [v2ref_12] <button name="Search term" lane="interaction" tier="top" region="region_repeated_1" text="Search term" tools="c" />` `~140B`. `renderDecisionSignals` already omits action-surface list `PromptLayoutEngine.ts:128`.
 
 *Change behind `prcTierOmitted` — scope explicitly `tier` only:*
-*   Drop `tier="top|high|mid|low"` `PromptLayoutEngine.ts:104` only. **Retain `lane`** `PromptLayoutEngine.ts:103` — `mixed` vs `readable` not derivable from `tools`. **Retain `region` for `remainder` elements** `PromptLayoutEngine.ts:91` where group header does not cover them; for grouped elements region stays in header `PromptLayoutEngine.ts:88` only. Keep `v2ref_N`, `kind`, `name`, `tools c/t/s/r/a`, `score s=`. Suppress `text` only when `text===name` `PlannerRepresentationCompiler.ts:143`.
-*   Result ` [v2ref_12] <button name="Search term" lane="interaction" tools="c" s=115 />` `~85B` `1.8×` `ProjectionSizeDiagnostics.ts:12`.
+*   Drop `tier="top|high|mid|low"` `PromptLayoutEngine.ts:104` only. **Retain `lane`** `PromptLayoutEngine.ts:103` — `mixed` vs `readable` is not derivable from `tools`. **Retain `region` for `remainder` elements** `PromptLayoutEngine.ts:91` where group header does not cover them; grouped elements may rely on the group header. Keep `v2ref_N`, `kind`, `name`, and `tools c/t/s/r/a`. In the flagged representation only, emit the existing numeric score as compact `s=` so removing tier does not remove ranking information. Suppress `text` only when `text===name` `PlannerRepresentationCompiler.ts:143`.
+*   The result shape is illustrative only; measure actual bytes after implementation. With the flag omitted or false, rendering must remain byte-equivalent to the current renderer.
 
 *Preservation:* `surfaceRefCount` equal, `tools c/t/s/r/a` per ref equal, `lane` per ref equal, `region` for `remainder` equal, `selectOptions` equal, `actionRefCoverage=1.0 readRefCoverage=1.0` `src/v2/planner/CompactPlannerView.ts:186`.
 
 ### P2 — Selector-Pipeline Fix + Lane-Scoped `+60`
 
-Root cause: `candidates = projection.interactions.map(scoreCandidate)` `PlannerWorkingSetSelector.ts:59`, `readableEvidence` filtered by `selectedSet` `PlannerWorkingSetSelector.ts:256`, `buildReadableEvidence` capped in **projection order** `projection.readables.slice(0, maxReadableEvidence)` not candidate-score order, so `top 5` guarantee false even if score boosted. Plus `classifyLowValue` `PlannerWorkingSetSelector.ts:217` `offscreen_low_value`/`generic_low_value` dropped `generic` `gridcell` before `goal_phrase` bonus.
+Root cause: `readableEvidence` is filtered by `selectedSet` `PlannerWorkingSetSelector.ts:256`, while `classifyLowValue` `PlannerWorkingSetSelector.ts:217` drops generic offscreen semantic content before it can contribute to selection. `ProjectionService` currently includes all observed refs in `projection.interactions`, so do not expand the candidate pool. `buildReadableEvidence` also caps in **projection order** rather than candidate-score order, so a score boost cannot reliably affect the evidence cap.
 
 *Change behind `readablePhraseBonus=60`:*
-1.  Exempt `role radio|checkbox|option|gridcell` with non-empty `name|text|aria-label` from `generic_low_value` and `offscreen_low_value` `PlannerWorkingSetSelector.ts:217` — never low-value.
-2.  Lane-scoped bonus in `scoreCandidate` `PlannerWorkingSetSelector.ts:168`: if `readableSet.has(item.refId)` `projection.readables` then `goal_phrase_match + (readablePhraseBonus ?? 30)` else `+30`. `60` not `90` to avoid equalling `recently_appeared +90`.
-3.  Fix capping order: `buildReadableEvidence` must sort `projection.readables.filter(selectedSet)` by **candidate score order** `compareCandidates` `PlannerWorkingSetSelector.ts:209` (or by `selectedRefIds` score order) before `slice(0, maxReadableEvidence)`, not projection order. Also ensure exempt `gridcell` offscreen with `hasText` bypasses `shouldKeepCandidate` `PlannerWorkingSetSelector.ts:205` via `classifyLowValue` returning `undefined`.
+1.  Normalize `item.role` with `trim().toLowerCase()` and exempt only named `radio|checkbox|option|gridcell` items from `generic_low_value` and `offscreen_low_value` `PlannerWorkingSetSelector.ts:217`. The current projection item has no separate `aria-label` field; use the normalized `name|text` values. Empty generic items remain droppable, and existing hidden-empty behavior remains unchanged.
+2.  Lane-scoped bonus in `scoreCandidate` `PlannerWorkingSetSelector.ts:168`: membership in `projection.readables` is the readable lane for this purpose; it does not claim the ref is read-only. When `readablePhraseBonus` is explicitly `60`, a goal phrase match in that lane receives `+60`, while non-readable candidates retain the existing `+30`. With the option omitted, preserve current scoring.
+3.  Fix capping order: in the flagged path, `buildReadableEvidence` must sort `projection.readables.filter(selectedSet)` by the candidate score map/order before `slice(0, maxReadableEvidence)`, not projection order. Ensure an exempt offscreen named `gridcell` survives candidate filtering and enters `selectedSet`; do not expand the candidate pool or uncap the overall working set.
 
-Offscreen phrase readable `60 lex+60 phrase=120 > visible generic 100` now top 5 by score, enters `selectedSet` then `readableEvidence` top 5 by score. Recently appeared actionable in clickable lane keeps `+90`.
+An offscreen phrase-matching readable can now compete by its explicit score and enter the bounded evidence set; recently appeared actionable refs retain their existing recency priority. Do not encode a fixed synthetic score relationship as a production requirement.
 
-*Why +60:* `+90` ties temporal `Booking__0` `refChanges.appeared` `PlannerWorkingSetSelector.ts:133`; `+60` preserves recency.
+*Why +60:* it is an explicit, caller-controlled boost that improves goal-relevant readable evidence without making it equal to the existing recency bonus. The value is a selector experiment, not a benchmark-derived contract.
 
-*Preservation:* synthetic offscreen `gridcell gridcell "Dec 25"` goal `Book Dec 25` must be in `readableEvidence` and `selectedRefIds`; empty `gridcell` still dropped; hidden still dropped.
+*Preservation:* synthetic offscreen named `gridcell` goal evidence must be in `readableEvidence` and `selectedRefIds`; empty generic content remains dropped and hidden-empty content remains dropped.
 
 ### P3 — Compact Data Plane Behind Flag With Full Preservation
 
-`PromptLayoutEngine.ts:4` `MISSION+STATE+RECENT+EVIDENCE+PROBLEMS+SURFACE+WORKING_SET+DECISION` keeps every field `PlannerInputComposer.ts:51` but behind `compactDataPlane` renders `S:` `LAST:` `EVIDENCE:` `W:` one-liners. `PlannerPrompt.ts:5` co-updated same commit.
+`PromptLayoutEngine.ts:4` keeps the same semantic blocks but, behind `compactDataPlane`, renders compact `S:`/`LAST:`/`EVIDENCE:`/`W:` lines. `PlannerPrompt.ts:5` is co-updated in the same commit so the model receives the compact syntax contract. Before rendering, extend `WorkingSetIR` in `src/v2/planner/prc/types.ts` and copy the fields in `PlannerRepresentationCompiler.ts`; otherwise the renderer cannot preserve data that the current compiler drops.
 
 *Preservation — rendered output must preserve:*
 *   `supportingReadIndexes` `TaskEvidenceCoverage.ts:51` per requirement,
@@ -69,13 +69,13 @@ Offscreen phrase readable `60 lex+60 phrase=120 > visible generic 100` now top 5
 *   `failures` `PlannerInputComposer.ts:54` list,
 *   `quarantine` `PlannerWorkingSetSelector.ts:286`,
 *   `changedRefs` `PlannerWorkingSetSelector.ts:430` counts + `topRefs`,
-*   `answerFeedback` `PlannerInputComposer.ts:57` `missingDetails`,
+*   `answerFeedback` `PlannerInputComposer.ts:57` bounded `previousAnswer`/`instruction` plus `missingDetails`,
 *   `deadState` `PlannerInputComposer.ts:55` `reasons/failureKinds`,
-*   `lineage` `PlannerInputComposer.ts:60` `totalSteps`.
+*   `lineage` `PlannerInputComposer.ts:60` `totalSteps`, `truncated`, and a bounded last-step summary when available.
 
-Checking `ir.execution` bit-equal is insufficient — must assert **rendered string** `PromptLayoutEngine.render` with flag true contains each of above substrings/values, and legacy string with flag false still contains `STATE` etc.
+Checking `ir.execution` bit-equal is insufficient. Assert the **rendered string** with flag true contains unique sentinel values for every listed field, including each action-surface lane and the bounded answer/lineage values. The legacy string with flag false must still contain the existing `STATE`/`WORKING SET` shape and must not silently lose fields.
 
-Byte gate `maxPlannerInputBytes` down with `maxWorkingSetObservedRefs` unchanged `diagnostics.ts:53`.
+The compact output must be shorter than the equivalent legacy PRC output for the preservation fixture, while retaining the required fields. Do not require a fixed percentage or absolute byte count. Keep `maxWorkingSetObservedRefs` unchanged `diagnostics.ts:53`.
 
 ### Deferred P4/P5
 
@@ -87,12 +87,12 @@ Keep hard gate `InputService.ts:206`, `V2AgentLoop.ts:401` validated finalizatio
 
 ```
 ObservationService.COLLECT → RefService.assign →
-ProjectionService.project → PlannerWorkingSetSelector.select (P2 flag via workingSetOptions, readablePhraseBonus lane-scoped, gridcell exempt, score-sorted readableEvidence) →
-PlannerInputComposer.compose (pass workingSetOptions, pass plannerSerialization flags) →
+ProjectionService.project → PlannerWorkingSetSelector.select (P2 opt-in via per-run workingSetOptions, readablePhraseBonus lane-scoped, named semantic gridcell handling, score-sorted readableEvidence) →
+PlannerInputComposer.compose (pass per-run workingSetOptions) →
 PlannerRepresentationCompiler.compile →
 PromptLayoutEngine.render (P1 tier flag, P3 compact flag, lane & remainder region preserved) →
 V2PlannerClient.call (pass plannerSerialization to buildV2PlannerSystemPrompt + buildV2PlannerUserMessage → PromptLayoutEngine) →
-V2AgentLoop dispatch (V2AgentLoopOptions.plannerSerialization/workingSetOptions non-hardcoded)
+V2AgentLoop dispatch (V2AgentLoopInput.plannerSerialization/workingSetOptions non-hardcoded; public BrowserAgentRunOptions forwards both)
 ```
 
 Flags in `PlannerSerializationConfig` and `PlannerWorkingSetOptions`.
@@ -103,9 +103,9 @@ Flags in `PlannerSerializationConfig` and `PlannerWorkingSetOptions`.
 
 | Dimension | Before | After P1+P2+P3 | Preservation Gate |
 | :--- | :---: | :---: | :--- |
-| Surface/elem | ~140B | ~85B tier only, lane & remainder region kept | `lane` & `region remainder` equal |
-| Metadata/call | 2.2KB | ~0.6KB `S:/W:` | rendered `supportingReadIndexes, c/t/s/r/a, failures, quarantine, changedRefs, answerFeedback, deadState, lineage` present |
-| Input/task | 54k | ~38-42k | `maxPlannerInputBytes` down |
+| Surface/elem | Current renderer | Flagged renderer may omit tier and compact duplicate text | `lane` & `region remainder` equal; legacy output unchanged when flags are false |
+| Metadata/call | Current PRC output | Compact `S:/W:` data plane | rendered `supportingReadIndexes, c/t/s/r/a, failures, quarantine, changedRefs, answerFeedback, deadState, lineage` present |
+| Input/task | Measured baseline | Must be measured after implementation | equivalent compact PRC prompt is smaller without reducing bounded evidence |
 | Offscreen phrase `gridcell` | omitted | in `readableEvidence` top 5 score-sorted | synthetic gridcell test |
 | Capabilities `c/t/s/r/a` | present | present | per-ref `actionSurface` bit-equal |
 | Recovery `blockedAction` | present | present compact `rec:` | rendered `rec:` contains |
@@ -123,9 +123,9 @@ No `strict` or Booking gate.
 
 ## 5. Testing — Independent Flags/Commits
 
-*   **P1 commit `prcTierOmitted`:** unit `promptLayoutEngine.test.ts` lane retained, tier absent when `prcTierOmitted:true` (must pass `true` explicitly, fail test otherwise invalid), `s=` kept, `region` for `remainder` kept, `surfaceRefCount` equal, `actionRefCoverage=1.0`. Flag enabled via `render(ir, {prcTierOmitted:true})` non-hardcoded.
-*   **P2 commit `readablePhraseBonus`:** synthetic offscreen `gridcell` `readableEvidence` inclusion score-sorted top 5, empty still dropped, hidden still dropped, `plannerWorkingSetSelector` with `new PlannerWorkingSetSelector({readablePhraseBonus:60})` non-hardcoded, trace `readableEvidence` contains phrase ref.
-*   **P3 commit `compactDataPlane`:** unit `promptLayoutEngine.test.ts` compact `S:`/`W:`/`EVIDENCE:` contains `supportingReadIndexes, c/t/s/r/a, failures, quarantine, changedRefs, answerFeedback, deadState, lineage`, legacy `STATE` with flag false, `buildV2PlannerSystemPrompt({compactDataPlane:true})` describes `S:/W:`. Runtime enable via `V2AgentLoopOptions.plannerSerialization:{mode:'prc', prcTierOmitted:true, compactDataPlane:true}` + `workingSetOptions:{readablePhraseBonus:60}` non-hardcoded.
+*   **P1 commit `prcTierOmitted`:** unit `promptLayoutEngine.test.ts` asserts exact default-vs-explicit-false byte-equivalence; with `prcTierOmitted:true`, tier is absent, flagged-only `s=` is present, lane/remainder region/tools/options/ref IDs are retained, and the rendered ref count is unchanged. Flag enabled via `render(ir, {prcTierOmitted:true})` non-hardcoded.
+*   **P2 commit `readablePhraseBonus`:** synthetic offscreen named `gridcell` readable evidence is selected within the configured cap in score order; empty generic content remains dropped; role matching is normalized; and the explicit `new PlannerWorkingSetSelector({readablePhraseBonus:60})` path is tested. Also test the per-call composer option without changing default behavior.
+*   **P3 commit `compactDataPlane`:** compiler/IR tests prove the four added working-set fields are copied; renderer tests use unique sentinel values and exact assertions for `supportingReadIndexes`, per-ref `c/t/s/r/a`, failures, quarantine, changed refs, answer feedback, dead state, and lineage. Legacy output remains unchanged with flags false, and `buildV2PlannerSystemPrompt({compactDataPlane:true})` documents `S:/W:`. The byte gate compares actual `buildV2PlannerUserMessage(..., {mode:'prc', compactDataPlane:false})` against the same call with `compactDataPlane:true`; it must be smaller without dropping sentinels. Runtime enable is through `BrowserAgentRunOptions` → `V2AgentLoopInput`, not `V2AgentLoopOptions`.
 
 `npm run test:unit:v2` 45/45 must stay when flags false.
 
@@ -143,4 +143,3 @@ No `strict` or Booking gate.
 ## 7. Open Items — None Blocking PRC Spec
 
 *P4/P5* backlog. Dynamic control deferred — fixed behind flag.
-

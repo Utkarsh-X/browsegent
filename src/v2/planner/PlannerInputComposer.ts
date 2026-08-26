@@ -25,7 +25,10 @@ export class PlannerInputComposer {
   private readonly recoveryStateBuilder = new RecoveryStateBuilder();
 
   compose(input: PlannerInputComposerInput): PlannerInput {
-    const workingSetSelection = this.workingSetSelector.select({
+    const workingSetSelector = input.workingSetOptions
+      ? new PlannerWorkingSetSelector(input.workingSetOptions)
+      : this.workingSetSelector;
+    const workingSetSelection = workingSetSelector.select({
       goal: input.goal,
       projection: input.projection,
       graphSnapshot: input.graphSnapshot,

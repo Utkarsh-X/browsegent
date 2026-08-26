@@ -6,7 +6,11 @@ import type { DeadStateEvidence } from '../runtime/DeadStateDetector';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { RuntimeUncertainty } from '../runtime/UncertaintySignals';
 import type { PlannerRecoveryState } from '../runtime/RecoveryState';
-import type { PlannerWorkingSet, PlannerWorkingSetDiagnostics } from './workingSetTypes';
+import type {
+  PlannerWorkingSet,
+  PlannerWorkingSetDiagnostics,
+  PlannerWorkingSetOptions,
+} from './workingSetTypes';
 import type { ProjectionSizeDiagnostics } from './ProjectionSizeDiagnostics';
 
 export type PlannerOutputTool =
@@ -44,6 +48,7 @@ export interface PlannerInputComposerInput {
   runtimeUncertainty?: RuntimeUncertainty;
   answerFeedback?: PlannerAnswerFeedback;
   evidenceCoverage?: PlannerEvidenceCoverage;
+  workingSetOptions?: PlannerWorkingSetOptions;
 }
 
 export interface PlannerInput {
@@ -222,4 +227,8 @@ export type PlannerSerializationMode = 'json' | 'prc';
 export interface PlannerSerializationConfig {
   /** @default 'json' */
   mode: PlannerSerializationMode;
+  /** Omit per-element score tiers in the opt-in PRC representation. */
+  prcTierOmitted?: boolean;
+  /** Render the compact PRC data-plane layout. */
+  compactDataPlane?: boolean;
 }

@@ -168,3 +168,32 @@ test('PRC compiler compiles tools attribute based on actionSurface compatibility
   assert.deepEqual(el?.tools, ['c', 't', 'r', 'a']);
 });
 
+test('PRC compiler preserves working-set evidence, changes, quarantine, and regions', () => {
+  const input = makeInput();
+  input.workingSet!.readableEvidence = [{
+    refId: 'v2ref_1',
+    text: 'readable sentinel',
+    reasons: ['answer_candidate'],
+  }];
+  input.workingSet!.changedRefs = {
+    appearedCount: 1,
+    weakenedCount: 2,
+    preservedCount: 3,
+    topRefs: [input.workingSet!.primaryRefs[0]],
+    omittedCount: 4,
+  };
+  input.workingSet!.quarantinedActions = [{
+    refId: 'v2ref_2',
+    tool: 'get',
+    failureKind: 'same_value',
+    retryable: false,
+    persistence: 'persistent',
+  }];
+
+  const ir = new PlannerRepresentationCompiler().compile(input);
+  assert.deepEqual(ir.workingSet?.readableEvidence, input.workingSet!.readableEvidence);
+  assert.deepEqual(ir.workingSet?.changedRefs, input.workingSet!.changedRefs);
+  assert.deepEqual(ir.workingSet?.quarantinedActions, input.workingSet!.quarantinedActions);
+  assert.deepEqual(ir.workingSet?.regionSummaries, input.workingSet!.regionSummaries);
+});
+

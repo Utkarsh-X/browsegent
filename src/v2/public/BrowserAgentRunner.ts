@@ -48,6 +48,7 @@ export class BrowserAgentRunner {
       model: options.model ?? this.options.defaultModel,
       ...(options.plannerMode !== undefined ? { plannerMode: options.plannerMode } : {}),
       ...(options.plannerSerialization !== undefined ? { plannerSerialization: options.plannerSerialization } : {}),
+      ...(options.workingSetOptions !== undefined ? { workingSetOptions: options.workingSetOptions } : {}),
     });
 
     return applyOutputMode(loopResult, options, warnings);

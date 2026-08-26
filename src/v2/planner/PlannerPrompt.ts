@@ -2,8 +2,10 @@ import type { PlannerInput, PlannerSerializationConfig } from './types';
 import { PlannerRepresentationCompiler } from './prc/PlannerRepresentationCompiler';
 import { PromptLayoutEngine } from './prc/PromptLayoutEngine';
 
-export function buildV2PlannerSystemPrompt(): string {
-  return `You are the BrowseGent v2 planner.
+export function buildV2PlannerSystemPrompt(
+  config: Pick<PlannerSerializationConfig, 'prcTierOmitted' | 'compactDataPlane'> = {},
+): string {
+  const base = `You are the BrowseGent v2 planner.
 
 You are the only semantic cognition layer. Runtime systems only provide operational evidence.
 
@@ -56,6 +58,12 @@ If the goal asks you to report an operational failure, block, or unavailable act
 When the input workingSet.mode is extract, verify, or done_candidate and useful evidence is present, prefer done or escalate over more browser actions. In finalization mode, plans are invalid; return only done or escalate.
 
 Use refs from the planner input. Selectors are not valid v2 planner output.`;
+
+  if (!config.compactDataPlane) return base;
+
+  return `${base}
+
+PRC compact data-plane notation is enabled for this request. Read the compact S:/LAST:/EVIDENCE:/W: markers plus SURFACE:/PROBLEMS: lines. SURFACE keeps ref IDs, element kinds, names, roles, lanes, scores, state, failures, options, and tools. W keeps primary/secondary/navigation/failed refs, c/t/s/r/a action lanes, readable evidence, changed refs, quarantine, regions, and omitted counts. EVIDENCE keeps supporting read indexes; LAST keeps bounded lineage; PROBLEMS keeps answer feedback, dead state, recovery, and failures. Do not infer that abbreviated formatting means omitted evidence.`;
 }
 
 export function buildV2PlannerUserMessage(
@@ -64,7 +72,10 @@ export function buildV2PlannerUserMessage(
 ): string {
   if (config.mode === 'prc') {
     const ir = new PlannerRepresentationCompiler().compile(input);
-    return `Planner input:\n${new PromptLayoutEngine().render(ir)}`;
+    return `Planner input:\n${new PromptLayoutEngine().render(ir, {
+      prcTierOmitted: config.prcTierOmitted,
+      compactDataPlane: config.compactDataPlane,
+    })}`;
   }
 
   return `Planner input JSON:\n${JSON.stringify(input)}`;

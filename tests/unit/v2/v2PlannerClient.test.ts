@@ -1043,6 +1043,31 @@ test('V2PlannerClient uses JSON serialization by default and switches to PRC whe
   );
 });
 
+test('V2PlannerClient forwards compact PRC serialization to both prompt builders', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  let capturedSystem = '';
+  let capturedUser = '';
+  const client = new V2PlannerClient({
+    plannerSerialization: { mode: 'prc', prcTierOmitted: true, compactDataPlane: true },
+    provider: async (system, user) => {
+      capturedSystem = system;
+      capturedUser = user;
+      return {
+        text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+        inputTokens: 1,
+        outputTokens: 1,
+      };
+    },
+  });
+
+  await client.call({ plannerInput: makePlannerInput('episode_compact_prc') });
+
+  assert.match(capturedSystem, /compact data-plane notation/i);
+  assert.match(capturedUser, /^Planner input:\nS:/);
+  assert.doesNotMatch(capturedUser, /tier="/);
+  assert.match(capturedUser, /s=10/);
+});
+
 test('V2PlannerClient records provider payload byte summaries without raw prompts', async () => {
   const { V2PlannerClient } = await loadPlannerClientModule();
   const { traceDir, store } = await freshTraceStore('planner_client_provider_payload');

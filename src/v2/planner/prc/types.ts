@@ -9,7 +9,16 @@ import type {
   CompressedLineage,
 } from '../types';
 import type { PlannerRecoveryState } from '../../runtime/RecoveryState';
-import type { PlannerActionSurface, WorkingSetDropReason, WorkingSetIncludeReason, WorkingSetMode } from '../workingSetTypes';
+import type {
+  PlannerActionSurface,
+  PlannerChangedRefsSummary,
+  PlannerQuarantinedAction,
+  PlannerWorkingSetEvidence,
+  PlannerWorkingSetRegionSummary,
+  WorkingSetDropReason,
+  WorkingSetIncludeReason,
+  WorkingSetMode,
+} from '../workingSetTypes';
 
 export type PlannerElementLane = 'interaction' | 'readable' | 'navigation' | 'mixed';
 export type PlannerScoreTier = 'top' | 'high' | 'mid' | 'low';
@@ -71,6 +80,10 @@ export interface WorkingSetIR {
   secondary: Array<{ refId: string; reasons: WorkingSetIncludeReason[] }>;
   navigation: Array<{ refId: string; reasons: WorkingSetIncludeReason[] }>;
   failed: Array<{ refId: string; reasons: WorkingSetIncludeReason[] }>;
+  readableEvidence: PlannerWorkingSetEvidence[];
+  changedRefs: PlannerChangedRefsSummary;
+  quarantinedActions: PlannerQuarantinedAction[];
+  regionSummaries: PlannerWorkingSetRegionSummary[];
   /** Operational action surface — available for working-set reasoning */
   actionSurface?: PlannerActionSurface;
   omitted?: { observed: number; selected: number; dropped: number; byReason: Partial<Record<WorkingSetDropReason, number>> };

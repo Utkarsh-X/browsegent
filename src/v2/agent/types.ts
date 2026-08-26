@@ -4,6 +4,7 @@ import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { BrowserSessionOptions } from '../substrate/types';
 import type { TraceArtifact, TraceManifest } from '../trace/types';
 import type { V2ToolDispatchContext, V2ToolDispatcherLike, V2ToolRuntime } from '../tools/types';
+import type { PlannerWorkingSetOptions } from '../planner/workingSetTypes';
 
 export interface V2AgentLoopInput {
   url: string;
@@ -12,6 +13,7 @@ export interface V2AgentLoopInput {
   model?: string;
   plannerMode?: 'current' | 'compact_enforced';
   plannerSerialization?: PlannerSerializationConfig;
+  workingSetOptions?: PlannerWorkingSetOptions;
 }
 
 export interface V2AgentLoopResult {

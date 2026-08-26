@@ -609,3 +609,30 @@ test('PlannerInputComposer carries compact task evidence coverage without raw re
   });
   assert.equal(JSON.stringify(input).includes('raw read text'), false);
 });
+
+test('PlannerInputComposer applies working-set options per call without changing the shared default', () => {
+  const observation = makeObservation({
+    observationId: 'obs_working_set_options',
+    refs: [
+      makeRef({ refId: 'ref_primary', name: 'Primary', text: 'Primary' }),
+      makeRef({ refId: 'ref_secondary', targetId: 'target_secondary', name: 'Secondary', text: 'Secondary' }),
+    ],
+  });
+  const projection = new ProjectionService().project(observation);
+  const composer = new PlannerInputComposer();
+
+  const defaultInput = composer.compose({
+    episodeId: 'episode_working_set_default',
+    goal: 'Inspect controls',
+    projection,
+  });
+  const boundedInput = composer.compose({
+    episodeId: 'episode_working_set_bounded',
+    goal: 'Inspect controls',
+    projection,
+    workingSetOptions: { maxPrimaryRefs: 1, maxSecondaryRefs: 0 },
+  });
+
+  assert.equal(defaultInput.workingSetDiagnostics?.selectedRefCount, 2);
+  assert.equal(boundedInput.workingSetDiagnostics?.selectedRefCount, 1);
+});

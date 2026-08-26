@@ -14,6 +14,7 @@ import { PlannerInputComposer } from '../planner/PlannerInputComposer';
 import { V2PlannerClient } from '../planner/V2PlannerClient';
 import { CompactPlannerClient } from '../planner/CompactPlannerClient';
 import type { PlannerAnswerFeedback, PlannerInput, PlannerOutput, PlannerSerializationConfig, PlannerOutputStep } from '../planner/types';
+import type { PlannerWorkingSetOptions } from '../planner/workingSetTypes';
 import {
   buildCompactPlannerView,
   buildPlainInteractiveSnapshotBaseline,
@@ -94,6 +95,7 @@ export class V2AgentLoop {
           runtimeUncertainty,
           answerFeedback,
           evidenceCoverage,
+          workingSetOptions: input.workingSetOptions,
         });
         harness.recordPlannerInput?.(plannerInput.episodeId, plannerInput);
         ledger.recordPhase('local_compute', Date.now() - composeStart);
@@ -402,6 +404,7 @@ export class V2AgentLoop {
         const finalizationResult = await this.attemptFinalization(
           harness, plannerClient, observation, graphSnapshot,
           input.goal, lastSuccessfulEvidenceValue, readEvidenceHistory, metrics, ledger, outcomeRecorder,
+          input.workingSetOptions,
         );
         if (finalizationResult) return finalizationResult;
 
@@ -505,6 +508,7 @@ export class V2AgentLoop {
     metrics: { plannerCalls: number; inputTokens: number; outputTokens: number; plannerDurationMs: number; toolExecutions: number },
     ledger?: LatencyLedger,
     outcomeRecorder?: ActionOutcomeRecorder,
+    workingSetOptions?: PlannerWorkingSetOptions,
   ): Promise<V2AgentLoopResult | undefined> {
     const projection = this.projectionService.project(observation, graphSnapshot);
     const evidenceCoverage = buildTaskEvidenceCoverage(goal, readEvidenceHistory);
@@ -522,6 +526,7 @@ export class V2AgentLoop {
       projection,
       graphSnapshot,
       evidenceCoverage,
+      workingSetOptions,
     });
     harness.recordPlannerInput?.(finalizationInput.episodeId, finalizationInput);
     metrics.plannerCalls += 1;
@@ -590,6 +595,7 @@ export class V2AgentLoop {
           metrics,
           ledger,
           outcomeRecorder,
+          workingSetOptions,
         });
         return await this.complete(harness, {
           success: true,
@@ -628,6 +634,7 @@ export class V2AgentLoop {
     metrics: { plannerCalls: number; inputTokens: number; outputTokens: number; plannerDurationMs: number; toolExecutions: number };
     ledger?: LatencyLedger;
     outcomeRecorder?: ActionOutcomeRecorder;
+    workingSetOptions?: PlannerWorkingSetOptions;
   }): Promise<string> {
     const grounding = detectAnswerEvidenceConflicts(input.draftAnswer, input.validationEvidence);
     if (grounding.conflicts.length === 0) {
@@ -651,6 +658,7 @@ export class V2AgentLoop {
       projection,
       graphSnapshot: input.graphSnapshot,
       evidenceCoverage: input.evidenceCoverage,
+      workingSetOptions: input.workingSetOptions,
     });
     input.harness.recordPlannerInput?.(reconciliationInput.episodeId, reconciliationInput);
     input.metrics.plannerCalls += 1;

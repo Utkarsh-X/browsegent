@@ -96,6 +96,15 @@ test('buildV2PlannerSystemPrompt describes finalization constraints', () => {
   assert.match(prompt, /In finalization mode, plans are invalid/i);
 });
 
+test('buildV2PlannerSystemPrompt documents compact PRC markers and preserved fields', () => {
+  const prompt = buildV2PlannerSystemPrompt({ compactDataPlane: true });
+
+  assert.match(prompt, /compact data-plane notation/i);
+  assert.match(prompt, /S:\/LAST:\/EVIDENCE:\/W:/);
+  assert.match(prompt, /supporting read indexes/i);
+  assert.match(prompt, /bounded lineage/i);
+});
+
 test('buildV2PlannerSystemPrompt requires complete multi-detail answers before done', () => {
   const prompt = buildV2PlannerSystemPrompt();
   assert.match(prompt, /multiple details/i);
@@ -152,6 +161,18 @@ test('buildV2PlannerUserMessage renders PRC when explicitly requested', () => {
   assert.match(message, /^Planner input:\nMISSION/);
   assert.match(message, /PLANNER SURFACE/);
   assert.doesNotMatch(message, /"visibility":"visible"/);
+});
+
+test('buildV2PlannerUserMessage renders compact PRC only when requested', () => {
+  const input = makeMinimalPlannerInputForPromptTest();
+  const message = buildV2PlannerUserMessage(input, {
+    mode: 'prc',
+    compactDataPlane: true,
+  });
+
+  assert.match(message, /^Planner input:\nS:/);
+  assert.match(message, /SURFACE:/);
+  assert.match(message, /\[ref_docs\]/);
 });
 
 test('buildV2PlannerUserMessage treats explicit undefined mode as JSON', () => {
