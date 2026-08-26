@@ -1,14 +1,21 @@
 import type { PlannerElementIR, PlannerRepresentationIR } from './types';
 
 export class PromptLayoutEngine {
-  render(ir: PlannerRepresentationIR): string {
+  render(
+    ir: PlannerRepresentationIR,
+    options: { prcTierOmitted?: boolean; compactDataPlane?: boolean } = {},
+  ): string {
+    if (options.compactDataPlane) {
+      return renderCompactDataPlane(ir, options);
+    }
+
     return [
       renderMission(ir),
       renderState(ir),
       renderRecentEvents(ir),
       renderEvidenceCoverage(ir),
       renderProblems(ir),
-      renderSurface(ir),
+      renderSurface(ir, options),
       renderWorkingSet(ir),
       renderDecisionSignals(ir),
     ].filter(Boolean).join('\n\n');
@@ -17,6 +24,132 @@ export class PromptLayoutEngine {
 
 function renderMission(ir: PlannerRepresentationIR): string {
   return `MISSION\n  goal: ${ir.execution.goal}`;
+}
+
+function renderCompactDataPlane(
+  ir: PlannerRepresentationIR,
+  options: { prcTierOmitted?: boolean },
+): string {
+  return [
+    renderCompactState(ir),
+    renderCompactLast(ir),
+    renderCompactEvidence(ir),
+    renderCompactProblems(ir),
+    renderCompactSurface(ir, options),
+    renderCompactWorkingSet(ir),
+  ].filter(Boolean).join('\n');
+}
+
+function renderCompactState(ir: PlannerRepresentationIR): string {
+  const page = ir.execution.page
+    ? ` page="${escapeAttr(compactValue(ir.execution.page.title, 160))}" url="${escapeAttr(compactValue(ir.execution.page.url, 512))}"`
+    : '';
+  const continuity = ir.execution.continuity
+    ? ` obs=${ir.execution.continuity.observationId ?? 'unknown'} gen=${ir.execution.continuity.generationId ?? 'unknown'} refs=${ir.execution.continuity.presentRefCount}`
+    : '';
+  const focus = ir.execution.focus ? ` focus=${ir.execution.focus.refId}` : '';
+  return `S: goal="${escapeAttr(compactValue(ir.execution.goal, 320))}"${page}${continuity}${focus}`;
+}
+
+function renderCompactLast(ir: PlannerRepresentationIR): string {
+  const parts: string[] = [];
+  const last = ir.execution.lastResult;
+  if (last) {
+    parts.push(`result=${last.kind}:${last.success ? 'ok' : `failed:${last.error?.code ?? 'unknown'}`}`);
+    if (last.targetRef) parts.push(`target=${last.targetRef}`);
+    if (last.valuePreview) parts.push(`value="${escapeAttr(compactValue(last.valuePreview))}"`);
+  }
+  const transition = ir.execution.transition;
+  if (transition) {
+    const counts = transition.refChangeCounts;
+    parts.push(`transition=${transition.transitionClass}:${transition.strength}`);
+    parts.push(`changes=${counts.appeared}/${counts.disappeared}/${counts.weakened}/${counts.preserved}`);
+  }
+  const lineage = ir.execution.lineage;
+  if (lineage) {
+    parts.push(`lineage=total=${lineage.totalSteps}${lineage.truncated ? ':truncated' : ''}`);
+    if (lineage.steps.length > 0) {
+      parts.push(`steps=${lineage.steps.map(step => [
+        step.stepId,
+        step.index,
+        step.kind,
+        step.status,
+        step.targetRef,
+        step.errorCode,
+      ].filter(value => value !== undefined).join(':')).join(',')}`);
+    }
+  }
+  return parts.length > 0 ? `LAST: ${parts.join(' ')}` : '';
+}
+
+function renderCompactEvidence(ir: PlannerRepresentationIR): string {
+  const coverage = ir.execution.evidenceCoverage;
+  if (!coverage) return '';
+  const requirements = coverage.requirements.map(requirement =>
+    `${requirement.key}:${requirement.status}@${requirement.supportingReadIndexes.join(',') || '-'}`,
+  );
+  return `EVIDENCE: contract=${escapeAttr(coverage.contractKind)} state=${coverage.status} reads=${coverage.readCount}${requirements.length ? ` requirements=${requirements.join(';')}` : ''}`;
+}
+
+function renderCompactProblems(ir: PlannerRepresentationIR): string {
+  const parts: string[] = [];
+  for (const failure of ir.execution.failures) {
+    parts.push(`failure=${failure.targetRef ?? 'none'}:${failure.kind}:${failure.persistence}:${failure.retryable ? 'retryable' : 'final'}`);
+  }
+  if (ir.execution.deadState) {
+    parts.push(`dead=${ir.execution.deadState.severity}:${compactList(ir.execution.deadState.reasons)}:${compactList(ir.execution.deadState.failureKinds)}`);
+  }
+  if (ir.execution.recovery) {
+    const recovery = ir.execution.recovery;
+    const blocked = recovery.blockedAction
+      ? ` blocked=${recovery.blockedAction.tool}:${recovery.blockedAction.ref ?? 'global'}`
+      : '';
+    parts.push(`recovery=${recovery.state}${blocked} next=${compactList(recovery.nextMechanisms)} signals=${compactList(recovery.signals)}`);
+  }
+  if (ir.execution.answerFeedback) {
+    const feedback = ir.execution.answerFeedback;
+    parts.push(`answerFeedback=missing:${compactList(feedback.missingDetails)} instruction="${escapeAttr(compactValue(feedback.instruction))}" previous="${escapeAttr(compactValue(feedback.previousAnswer))}"`);
+  }
+  if (ir.execution.uncertainty.level !== 'none') {
+    parts.push(`uncertainty=${ir.execution.uncertainty.level}:${compactList(ir.execution.uncertainty.signals)}`);
+  }
+  return parts.length > 0 ? `PROBLEMS: ${parts.join(' ')}` : '';
+}
+
+function renderCompactSurface(
+  ir: PlannerRepresentationIR,
+  options: { prcTierOmitted?: boolean },
+): string {
+  const lines = ['SURFACE:'];
+  for (const group of ir.surface.groups) {
+    lines.push(`  region=${escapeAttr(group.regionId)} name="${escapeAttr(compactValue(group.label, 120))}"${group.omittedCount ? ` omitted=${group.omittedCount}/${group.totalCount}` : ''}`);
+    for (const element of group.elements) lines.push(`    ${renderCompactElement(element, options)}`);
+  }
+  if (ir.surface.remainder.length > 0) {
+    lines.push('  region=remainder');
+    for (const element of ir.surface.remainder) lines.push(`    ${renderCompactElement(element, options)}`);
+  }
+  return lines.join('\n');
+}
+
+function renderCompactElement(
+  element: PlannerElementIR,
+  options: { prcTierOmitted?: boolean },
+): string {
+  const attrs = [
+    `n="${escapeAttr(compactValue(element.name, 220))}"`,
+    element.role && element.role !== element.kind ? `role="${escapeAttr(element.role)}"` : undefined,
+    `l=${element.lane}`,
+    options.prcTierOmitted ? undefined : `tier=${element.scoreTier}`,
+    element.regionId ? `region=${escapeAttr(compactValue(element.regionId, 120))}` : undefined,
+    element.text ? `text="${escapeAttr(compactValue(element.text, 220))}"` : undefined,
+    element.selectOptions?.length ? `options="${escapeAttr(element.selectOptions.map(option => compactValue(option, 120)).join('|'))}"` : undefined,
+    element.anomalies.length ? `state="${escapeAttr(compactList(element.anomalies))}"` : undefined,
+    element.failure ? `failed=${escapeAttr(compactValue(element.failure.kind, 120))}x${element.failure.count}` : undefined,
+    element.tools?.length ? `tools="${element.tools.join(',')}"` : undefined,
+    options.prcTierOmitted ? `s=${element.score}` : undefined,
+  ].filter(Boolean);
+  return `[${element.refId}] <${element.kind} ${attrs.join(' ')} />`;
 }
 
 function renderState(ir: PlannerRepresentationIR): string {
@@ -81,33 +214,34 @@ function renderEvidenceCoverage(ir: PlannerRepresentationIR): string {
   return lines.join('\n');
 }
 
-function renderSurface(ir: PlannerRepresentationIR): string {
+function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: boolean }): string {
   // PLANNER SURFACE always emits — the page surface is always present in planner context
   const lines = ['PLANNER SURFACE'];
   for (const group of ir.surface.groups) {
     lines.push(`  ${group.label} (${group.regionId}${group.omittedCount ? `, omitted ${group.omittedCount} of ${group.totalCount}` : ''})`);
-    for (const element of group.elements) lines.push(`    ${renderElement(element)}`);
+    for (const element of group.elements) lines.push(`    ${renderElement(element, options)}`);
   }
   if (ir.surface.remainder.length > 0) {
     lines.push('  Page Elements');
-    for (const element of ir.surface.remainder) lines.push(`    ${renderElement(element)}`);
+    for (const element of ir.surface.remainder) lines.push(`    ${renderElement(element, options)}`);
   }
   return lines.join('\n');
 }
 
-function renderElement(element: PlannerElementIR): string {
+function renderElement(element: PlannerElementIR, options: { prcTierOmitted?: boolean } = {}): string {
   const attrs = [
     `name="${escapeAttr(element.name)}"`,
     // Suppress role when it duplicates kind (e.g. role=button kind=button)
     element.role && element.role !== element.kind ? `role="${escapeAttr(element.role)}"` : undefined,
     `lane="${element.lane}"`,
-    `tier="${element.scoreTier}"`,
+    options.prcTierOmitted ? undefined : `tier="${element.scoreTier}"`,
     element.regionId ? `region="${escapeAttr(element.regionId)}"` : undefined,
     element.text ? `text="${escapeAttr(element.text)}"` : undefined,
     element.selectOptions?.length ? `options="${escapeAttr(element.selectOptions.join(' | '))}"` : undefined,
     element.anomalies.length ? `state="${escapeAttr(element.anomalies.join(','))}"` : undefined,
     element.failure ? `failed="${element.failure.kind}x${element.failure.count}"` : undefined,
     element.tools?.length ? `tools="${element.tools.join(',')}"` : undefined,
+    options.prcTierOmitted ? `s="${element.score}"` : undefined,
   ].filter(Boolean);
   return `[${element.refId}] <${element.kind} ${attrs.join(' ')} />`;
 }
@@ -123,6 +257,43 @@ function renderWorkingSet(ir: PlannerRepresentationIR): string {
   if (ws.failed.length) lines.push(`  failed: ${ws.failed.map(ref => `${ref.refId}(${ref.reasons.join(',')})`).join(', ')}`);
   if (ws.omitted) lines.push(`  omitted: observed=${ws.omitted.observed} selected=${ws.omitted.selected} dropped=${ws.omitted.dropped}`);
   return lines.length > 1 ? lines.join('\n') : '';
+}
+
+function renderCompactWorkingSet(ir: PlannerRepresentationIR): string {
+  const ws = ir.workingSet;
+  if (!ws) return '';
+  const parts: string[] = [];
+  if (ws.mode) parts.push(`mode=${ws.mode}${ws.modeReason ? `:${escapeAttr(compactValue(ws.modeReason, 120))}` : ''}`);
+  if (ws.primary.length) parts.push(`primary=${renderCompactRefs(ws.primary)}`);
+  if (ws.secondary.length) parts.push(`secondary=${renderCompactRefs(ws.secondary)}`);
+  if (ws.navigation.length) parts.push(`navigation=${renderCompactRefs(ws.navigation)}`);
+  if (ws.failed.length) parts.push(`failed=${renderCompactRefs(ws.failed)}`);
+  if (ws.actionSurface) {
+    const surface = ws.actionSurface;
+    parts.push(`actions=c:${surface.clickableRefs.join(',')} t:${surface.typeableRefs.join(',')} s:${surface.selectableRefs.join(',')} r:${surface.readableRefs.join(',')} a:${surface.ambiguousRefs.join(',')}`);
+  }
+  if (ws.readableEvidence.length) {
+    parts.push(`readable=${ws.readableEvidence.map(evidence => `${evidence.refId}:${escapeAttr(compactValue(evidence.text, 160))}:${evidence.reasons.join('|')}`).join(';')}`);
+  }
+  const changed = ws.changedRefs;
+  parts.push(`changed=${changed.appearedCount}/${changed.weakenedCount}/${changed.preservedCount}/${changed.omittedCount}`);
+  if (changed.topRefs.length) parts.push(`changedTop=${renderCompactRefs(changed.topRefs)}`);
+  if (ws.quarantinedActions.length) {
+    parts.push(`quarantine=${ws.quarantinedActions.map(action => `${action.tool}:${action.refId}:${action.failureKind}:${action.retryable ? 'retryable' : 'persistent'}`).join(';')}`);
+  }
+  if (ws.regionSummaries.length) {
+    parts.push(`regions=${ws.regionSummaries.map(region => `${region.regionId}:"${escapeAttr(compactValue(region.label, 120))}":${region.representativeRefs.join(',')}:${region.omittedRefCount}`).join(';')}`);
+  }
+  if (ws.omitted) parts.push(`omitted=${ws.omitted.observed}/${ws.omitted.selected}/${ws.omitted.dropped}`);
+  return `W: ${parts.join(' ')}`;
+}
+
+function renderCompactRefs(refs: Array<{ refId: string; reasons: string[] }>): string {
+  return refs.map(ref => `${ref.refId}(${ref.reasons.join('|')})`).join(',');
+}
+
+function compactList(values: readonly string[], maxItemLength = 120): string {
+  return values.map(value => escapeAttr(compactValue(value, maxItemLength))).join('|');
 }
 
 function renderDecisionSignals(ir: PlannerRepresentationIR): string {
@@ -141,4 +312,9 @@ function renderDecisionSignals(ir: PlannerRepresentationIR): string {
 
 function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\s+/g, ' ').trim();
+}
+
+function compactValue(value: string, maxLength = 240): string {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 3)}...` : normalized;
 }

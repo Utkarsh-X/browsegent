@@ -242,6 +242,10 @@ function buildWorkingSet(workingSet: NonNullable<PlannerInput['workingSet']>): W
     secondary: compact(workingSet.secondaryRefs),
     navigation: compact(workingSet.navigationRefs),
     failed: compact(workingSet.failedRefs),
+    readableEvidence: workingSet.readableEvidence,
+    changedRefs: workingSet.changedRefs,
+    quarantinedActions: workingSet.quarantinedActions,
+    regionSummaries: workingSet.regionSummaries,
     actionSurface: workingSet.actionSurface,
     omitted: workingSet.omitted ? {
       observed: workingSet.omitted.observedRefCount,

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { PlannerRepresentationCompiler } from '../../../../src/v2/planner/prc/PlannerRepresentationCompiler';
 import { PromptLayoutEngine } from '../../../../src/v2/planner/prc/PromptLayoutEngine';
+import { buildV2PlannerUserMessage } from '../../../../src/v2/planner/PlannerPrompt';
 import type { PlannerInput } from '../../../../src/v2/planner/types';
 
 const input: PlannerInput = {
@@ -77,6 +78,49 @@ test('PromptLayoutEngine renders specific tool capability attributes correctly',
   assert.match(text, /\[r1\] <button .* tools="c,t,r" \/>/);
   // r2 should have t,r
   assert.match(text, /\[r2\] <input .* tools="t,r" \/>/);
+});
+
+test('P1 omits tier only when requested and preserves lane, remainder region, and refs', () => {
+  const remainderInput: PlannerInput = {
+    ...input,
+    current: {
+      ...input.current,
+      refs: {
+        ...input.current.refs,
+        r3: {
+          refId: 'r3',
+          kind: 'generic',
+          role: 'text',
+          name: 'Remainder note',
+          text: 'Remainder note',
+          visibility: 'visible',
+          actionability: 'ready',
+          state: 'live',
+          confidence: 1,
+          score: 60,
+          regionId: 'region_remainder',
+        },
+      },
+      interactions: [...input.current.interactions, { refId: 'r3', rank: 3 }],
+      regions: [],
+      stats: { ...input.current.stats, interactionCount: 3, regionCount: 0 },
+    },
+  };
+
+  const ir = new PlannerRepresentationCompiler().compile(remainderInput);
+  const engine = new PromptLayoutEngine();
+  const legacy = engine.render(ir);
+  assert.equal(legacy, engine.render(ir, { prcTierOmitted: false }));
+  assert.match(legacy, /\[r3\].*region="region_remainder"/);
+  assert.match(legacy, /tier="/);
+  assert.doesNotMatch(legacy, / s="/);
+
+  const tierOmitted = engine.render(ir, { prcTierOmitted: true });
+  assert.doesNotMatch(tierOmitted, /tier="/);
+  assert.match(tierOmitted, /lane="/);
+  assert.match(tierOmitted, /\[r3\].*region="region_remainder"/);
+  assert.match(tierOmitted, /s="/);
+  assert.equal((legacy.match(/\[r\d\]/g) ?? []).length, (tierOmitted.match(/\[r\d\]/g) ?? []).length);
 });
 
 test('PromptLayoutEngine rendered prompt size is smaller on a high-density fixture', () => {
@@ -173,4 +217,177 @@ test('PromptLayoutEngine renders recovery with global ref as just tool name', ()
   const text = new PromptLayoutEngine().render(ir);
   assert.match(text, /recovery: zero_result_read_loop blocked=search_page:global/);
   assert.match(text, /BLOCKED: Do NOT/);
+});
+
+test('P3 compact data plane preserves control-plane evidence and action capabilities', () => {
+  const denseRefs = Object.fromEntries(Array.from({ length: 60 }, (_, index) => {
+    const refId = `dense-${index}`;
+    return [refId, {
+      refId,
+      kind: 'button' as const,
+      role: 'button',
+      name: `Dense button ${index}`,
+      visibility: 'visible' as const,
+      actionability: 'ready' as const,
+      state: 'live' as const,
+      confidence: 1,
+      score: 80,
+    }];
+  }));
+  const compactInput: PlannerInput = {
+    ...input,
+    current: {
+      ...input.current,
+      refs: { ...input.current.refs, ...denseRefs },
+      interactions: [
+        ...input.current.interactions,
+        ...Object.keys(denseRefs).map((refId, index) => ({ refId, rank: index + 3 })),
+      ],
+      stats: { ...input.current.stats, interactionCount: 32 },
+    },
+    failures: [
+      ...(input.failures ?? []),
+      {
+        failureId: 'sentinel-failure',
+        kind: 'sentinel_failure_kind',
+        category: 'execution',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        targetRef: 'sentinel-failure-ref',
+        signals: ['sentinel_failure_signal'],
+      },
+    ],
+    deadState: {
+      deadState: true,
+      evidenceId: 'sentinel-dead-evidence',
+      observationId: 'sentinel-dead-observation',
+      severity: 'warning',
+      reasons: ['sentinel_dead_reason'],
+      failureKinds: ['sentinel_dead_failure'],
+      signals: ['sentinel_dead_signal'],
+    },
+    answerFeedback: {
+      previousAnswer: 'sentinel_previous_answer',
+      missingDetails: ['sentinel_missing_detail'],
+      instruction: 'sentinel_answer_instruction',
+    },
+    evidenceCoverage: {
+      contractKind: 'sentinel_contract',
+      status: 'incomplete',
+      readCount: 17,
+      requirements: [{
+        key: 'concrete_basic_information',
+        status: 'missing',
+        supportingReadIndexes: [17, 18],
+      }],
+    },
+    lineage: {
+      totalSteps: 7,
+      truncated: true,
+      steps: [{
+        stepId: 'sentinel-lineage-step',
+        index: 6,
+        kind: 'click',
+        status: 'failed',
+        targetRef: 'sentinel-lineage-ref',
+        errorCode: 'sentinel-lineage-error',
+      }],
+    },
+    workingSet: {
+      ...input.workingSet!,
+      actionSurface: {
+        clickableRefs: ['r1'],
+        typeableRefs: ['r1'],
+        selectableRefs: ['r1'],
+        readableRefs: ['r1'],
+        ambiguousRefs: ['r1'],
+      },
+      readableEvidence: [{
+        refId: 'sentinel-readable-ref',
+        text: 'sentinel_readable_text',
+        reasons: ['answer_candidate'],
+      }],
+      changedRefs: {
+        appearedCount: 23,
+        weakenedCount: 4,
+        preservedCount: 5,
+        topRefs: [{
+          refId: 'sentinel-changed-ref',
+          kind: 'button',
+          score: 90,
+          reasons: ['recently_changed'],
+        }],
+        omittedCount: 2,
+      },
+      quarantinedActions: [{
+        refId: 'sentinel-quarantine-ref',
+        tool: 'sentinel-quarantine-tool',
+        failureKind: 'sentinel-quarantine-failure',
+        retryable: false,
+        persistence: 'persistent',
+      }],
+      regionSummaries: [{
+        regionId: 'sentinel-region',
+        label: 'Sentinel region',
+        representativeRefs: ['sentinel-region-ref'],
+        omittedRefCount: 2,
+      }],
+    },
+    recovery: {
+      state: 'same_action_loop',
+      severity: 'warning',
+      blockedAction: { tool: 'click', ref: 'sentinel-blocked-ref' },
+      nextMechanisms: ['sentinel_next_mechanism'],
+      signals: ['sentinel_recovery_signal'],
+    },
+    lastResult: {
+      success: false,
+      kind: 'click',
+      traceStepId: 'sentinel-last-step',
+      targetRef: 'sentinel-last-ref',
+      valuePreview: 'sentinel_last_value',
+      error: { code: 'sentinel-last-error', retryable: false },
+    },
+    continuity: {
+      snapshotId: 'sentinel-snapshot',
+      observationId: 'sentinel-observation',
+      generationId: 3,
+      refCount: 2,
+      presentRefCount: 2,
+      regionCount: 1,
+      transitionCount: 1,
+    },
+  };
+  const ir = new PlannerRepresentationCompiler().compile(compactInput);
+  const text = new PromptLayoutEngine().render(ir, {
+    prcTierOmitted: true,
+    compactDataPlane: true,
+  });
+
+  assert.match(text, /^S:/);
+  assert.match(text, /LAST:/);
+  assert.match(text, /EVIDENCE:.*@17,18/);
+  assert.match(text, /tools="c,t,s,r,a"/);
+  assert.match(text, /sentinel_failure_kind/);
+  assert.match(text, /sentinel-quarantine-tool/);
+  assert.match(text, /sentinel-changed-ref/);
+  assert.match(text, /sentinel_readable_text/);
+  assert.match(text, /sentinel_answer_instruction/);
+  assert.match(text, /sentinel_dead_reason/);
+  assert.match(text, /sentinel-lineage-error/);
+  assert.match(text, /lineage=total=7/);
+  assert.match(text, /sentinel-region/);
+
+  const expanded = buildV2PlannerUserMessage(compactInput, {
+    mode: 'prc',
+    prcTierOmitted: true,
+    compactDataPlane: false,
+  });
+  const compact = buildV2PlannerUserMessage(compactInput, {
+    mode: 'prc',
+    prcTierOmitted: true,
+    compactDataPlane: true,
+  });
+  assert.ok(Buffer.byteLength(compact) < Buffer.byteLength(expanded), 'compact PRC should reduce the rendered user payload');
 });
