@@ -86,6 +86,51 @@ test('PlannerWorkingSetSelector promotes goal-matching refs over generic visible
   assert.ok(selection.workingSet.primaryRefs[0].score > (selection.current.refs.ref_docs.score ?? 0));
 });
 
+test('P2 opts into named semantic offscreen evidence and sorts readable evidence by candidate score', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_generic_high',
+      role: undefined,
+      name: 'Generic evidence',
+      text: 'Generic evidence',
+      visibility: 'visible',
+      continuityConfidence: 0,
+    }),
+    makeRef({
+      refId: 'ref_gridcell',
+      role: ' GRIDCELL ',
+      name: 'Dec holiday',
+      text: 'Dec holiday',
+      visibility: 'offscreen',
+      continuityConfidence: 1,
+    }),
+    makeRef({
+      refId: 'ref_other',
+      role: 'text',
+      name: 'Other detail',
+      text: 'Other detail',
+      visibility: 'visible',
+      continuityConfidence: 0,
+    }),
+  ]));
+
+  const defaultSelection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 3,
+    maxSecondaryRefs: 0,
+    maxReadableEvidence: 2,
+  }).select({ goal: 'Book Dec holiday', projection });
+  assert.equal(defaultSelection.selectedRefIds.includes('ref_gridcell'), false);
+
+  const optInSelection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 3,
+    maxSecondaryRefs: 0,
+    maxReadableEvidence: 2,
+    readablePhraseBonus: 60,
+  }).select({ goal: 'Book Dec holiday', projection });
+  assert.ok(optInSelection.selectedRefIds.includes('ref_gridcell'));
+  assert.equal(optInSelection.workingSet.readableEvidence[0]?.refId, 'ref_gridcell');
+});
+
 test('PlannerWorkingSetSelector bounds dense repeated regions and reports omitted counts', () => {
   const projection = new ProjectionService().project(makeObservation([
     makeRef({ refId: 'ref_open_1', role: 'button', name: 'Open', targetId: 'target_1', selectorCandidates: ['[data-testid="open-1"]'] }),

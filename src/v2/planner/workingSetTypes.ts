@@ -41,6 +41,8 @@ export interface PlannerWorkingSetOptions {
   maxRegionSummaries?: number;
   maxTextLengthPerRef?: number;
   maxChangedRefs?: number;
+  /** Optional opt-in goal-phrase boost for refs in the projection readable lane. */
+  readablePhraseBonus?: number;
 }
 
 export interface PlannerWorkingSetRef {

@@ -21,7 +21,10 @@ import type {
   WorkingSetMode,
 } from './workingSetTypes';
 
-const DEFAULT_OPTIONS: Required<PlannerWorkingSetOptions> = {
+type ResolvedPlannerWorkingSetOptions = Omit<Required<PlannerWorkingSetOptions>, 'readablePhraseBonus'>
+  & Pick<PlannerWorkingSetOptions, 'readablePhraseBonus'>;
+
+const DEFAULT_OPTIONS: ResolvedPlannerWorkingSetOptions = {
   maxPrimaryRefs: 32,
   maxSecondaryRefs: 48,
   maxReadableEvidence: 48,
@@ -49,7 +52,7 @@ interface Candidate {
 }
 
 export class PlannerWorkingSetSelector {
-  private readonly options: Required<PlannerWorkingSetOptions>;
+  private readonly options: ResolvedPlannerWorkingSetOptions;
 
   constructor(options: PlannerWorkingSetOptions = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
@@ -57,7 +60,16 @@ export class PlannerWorkingSetSelector {
 
   select(input: PlannerWorkingSetSelectorInput): PlannerWorkingSetSelection {
     const evidence = buildEvidenceSets(input);
-    const candidates = input.projection.interactions.map(item => scoreCandidate(item, input.goal, evidence));
+    const readableRefs = new Set(input.projection.readables.map(item => item.refId));
+    const candidates = input.projection.interactions.map(item => scoreCandidate(
+      item,
+      input.goal,
+      evidence,
+      { readablePhraseBonus: this.options.readablePhraseBonus },
+      readableRefs.has(item.refId),
+      this.options.readablePhraseBonus !== undefined,
+    ));
+    const scoreByRef = new Map(candidates.map(candidate => [candidate.item.refId, candidate.score]));
     const selected = candidates
       .filter(candidate => shouldKeepCandidate(candidate))
       .sort(compareCandidates);
@@ -68,7 +80,7 @@ export class PlannerWorkingSetSelector {
     const selectedSet = new Set(selectedRefIds);
     const primary = selected.slice(0, this.options.maxPrimaryRefs);
     const secondary = selected.slice(this.options.maxPrimaryRefs, this.options.maxPrimaryRefs + this.options.maxSecondaryRefs);
-    const readableEvidence = buildReadableEvidence(input.projection, selectedSet, this.options);
+    const readableEvidence = buildReadableEvidence(input.projection, selectedSet, this.options, scoreByRef);
     const quarantinedActions = buildQuarantinedActions(input);
     const actionSurface = buildActionSurface(input.projection, selectedSet, quarantinedActions);
     const navigationRefs = input.projection.navigation
@@ -162,6 +174,9 @@ function scoreCandidate(
   item: ProjectionItem,
   goal: string,
   evidence: { appearedRefs: Set<string>; changedRefs: Set<string>; failedRefs: Set<string> },
+  options: Pick<PlannerWorkingSetOptions, 'readablePhraseBonus'> = {},
+  isReadable: boolean,
+  allowSemanticOffscreen: boolean,
 ): Candidate {
   const reasons = new Set<WorkingSetIncludeReason>();
   let score = item.score;
@@ -176,7 +191,7 @@ function scoreCandidate(
   }
   if (goalRelevance.phraseMatches > 0) {
     reasons.add('goal_phrase_match');
-    score += 30;
+    score += isReadable ? (options.readablePhraseBonus ?? 30) : 30;
   }
   if (isGoalRelevantRole(goal, item)) {
     reasons.add('role_relevant_to_goal');
@@ -195,7 +210,7 @@ function scoreCandidate(
   if (evidence.failedRefs.has(item.refId)) {
     reasons.add('last_failure');
   }
-  const lowValueReason = classifyLowValue(item);
+  const lowValueReason = classifyLowValue(item, allowSemanticOffscreen);
   const dropReason = evidence.failedRefs.has(item.refId) || evidence.changedRefs.has(item.refId)
     ? undefined
     : lowValueReason;
@@ -211,8 +226,13 @@ function compareCandidates(left: Candidate, right: Candidate): number {
   return left.item.refId.localeCompare(right.item.refId);
 }
 
-function classifyLowValue(item: ProjectionItem): WorkingSetDropReason | undefined {
+function classifyLowValue(item: ProjectionItem, allowSemanticOffscreen = false): WorkingSetDropReason | undefined {
   const hasText = Boolean(item.name?.trim() || item.text?.trim());
+  const normalizedRole = item.role?.trim().toLowerCase();
+  const semanticRoleExempt = allowSemanticOffscreen
+    && ['radio', 'checkbox', 'option', 'gridcell'].includes(normalizedRole ?? '')
+    && hasText;
+  if (semanticRoleExempt) return undefined;
   if (item.visibility === 'hidden' && !hasText) return 'hidden_low_value';
   if (item.visibility === 'offscreen' && item.kind === 'generic') return 'offscreen_low_value';
   if (item.kind === 'generic' && !hasText) return 'generic_low_value';
@@ -251,11 +271,16 @@ function toWorkingSetRef(item: ProjectionItem, reasons: Set<WorkingSetIncludeRea
 function buildReadableEvidence(
   projection: OperationalProjection,
   selectedSet: Set<string>,
-  options: Required<PlannerWorkingSetOptions>,
+  options: ResolvedPlannerWorkingSetOptions,
+  scoreByRef: ReadonlyMap<string, number>,
 ): PlannerWorkingSetEvidence[] {
   return projection.readables
     .filter(item => selectedSet.has(item.refId))
     .filter(item => Boolean(item.name?.trim() || item.text?.trim()))
+    .sort((left, right) => {
+      const scoreDifference = (scoreByRef.get(right.refId) ?? 0) - (scoreByRef.get(left.refId) ?? 0);
+      return scoreDifference !== 0 ? scoreDifference : left.refId.localeCompare(right.refId);
+    })
     .slice(0, options.maxReadableEvidence)
     .map(item => ({
       refId: item.refId,
@@ -466,7 +491,7 @@ function buildChangedRefsSummary(
 function serializeSelectedProjection(
   projection: OperationalProjection,
   selectedSet: Set<string>,
-  options: Required<PlannerWorkingSetOptions>,
+  options: ResolvedPlannerWorkingSetOptions,
 ): SerializedProjection {
   const selectedItems = projection.interactions.filter(item => selectedSet.has(item.refId));
   const selectedRefs: SerializedProjection['refs'] = {};
@@ -633,7 +658,7 @@ function buildDiagnostics(
   selectedRefIds: string[],
   selected: Candidate[],
   dropped: Candidate[],
-  options: Required<PlannerWorkingSetOptions>,
+  options: ResolvedPlannerWorkingSetOptions,
 ): PlannerWorkingSetDiagnostics {
   return {
     observedRefCount: projection.stats.interactionCount,
