@@ -1,9 +1,10 @@
 import { BrowserUseLocalAdapter } from './adapters/BrowserUseLocalAdapter';
 import { AlumniumAdapter } from './adapters/AlumniumAdapter';
+import { BrowserControlAdapter } from './adapters/BrowserControlAdapter';
 import { BrowseGentBenchmarkAdapter } from './adapters/BrowseGentAdapter';
 import type { BenchmarkAdapter } from './types';
 
-export type BenchmarkAdapterId = 'browsegent' | 'browser-use-local' | 'alumnium-local';
+export type BenchmarkAdapterId = 'browsegent' | 'browser-use-local' | 'alumnium-local' | 'browser-control';
 
 export interface CreateBenchmarkAdapterOptions {
   env?: NodeJS.ProcessEnv;
@@ -20,12 +21,14 @@ export function createBenchmarkAdapter(
       return new BrowserUseLocalAdapter({ env: options.env });
     case 'alumnium-local':
       return new AlumniumAdapter({ env: options.env });
+    case 'browser-control':
+      return new BrowserControlAdapter({ env: options.env });
   }
 }
 
 export function readBenchmarkAdapterId(value: string | undefined): BenchmarkAdapterId {
-  if (value === undefined || value === 'browsegent' || value === 'browser-use-local' || value === 'alumnium-local') {
+  if (value === undefined || value === 'browsegent' || value === 'browser-use-local' || value === 'alumnium-local' || value === 'browser-control') {
     return value ?? 'browsegent';
   }
-  throw new Error(`Unsupported benchmark adapter "${value}". Use browsegent, browser-use-local, or alumnium-local.`);
+  throw new Error(`Unsupported benchmark adapter "${value}". Use browsegent, browser-use-local, alumnium-local, or browser-control.`);
 }
