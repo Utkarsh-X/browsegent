@@ -82,14 +82,17 @@ export class BrowserUseLocalAdapter implements BenchmarkAdapter {
     const resultPath = join(artifactPath, 'result.json');
     const stdoutPath = join(artifactPath, 'stdout.txt');
     const stderrPath = join(artifactPath, 'stderr.txt');
-    const secrets = collectGeminiKeyPool(this.env).map(entry => entry.value);
+    const secrets = [
+      ...collectGeminiKeyPool(this.env).map(entry => entry.value),
+      this.env.OPENROUTER_API_KEY,
+    ];
 
     await mkdir(artifactPath, { recursive: true });
     await writeFile(inputPath, `${JSON.stringify({
       taskId: task.taskId,
       url: task.url,
       goal: task.goal,
-      model: resolveGeminiModelName(options.model, this.env),
+      model: resolveModelName(options.model, this.env),
       maxSteps: options.maxSteps ?? task.maxSteps ?? 8,
       headed: options.headed,
       requestMinIntervalMs: options.requestMinIntervalMs,
@@ -104,7 +107,7 @@ export class BrowserUseLocalAdapter implements BenchmarkAdapter {
     const maxSteps = options.maxSteps ?? task.maxSteps ?? 8;
     const dynamicTimeoutMs = Math.max(
       this.timeoutMs,
-      (requestMinIntervalMs * maxSteps) + 180_000
+      (maxSteps * 120_000) + (requestMinIntervalMs * maxSteps) + 180_000,
     );
 
     const processResult = await this.processRunner(this.pythonCommand, [
@@ -163,13 +166,14 @@ function normalizeGeminiModelName(model: string | undefined): string | undefined
   return model?.replace(/^gemini\//, '');
 }
 
-function resolveGeminiModelName(model: string | undefined, env: NodeJS.ProcessEnv): string {
-  return normalizeGeminiModelName(
-    model
-      ?? env.BROWSEGENT_GEMINI_MODEL
-      ?? env.GEMINI_MODEL
-      ?? DEFAULT_BROWSER_USE_GEMINI_MODEL,
-  ) ?? DEFAULT_BROWSER_USE_GEMINI_MODEL;
+function resolveModelName(model: string | undefined, env: NodeJS.ProcessEnv): string {
+  if (model) {
+    if (model.startsWith('gemini/')) return model.slice('gemini/'.length);
+    return model;
+  }
+  return env.BROWSEGENT_GEMINI_MODEL
+    ?? env.GEMINI_MODEL
+    ?? DEFAULT_BROWSER_USE_GEMINI_MODEL;
 }
 
 async function readRunnerResult(resultPath: string): Promise<BrowserUseRunnerResult | undefined> {
