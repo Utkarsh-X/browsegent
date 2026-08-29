@@ -233,6 +233,8 @@ function normalizeProvider(value: string): LlmProvider {
 
 function parsePrefixedModel(model: string): { provider: LlmProvider; model: string } | null {
   if (model.startsWith('openrouter/')) return { provider: 'openrouter', model: model.slice('openrouter/'.length) };
+  if (model.startsWith('stealth/')) return { provider: 'openrouter', model: model.slice('stealth/'.length) };
+  if (model.startsWith('ox/')) return { provider: 'openrouter', model: model.slice('ox/'.length) };
   if (model.startsWith('gemini/')) return { provider: 'gemini', model: model.slice('gemini/'.length) };
   if (model.startsWith('google/gemini/')) return { provider: 'gemini', model: model.slice('google/gemini/'.length) };
   if (model.startsWith('cerebras/')) return { provider: 'cerebras', model: model.slice('cerebras/'.length) };
@@ -242,7 +244,14 @@ function parsePrefixedModel(model: string): { provider: LlmProvider; model: stri
 }
 
 function inferProviderFromModel(model: string): LlmProvider | null {
-  if (model.startsWith('stealth/') || model.startsWith('anthropic/') || model.startsWith('meta-llama/') || model.startsWith('deepseek/')) return 'openrouter';
+  if (
+    model.startsWith('stealth/') ||
+    model.startsWith('ox/') ||
+    model.startsWith('ox-') ||
+    model.startsWith('anthropic/') ||
+    model.startsWith('meta-llama/') ||
+    model.startsWith('deepseek/')
+  ) return 'openrouter';
   if (model.startsWith('gemini')) return 'gemini';
   if (model.startsWith('gpt')) return 'openai';
   if (model.startsWith('qwen')) return 'cerebras';

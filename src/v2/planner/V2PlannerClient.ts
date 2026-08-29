@@ -483,6 +483,11 @@ function summarizeProviderPayload(
   attempts: ProviderPayloadAttemptSummary[],
 ) {
   return {
+    serialization: {
+      mode: config.mode,
+      prcTierOmitted: config.prcTierOmitted ?? false,
+      compactDataPlane: config.compactDataPlane ?? false,
+    },
     serializationMode: config.mode,
     attempts,
     totalSystemBytes: sum(attempts.map(attempt => attempt.systemBytes)),

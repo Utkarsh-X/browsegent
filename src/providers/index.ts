@@ -26,7 +26,15 @@ export interface ProviderCallOptions {
 }
 
 export function detectProvider(model: string): LlmProvider {
-  if (model.startsWith('openrouter/') || model.startsWith('stealth/') || model.startsWith('anthropic/') || model.startsWith('meta-llama/') || model.startsWith('deepseek/')) return 'openrouter';
+  if (
+    model.startsWith('openrouter/') ||
+    model.startsWith('stealth/') ||
+    model.startsWith('ox/') ||
+    model.startsWith('ox-') ||
+    model.startsWith('anthropic/') ||
+    model.startsWith('meta-llama/') ||
+    model.startsWith('deepseek/')
+  ) return 'openrouter';
   if (model.startsWith('gemini') || model.startsWith('google/gemini')) return 'gemini';
   if (model.startsWith('cerebras/') || model.startsWith('qwen')) return 'cerebras';
   if (model.startsWith('ollama/')) return 'ollama';
@@ -313,8 +321,12 @@ async function callOpenRouter(
   model: string,
   options: ProviderCallOptions = {},
 ): Promise<ProviderResult> {
-  const apiKey = getRuntimeConfig().llm.openrouterApiKey ?? process.env.OPENROUTER_API_KEY;
-  if (!apiKey) throw new Error('OPENROUTER_API_KEY not set in .env');
+  const apiKey = getRuntimeConfig().llm.openrouterApiKey ?? process.env.OPENROUTER_API_KEY ?? 'stealth-key';
+  const baseUrl = process.env.OPENROUTER_BASE_URL
+    ?? process.env.BROWSEGENT_OPENROUTER_BASE_URL
+    ?? 'https://openrouter.ai/api/v1';
+
+  const isLocalOrGateway = baseUrl.includes('127.0.0.1') || baseUrl.includes('localhost');
 
   const retries = readPositiveIntEnv('BROWSEGENT_OPENROUTER_RETRIES', 6);
   const retryBaseMs = readPositiveIntEnv('BROWSEGENT_OPENROUTER_RETRY_BASE_MS', 3000);
@@ -322,12 +334,19 @@ async function callOpenRouter(
   const retryCodes = new Set([429, 500, 502, 503]);
 
   for (let attempt = 1; attempt <= retries; attempt++) {
-    const pacingWaitMs = await waitForGeminiRequestSlot();
-    if (pacingWaitMs > 0) options.onPacingWait?.(pacingWaitMs);
+    if (!isLocalOrGateway) {
+      const pacingWaitMs = await waitForGeminiRequestSlot();
+      if (pacingWaitMs > 0) options.onPacingWait?.(pacingWaitMs);
+    }
 
     let response: Response;
     try {
-      response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const url = `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
+      const responseFormat = options.responseSchema
+        ? { type: 'json_schema', json_schema: { schema: options.responseSchema } }
+        : { type: 'json_object' };
+
+      response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -342,7 +361,7 @@ async function callOpenRouter(
             { role: 'user', content: user },
           ],
           temperature: 0.1,
-          response_format: { type: 'json_object' },
+          response_format: responseFormat,
         }),
       });
     } catch (fetchError) {

@@ -2,6 +2,7 @@ import { access, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { auditTraceReplay } from '../../../src/v2';
+import type { PlannerWorkingSetOptions } from '../../../src/v2/planner/workingSetTypes';
 import { createBenchmarkAdapter, readBenchmarkAdapterId } from './adapter_factory';
 import { BrowseGentBenchmarkAdapter } from './adapters/BrowseGentAdapter';
 import { resolveBenchmarkRateLimit } from './benchmark_rate_limit';
@@ -53,6 +54,7 @@ export interface RunBenchmarkOptions {
   ) => Promise<BenchmarkTraceScore>;
   plannerMode?: 'current' | 'compact_enforced';
   plannerSerialization?: BenchmarkRunMetadata['plannerSerialization'];
+  workingSetOptions?: PlannerWorkingSetOptions;
 }
 
 export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<BenchmarkReport> {
@@ -119,6 +121,7 @@ export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<B
           requestMinIntervalMs: rateLimit.mode === 'paced' ? rateLimit.minIntervalMs : undefined,
           plannerMode: options.plannerMode,
           plannerSerialization: options.plannerSerialization,
+          workingSetOptions: options.workingSetOptions,
         });
         const trace = options.traceAudit
           ? await options.traceAudit(
@@ -149,6 +152,7 @@ export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<B
         rateLimit,
         keyAssignments,
         options.plannerSerialization,
+        options.workingSetOptions,
       ),
       results: scoredResults,
     });
@@ -208,6 +212,7 @@ function buildRunMetadata(
   rateLimit: ReturnType<typeof resolveBenchmarkRateLimit>,
   assignments: BenchmarkGeminiKeyAssignment[],
   plannerSerialization: BenchmarkRunMetadata['plannerSerialization'],
+  workingSetOptions: BenchmarkRunMetadata['workingSetOptions'],
 ): BenchmarkRunMetadata {
   return {
     geminiKeyPool: {
@@ -222,6 +227,7 @@ function buildRunMetadata(
     },
     rateLimit,
     plannerSerialization,
+    ...(workingSetOptions !== undefined ? { workingSetOptions } : {}),
   };
 }
 
@@ -235,7 +241,8 @@ function renderMarkdownSummary(report: BenchmarkReport): string {
     `Gemini key diagnostics: configured ${report.runMetadata?.geminiKeyPool?.configuredKeyCount ?? 0}, unique ${report.runMetadata?.geminiKeyPool?.uniqueKeyCount ?? 0}, duplicates ${report.runMetadata?.geminiKeyPool?.duplicateKeyCount ?? 0}`,
     `Gemini key assignment: ${report.runMetadata?.geminiKeyPool?.assignmentMode ?? 'none'}${report.runMetadata?.geminiKeyPool?.assignments?.length ? `, ${report.runMetadata.geminiKeyPool.assignments.length} task attempts` : ''}`,
     `Rate limit: ${report.runMetadata?.rateLimit?.mode ?? 'disabled'}${report.runMetadata?.rateLimit?.minIntervalMs ? `, ${report.runMetadata.rateLimit.minIntervalMs}ms minimum interval` : ''}`,
-    `Planner serialization: ${report.runMetadata?.plannerSerialization?.mode ?? 'json'}`,
+    `Planner serialization: ${formatPlannerSerialization(report.runMetadata?.plannerSerialization)}`,
+    `Working set options: ${formatWorkingSetOptions(report.runMetadata?.workingSetOptions)}`,
     `Runs: ${report.summary.totalRuns}`,
     `Pass rate: ${(report.summary.passRate * 100).toFixed(1)}%`,
     `Trace complete rate: ${(report.summary.traceCompleteRate * 100).toFixed(1)}%`,
@@ -261,6 +268,24 @@ function renderMarkdownSummary(report: BenchmarkReport): string {
     `Holdout pass rate: ${(report.summary.partitions.holdout.passRate * 100).toFixed(1)}% (${report.summary.partitions.holdout.passedRuns}/${report.summary.partitions.holdout.totalRuns})`,
     '',
   ].join('\n');
+}
+
+function formatPlannerSerialization(serialization: BenchmarkRunMetadata['plannerSerialization']): string {
+  const mode = serialization?.mode ?? 'json';
+  if (mode !== 'prc') return `mode=${mode}`;
+  return [
+    `mode=${mode}`,
+    `prcTierOmitted=${serialization?.prcTierOmitted ?? 'not-set'}`,
+    `compactDataPlane=${serialization?.compactDataPlane ?? 'not-set'}`,
+  ].join(' ');
+}
+
+function formatWorkingSetOptions(workingSetOptions: PlannerWorkingSetOptions | undefined): string {
+  if (!workingSetOptions) return 'none';
+  return Object.entries(workingSetOptions)
+    .filter(([, value]) => value !== undefined)
+    .map(([key, value]) => `${key}=${String(value)}`)
+    .join(' ') || 'none';
 }
 
 function formatCounterMap(values: Record<string, number> | undefined): string {
@@ -290,7 +315,7 @@ if (require.main === module) {
     });
 }
 
-function readCliOptions(): RunBenchmarkOptions {
+export function readCliOptions(): RunBenchmarkOptions {
   const model = readModelArg();
   const adapterId = readBenchmarkAdapterId(readFlag('--adapter'));
   const countArg = readFlag('--count');
@@ -307,6 +332,9 @@ function readCliOptions(): RunBenchmarkOptions {
   } else if (plannerModeArg !== undefined) {
     throw new Error(`Unsupported --planner-mode "${plannerModeArg}". Use current or compact_enforced.`);
   }
+  if (plannerSerializationArg !== undefined && plannerMode === 'compact_enforced') {
+    throw new Error('--planner-serialization cannot be combined with --planner-mode compact_enforced; compact_enforced ignores planner serialization.');
+  }
 
   return {
     adapter: createBenchmarkAdapter(adapterId, { env: process.env }),
@@ -318,7 +346,8 @@ function readCliOptions(): RunBenchmarkOptions {
     requestMinIntervalMs: requestMinIntervalArg ? Number(requestMinIntervalArg) : undefined,
     partition: partitionArg,
     plannerMode,
-    plannerSerialization: plannerSerializationArg ? { mode: plannerSerializationArg } : undefined,
+    plannerSerialization: readPlannerSerializationConfig(plannerSerializationArg),
+    workingSetOptions: readWorkingSetOptions(),
   };
 }
 
@@ -347,6 +376,42 @@ function readPlannerSerializationArg(): NonNullable<BenchmarkRunMetadata['planne
     return value;
   }
   throw new Error(`Unsupported --planner-serialization "${value}". Use json or prc.`);
+}
+
+function readPlannerSerializationConfig(
+  mode: NonNullable<BenchmarkRunMetadata['plannerSerialization']>['mode'] | undefined,
+): BenchmarkRunMetadata['plannerSerialization'] {
+  const prcTierOmitted = hasFlag('--prc-tier-omitted');
+  const compactDataPlane = hasFlag('--compact-data-plane');
+  if (prcTierOmitted || compactDataPlane) {
+    if (mode !== 'prc') {
+      const flags = [
+        ...(prcTierOmitted ? ['--prc-tier-omitted'] : []),
+        ...(compactDataPlane ? ['--compact-data-plane'] : []),
+      ];
+      throw new Error(`${flags.join(' and ')} require --planner-serialization prc.`);
+    }
+    return {
+      mode,
+      ...(prcTierOmitted ? { prcTierOmitted: true } : {}),
+      ...(compactDataPlane ? { compactDataPlane: true } : {}),
+    };
+  }
+  return mode === undefined ? undefined : { mode };
+}
+
+function readWorkingSetOptions(): PlannerWorkingSetOptions | undefined {
+  const bonusArg = readFlag('--readable-phrase-bonus');
+  if (bonusArg === undefined) return undefined;
+  const readablePhraseBonus = Number(bonusArg);
+  if (!Number.isFinite(readablePhraseBonus) || readablePhraseBonus < 0) {
+    throw new Error(`Unsupported --readable-phrase-bonus "${bonusArg}". Use a non-negative finite number.`);
+  }
+  return { readablePhraseBonus };
+}
+
+function hasFlag(name: string): boolean {
+  return process.argv.includes(name);
 }
 
 function isFlagValue(args: string[], value: string): boolean {

@@ -30,6 +30,7 @@ export class BrowseGentBenchmarkAdapter implements BenchmarkAdapter {
         output: 'text',
         ...(options.plannerMode !== undefined ? { plannerMode: options.plannerMode } : {}),
         ...(options.plannerSerialization !== undefined ? { plannerSerialization: options.plannerSerialization } : {}),
+        ...(options.workingSetOptions !== undefined ? { workingSetOptions: options.workingSetOptions } : {}),
       });
 
       return {

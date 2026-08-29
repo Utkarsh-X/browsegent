@@ -28,6 +28,7 @@ export interface RunWebVoyagerLiteOptions {
   manualAuditPath?: string;
   plannerMode?: 'current' | 'compact_enforced';
   plannerSerialization?: RunBenchmarkOptions['plannerSerialization'];
+  workingSetOptions?: RunBenchmarkOptions['workingSetOptions'];
 }
 
 export interface WebVoyagerLiteRunResult {
@@ -64,6 +65,7 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
     traceAudit: options.traceAudit,
     plannerMode: options.plannerMode,
     plannerSerialization: options.plannerSerialization,
+    workingSetOptions: options.workingSetOptions,
   });
 
   const byTaskId = new Map(tasks.map(task => [task.taskId, task]));
@@ -132,7 +134,7 @@ if (require.main === module) {
     });
 }
 
-function readCliOptions(): RunWebVoyagerLiteOptions {
+export function readCliOptions(): RunWebVoyagerLiteOptions {
   const sourceRoot = readFlag('--source-root') ?? process.env.WEBVOYAGER_SOURCE_ROOT;
   if (!sourceRoot) {
     throw new Error('Provide --source-root or WEBVOYAGER_SOURCE_ROOT pointing to the external WebVoyager clone.');
@@ -156,6 +158,9 @@ function readCliOptions(): RunWebVoyagerLiteOptions {
   } else if (plannerModeArg !== undefined) {
     throw new Error(`Unsupported --planner-mode "${plannerModeArg}". Use current or compact_enforced.`);
   }
+  if (plannerSerializationArg !== undefined && plannerMode === 'compact_enforced') {
+    throw new Error('--planner-serialization cannot be combined with --planner-mode compact_enforced; compact_enforced ignores planner serialization.');
+  }
 
   return {
     sourceRoot,
@@ -169,7 +174,8 @@ function readCliOptions(): RunWebVoyagerLiteOptions {
     taskSlice,
     manualAuditPath,
     plannerMode,
-    plannerSerialization: plannerSerializationArg ? { mode: plannerSerializationArg } : undefined,
+    plannerSerialization: readPlannerSerializationConfig(plannerSerializationArg),
+    workingSetOptions: readWorkingSetOptions(),
   };
 }
 
@@ -198,6 +204,42 @@ function readPlannerSerializationArg(): NonNullable<RunBenchmarkOptions['planner
     return value;
   }
   throw new Error(`Unsupported --planner-serialization "${value}". Use json or prc.`);
+}
+
+function readPlannerSerializationConfig(
+  mode: NonNullable<RunBenchmarkOptions['plannerSerialization']>['mode'] | undefined,
+): RunBenchmarkOptions['plannerSerialization'] {
+  const prcTierOmitted = hasFlag('--prc-tier-omitted');
+  const compactDataPlane = hasFlag('--compact-data-plane');
+  if (prcTierOmitted || compactDataPlane) {
+    if (mode !== 'prc') {
+      const flags = [
+        ...(prcTierOmitted ? ['--prc-tier-omitted'] : []),
+        ...(compactDataPlane ? ['--compact-data-plane'] : []),
+      ];
+      throw new Error(`${flags.join(' and ')} require --planner-serialization prc.`);
+    }
+    return {
+      mode,
+      ...(prcTierOmitted ? { prcTierOmitted: true } : {}),
+      ...(compactDataPlane ? { compactDataPlane: true } : {}),
+    };
+  }
+  return mode === undefined ? undefined : { mode };
+}
+
+function readWorkingSetOptions(): RunBenchmarkOptions['workingSetOptions'] {
+  const bonusArg = readFlag('--readable-phrase-bonus');
+  if (bonusArg === undefined) return undefined;
+  const readablePhraseBonus = Number(bonusArg);
+  if (!Number.isFinite(readablePhraseBonus) || readablePhraseBonus < 0) {
+    throw new Error(`Unsupported --readable-phrase-bonus "${bonusArg}". Use a non-negative finite number.`);
+  }
+  return { readablePhraseBonus };
+}
+
+function hasFlag(name: string): boolean {
+  return process.argv.includes(name);
 }
 
 function isFlagValue(args: string[], value: string): boolean {

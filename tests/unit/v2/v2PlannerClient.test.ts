@@ -1073,7 +1073,7 @@ test('V2PlannerClient records provider payload byte summaries without raw prompt
   const { traceDir, store } = await freshTraceStore('planner_client_provider_payload');
   const client = new V2PlannerClient({
     traceStore: store,
-    plannerSerialization: { mode: 'prc' },
+    plannerSerialization: { mode: 'prc', prcTierOmitted: true, compactDataPlane: false },
     provider: async (_system, _user) => ({
       text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
       inputTokens: 5,
@@ -1090,6 +1090,11 @@ test('V2PlannerClient records provider payload byte summaries without raw prompt
   ));
 
   assert.equal(outputJson.providerPayload.serializationMode, 'prc');
+  assert.deepEqual(outputJson.providerPayload.serialization, {
+    mode: 'prc',
+    prcTierOmitted: true,
+    compactDataPlane: false,
+  });
   assert.equal(outputJson.providerPayload.attempts.length, 1);
   assert.equal(outputJson.providerPayload.attempts[0].attempt, 1);
   assert.equal(typeof outputJson.providerPayload.attempts[0].systemBytes, 'number');
