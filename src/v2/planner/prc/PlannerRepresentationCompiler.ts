@@ -211,21 +211,23 @@ function buildPinnedRefIds(workingSet: PlannerInput['workingSet']): Set<string> 
   if (!workingSet) return pinned;
 
   for (const ref of [
-    ...workingSet.primaryRefs,
-    ...workingSet.secondaryRefs,
-    ...workingSet.navigationRefs,
-    ...workingSet.failedRefs,
+    ...(workingSet.primaryRefs ?? []),
+    ...(workingSet.secondaryRefs ?? []),
+    ...(workingSet.navigationRefs ?? []),
+    ...(workingSet.failedRefs ?? []),
   ]) {
-    pinned.add(ref.refId);
+    if (ref?.refId) pinned.add(ref.refId);
   }
 
-  for (const refId of [
-    ...workingSet.actionSurface.clickableRefs,
-    ...workingSet.actionSurface.typeableRefs,
-    ...workingSet.actionSurface.selectableRefs,
-    ...workingSet.actionSurface.readableRefs,
-  ]) {
-    pinned.add(refId);
+  if (workingSet.actionSurface) {
+    for (const refId of [
+      ...(workingSet.actionSurface.clickableRefs ?? []),
+      ...(workingSet.actionSurface.typeableRefs ?? []),
+      ...(workingSet.actionSurface.selectableRefs ?? []),
+      ...(workingSet.actionSurface.readableRefs ?? []),
+    ]) {
+      if (refId) pinned.add(refId);
+    }
   }
 
   return pinned;
