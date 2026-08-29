@@ -1,6 +1,7 @@
 import type { OperationalProjection, ProjectionItem } from '../brain1/projectionTypes';
 import { inferAnswerContract } from './AnswerContract';
 import type { PlannerEvidenceCoverage } from '../planner/types';
+import type { TaskEvidenceRead } from './TaskEvidenceCoverage';
 
 export interface FinalizationEvidenceInput {
   goal: string;
@@ -20,14 +21,21 @@ export interface ReadEvidenceHistoryEntry {
 }
 
 /**
- * Answer validation may only use text returned by an explicit read operation.
- * Action targets and input previews describe the control, not the page fact.
+ * Answer validation uses text returned by explicit read operations and bounded visible surface observations.
  */
-export function buildAnswerValidationEvidence(readEvidenceHistory: ReadEvidenceHistoryEntry[]): string {
-  return readEvidenceHistory
+export function buildAnswerValidationEvidence(
+  readEvidenceHistory: ReadEvidenceHistoryEntry[],
+  surfaceEvidenceReads?: TaskEvidenceRead[],
+): string {
+  const toolTexts = readEvidenceHistory
     .map(entry => entry.text.replace(/\s+/g, ' ').trim())
-    .filter(text => text.length > 0)
-    .join('\n');
+    .filter(text => text.length > 0);
+
+  const surfaceTexts = (surfaceEvidenceReads ?? [])
+    .map(entry => entry.text.replace(/\s+/g, ' ').trim())
+    .filter(text => text.length > 0);
+
+  return [...toolTexts, ...surfaceTexts].join('\n');
 }
 
 export function buildFinalizationEvidence(input: FinalizationEvidenceInput): string {

@@ -26,3 +26,11 @@ docs/
 # manifests record their sha256 provenance instead.
 tests/benchmark/v2/webarena/source/
 tests/benchmark/v2/webarena/auth/
+
+# Internal stateless AGY adapter and gateway
+.agy-gateway/
+agy-gateway/
+.browser-control/
+.claude/
+scratch/
+

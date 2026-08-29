@@ -431,6 +431,19 @@ test('V2AgentLoop replans when answer text passes but explicit evidence is incom
 
 test('V2AgentLoop replans when done output explicitly reports an unfinished result', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
+  const obs = makeObservation('obs_flights', {
+    refs: [
+      makeRef({
+        refId: 'ref_price',
+        role: 'text',
+        name: 'Lowest price: $412 round-trip',
+        text: 'Lowest price: $412 round-trip',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+  const harness = new FakeHarness([obs, obs]);
   const planner = new FakePlanner([
     {
       done: true,
@@ -439,7 +452,7 @@ test('V2AgentLoop replans when done output explicitly reports an unfinished resu
     { done: true, val: 'The lowest round-trip price is 412 USD.' },
   ]);
   const loop = new V2AgentLoop({
-    harnessFactory: () => new FakeHarness(),
+    harnessFactory: () => harness,
     plannerClient: planner,
     dispatcherFactory: () => new FakeDispatcher(),
   });
@@ -2600,4 +2613,287 @@ test('pre-execution rejection records progress memory', async () => {
 
   assert.equal(result.success, true);
   assert.equal(result.value, 'Recovered');
+});
+
+test('V2AgentLoop finalizes successfully when required details are grounded in direct surface observation', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const surfaceObs = makeObservation('obs_dictionary', {
+    refs: [
+      makeRef({
+        refId: 'ref_pron',
+        role: 'text',
+        name: 'UK /ˌser.ənˈdɪp.ə.ti/',
+        text: 'UK /ˌser.ənˈdɪp.ə.ti/',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+      makeRef({
+        refId: 'ref_def',
+        role: 'text',
+        name: 'serendipity definition: finding valuable things by chance',
+        text: 'serendipity definition: finding valuable things by chance',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+
+  const planner = new FakePlanner([
+    {
+      done: true,
+      val: 'Serendipity is pronounced UK /ˌser.ənˈdɪp.ə.ti/. It means finding valuable things by chance.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness([surfaceObs, surfaceObs]),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://dictionary.cambridge.org/dictionary/english/serendipity',
+    goal: 'Find the Cambridge definition and pronunciation for serendipity',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.match(result.value, /UK \/ˌser\.ənˈdɪp\.ə\.ti\//);
+  assert.equal(planner.inputs[0].evidenceCoverage?.status, 'ready');
+  assert.equal(planner.inputs[0].evidenceCoverage?.requirements.length, 2);
+  assert.equal(planner.inputs[0].evidenceCoverage?.requirements[0].status, 'proven');
+  assert.equal(planner.inputs[0].evidenceCoverage?.requirements[1].status, 'proven');
+});
+
+test('V2AgentLoop finalizes successfully when required details are grounded via tool read', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    {
+      done: true,
+      val: 'Serendipity is pronounced UK /ˌser.ənˈdɪp.ə.ti/. Definition: finding good things without looking for them.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'get',
+    targetRef: 'ref_submit',
+    value: { text: 'UK /ˌser.ənˈdɪp.ə.ti/ Definition: finding good things without looking for them.' },
+    traceStepId: 'tool_get_pron',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/serendipity',
+    goal: 'Find the Cambridge definition and pronunciation for serendipity',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.match(result.value, /UK \/ˌser\.ənˈdɪp\.ə\.ti\//);
+  assert.equal(planner.inputs[1].evidenceCoverage?.status, 'ready');
+});
+
+test('V2AgentLoop finalization rejects when required details are missing from both surface and tool reads', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    {
+      done: true,
+      val: 'Serendipity is pronounced UK /ˌser.ənˈdɪp.ə.ti/. Definition: finding good things.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'get',
+    targetRef: 'ref_submit',
+    value: { text: 'Cambridge Dictionary home navigation menu and search bar.' },
+    traceStepId: 'tool_get_irrelevant',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/serendipity',
+    goal: 'Find the Cambridge definition and pronunciation for serendipity',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, false);
+  assert.match(result.failureReason ?? '', /answer_contract_failed|missing_evidence/);
+});
+
+test('V2AgentLoop surface provenance dynamically updates on fresh observation and aggregates multi-ref facts', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const step1Obs = makeObservation('obs_initial', {
+    refs: [
+      makeRef({
+        refId: 'ref_search',
+        role: 'searchbox',
+        name: 'Search Google Maps',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+
+  const step2Obs = makeObservation('obs_place_details', {
+    refs: [
+      makeRef({
+        refId: 'ref_address',
+        role: 'text',
+        name: 'Address: Barstow, CA 92311, United States',
+        text: 'Address: Barstow, CA 92311, United States',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+      makeRef({
+        refId: 'ref_hours',
+        role: 'text',
+        name: 'Open 24 hours',
+        text: 'Open 24 hours',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+
+  const harness = new FakeHarness([step1Obs, step2Obs]);
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_search' }], confidence: 'high' },
+    {
+      done: true,
+      val: 'Castle Mountains National Monument is located at Barstow, CA 92311, United States. It is open 24 hours.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://maps.google.com',
+    goal: 'Find basic information for Castle Mountains National Monument on Google Maps',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.match(result.value, /Barstow, CA 92311/);
+  // Step 1: Initial observation had 0 basic info signals -> coverage uncertain
+  assert.equal(planner.inputs[0].evidenceCoverage?.status, 'uncertain');
+  // Step 2: Fresh observation with 2 distinct surface refs -> coverage ready with proven basic info!
+  assert.equal(planner.inputs[1].evidenceCoverage?.status, 'ready');
+  assert.equal(planner.inputs[1].evidenceCoverage?.requirements[0].status, 'proven');
+});
+
+test('V2AgentLoop finalizes successfully when ranking evidence is grounded on visible surface without tool read', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const obs = makeObservation('obs_arxiv', {
+    refs: [
+      makeRef({
+        refId: 'ref_result_1',
+        role: 'text',
+        name: '#1 Result: Quantum Error Correction Architecture',
+        text: '#1 Result: Quantum Error Correction Architecture',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+      makeRef({
+        refId: 'ref_result_2',
+        role: 'text',
+        name: 'Top 10 preprints in quantum computing',
+        text: 'Top 10 preprints in quantum computing',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+
+  const harness = new FakeHarness([obs]);
+  const planner = new FakePlanner([
+    {
+      done: true,
+      val: 'The top result for quantum computing is #1 Quantum Error Correction Architecture.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://arxiv.org',
+    goal: 'Find latest preprints about quantum computing on arXiv and report the top results',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.match(result.value, /Quantum Error Correction Architecture/);
+});
+
+test('V2AgentLoop replans when surface contains only control-only ranking labels or isolated IDs', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const obs = makeObservation('obs_github_controls', {
+    refs: [
+      makeRef({
+        refId: 'ref_sort',
+        role: 'combobox',
+        name: 'Sort by: Most stars',
+        text: 'Sort by: Most stars',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+      makeRef({
+        refId: 'ref_arxiv_id',
+        role: 'text',
+        name: 'arXiv:2608.24832',
+        text: 'arXiv:2608.24832',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+
+  const harness = new FakeHarness([obs, obs]);
+  const planner = new FakePlanner([
+    {
+      done: true,
+      val: 'The top project is arXiv:2608.24832.',
+    },
+    {
+      plan: [{ tool: 'click', ref: 'ref_sort' }],
+      confidence: 'high',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://github.com',
+    goal: 'Find trending TypeScript repositories on GitHub and note top stars',
+    maxSteps: 2,
+  });
+
+  // Step 1 done was rejected because surface only had sort controls and isolated IDs
+  // Planner received feedback and continued to step 2
+  assert.equal(planner.inputs.length, 2);
+  assert.ok(planner.inputs[1].answerFeedback);
+  assert.deepEqual(planner.inputs[1].answerFeedback.missingDetails, ['missing_ranking_evidence']);
 });

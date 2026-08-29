@@ -140,21 +140,51 @@ export function hasDefinitionDetail(value: string): boolean {
 }
 
 export function hasRankingEvidence(value: string): boolean {
-  const normalized = value.replace(/\s+/g, ' ').trim();
-  const hasOrderSignal = /\b(?:sorted|rank(?:ed|ing)?|ordered|top\s+\d+|#\d+|first|second|highest|lowest|most|least|cheapest|latest|newest|oldest|best)\b/i.test(normalized);
-  const hasDimensionSignal = /\b(?:stars?|rating|reviews?|price|cost|date|score|position|result|rank)\b/i.test(normalized);
-  return hasOrderSignal && hasDimensionSignal;
+  const lines = value.split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  if (lines.length > 1) {
+    return lines.some(line => hasRankingEvidence(line));
+  }
+
+  const normalized = lines[0] ?? '';
+  if (!normalized) return false;
+
+  // Exclude pure sort/filter control dropdowns or headers with no entity/value attached
+  const isPureControl = /^(?:sort|order|filter|group|arrange)\s+(?:by|results\s+by)\s*:[^0-9]*$/i.test(normalized)
+    || /^(?:sort\s+results\s+by|sort\s+by|order\s+by|filter\s+by)\b[^0-9]{0,60}$/i.test(normalized);
+  if (isPureControl) {
+    return false;
+  }
+
+  // 1. Ordinal rank (e.g. "#1", "top 10", "rank 1", "1st result")
+  const hasOrdinalRank = /(?:^|\s)#\d+\b|\b(?:top\s+\d+|rank(?:ed)?\s*#?\d+|1st|2nd|3rd|[4-9]th)\b/i.test(normalized);
+
+  // 2. Order signal + Dimension signal attached to concrete values (e.g. "Highest rated: 4.9", "Cheapest flight: $120", "Most stars: 98.4k")
+  const hasOrderSignal = /\b(?:sorted|rank(?:ed|ing)?|ordered|top|highest|lowest|most|least|cheapest|latest|newest|oldest|best)\b/i.test(normalized);
+  const hasDimensionSignal = /\b(?:stars?|rating|reviews?|price|cost|fee|score|position|rank)\b|[$€£¥₹]\s*\d/i.test(normalized);
+  const hasConcreteValue = /[:\d$€£]|\b(?:preprint|paper|repository|repo|hotel|place|item|product|author|title)\b/i.test(normalized);
+
+  return hasOrdinalRank || (hasOrderSignal && hasDimensionSignal && hasConcreteValue && !isPureControl);
 }
 
+export const BASIC_INFO_SIGNALS = [
+  // 0. Hours / Schedule: requires actual temporal schedule values
+  /\b(?:open\s+24\s*hours?|open\s+now|closed\s+now|open\s+daily|closed\s+on\s+[a-z]+|\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)\s*(?:-|–|to)\s*\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)|hours?\s*:\s*(?:[^\n,;]{2,30}\d|open|closed))\b/i,
+
+  // 1. Phone / Contact: requires actual phone digits
+  /(?:\+?\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}\b|\b(?:phone|tel(?:ephone)?)\s*:\s*\+?\d[\d\s().-]{5,}\d/i,
+
+  // 2. Address / Location: requires street address, City/State/Zip, or explicit address value
+  /\b\d{1,5}\s+[A-Z][a-z0-9\s.,'-]+(?:st|street|ave|avenue|rd|road|blvd|boulevard|dr|drive|lane|way|pkwy|parkway|hwy|highway)\b|\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?\b|\baddress\s*:\s*[A-Z0-9][^\n,;]{4,}|\bin\s+[A-Z][a-z]+,\s*[A-Z]{2}\b/i,
+
+  // 3. Rating / Reviews: requires concrete score or count
+  /\b[1-5](?:\.\d)?\s*(?:\/\s*5|\s*stars?|\s*out of 5)\b|\b(?:\d{1,3}(?:,\d{3})+|\d+)\s+(?:reviews?|ratings?)\b|[★☆]{3,5}|\brating\s*:\s*[1-5](?:\.\d)?/i,
+
+  // 4. Price / Fee: requires currency amount or explicit free entry statement
+  /[$€£¥₹]\s*\d+(?:\.\d{2})?(?:\s*(?:k|m|million|billion|per\s+[a-z]+|\/|\+))?|\b\d+(?:\.\d{2})?\s*(?:usd|eur|gbp|dollars?|cents?)\b|\b(?:free\s+admission|free\s+entry|no\s+(?:fee|admission|cost)|admission\s+is\s+free)\b|\b(?:entry|admission|ticket|fee|price|cost)\s*:\s*(?:[$€£¥₹]\s*\d+|free|none)/i,
+];
+
 export function hasConcreteBasicInformation(value: string): boolean {
-  const signals = [
-    /\b(open|closed|hours?|24 hours?)\b/i,
-    /\b(phone|contact|call)\b|\+?\d[\d\s().-]{6,}\d/,
-    /\b(address|located|location|in [A-Z][a-z]+|,\s*[A-Z]{2}\b|\b\d{5}(?:-\d{4})?\b)/,
-    /\b(rating|stars?|reviews?)\b/i,
-    /\b(price|cost|fee|ticket)\b/i,
-  ];
-  return signals.filter(signal => signal.test(value)).length >= 2;
+  return BASIC_INFO_SIGNALS.filter(signal => signal.test(value)).length >= 2;
 }
 
 function evidenceContainsSpecificLocation(evidenceText: string | undefined): boolean {

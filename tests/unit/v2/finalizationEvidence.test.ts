@@ -129,11 +129,26 @@ test('buildFinalizationEvidence preserves late details from explicit read eviden
   assert.match(evidence, new RegExp(lateMarker));
 });
 
-test('buildAnswerValidationEvidence accepts only explicit read evidence', () => {
-  const evidence = buildAnswerValidationEvidence([
-    { kind: 'get', targetRef: 'ref_result', text: 'Verified result: 11.2' },
-    { kind: 'inspect_region', targetRef: 'ref_details', text: 'Verified details: open daily' },
-  ]);
+test('buildAnswerValidationEvidence accepts explicit read evidence and surface observation reads', () => {
+  const evidence = buildAnswerValidationEvidence(
+    [
+      { kind: 'get', targetRef: 'ref_result', text: 'Verified result: 11.2' },
+      { kind: 'inspect_region', targetRef: 'ref_details', text: 'Verified details: open daily' },
+    ],
+    [
+      {
+        kind: 'surface_observation',
+        sourceKind: 'surface_observation' as const,
+        observationId: 'obs_1',
+        targetRef: 'ref_surface',
+        refIds: ['ref_surface'],
+        text: 'Most starred repository: microsoft/TypeScript (98.4k stars)',
+      },
+    ],
+  );
 
-  assert.equal(evidence, 'Verified result: 11.2\nVerified details: open daily');
+  assert.equal(
+    evidence,
+    'Verified result: 11.2\nVerified details: open daily\nMost starred repository: microsoft/TypeScript (98.4k stars)',
+  );
 });

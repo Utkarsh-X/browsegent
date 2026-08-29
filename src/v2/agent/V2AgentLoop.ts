@@ -6,7 +6,8 @@ import {
   buildFinalizationEvidence,
   type ReadEvidenceHistoryEntry,
 } from './FinalizationEvidence';
-import { buildTaskEvidenceCoverage } from './TaskEvidenceCoverage';
+import { buildTaskEvidenceCoverage, type TaskEvidenceRead } from './TaskEvidenceCoverage';
+import type { OperationalProjection } from '../brain1/projectionTypes';
 import { ContinuityGraph } from '../graph/ContinuityGraph';
 import type { ContinuityGraphSnapshot } from '../graph/types';
 import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
@@ -82,7 +83,8 @@ export class V2AgentLoop {
         const stepStartMs = Date.now();
         const composeStart = Date.now();
         const projection = this.projectionService.project(observation, graphSnapshot);
-        const evidenceCoverage = buildTaskEvidenceCoverage(input.goal, readEvidenceHistory);
+        const surfaceEvidence = extractSurfaceEvidence(projection, observation.observationId);
+        const evidenceCoverage = buildTaskEvidenceCoverage(input.goal, readEvidenceHistory, surfaceEvidence);
         const plannerInput = this.plannerInputComposer.compose({
           episodeId: `episode_${stepIndex + 1}_${observation.observationId}`,
           goal: input.goal,
@@ -177,7 +179,7 @@ export class V2AgentLoop {
         if (plannerResult.output.done === true) {
             const value = normalizeAnswerValue(plannerResult.output.val ?? '', input.goal);
             const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(input.goal), {
-              evidenceText: buildAnswerValidationEvidence(readEvidenceHistory),
+              evidenceText: buildAnswerValidationEvidence(readEvidenceHistory, surfaceEvidence),
             });
           const coverageReasons = answerValidation.ok ? missingCoverageReasons(evidenceCoverage) : [];
           const validationReasons = [...answerValidation.reasons, ...coverageReasons];
@@ -511,7 +513,8 @@ export class V2AgentLoop {
     workingSetOptions?: PlannerWorkingSetOptions,
   ): Promise<V2AgentLoopResult | undefined> {
     const projection = this.projectionService.project(observation, graphSnapshot);
-    const evidenceCoverage = buildTaskEvidenceCoverage(goal, readEvidenceHistory);
+    const surfaceEvidence = extractSurfaceEvidence(projection, observation.observationId);
+    const evidenceCoverage = buildTaskEvidenceCoverage(goal, readEvidenceHistory, surfaceEvidence);
     const finalizationEvidence = buildFinalizationEvidence({
       goal,
       projection,
@@ -519,7 +522,7 @@ export class V2AgentLoop {
       readEvidenceHistory,
       evidenceCoverage,
     });
-    const validationEvidence = buildAnswerValidationEvidence(readEvidenceHistory);
+    const validationEvidence = buildAnswerValidationEvidence(readEvidenceHistory, surfaceEvidence);
     const finalizationInput = this.plannerInputComposer.compose({
       episodeId: `episode_finalization_${observation.observationId}`,
       goal: `${goal}\n\nFinalization evidence:\n${finalizationEvidence}\n\nReturn done with the best answer if the evidence answers the goal. Otherwise escalate with a concise reason. Do not return a plan.`,
@@ -866,6 +869,35 @@ function missingCoverageReasons(coverage: ReturnType<typeof buildTaskEvidenceCov
   return coverage.requirements
     .filter(requirement => requirement.status === 'missing' || requirement.status === 'conflicting')
     .map(requirement => `missing_evidence_${requirement.key}`);
+}
+
+function extractSurfaceEvidence(projection: OperationalProjection, observationId: string): TaskEvidenceRead[] {
+  const seenRefs = new Set<string>();
+  const surfaceReads: TaskEvidenceRead[] = [];
+
+  for (const item of [
+    ...(projection.readables ?? []),
+    ...(projection.interactions ?? []),
+    ...(projection.navigation ?? []),
+  ]) {
+    if (seenRefs.has(item.refId)) continue;
+    seenRefs.add(item.refId);
+
+    if (item.visibility !== 'visible') continue;
+    const text = [item.name, item.text].filter(Boolean).join(' ').trim();
+    if (!text) continue;
+
+    surfaceReads.push({
+      kind: 'surface_observation',
+      sourceKind: 'surface_observation',
+      observationId,
+      targetRef: item.refId,
+      refIds: [item.refId],
+      text,
+    });
+  }
+
+  return surfaceReads;
 }
 
 /**

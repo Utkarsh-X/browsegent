@@ -1,4 +1,5 @@
 import {
+  BASIC_INFO_SIGNALS,
   hasConcreteBasicInformation,
   hasConcretePronunciation,
   hasDefinitionDetail,
@@ -14,6 +15,9 @@ import type {
 export interface TaskEvidenceRead {
   kind: string;
   targetRef?: string;
+  refIds?: string[];
+  sourceKind?: 'tool_read' | 'surface_observation';
+  observationId?: string;
   text: string;
 }
 
@@ -22,14 +26,18 @@ const EXPLICIT_CONFLICT = /\b(?:contradict(?:s|ory)?|conflicting|inconsistent|di
 export function buildTaskEvidenceCoverage(
   goal: string,
   readEvidence: TaskEvidenceRead[],
+  surfaceEvidence?: TaskEvidenceRead[],
 ): PlannerEvidenceCoverage {
+  const allEvidence = surfaceEvidence && surfaceEvidence.length > 0
+    ? [...readEvidence, ...surfaceEvidence]
+    : readEvidence;
   const contract = inferAnswerContract(goal);
   const requirements: PlannerEvidenceCoverageRequirement[] = contract.requiredDetails.map(key =>
-    classifyRequirement(key, readEvidence),
+    classifyRequirement(key, allEvidence, readEvidence.length),
   );
 
   if (contract.requiresRankingEvidence) {
-    requirements.push(classifyRequirement('ranking_evidence', readEvidence));
+    requirements.push(classifyRequirement('ranking_evidence', allEvidence, readEvidence.length));
   }
 
   const hasConflict = requirements.some(requirement => requirement.status === 'conflicting');
@@ -39,19 +47,47 @@ export function buildTaskEvidenceCoverage(
   return {
     contractKind: contract.kind,
     status: hasConflict || hasMissing ? 'incomplete' : hasUncertainty ? 'uncertain' : 'ready',
-    readCount: readEvidence.length,
+    readCount: allEvidence.length,
     requirements,
   };
 }
 
-function classifyRequirement(
-  key: PlannerEvidenceCoverageKey,
-  readEvidence: TaskEvidenceRead[],
-): PlannerEvidenceCoverageRequirement {
-  const supportingReadIndexes = readEvidence
+function findSupportingReadIndexes(key: PlannerEvidenceCoverageKey, allEvidence: TaskEvidenceRead[]): number[] {
+  if (key === 'concrete_basic_information') {
+    const matchedSignalIndexes = new Set<number>();
+    const supportingIndexes: number[] = [];
+
+    allEvidence.forEach((read, readIndex) => {
+      let matchedAny = false;
+      BASIC_INFO_SIGNALS.forEach((signal, signalIndex) => {
+        if (signal.test(read.text)) {
+          matchedSignalIndexes.add(signalIndex);
+          matchedAny = true;
+        }
+      });
+      if (matchedAny) {
+        supportingIndexes.push(readIndex);
+      }
+    });
+
+    if (matchedSignalIndexes.size >= 2) {
+      return supportingIndexes;
+    }
+    return [];
+  }
+
+  return allEvidence
     .map((read, index) => matchesRequirement(key, read.text) ? index : -1)
     .filter(index => index >= 0);
-  const conflictingReadIndexes = readEvidence
+}
+
+function classifyRequirement(
+  key: PlannerEvidenceCoverageKey,
+  allEvidence: TaskEvidenceRead[],
+  toolReadCount: number,
+): PlannerEvidenceCoverageRequirement {
+  const supportingReadIndexes = findSupportingReadIndexes(key, allEvidence);
+  const conflictingReadIndexes = allEvidence
     .map((read, index) => EXPLICIT_CONFLICT.test(read.text) && matchesRequirement(key, read.text) ? index : -1)
     .filter(index => index >= 0);
 
@@ -63,10 +99,18 @@ function classifyRequirement(
     };
   }
 
-  // With no explicit reads yet, coverage cannot prove or disprove the fact.
-  // Keep this uncertain so computed/direct-answer flows retain their existing
-  // behavior while the planner still sees that verification is advisable.
-  if (readEvidence.length === 0) {
+  if (supportingReadIndexes.length > 0) {
+    return {
+      key,
+      status: 'proven',
+      supportingReadIndexes: supportingReadIndexes.slice(0, 4),
+    };
+  }
+
+  // If no explicit tool reads have been performed and surface facts didn't prove the detail,
+  // keep this uncertain so direct observation / computation flows retain their behavior
+  // while still signalling to the planner that verification is advisable.
+  if (toolReadCount === 0) {
     return { key, status: 'uncertain', supportingReadIndexes: [] };
   }
 
@@ -80,8 +124,8 @@ function classifyRequirement(
 
   return {
     key,
-    status: supportingReadIndexes.length > 0 ? 'proven' : 'missing',
-    supportingReadIndexes: supportingReadIndexes.slice(0, 4),
+    status: 'missing',
+    supportingReadIndexes: [],
   };
 }
 
