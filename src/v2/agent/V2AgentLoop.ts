@@ -7,6 +7,7 @@ import {
   type ReadEvidenceHistoryEntry,
 } from './FinalizationEvidence';
 import { buildTaskEvidenceCoverage, type TaskEvidenceRead } from './TaskEvidenceCoverage';
+import { EvidenceLedger } from './EvidenceLedger';
 import type { OperationalProjection } from '../brain1/projectionTypes';
 import { ContinuityGraph } from '../graph/ContinuityGraph';
 import type { ContinuityGraphSnapshot } from '../graph/types';
@@ -77,13 +78,17 @@ export class V2AgentLoop {
       let lastSuccessfulEvidenceValue: string | undefined;
       let readEvidenceHistory: ReadEvidenceHistoryEntry[] = [];
       let answerFeedback: PlannerAnswerFeedback | undefined;
+      let lastRejectedAnswerKey: string | undefined;
+      let repeatedRejectedAnswerCount = 0;
+      const evidenceLedger = new EvidenceLedger();
 
       for (let stepIndex = 0; stepIndex < maxSteps; stepIndex += 1) {
         ledger.beginStep(stepIndex);
         const stepStartMs = Date.now();
         const composeStart = Date.now();
         const projection = this.projectionService.project(observation, graphSnapshot);
-        const surfaceEvidence = extractSurfaceEvidence(projection, observation.observationId);
+        evidenceLedger.recordObservation(observation, projection);
+        const surfaceEvidence = evidenceLedger.getAllEvidenceReads();
         const evidenceCoverage = buildTaskEvidenceCoverage(input.goal, readEvidenceHistory, surfaceEvidence);
         const plannerInput = this.plannerInputComposer.compose({
           episodeId: `episode_${stepIndex + 1}_${observation.observationId}`,
@@ -97,6 +102,7 @@ export class V2AgentLoop {
           runtimeUncertainty,
           answerFeedback,
           evidenceCoverage,
+          evidenceSnapshot: evidenceLedger.getPlannerEvidenceSnapshot(),
           workingSetOptions: input.workingSetOptions,
         });
         harness.recordPlannerInput?.(plannerInput.episodeId, plannerInput);
@@ -179,13 +185,36 @@ export class V2AgentLoop {
         if (plannerResult.output.done === true) {
             const value = normalizeAnswerValue(plannerResult.output.val ?? '', input.goal);
             const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(input.goal), {
-              evidenceText: buildAnswerValidationEvidence(readEvidenceHistory, surfaceEvidence),
+              evidenceText: buildAnswerValidationEvidence(readEvidenceHistory, surfaceEvidence, evidenceLedger),
             });
           const coverageReasons = answerValidation.ok ? missingCoverageReasons(evidenceCoverage) : [];
           const validationReasons = [...answerValidation.reasons, ...coverageReasons];
           if (validationReasons.length > 0) {
+            const rejectedAnswerKey = buildRejectedAnswerKey(
+              value,
+              validationReasons,
+              observation,
+              readEvidenceHistory,
+            );
+            repeatedRejectedAnswerCount = rejectedAnswerKey === lastRejectedAnswerKey
+              ? repeatedRejectedAnswerCount + 1
+              : 1;
+            lastRejectedAnswerKey = rejectedAnswerKey;
+            if (repeatedRejectedAnswerCount >= 3) {
+              return await this.complete(harness, {
+                success: false,
+                value,
+                failureReason: `planner_repeated_answer_rejection:${validationReasons.join('|')}`,
+                steps: metrics.plannerCalls,
+                metrics,
+              }, ledger, outcomeRecorder);
+            }
             if (stepIndex < maxSteps - 1) {
-              answerFeedback = buildAnswerFeedback(value, validationReasons);
+              answerFeedback = buildAnswerFeedback(
+                value,
+                validationReasons,
+                repeatedRejectedAnswerCount >= 2,
+              );
               runtimeUncertainty = appendRuntimeUncertaintySignals(
                 runtimeUncertainty,
                 validationReasons.map(reason => `answer_contract:${reason}`),
@@ -241,7 +270,9 @@ export class V2AgentLoop {
           if (blockedSig) {
             const blockDescription = blockedSig.startsWith('tool:')
               ? `the ${plannedStep.tool} tool produced no progress three times`
-              : `3 identical repeats (signature: ${blockedSig})`;
+              : blockedSig.startsWith('persistent_target:')
+                ? `persistent mutation failures on semantic target ${blockedSig.slice('persistent_target:'.length)}`
+                : `3 identical repeats (signature: ${blockedSig})`;
             lastResult = {
               success: false,
               kind: plannedStep.tool,
@@ -314,6 +345,15 @@ export class V2AgentLoop {
             }
             lastSuccessfulEvidenceValue = successfulToolEvidencePreview(lastResult) ?? lastSuccessfulEvidenceValue;
             readEvidenceHistory = appendReadEvidenceHistory(readEvidenceHistory, lastResult);
+            const latestRead = readEvidenceHistory[readEvidenceHistory.length - 1];
+            if (latestRead) {
+              evidenceLedger.recordToolRead({
+                kind: latestRead.kind,
+                targetRef: latestRead.targetRef,
+                text: latestRead.text,
+                sourceKind: 'tool_read',
+              });
+            }
             outcomeRecorder.record({
               stepIndex, tool: plannedStep.tool, targetRef: plannedStep.ref,
               source: 'dispatch', success: lastResult.success, errorCode: lastResult.error?.code,
@@ -360,6 +400,7 @@ export class V2AgentLoop {
               transitionEvidence,
               graphSnapshot,
               failures: failureEvidence,
+              extraSignals: progressSignals,
             });
             const deadState = this.deadStateDetector.assess({
               projection: currentProjection,
@@ -374,11 +415,19 @@ export class V2AgentLoop {
               graphSnapshot,
               failures: failureEvidence,
               deadStateEvidence,
+              extraSignals: progressSignals,
             });
             break; // break mini-plan → replan
           }
 
           // Success path — only reachable from dispatched actions
+          if (hasPageBoundary(transitionEvidence)) {
+            // Failure and dead-state evidence is scoped to the previous page.
+            // Preserve task evidence and the transition itself, but do not
+            // make the planner recover from a target it can no longer see.
+            failureEvidence = [];
+            deadStateEvidence = undefined;
+          }
           runtimeUncertainty = undefined;
           if (progressSignals.length > 0) {
             const currentProjection = this.projectionService.project(observation, graphSnapshot);
@@ -407,6 +456,7 @@ export class V2AgentLoop {
           harness, plannerClient, observation, graphSnapshot,
           input.goal, lastSuccessfulEvidenceValue, readEvidenceHistory, metrics, ledger, outcomeRecorder,
           input.workingSetOptions,
+          evidenceLedger,
         );
         if (finalizationResult) return finalizationResult;
 
@@ -511,9 +561,12 @@ export class V2AgentLoop {
     ledger?: LatencyLedger,
     outcomeRecorder?: ActionOutcomeRecorder,
     workingSetOptions?: PlannerWorkingSetOptions,
+    evidenceLedger?: EvidenceLedger,
   ): Promise<V2AgentLoopResult | undefined> {
     const projection = this.projectionService.project(observation, graphSnapshot);
-    const surfaceEvidence = extractSurfaceEvidence(projection, observation.observationId);
+    const ledgerInstance = evidenceLedger ?? new EvidenceLedger();
+    ledgerInstance.recordObservation(observation, projection);
+    const surfaceEvidence = ledgerInstance.getAllEvidenceReads();
     const evidenceCoverage = buildTaskEvidenceCoverage(goal, readEvidenceHistory, surfaceEvidence);
     const finalizationEvidence = buildFinalizationEvidence({
       goal,
@@ -522,13 +575,14 @@ export class V2AgentLoop {
       readEvidenceHistory,
       evidenceCoverage,
     });
-    const validationEvidence = buildAnswerValidationEvidence(readEvidenceHistory, surfaceEvidence);
+    const validationEvidence = buildAnswerValidationEvidence(readEvidenceHistory, surfaceEvidence, ledgerInstance);
     const finalizationInput = this.plannerInputComposer.compose({
       episodeId: `episode_finalization_${observation.observationId}`,
       goal: `${goal}\n\nFinalization evidence:\n${finalizationEvidence}\n\nReturn done with the best answer if the evidence answers the goal. Otherwise escalate with a concise reason. Do not return a plan.`,
       projection,
       graphSnapshot,
       evidenceCoverage,
+      evidenceSnapshot: ledgerInstance.getPlannerEvidenceSnapshot(),
       workingSetOptions,
     });
     harness.recordPlannerInput?.(finalizationInput.episodeId, finalizationInput);
@@ -794,13 +848,30 @@ function formatPlannerEscalation(kind: string, reason: string | undefined): stri
   return compactReason ? `planner_escalated:${kind}:${compactReason}` : `planner_escalated:${kind}`;
 }
 
-function buildAnswerFeedback(previousAnswer: string, missingDetails: string[]): PlannerAnswerFeedback {
+function buildAnswerFeedback(
+  previousAnswer: string,
+  missingDetails: string[],
+  forceStrategyPivot = false,
+): PlannerAnswerFeedback {
   return {
     previousAnswer,
     missingDetails,
-    instruction:
-      'Previous done answer did not satisfy the answer contract. Continue gathering evidence or return done only when all missing details are answered.',
+    instruction: forceStrategyPivot
+      ? 'The same done answer was rejected again without new evidence. Do not return done again. Execute a different evidence-gathering action or escalate if the page is blocked.'
+      : 'Previous done answer did not satisfy the answer contract. Continue gathering evidence or return done only when all missing details are answered.',
   };
+}
+
+function buildRejectedAnswerKey(
+  answer: string,
+  reasons: string[],
+  observation: BrowserObservation,
+  readEvidenceHistory: ReadEvidenceHistoryEntry[],
+): string {
+  const evidence = readEvidenceHistory
+    .map(entry => `${entry.kind}:${entry.targetRef ?? ''}:${entry.text}`)
+    .join('|');
+  return `${observation.observationId}|${reasons.join('|')}|${answer}|${evidence}`;
 }
 
 function appendRuntimeUncertaintySignals(
@@ -850,6 +921,7 @@ function numberOrZero(value: unknown): number {
 
 const READ_TOOL_KINDS = new Set(['get', 'inspect_region', 'search_page']);
 const MUTATION_EVIDENCE_KINDS = new Set(['click', 'type', 'select', 'press', 'navigate']);
+const TARGET_MUTATION_KINDS = new Set(['click', 'type', 'select', 'press']);
 
 /**
  * Determine if a tool result produced read evidence.
@@ -930,16 +1002,20 @@ interface ActionProgressEntry {
   targetKey: string;
   valueKey?: string;
   noProgressMutation: boolean;
+  persistentFailure: boolean;
   actionSignature: string;
   semanticActionSignature?: string;
+  semanticTargetKey?: string;
 }
 
 class ActionProgressMemory {
   private readonly entries: ActionProgressEntry[] = [];
   private readonly hardBlockedSignatures: Set<string> = new Set();
   private readonly hardBlockedSemanticSignatures: Set<string> = new Set();
+  private readonly hardBlockedPersistentTargets: Set<string> = new Set();
   private readonly hardBlockedKinds: Set<string> = new Set();
   private readonly noProgressCountsByKind: Map<string, number> = new Map();
+  private readonly persistentFailureCountsByTarget: Map<string, number> = new Map();
 
   static actionSignature(
     step: { tool: string; ref?: string; text?: string; value?: string; pattern?: string; url?: string; key?: string },
@@ -965,6 +1041,11 @@ class ActionProgressMemory {
     if (observation && step.ref) {
       const ref = observation.refs.find(candidate => candidate.refId === step.ref);
       if (ref?.targetId) {
+        const targetKey = normalizeSignalToken(ref.targetId);
+        if (TARGET_MUTATION_KINDS.has(kind) && this.hardBlockedPersistentTargets.has(targetKey)) {
+          return `persistent_target:${targetKey}`;
+        }
+
         const semanticSig = ActionProgressMemory.actionSignature(step, ref.targetId);
         if (this.hardBlockedSemanticSignatures.has(semanticSig)) return semanticSig;
       }
@@ -975,11 +1056,13 @@ class ActionProgressMemory {
 
   resetSignatureOnPageChange(evidence: TransitionEvidence | undefined): void {
     if (!evidence) return;
-    if (evidence.urlChanged || evidence.generationChanged) {
+    if (hasObservablePageChange(evidence)) {
       this.hardBlockedSignatures.clear();
       this.hardBlockedSemanticSignatures.clear();
+      this.hardBlockedPersistentTargets.clear();
       this.hardBlockedKinds.clear();
       this.noProgressCountsByKind.clear();
+      this.persistentFailureCountsByTarget.clear();
     }
   }
 
@@ -996,14 +1079,25 @@ class ActionProgressMemory {
 
     const signals: string[] = [];
 
-    if (entry.noProgressMutation) {
-      const kindCount = (this.noProgressCountsByKind.get(entry.kind) ?? 0) + 1;
-      this.noProgressCountsByKind.set(entry.kind, kindCount);
-      if (kindCount >= REPEAT_SIGNAL_THRESHOLD) {
-        signals.push(`repeated_no_progress_kind:${entry.kind}:${kindCount}`);
+    if (entry.persistentFailure && entry.semanticTargetKey && TARGET_MUTATION_KINDS.has(entry.kind)) {
+      const targetCount = (this.persistentFailureCountsByTarget.get(entry.semanticTargetKey) ?? 0) + 1;
+      this.persistentFailureCountsByTarget.set(entry.semanticTargetKey, targetCount);
+      if (targetCount >= REPEAT_SIGNAL_THRESHOLD) {
+        signals.push(`repeated_persistent_target:${entry.semanticTargetKey}:${targetCount}`);
+        this.hardBlockedPersistentTargets.add(entry.semanticTargetKey);
       }
-      if (kindCount >= 3) {
-        this.hardBlockedKinds.add(entry.kind);
+    }
+
+    if (entry.noProgressMutation) {
+      if (!entry.persistentFailure) {
+        const kindCount = (this.noProgressCountsByKind.get(entry.kind) ?? 0) + 1;
+        this.noProgressCountsByKind.set(entry.kind, kindCount);
+        if (kindCount >= REPEAT_SIGNAL_THRESHOLD) {
+          signals.push(`repeated_no_progress_kind:${entry.kind}:${kindCount}`);
+        }
+        if (kindCount >= 3) {
+          this.hardBlockedKinds.add(entry.kind);
+        }
       }
 
       const count = this.entries.filter(existing =>
@@ -1076,7 +1170,17 @@ function isNoProgressMutation(result: V2ToolResult): boolean {
   }
 
   const evidence = result.evidence;
-  if (evidence.urlChanged || evidence.generationChanged) {
+  if (evidence.urlChanged) {
+    return false;
+  }
+
+  // Reloading the same URL without any observable ref change is not proof of
+  // progress. Keep the loop guard active until the page exposes new state.
+  if (result.kind === 'navigate' && !hasObservablePageChange(evidence)) {
+    return true;
+  }
+
+  if (evidence.generationChanged) {
     return false;
   }
 
@@ -1099,6 +1203,18 @@ function isNoProgressMutation(result: V2ToolResult): boolean {
   return false;
 }
 
+function hasObservablePageChange(evidence: TransitionEvidence): boolean {
+  return evidence.urlChanged
+    || evidence.refChanges.appeared.length > 0
+    || evidence.refChanges.disappeared.length > 0
+    || evidence.refChanges.weakened.length > 0
+    || evidence.notes.some(note => note.startsWith('ref_changed:') || note.startsWith('box_changed:'));
+}
+
+function hasPageBoundary(evidence: TransitionEvidence | undefined): boolean {
+  return Boolean(evidence?.urlChanged || evidence?.generationChanged);
+}
+
 /**
  * Determines whether a tool result should be recorded in progress memory.
  * For read tools, we record a fallback placeholder "__empty__" when there is no text
@@ -1109,13 +1225,16 @@ function progressEntryForResult(
   plannedStep?: PlannerOutputStep,
   actionObservation?: BrowserObservation,
 ): ActionProgressEntry | undefined {
-  if (!result.success) {
+  const persistentMutationFailure = !result.success
+    && result.error?.retryable === false
+    && MUTATION_EVIDENCE_KINDS.has(result.kind);
+  if (!result.success && !persistentMutationFailure) {
     return undefined;
   }
 
   const kind = normalizeSignalToken(plannedStep?.tool ?? result.kind);
   const targetKey = normalizeSignalToken(plannedStep?.ref ?? result.targetRef ?? result.target?.refId ?? 'global');
-  const noProgressMutation = isNoProgressMutation(result);
+  const noProgressMutation = persistentMutationFailure || isNoProgressMutation(result);
   const isRead = READ_TOOL_KINDS.has(result.kind);
   const valuePreview = isRead ? (previewResultValue(result.value) || '__empty__') : undefined;
   const mutationValue = plannedStep?.tool === 'type'
@@ -1137,12 +1256,14 @@ function progressEntryForResult(
     targetKey,
     valueKey,
     noProgressMutation,
+    persistentFailure: persistentMutationFailure,
     actionSignature: plannedStep
       ? ActionProgressMemory.actionSignature(plannedStep)
       : `${kind}:${targetKey}:${valueKey ?? '__none__'}`,
     semanticActionSignature: plannedStep && semanticTargetId
       ? ActionProgressMemory.actionSignature(plannedStep, semanticTargetId)
       : undefined,
+    semanticTargetKey: semanticTargetId ? normalizeSignalToken(semanticTargetId) : undefined,
   };
 }
 
