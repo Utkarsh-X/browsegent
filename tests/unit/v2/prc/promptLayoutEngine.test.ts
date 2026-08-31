@@ -80,6 +80,40 @@ test('PromptLayoutEngine renders specific tool capability attributes correctly',
   assert.match(text, /\[r2\] <input .* tools="t,r" \/>/);
 });
 
+test('PromptLayoutEngine exposes generic combobox protocol metadata in JSON and compact PRC', () => {
+  const comboInput: PlannerInput = {
+    ...input,
+    current: {
+      ...input.current,
+      refs: {
+        ...input.current.refs,
+        r2: {
+          ...input.current.refs.r2,
+          role: 'combobox',
+          value: 'Par',
+          placeholder: 'Where are you going?',
+          ariaAutocomplete: 'list',
+          ariaHasPopup: 'listbox',
+        },
+      },
+    },
+  };
+  const ir = new PlannerRepresentationCompiler().compile(comboInput);
+  const engine = new PromptLayoutEngine();
+
+  const expanded = engine.render(ir);
+  assert.match(expanded, /aria-autocomplete="list"/);
+  assert.match(expanded, /aria-haspopup="listbox"/);
+  assert.match(expanded, /value="Par"/);
+  assert.match(expanded, /placeholder="Where are you going\?"/);
+
+  const compact = engine.render(ir, { compactDataPlane: true, prcTierOmitted: true });
+  assert.match(compact, /ac=list/);
+  assert.match(compact, /popup=listbox/);
+  assert.match(compact, /value="Par"/);
+  assert.match(compact, /ph="Where are you going\?"/);
+});
+
 test('P1 omits tier only when requested and preserves lane, remainder region, and refs', () => {
   const remainderInput: PlannerInput = {
     ...input,
@@ -297,7 +331,7 @@ test('P3 compact data plane preserves control-plane evidence and action capabili
     workingSet: {
       ...input.workingSet!,
       actionSurface: {
-        clickableRefs: ['r1'],
+        clickableRefs: ['r1', 'sentinel-unrendered-action-ref'],
         typeableRefs: ['r1'],
         selectableRefs: ['r1'],
         readableRefs: ['r1'],
@@ -369,6 +403,8 @@ test('P3 compact data plane preserves control-plane evidence and action capabili
   assert.match(text, /LAST:/);
   assert.match(text, /EVIDENCE:.*@17,18/);
   assert.match(text, /tools="c,t,s,r,a"/);
+  assert.doesNotMatch(text, /actions=c:r1/);
+  assert.match(text, /actions=c:sentinel-unrendered-action-ref/);
   assert.match(text, /sentinel_failure_kind/);
   assert.match(text, /sentinel-quarantine-tool/);
   assert.match(text, /sentinel-changed-ref/);

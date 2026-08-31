@@ -14,6 +14,7 @@ export class PromptLayoutEngine {
       renderState(ir),
       renderRecentEvents(ir),
       renderEvidenceCoverage(ir),
+      renderEvidenceSnapshot(ir),
       renderProblems(ir),
       renderSurface(ir, options),
       renderWorkingSet(ir),
@@ -84,11 +85,64 @@ function renderCompactLast(ir: PlannerRepresentationIR): string {
 
 function renderCompactEvidence(ir: PlannerRepresentationIR): string {
   const coverage = ir.execution.evidenceCoverage;
-  if (!coverage) return '';
-  const requirements = coverage.requirements.map(requirement =>
-    `${requirement.key}:${requirement.status}@${requirement.supportingReadIndexes.join(',') || '-'}`,
-  );
-  return `EVIDENCE: contract=${escapeAttr(coverage.contractKind)} state=${coverage.status} reads=${coverage.readCount}${requirements.length ? ` requirements=${requirements.join(';')}` : ''}`;
+  const parts: string[] = [];
+  if (coverage) {
+    const requirements = coverage.requirements.map(requirement =>
+      `${requirement.key}:${requirement.status}@${requirement.supportingReadIndexes.join(',') || '-'}`,
+    );
+    parts.push(`contract=${escapeAttr(coverage.contractKind)} state=${coverage.status} reads=${coverage.readCount}`);
+    if (requirements.length) parts.push(`requirements=${requirements.join(';')}`);
+  }
+  const snapshot = ir.execution.evidenceSnapshot;
+  if (snapshot) {
+    parts.push(`facts=${renderCompactEvidenceFacts(snapshot)}`);
+  }
+  return parts.length > 0 ? `EVIDENCE: ${parts.join(' ')}` : '';
+}
+
+function renderEvidenceSnapshot(ir: PlannerRepresentationIR): string {
+  const snapshot = ir.execution.evidenceSnapshot;
+  if (!snapshot || snapshot.cards.length === 0) return '';
+
+  const lines = ['EVIDENCE SNAPSHOT'];
+  if (snapshot.activeSort) {
+    lines.push(`  sort: ${snapshot.activeSort.dimension} (${snapshot.activeSort.direction}) via ${snapshot.activeSort.source}`);
+  }
+  for (const card of snapshot.cards) {
+    const parts: string[] = [];
+    if (card.provenRank !== undefined) parts.push(`Rank #${card.provenRank}`);
+    else parts.push(`Position ${card.position + 1}`);
+    if (card.entity) parts.push(card.entity);
+    if (card.metrics.stars !== undefined) parts.push(`${card.metrics.stars} stars`);
+    if (card.metrics.rating !== undefined) parts.push(`Rating: ${card.metrics.rating}`);
+    if (card.metrics.reviewCount !== undefined) parts.push(`${card.metrics.reviewCount} reviews`);
+    if (card.metrics.price !== undefined) parts.push(`Price: ${card.metrics.price}`);
+    if (card.metrics.citations !== undefined) parts.push(`${card.metrics.citations} citations`);
+    if (card.temporal?.length) parts.push(card.temporal.join(', '));
+    if (card.refIds.length) parts.push(`refs=${card.refIds.join(',')}`);
+    lines.push(`  ${parts.join(' | ')}`);
+  }
+  return lines.join('\n');
+}
+
+function renderCompactEvidenceFacts(snapshot: NonNullable<PlannerRepresentationIR['execution']['evidenceSnapshot']>): string {
+  const sort = snapshot.activeSort
+    ? `sort=${snapshot.activeSort.dimension}:${snapshot.activeSort.direction}:${snapshot.activeSort.source}`
+    : '';
+  const cards = snapshot.cards.map(card => {
+    const fields = [
+      card.provenRank !== undefined ? `rank${card.provenRank}` : `pos${card.position + 1}`,
+      card.entity ? escapeAttr(compactValue(card.entity, 160)) : undefined,
+      card.metrics.stars !== undefined ? `stars=${card.metrics.stars}` : undefined,
+      card.metrics.rating !== undefined ? `rating=${card.metrics.rating}` : undefined,
+      card.metrics.reviewCount !== undefined ? `reviews=${card.metrics.reviewCount}` : undefined,
+      card.metrics.price !== undefined ? `price=${card.metrics.price}` : undefined,
+      card.metrics.citations !== undefined ? `citations=${card.metrics.citations}` : undefined,
+      card.refIds.length ? `refs=${card.refIds.join(',')}` : undefined,
+    ].filter(Boolean);
+    return fields.join(':');
+  }).join(';');
+  return [sort, cards].filter(Boolean).join(' cards=');
 }
 
 function renderCompactProblems(ir: PlannerRepresentationIR): string {
@@ -139,6 +193,10 @@ function renderCompactElement(
   const attrs = [
     `n="${escapeAttr(compactValue(element.name, 220))}"`,
     element.role && element.role !== element.kind ? `role="${escapeAttr(element.role)}"` : undefined,
+    element.ariaAutocomplete ? `ac=${escapeAttr(compactValue(element.ariaAutocomplete, 40))}` : undefined,
+    element.ariaHasPopup ? `popup=${escapeAttr(compactValue(element.ariaHasPopup, 40))}` : undefined,
+    element.value !== undefined ? `value="${escapeAttr(compactValue(element.value, 160))}"` : undefined,
+    element.placeholder ? `ph="${escapeAttr(compactValue(element.placeholder, 160))}"` : undefined,
     `l=${element.lane}`,
     options.prcTierOmitted ? undefined : `tier=${element.scoreTier}`,
     element.regionId ? `region=${escapeAttr(compactValue(element.regionId, 120))}` : undefined,
@@ -233,6 +291,10 @@ function renderElement(element: PlannerElementIR, options: { prcTierOmitted?: bo
     `name="${escapeAttr(element.name)}"`,
     // Suppress role when it duplicates kind (e.g. role=button kind=button)
     element.role && element.role !== element.kind ? `role="${escapeAttr(element.role)}"` : undefined,
+    element.ariaAutocomplete ? `aria-autocomplete="${escapeAttr(element.ariaAutocomplete)}"` : undefined,
+    element.ariaHasPopup ? `aria-haspopup="${escapeAttr(element.ariaHasPopup)}"` : undefined,
+    element.value !== undefined ? `value="${escapeAttr(element.value)}"` : undefined,
+    element.placeholder ? `placeholder="${escapeAttr(element.placeholder)}"` : undefined,
     `lane="${element.lane}"`,
     options.prcTierOmitted ? undefined : `tier="${element.scoreTier}"`,
     element.regionId ? `region="${escapeAttr(element.regionId)}"` : undefined,
@@ -270,7 +332,21 @@ function renderCompactWorkingSet(ir: PlannerRepresentationIR): string {
   if (ws.failed.length) parts.push(`failed=${renderCompactRefs(ws.failed)}`);
   if (ws.actionSurface) {
     const surface = ws.actionSurface;
-    parts.push(`actions=c:${surface.clickableRefs.join(',')} t:${surface.typeableRefs.join(',')} s:${surface.selectableRefs.join(',')} r:${surface.readableRefs.join(',')} a:${surface.ambiguousRefs.join(',')}`);
+    const renderedRefIds = new Set([
+      ...ir.surface.groups.flatMap(group => group.elements.map(element => element.refId)),
+      ...ir.surface.remainder.map(element => element.refId),
+    ]);
+    const actionLaneEntries: Array<{ lane: string; refs: readonly string[] }> = [
+      { lane: 'c', refs: surface.clickableRefs },
+      { lane: 't', refs: surface.typeableRefs },
+      { lane: 's', refs: surface.selectableRefs },
+      { lane: 'r', refs: surface.readableRefs },
+      { lane: 'a', refs: surface.ambiguousRefs },
+    ];
+    const actionLanes = actionLaneEntries
+      .map(({ lane, refs }) => `${lane}:${refs.filter(ref => !renderedRefIds.has(ref)).join(',')}`)
+      .filter(part => !part.endsWith(':'));
+    if (actionLanes.length > 0) parts.push(`actions=${actionLanes.join(' ')}`);
   }
   if (ws.readableEvidence.length) {
     parts.push(`readable=${ws.readableEvidence.map(evidence => `${evidence.refId}:${escapeAttr(compactValue(evidence.text, 160))}:${evidence.reasons.join('|')}`).join(';')}`);

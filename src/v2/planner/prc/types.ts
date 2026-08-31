@@ -30,6 +30,10 @@ export interface PlannerElementIR {
   /** Guaranteed non-empty by compiler: falls back to text, then refId */
   name: string;
   text?: string;
+  ariaAutocomplete?: string;
+  ariaHasPopup?: string;
+  value?: string;
+  placeholder?: string;
   lane: PlannerElementLane;
   rank?: number;
   scoreTier: PlannerScoreTier;
@@ -69,6 +73,7 @@ export interface ExecutionContextIR {
   recovery?: PlannerRecoveryState;
   answerFeedback?: PlannerAnswerFeedback;
   evidenceCoverage?: import('../types').PlannerEvidenceCoverage;
+  evidenceSnapshot?: import('../types').PlannerEvidenceSnapshot;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
 }
