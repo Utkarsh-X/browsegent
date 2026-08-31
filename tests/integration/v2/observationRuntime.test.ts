@@ -69,7 +69,7 @@ test('ObservationService gives repeated controls distinct ref and target identit
   }
 });
 
-test('InputService exposes suggestion-gated fill failure while the generic option protocol remains operable', async () => {
+test('InputService opens a closed suggestion control before filling it', async () => {
   const session = new BrowserSession({ headed: false });
   const observer = new ObservationService();
 
@@ -87,25 +87,45 @@ test('InputService exposes suggestion-gated fill failure while the generic optio
     assert.equal(input.ariaHasPopup, 'listbox');
     assert.equal(input.placeholder, undefined);
 
-    await assert.rejects(
-      () => new InputService().type(input, 'Paris', page),
-      (error: unknown) => {
-        assert.equal((error as { code?: string }).code, 'input_not_applied');
-        const diagnostics = (error as { diagnostics?: Record<string, unknown> }).diagnostics;
-        assert.equal(diagnostics?.requestedValue, 'Paris');
-        assert.equal(diagnostics?.retainedValue, '');
-        assert.equal(diagnostics?.activeElement, 'input');
-        assert.equal(diagnostics?.targetConnected, true);
-        return true;
-      },
-    );
-    assert.equal(await page.locator('#destination').inputValue(), '');
-
-    await page.locator('#destination').click();
-    await page.locator('#destination').fill('Paris');
+    const result = await new InputService().type(input, 'Paris', page);
+    assert.equal(result.value?.inputValue, 'Paris');
+    assert.equal(await page.locator('#destinations').isVisible(), true);
     await page.getByRole('option', { name: 'Paris' }).click();
     await page.locator('button[type="submit"]').click();
     assert.equal(await page.locator('#result').textContent(), 'submitted:Paris');
+  } finally {
+    await session.close();
+  }
+});
+
+test('InputService does not reopen a suggestion control with visible options', async () => {
+  const session = new BrowserSession({ headed: false });
+  const observer = new ObservationService();
+
+  try {
+    await session.open(fixtureUrl('search-combobox.html'));
+    const page = session.currentPage();
+    const observation = await observer.capture({
+      sessionId: 'session_open_suggestion_protocol',
+      generationId: 1,
+      page,
+    });
+    const input = observation.refs.find(ref => ref.name === 'Search place');
+    assert.ok(input);
+
+    await page.locator('#query').evaluate(element => {
+      let clicks = 0;
+      element.addEventListener('click', () => { clicks += 1; });
+      (element as HTMLElement & { __testClickCount?: () => number }).__testClickCount = () => clicks;
+    });
+    const result = await new InputService().type(input, 'Paris', page);
+
+    assert.equal(result.value?.inputValue, 'Paris');
+    assert.equal(await page.locator('#suggestions').isVisible(), true);
+    const clickCount = await page.locator('#query').evaluate(element =>
+      (element as HTMLElement & { __testClickCount?: () => number }).__testClickCount?.() ?? -1,
+    );
+    assert.equal(clickCount, 0);
   } finally {
     await session.close();
   }

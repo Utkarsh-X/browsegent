@@ -1,10 +1,16 @@
-import type { ElementHandle, JSHandle, Page } from 'playwright';
+import type { ElementHandle, JSHandle, Locator, Page } from 'playwright';
 
 import { V2OperationalError } from '../runtime/errors';
 import type { V2Ref } from '../runtime/types';
 import { RefResolver } from './RefResolver';
 import { semanticHitTest } from './semanticHitTest';
 import type { HitTestVerdict } from './semanticHitTest';
+
+interface SuggestionControlMetadata {
+  role?: string;
+  ariaAutocomplete?: string;
+  ariaHasPopup?: string;
+}
 
 export interface InputExecutionResult<TValue = unknown> {
   kind: 'click' | 'type' | 'select';
@@ -135,8 +141,17 @@ export class InputService {
   async type(ref: V2Ref, text: string, page: Page): Promise<InputExecutionResult<{ inputValue: string }>> {
     this.assertExecutable(ref);
     this.assertActionCompatible(ref, 'type');
-    const { locator } = await this.resolver.resolve(ref, page);
+    let { locator } = await this.resolver.resolve(ref, page);
     await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
+
+    const suggestionState = await inspectSuggestionControl(locator, ref);
+    if (suggestionState.requiresOpen) {
+      // Some ARIA comboboxes reject values until their suggestion surface is open.
+      // Use the normal semantic click path, then resolve again in case the widget rerendered.
+      await this.click(ref, page);
+      ({ locator } = await this.resolver.resolve(ref, page));
+      await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
+    }
 
     try {
       await locator.fill(text, { timeout: 1_500 });
@@ -311,6 +326,49 @@ function mapPlaywrightError(error: unknown, action: 'click' | 'type' | 'select')
   }
 
   return new V2OperationalError('timeout', `${action} failed before completion: ${message}`, { retryable: true });
+}
+
+async function inspectSuggestionControl(locator: Locator, ref: SuggestionControlMetadata): Promise<{ requiresOpen: boolean }> {
+  const state = await locator.evaluate((element, metadata) => {
+    const helpers = {
+      normalize(value: string | null | undefined): string {
+        return String(value ?? '').trim().toLowerCase();
+      },
+      isVisible(candidate: Element): boolean {
+        const html = candidate as HTMLElement;
+        if (candidate.hasAttribute('hidden')) return false;
+        const style = window.getComputedStyle(html);
+        const rect = html.getBoundingClientRect();
+        return style.display !== 'none'
+          && style.visibility !== 'hidden'
+          && rect.width > 0
+          && rect.height > 0;
+      },
+    };
+    const role = helpers.normalize(element.getAttribute('role') || metadata.role);
+    const autocomplete = helpers.normalize(element.getAttribute('aria-autocomplete') || metadata.ariaAutocomplete);
+    const hasPopup = helpers.normalize(element.getAttribute('aria-haspopup') || metadata.ariaHasPopup);
+    const suggestionBacked = (role === 'combobox' || role === 'searchbox')
+      && (autocomplete === 'list' || autocomplete === 'both' || autocomplete === 'inline' || hasPopup === 'listbox');
+
+    if (!suggestionBacked) {
+      return { requiresOpen: false };
+    }
+
+    const controlledId = element.getAttribute('aria-controls');
+    const controlled = controlledId ? document.getElementById(controlledId) : undefined;
+    const optionRoot: ParentNode = controlled ?? document;
+    const visibleOptionCount = Array.from(optionRoot.querySelectorAll('[role="option"]')).filter(helpers.isVisible).length;
+    const expanded = helpers.normalize(element.getAttribute('aria-expanded')) === 'true';
+
+    return { requiresOpen: !expanded && visibleOptionCount === 0 };
+  }, {
+    role: ref.role,
+    ariaAutocomplete: ref.ariaAutocomplete,
+    ariaHasPopup: ref.ariaHasPopup,
+  });
+
+  return state;
 }
 
 function isSensitiveInput(ref: V2Ref): boolean {
