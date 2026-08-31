@@ -447,6 +447,67 @@ test('V2PlannerClient fails deterministically after bounded validation retry is 
   assert.match(outputJson.rawText, /evaluate_js/);
 });
 
+test('V2PlannerClient recovers an empty observation from repeated observation-id reads', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_empty_observation');
+  plannerInput.current.page = {
+    url: 'https://example.test/booking',
+    title: '',
+  };
+  plannerInput.current.observationId = 'obs_3_10';
+  plannerInput.current.refs = {};
+  plannerInput.current.interactions = [];
+  plannerInput.current.readables = [];
+  plannerInput.current.navigation = [];
+  plannerInput.current.regions = [];
+  plannerInput.current.stats = {
+    interactionCount: 0,
+    readableCount: 0,
+    navigationCount: 0,
+    regionCount: 0,
+  };
+  plannerInput.lastResult = {
+    success: true,
+    kind: 'navigate',
+    traceStepId: 'step_navigate',
+  };
+  plannerInput.transition = {
+    beforeObservationId: 'obs_2_9',
+    afterObservationId: 'obs_3_10',
+    transitionClass: 'structural_macrostate',
+    strength: 'strong',
+    generationChanged: true,
+    urlChanged: true,
+    refChangeCounts: {
+      appeared: 0,
+      disappeared: 1,
+      weakened: 0,
+      preserved: 0,
+    },
+    notes: [],
+  };
+
+  let providerCalls = 0;
+  const client = new V2PlannerClient({
+    provider: async () => {
+      providerCalls += 1;
+      return {
+        text: '{"plan":[{"tool":"get","ref":"obs_3_10"}],"confidence":"high"}',
+        inputTokens: 4,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.equal(providerCalls, 2);
+  assert.deepEqual(result.output, {
+    plan: [{ tool: 'wait', timeout: 1000 }],
+    confidence: 'low',
+  });
+});
+
 test('V2PlannerClient records provider failures as planner replay artifacts', async () => {
   const { V2PlannerClient, V2PlannerClientError } = await loadPlannerClientModule();
   const { traceDir, store } = await freshTraceStore('planner_client_provider_error');

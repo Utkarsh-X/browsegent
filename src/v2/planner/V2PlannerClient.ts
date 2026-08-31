@@ -206,6 +206,40 @@ export class V2PlannerClient {
       return result;
     }
 
+    const emptyObservationRecovery = buildEmptyObservationWaitRescue(
+      lastRawText,
+      input,
+      lastErrors,
+    );
+    if (emptyObservationRecovery) {
+      const result: V2PlannerCallResult = {
+        output: emptyObservationRecovery,
+        rawText: lastRawText,
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+        durationMs,
+      };
+
+      this.recordPlannerOutput(input.plannerInput.episodeId, {
+        attempts: 2,
+        rawText: lastRawText,
+        validation: { ok: true, errors: [] },
+        output: emptyObservationRecovery,
+        recovery: {
+          kind: 'empty_observation_wait',
+          sourceErrors: lastErrors,
+        },
+        providerPayload: summarizeProviderPayload(this.plannerSerialization, providerPayloadAttempts),
+        metrics: {
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
+          durationMs,
+        },
+      });
+
+      return result;
+    }
+
     this.recordPlannerOutput(input.plannerInput.episodeId, {
       attempts: 2,
       rawText: lastRawText,
@@ -375,6 +409,68 @@ function buildReadableOnlyClickRescue(
     plan: [{ tool: 'get', ref }],
     confidence: 'low',
   };
+}
+
+function buildEmptyObservationWaitRescue(
+  rawText: string,
+  input: V2PlannerCallInput,
+  errors: string[],
+): PlannerOutput | undefined {
+  const lastResult = input.plannerInput.lastResult;
+  const followedPageChange = Boolean(
+    input.plannerInput.transition
+      && (input.plannerInput.transition.urlChanged || input.plannerInput.transition.generationChanged),
+  );
+  if (
+    input.mode === 'finalization'
+    || !isEmptyCurrentProjection(input.plannerInput.current)
+    || lastResult?.success !== true
+    || lastResult.kind !== 'navigate'
+    || !followedPageChange
+  ) {
+    return undefined;
+  }
+
+  const hasObservationIdReadError = errors.some(error =>
+    /ref "obs_[^"]+" is not present in selected planner refs for tool "(get|inspect_region)"/.test(error),
+  );
+  if (!hasObservationIdReadError) return undefined;
+
+  const parsed = robustJsonParse(rawText);
+  if (!parsed || !Array.isArray(parsed.plan)) return undefined;
+  const firstStep = parsed.plan[0];
+  if (typeof firstStep !== 'object' || firstStep === null || Array.isArray(firstStep)) {
+    return undefined;
+  }
+
+  const step = firstStep as Record<string, unknown>;
+  const ref = typeof step.ref === 'string'
+    ? step.ref
+    : typeof step.sel === 'string'
+      ? step.sel
+      : typeof step.selector === 'string'
+        ? step.selector
+        : undefined;
+  if ((step.tool !== 'get' && step.tool !== 'inspect_region') || !ref || !/^obs_[A-Za-z0-9_-]+$/.test(ref)) {
+    return undefined;
+  }
+
+  return {
+    plan: [{ tool: 'wait', timeout: 1000 }],
+    confidence: 'low',
+  };
+}
+
+function isEmptyCurrentProjection(current: PlannerInput['current']): boolean {
+  return Object.keys(current.refs ?? {}).length === 0
+    && current.interactions.length === 0
+    && current.readables.length === 0
+    && current.navigation.length === 0
+    && current.regions.length === 0
+    && current.stats.interactionCount === 0
+    && current.stats.readableCount === 0
+    && current.stats.navigationCount === 0
+    && current.stats.regionCount === 0;
 }
 
 function formatInvalidRefDetail(
