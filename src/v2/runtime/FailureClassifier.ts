@@ -153,6 +153,7 @@ function toFailureKind(code: string | undefined): FailureEvidenceKind {
     case 'target_disabled':
     case 'target_blocked':
     case 'target_not_editable':
+    case 'input_not_applied':
     case 'target_not_clickable':
     case 'target_not_selectable':
     case 'stale_ref':
@@ -195,6 +196,7 @@ function categoryFor(kind: FailureEvidenceKind): FailureEvidenceCategory {
     case 'target_disabled':
     case 'target_blocked':
     case 'target_not_editable':
+    case 'input_not_applied':
     case 'target_not_clickable':
     case 'target_not_selectable':
     case 'ambiguous_ref_resolution':
@@ -235,6 +237,7 @@ function persistenceFor(kind: FailureEvidenceKind, retryable: boolean): FailureE
     || kind === 'target_disabled'
     || kind === 'target_blocked'
     || kind === 'target_not_editable'
+    || kind === 'input_not_applied'
     || kind === 'target_not_clickable'
     || kind === 'target_not_selectable'
     || kind === 'ambiguous_ref_resolution'
@@ -259,6 +262,8 @@ function messageFor(kind: FailureEvidenceKind): string {
       return 'Target ref center point is blocked by another element.';
     case 'target_not_editable':
       return 'Target ref is not editable for text entry.';
+    case 'input_not_applied':
+      return 'Target ref accepted input but did not retain the requested value.';
     case 'target_not_clickable':
       return 'Target ref is not clickable at execution time.';
     case 'target_not_selectable':
