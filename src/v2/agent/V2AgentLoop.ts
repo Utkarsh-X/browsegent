@@ -366,7 +366,7 @@ export class V2AgentLoop {
 
           // Record progress for ALL outcomes (dispatched and pre-execution)
           const progressSignals = progressMemory.record(lastResult!, plannedStep, actionObservation);
-          if (!preExecutionRejected) {
+          if (!preExecutionRejected && lastResult!.success) {
             progressMemory.resetSignatureOnPageChange(lastResult!.evidence);
           }
 
@@ -1326,7 +1326,6 @@ function shouldContinueMiniPlan(input: {
     input.lastResult.kind === 'type'
     && input.lastResult.target?.role
     && (input.lastResult.target.role === 'combobox' || input.lastResult.target.role === 'searchbox')
-    && nextStep.tool !== 'press'
   ) {
     return false;
   }

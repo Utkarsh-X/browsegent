@@ -2847,6 +2847,58 @@ test('V2AgentLoop hard-blocks cross-tool persistent mutations on one semantic ta
   assert.equal(planner.inputs[3].lastResult?.error?.code, 'action_blocked_by_loop_detector');
 });
 
+test('V2AgentLoop preserves persistent-target blocking across failed local ref churn', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'Paris' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'Paris' }], confidence: 'high' },
+    { done: true, val: 'Changed target' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const failedLocalChurn = {
+    ...makeEvidence(),
+    refChanges: {
+      ...makeEvidence().refChanges,
+      appeared: ['ref_overlay'],
+    },
+  };
+  dispatcher.results.push(
+    {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_submit',
+      error: { code: 'input_not_applied', message: 'input did not apply', retryable: false },
+      evidence: failedLocalChurn,
+      traceStepId: 'failed_type',
+    },
+    {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      error: { code: 'target_blocked', message: 'target was blocked', retryable: false },
+      evidence: failedLocalChurn,
+      traceStepId: 'failed_click',
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Search for Paris',
+    maxSteps: 4,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(dispatcher.steps?.length, 2);
+  assert.ok(planner.inputs[2].uncertainty.signals.includes('repeated_persistent_target:target_submit:2'));
+  assert.equal(planner.inputs[3].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+});
+
 test('V2AgentLoop allows an alternative semantic target after persistent target blocking', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const primaryRef = makeRef({ refId: 'ref_submit', targetId: 'target_submit' });
