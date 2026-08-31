@@ -12,12 +12,18 @@ export type ProjectionRegionKind = 'repeated_list' | 'form' | 'navigation' | 'co
 
 export interface ProjectionItem {
   refId: string;
+  /** Internal continuity identity; never serialized to the planner. */
+  targetId?: string;
   kind: ProjectionItemKind;
   role?: string;
   name?: string;
   text?: string;
   tagName?: string;
   inputType?: string;
+  value?: string;
+  placeholder?: string;
+  ariaAutocomplete?: string;
+  ariaHasPopup?: string;
   editableKind?: EditableKind;
   capabilities?: V2RefCapabilities;
   visibility: VisibilityState;
@@ -91,6 +97,10 @@ export interface SerializedProjectionRef {
   role?: string;
   name?: string;
   text?: string;
+  ariaAutocomplete?: string;
+  ariaHasPopup?: string;
+  value?: string;
+  placeholder?: string;
   visibility: VisibilityState;
   actionability: ActionabilityState;
   state: RefState;

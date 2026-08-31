@@ -227,3 +227,26 @@ test('serializeProjection includes bounded native select option labels for selec
     'Relevance',
   ]);
 });
+
+test('serializeProjection preserves generic combobox protocol metadata and current value', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_destination',
+      role: 'combobox',
+      tagName: 'input',
+      inputType: 'text',
+      name: 'Destination',
+      ariaAutocomplete: 'list',
+      ariaHasPopup: 'listbox',
+      value: 'Par',
+      placeholder: 'Where are you going?',
+      capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
+    }),
+  ]));
+  const serialized = serializeProjection(projection);
+
+  assert.equal(serialized.refs.ref_destination.ariaAutocomplete, 'list');
+  assert.equal(serialized.refs.ref_destination.ariaHasPopup, 'listbox');
+  assert.equal(serialized.refs.ref_destination.value, 'Par');
+  assert.equal(serialized.refs.ref_destination.placeholder, 'Where are you going?');
+});

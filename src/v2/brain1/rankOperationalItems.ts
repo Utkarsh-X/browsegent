@@ -6,12 +6,17 @@ export function toProjectionItem(ref: V2Ref): ProjectionItem {
   const capabilities = ref.capabilities ?? deriveRefCapabilities(ref);
   return {
     refId: ref.refId,
+    targetId: ref.targetId,
     kind: inferProjectionKind(ref, capabilities),
     role: ref.role,
     name: ref.name,
     text: ref.text,
     tagName: ref.tagName,
     inputType: ref.inputType,
+    ariaAutocomplete: ref.ariaAutocomplete,
+    ariaHasPopup: ref.ariaHasPopup,
+    value: ref.value,
+    placeholder: ref.placeholder,
     editableKind: ref.editableKind,
     capabilities,
     visibility: ref.visibility,
