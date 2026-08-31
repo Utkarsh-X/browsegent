@@ -43,6 +43,29 @@ test('RecoveryStateBuilder detects repeated no-progress mutations', () => {
   assert.ok(recovery?.nextMechanisms.includes('avoid_repeating_blocked_action'));
 });
 
+test('RecoveryStateBuilder preserves a non-applied input as a type-target recovery signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_search',
+      error: {
+        code: 'input_not_applied',
+        message: 'The target did not retain the requested input.',
+        retryable: false,
+      },
+      traceStepId: 'step_input_not_applied',
+    },
+    failures: [],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery?.state, 'wrong_target_type');
+  assert.equal(recovery?.blockedAction?.tool, 'type');
+  assert.equal(recovery?.blockedAction?.ref, 'ref_search');
+  assert.ok(recovery?.nextMechanisms.includes('choose_typeable_ref'));
+});
+
 test('RecoveryStateBuilder treats repeated no-progress tool use as a strategy pivot', () => {
   const recovery = new RecoveryStateBuilder().build({
     failures: [],

@@ -198,6 +198,7 @@ function buildWrongTargetRecovery(
   const code = lastResult?.error?.code;
   const WRONG_TARGET_CODES = new Set([
     'target_not_editable',
+    'input_not_applied',
     'target_not_clickable',
     'target_blocked',
     'ambiguous_ref_resolution',
@@ -222,7 +223,7 @@ function buildWrongTargetRecovery(
 }
 
 function mechanismsForErrorCode(code: string): string[] {
-  if (code === 'target_not_editable') {
+  if (code === 'target_not_editable' || code === 'input_not_applied') {
     return ['choose_typeable_ref', 'click_launcher_then_type', 'expand_or_reobserve'];
   }
   if (code === 'target_not_clickable' || code === 'target_blocked' || code === 'low_confidence_ref') {
