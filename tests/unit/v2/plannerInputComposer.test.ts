@@ -191,6 +191,79 @@ test('PlannerInputComposer emits canonical refs with lightweight ranked projecti
   assert.equal('role' in input.current.navigation[0], false);
 });
 
+test('PlannerInputComposer preserves generic combobox metadata in selected refs', () => {
+  const observation = makeObservation({
+    observationId: 'obs_combobox_metadata',
+    refs: [makeRef({
+      refId: 'ref_destination',
+      targetId: 'target_destination',
+      role: 'combobox',
+      name: 'Destination',
+      text: 'Destination',
+      value: 'Paris',
+      placeholder: 'Where are you going?',
+      ariaAutocomplete: 'list',
+      ariaHasPopup: 'listbox',
+      capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
+    })],
+  });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_combobox_metadata',
+    goal: 'Search for a destination',
+    projection,
+  });
+
+  const ref = input.current.refs.ref_destination;
+  assert.ok(ref);
+  assert.equal(ref.ariaAutocomplete, 'list');
+  assert.equal(ref.ariaHasPopup, 'listbox');
+  assert.equal(ref.value, 'Paris');
+  assert.equal(ref.placeholder, 'Where are you going?');
+});
+
+test('PlannerInputComposer keeps only current interaction refs actionable in evidence snapshots', () => {
+  const observation = makeObservation({
+    observationId: 'obs_evidence_ref_scope',
+    refs: [
+      makeRef({
+        refId: 'ref_result',
+        role: 'link',
+        name: 'owner/repository',
+        text: 'owner/repository',
+      }),
+      makeRef({
+        refId: 'ref_distractor',
+        role: 'button',
+        name: 'Account menu',
+        text: 'Account menu',
+      }),
+    ],
+  });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_evidence_ref_scope',
+    goal: 'Find the repository with the most stars',
+    projection,
+    evidenceSnapshot: {
+      activeSort: { dimension: 'stars', direction: 'desc', source: 'url_query' },
+      cards: [{
+        position: 0,
+        entity: 'owner/repository',
+        provenRank: 1,
+        metrics: { stars: 73 },
+        refIds: ['ref_result', 'ref_historical'],
+      }],
+    },
+    workingSetOptions: { maxPrimaryRefs: 1, maxSecondaryRefs: 0 },
+  });
+
+  assert.deepEqual(input.evidenceSnapshot?.cards[0]?.refIds, ['ref_result']);
+  assert.ok(input.current.refs.ref_result);
+  assert.equal(input.current.refs.ref_historical, undefined);
+  assert.ok(input.workingSet?.actionSurface.clickableRefs.includes('ref_result'));
+});
+
 test('PlannerInputComposer includes transition summary and uncertainty signals', () => {
   const { after, evidence, graph } = makeTransition();
   const projection = new ProjectionService().project(after, graph.snapshot());

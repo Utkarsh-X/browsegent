@@ -48,6 +48,7 @@ export interface PlannerInputComposerInput {
   runtimeUncertainty?: RuntimeUncertainty;
   answerFeedback?: PlannerAnswerFeedback;
   evidenceCoverage?: PlannerEvidenceCoverage;
+  evidenceSnapshot?: PlannerEvidenceSnapshot;
   workingSetOptions?: PlannerWorkingSetOptions;
 }
 
@@ -66,6 +67,7 @@ export interface PlannerInput {
   recovery?: PlannerRecoveryState;
   answerFeedback?: PlannerAnswerFeedback;
   evidenceCoverage?: PlannerEvidenceCoverage;
+  evidenceSnapshot?: PlannerEvidenceSnapshot;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
   sizeDiagnostics?: ProjectionSizeDiagnostics;
@@ -96,6 +98,31 @@ export interface PlannerEvidenceCoverage {
   status: PlannerEvidenceCoverageState;
   readCount: number;
   requirements: PlannerEvidenceCoverageRequirement[];
+}
+
+/** Bounded, relation-preserving facts extracted from the evidence ledger. */
+export interface PlannerEvidenceSnapshot {
+  activeSort?: {
+    dimension: 'stars' | 'date' | 'price' | 'rating' | 'relevance';
+    direction: 'asc' | 'desc';
+    source: 'url_query' | 'active_control' | 'action_lineage';
+  };
+  cards: PlannerEvidenceSnapshotCard[];
+}
+
+export interface PlannerEvidenceSnapshotCard {
+  position: number;
+  entity?: string;
+  provenRank?: number;
+  metrics: {
+    stars?: number;
+    rating?: number;
+    reviewCount?: number;
+    price?: number;
+    citations?: number;
+  };
+  temporal?: string[];
+  refIds: string[];
 }
 
 export interface PlannerContinuitySummary {

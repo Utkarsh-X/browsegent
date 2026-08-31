@@ -7,6 +7,7 @@ import { RecoveryStateBuilder } from '../runtime/RecoveryState';
 import type {
   PlannerContinuitySummary,
   PlannerDeadStateSummary,
+  PlannerEvidenceSnapshot,
   PlannerFailureSummary,
   PlannerInput,
   PlannerInputComposerInput,
@@ -28,9 +29,14 @@ export class PlannerInputComposer {
     const workingSetSelector = input.workingSetOptions
       ? new PlannerWorkingSetSelector(input.workingSetOptions)
       : this.workingSetSelector;
+    const evidenceSnapshot = restrictEvidenceSnapshotToCurrentInteractions(input.evidenceSnapshot, input.projection);
+    const evidenceRefIds = evidenceSnapshot
+      ? [...new Set(evidenceSnapshot.cards.flatMap(card => card.refIds))].slice(0, 16)
+      : undefined;
     const workingSetSelection = workingSetSelector.select({
       goal: input.goal,
       projection: input.projection,
+      evidenceRefIds,
       graphSnapshot: input.graphSnapshot,
       transitionEvidence: input.transitionEvidence,
       lastResult: input.lastResult,
@@ -59,6 +65,7 @@ export class PlannerInputComposer {
       recovery,
       answerFeedback: input.answerFeedback,
       evidenceCoverage: input.evidenceCoverage,
+      evidenceSnapshot,
       uncertainty: buildUncertainty(input),
       lineage: input.trace
         ? this.lineageCompressor.compress(input.trace, { maxSteps: input.maxLineageSteps })
@@ -73,6 +80,22 @@ export class PlannerInputComposer {
 
     return plannerInput;
   }
+}
+
+function restrictEvidenceSnapshotToCurrentInteractions(
+  snapshot: PlannerEvidenceSnapshot | undefined,
+  projection: PlannerInputComposerInput['projection'],
+): PlannerEvidenceSnapshot | undefined {
+  if (!snapshot) return undefined;
+
+  const currentInteractionRefs = new Set(projection.interactions.map(item => item.refId));
+  return {
+    ...snapshot,
+    cards: snapshot.cards.map(card => ({
+      ...card,
+      refIds: card.refIds.filter(refId => currentInteractionRefs.has(refId)),
+    })),
+  };
 }
 
 function summarizeContinuity(snapshot: ContinuityGraphSnapshot): PlannerContinuitySummary {
