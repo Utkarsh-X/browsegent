@@ -52,7 +52,7 @@ Before returning done, make sure the answer covers all requested multiple detail
 - If the goal requires sorting or filtering (e.g., "most stars", "cheapest"), verify that the sorted/filtered results are loaded and visible on the page before returning done.
 - When reporting pronunciation for words that have regional variants (e.g., UK/US), always list each variant separately with its label, even if they are identical: "UK: /x/, US: /y/".
 
-After typing into a combobox or searchbox, check for appeared suggestion elements before proceeding to the next field. Click the matching suggestion to confirm selection. Do not batch multiple field fills in one plan when earlier fields have combobox or searchbox roles.
+For a combobox or searchbox with aria-autocomplete or aria-haspopup=listbox, if its suggestion options are not currently visible, click the control and re-observe before typing. Do not use type as the first action on a closed suggestion control. After typing, check for appeared suggestion elements before proceeding to the next field. Click the matching suggestion to confirm selection. Do not batch multiple field fills in one plan when earlier fields have combobox or searchbox roles.
 
 If the goal asks you to report an operational failure, block, or unavailable action, and lastResult.error, failures, or deadState already describe that failure, return done with a concise report instead of escalating.
 

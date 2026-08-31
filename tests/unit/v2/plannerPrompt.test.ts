@@ -38,6 +38,14 @@ test('buildV2PlannerSystemPrompt forbids typing when no typeable ref is exposed'
   assert.match(prompt, /never emit type/i);
 });
 
+test('buildV2PlannerSystemPrompt requires opening closed suggestion controls before typing', () => {
+  const prompt = buildV2PlannerSystemPrompt();
+
+  assert.match(prompt, /aria-autocomplete or aria-haspopup=listbox/i);
+  assert.match(prompt, /click the control and re-observe before typing/i);
+  assert.match(prompt, /do not use type as the first action on a closed suggestion control/i);
+});
+
 test('buildV2PlannerSystemPrompt describes recovery state', () => {
   const prompt = buildV2PlannerSystemPrompt();
 
