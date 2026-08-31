@@ -2325,6 +2325,57 @@ test('V2AgentLoop interrupts mini-plan after typing into a combobox', async () =
   assert.deepEqual(dispatcher.steps?.map(step => step.tool), ['type']);
 });
 
+test('V2AgentLoop re-observes before pressing Enter after typing into a combobox', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    {
+      plan: [
+        { tool: 'type', ref: 'ref_destination', text: 'Paris' },
+        { tool: 'press', ref: 'ref_destination', key: 'Enter' },
+      ],
+      confidence: 'high',
+    },
+    // The fresh observation must let the planner choose a visible suggestion.
+    { done: true, val: 'Suggestion selected' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'type',
+    targetRef: 'ref_destination',
+    value: { inputValue: 'Paris' },
+    target: { refId: 'ref_destination', role: 'combobox', name: 'Destination', text: 'Paris' },
+    evidence: makeNoProgressEvidence(),
+    traceStepId: 'tool_type_combobox',
+  });
+  const harness = new FakeHarness([
+    makeObservation('obs_initial', {
+      refs: [makeRef({ refId: 'ref_destination', role: 'combobox', name: 'Destination' })],
+    }),
+    makeObservation('obs_after_type', {
+      refs: [
+        makeRef({ refId: 'ref_destination', role: 'combobox', name: 'Destination', value: 'Paris' }),
+        makeRef({ refId: 'ref_option', role: 'option', name: 'Paris, France', text: 'Paris, France' }),
+      ],
+    }),
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/travel',
+    goal: 'Select Paris as the destination',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.deepEqual(dispatcher.steps?.map(step => step.tool), ['type']);
+  assert.equal(planner.inputs.length, 2);
+});
+
 test('V2AgentLoop interrupts mini-plan after type when new refs appeared (dropdown opened)', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([
