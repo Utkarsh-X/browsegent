@@ -2,6 +2,7 @@ import type { OperationalProjection, ProjectionItem } from '../brain1/projection
 import { inferAnswerContract } from './AnswerContract';
 import type { PlannerEvidenceCoverage } from '../planner/types';
 import type { TaskEvidenceRead } from './TaskEvidenceCoverage';
+import type { EvidenceLedger } from './EvidenceLedger';
 
 export interface FinalizationEvidenceInput {
   goal: string;
@@ -21,12 +22,17 @@ export interface ReadEvidenceHistoryEntry {
 }
 
 /**
- * Answer validation uses text returned by explicit read operations and bounded visible surface observations.
+ * Answer validation uses text returned by explicit read operations, structured card relations, and bounded visible surface observations.
  */
 export function buildAnswerValidationEvidence(
   readEvidenceHistory: ReadEvidenceHistoryEntry[],
   surfaceEvidenceReads?: TaskEvidenceRead[],
+  evidenceLedger?: EvidenceLedger,
 ): string {
+  if (evidenceLedger) {
+    return evidenceLedger.buildValidationEvidenceText();
+  }
+
   const toolTexts = readEvidenceHistory
     .map(entry => entry.text.replace(/\s+/g, ' ').trim())
     .filter(text => text.length > 0);

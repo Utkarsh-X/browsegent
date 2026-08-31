@@ -32,20 +32,16 @@ test('TaskEvidenceCoverage: empty readEvidence produces "uncertain" state for re
   assert.deepEqual(definitionReq.supportingReadIndexes, []);
 });
 
-test('TaskEvidenceCoverage: empty readEvidence produces "uncertain" state for ranking evidence', () => {
+test('TaskEvidenceCoverage: temporal latest lookup does not require ranking evidence', () => {
   const goal = 'Find the latest preprints about quantum computing on arXiv';
   const readEvidence: TaskEvidenceRead[] = [];
 
   const coverage = buildTaskEvidenceCoverage(goal, readEvidence);
 
-  assert.equal(coverage.contractKind, 'ranked_entity');
-  assert.equal(coverage.status, 'uncertain');
+  assert.equal(coverage.contractKind, 'entity');
+  assert.equal(coverage.status, 'ready');
   assert.equal(coverage.readCount, 0);
-
-  const rankingReq = coverage.requirements.find(r => r.key === 'ranking_evidence');
-  assert.ok(rankingReq);
-  assert.equal(rankingReq.status, 'uncertain');
-  assert.deepEqual(rankingReq.supportingReadIndexes, []);
+  assert.deepEqual(coverage.requirements, []);
 });
 
 test('TaskEvidenceCoverage: matching read transitions requirement to "proven" and coverage to "ready"', () => {
