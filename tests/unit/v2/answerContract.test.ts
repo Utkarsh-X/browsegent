@@ -2,10 +2,24 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { inferAnswerContract, validateAnswerAgainstContract } from '../../../src/v2/agent/AnswerContract';
 
-test('inferAnswerContract requires non-url text for named entity goals', () => {
+test('inferAnswerContract treats temporal latest lookup as a named entity goal', () => {
   const contract = inferAnswerContract('Find the latest paper about quantum computing on arXiv');
-  assert.equal(contract.kind, 'ranked_entity');
+  assert.equal(contract.kind, 'entity');
   assert.equal(contract.requiresNonUrlText, true);
+  assert.equal(contract.requiresRankingEvidence, false);
+});
+
+test('inferAnswerContract does not require ranking evidence for latest product details', () => {
+  const contract = inferAnswerContract('Find information about the latest MacBook model and its features');
+  assert.notEqual(contract.kind, 'ranked_entity');
+  assert.equal(contract.requiresRankingEvidence, false);
+});
+
+test('inferAnswerContract does not require ranking evidence for a latest event score and recap', () => {
+  const contract = inferAnswerContract(
+    'Check ESPN for the score and a brief recap of the latest college football championship game',
+  );
+  assert.equal(contract.requiresRankingEvidence, false);
 });
 
 test('validateAnswerAgainstContract rejects url-only answer for entity goal', () => {
@@ -54,6 +68,24 @@ test('validateAnswerAgainstContract rejects empty answer', () => {
   const validation = validateAnswerAgainstContract('', contract);
   assert.equal(validation.ok, false);
   assert.ok(validation.reasons.includes('empty_answer'));
+});
+
+test('inferAnswerContract preserves ranking evidence for explicit comparative goals', () => {
+  for (const goal of [
+    'Find the repository with the most stars',
+    'Find the lowest round-trip flight price',
+    'Find the top rated hotels in Paris',
+  ]) {
+    const contract = inferAnswerContract(goal);
+    assert.equal(contract.kind, 'ranked_entity', goal);
+    assert.equal(contract.requiresRankingEvidence, true, goal);
+  }
+});
+
+test('inferAnswerContract does not treat generic best-way guidance as ranking', () => {
+  const contract = inferAnswerContract('What is the best way to organize browser agent recovery?');
+  assert.notEqual(contract.kind, 'ranked_entity');
+  assert.equal(contract.requiresRankingEvidence, false);
 });
 
 test('validateAnswerAgainstContract rejects an answer that explicitly reports an unfinished result', () => {

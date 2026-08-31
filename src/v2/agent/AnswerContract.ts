@@ -28,10 +28,10 @@ export function inferAnswerContract(goal: string): AnswerContract {
   if (/\b(count|number|how many|calculate|compute|value|answer)\b/.test(normalized)) {
     return contract('number', false, false, 'goal_requests_numeric_or_direct_answer', requiredDetails);
   }
-  if (/\b(most|highest|lowest|largest|smallest|top|latest|newest|oldest|best)\b/.test(normalized)) {
+  if (isComparativeRankingGoal(normalized)) {
     return contract('ranked_entity', true, true, 'goal_requests_ranked_entity', requiredDetails);
   }
-  if (/\b(repo|repository|paper|article|title|name|place|location|company|person|product)\b/.test(normalized)) {
+  if (/\b(repo|repository|paper|preprints?|article|title|name|place|location|company|person|product)\b/.test(normalized)) {
     return contract('entity', true, false, 'goal_requests_named_entity', requiredDetails);
   }
   if (/\b(describe|summary|explain|tell me about)\b/.test(normalized)) {
@@ -77,11 +77,70 @@ export function validateAnswerAgainstContract(
   if (
     contract.requiresRankingEvidence
     && options.evidenceText?.trim()
-    && !hasRankingEvidence(options.evidenceText)
   ) {
-    reasons.push('missing_ranking_evidence');
+    if (!hasRankingEvidence(options.evidenceText)) {
+      reasons.push('missing_ranking_evidence');
+    } else if (contract.kind === 'ranked_entity') {
+      const topEntities = extractTopRankedEntitiesFromEvidence(options.evidenceText);
+      if (topEntities.length > 0 && !topEntities.some(entity => answerIncludesEntity(compact, entity))) {
+        reasons.push('answer_does_not_match_top_ranked_evidence');
+      }
+    }
   }
   return { ok: reasons.length === 0, reasons };
+}
+
+function isComparativeRankingGoal(normalizedGoal: string): boolean {
+  // Temporal recency is a lookup constraint, not proof that the task asks for
+  // a comparison. Keep explicit comparative terms and top-N/result language.
+  const withoutTemporalTerms = normalizedGoal
+    .replace(/\bmost\s+recent(?:ly)?\b/g, ' ')
+    .replace(/\b(?:latest|newest|oldest)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const hasComparativeTerm = /\b(?:most|highest|lowest|largest|smallest|top|best|cheapest|least)\b/.test(withoutTemporalTerms);
+  if (!hasComparativeTerm) return false;
+
+  // Guidance questions use "best" without selecting a result from a set.
+  if (/\bbest\s+(?:way|practice|practices|approach|method|methods)\b/.test(withoutTemporalTerms)) {
+    return false;
+  }
+
+  const hasExplicitTopResults = /\btop\s+(?:\d+|results?|items?|options?|entries?)\b/.test(withoutTemporalTerms);
+  const hasComparisonDimension = /\b(?:starred?|stars?|rating|reviews?|price|cost|fee|score|rank(?:ed|ing)?|results?|options?)\b|[$€£¥₹]\s*\d/.test(withoutTemporalTerms);
+  const hasSelectionIntent = /\b(?:which|what|find|identify|select|choose|name|list)\b/.test(withoutTemporalTerms);
+
+  return hasExplicitTopResults || hasComparisonDimension || hasSelectionIntent;
+}
+
+export function extractTopRankedEntitiesFromEvidence(evidenceText: string): string[] {
+  const entities: string[] = [];
+  const lines = evidenceText.split('\n').map(l => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    const match = line.match(/\[Card\s+\d+:\s+Rank\s+#1\s+\|\s+([^|]+?)(?:\s+\||\])/i);
+    if (match && match[1]) {
+      const entity = match[1].trim();
+      if (entity && !entities.includes(entity)) {
+        entities.push(entity);
+      }
+    }
+  }
+  return entities;
+}
+
+export function answerIncludesEntity(answer: string, entity: string): boolean {
+  const normAnswer = answer.toLowerCase().replace(/[-_/]/g, ' ');
+  const normEntity = entity.toLowerCase().replace(/[-_/]/g, ' ');
+  if (normAnswer.includes(normEntity) || normAnswer.includes(entity.toLowerCase())) {
+    return true;
+  }
+  if (entity.includes('/')) {
+    const [, repo] = entity.split('/');
+    if (repo && repo.length >= 3 && normAnswer.includes(repo.toLowerCase().replace(/[-_]/g, ' '))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function isUrlOnly(value: string): boolean {
