@@ -53,6 +53,7 @@ test('v2 public error code set is operational and non-strategic', () => {
       'target_disabled',
       'target_blocked',
       'target_not_editable',
+      'input_not_applied',
       'target_not_clickable',
       'target_not_selectable',
       'stale_ref',
