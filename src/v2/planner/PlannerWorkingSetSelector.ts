@@ -37,6 +37,8 @@ const DEFAULT_OPTIONS: ResolvedPlannerWorkingSetOptions = {
 export interface PlannerWorkingSetSelectorInput {
   goal: string;
   projection: OperationalProjection;
+  /** Current-observation refs that back relation-bound evidence facts. */
+  evidenceRefIds?: readonly string[];
   graphSnapshot?: ContinuityGraphSnapshot;
   transitionEvidence?: TransitionEvidence;
   lastResult?: V2ToolResult;
@@ -61,6 +63,7 @@ export class PlannerWorkingSetSelector {
   select(input: PlannerWorkingSetSelectorInput): PlannerWorkingSetSelection {
     const evidence = buildEvidenceSets(input);
     const readableRefs = new Set(input.projection.readables.map(item => item.refId));
+    const evidenceRefIds = new Set(input.evidenceRefIds ?? []);
     const candidates = input.projection.interactions.map(item => scoreCandidate(
       item,
       input.goal,
@@ -68,11 +71,12 @@ export class PlannerWorkingSetSelector {
       { readablePhraseBonus: this.options.readablePhraseBonus },
       readableRefs.has(item.refId),
       this.options.readablePhraseBonus !== undefined,
+      evidenceRefIds.has(item.refId),
     ));
     const scoreByRef = new Map(candidates.map(candidate => [candidate.item.refId, candidate.score]));
     const selected = candidates
       .filter(candidate => shouldKeepCandidate(candidate))
-      .sort(compareCandidates);
+      .sort(compareCandidatesWithEvidence);
     const dropped = candidates.filter(candidate => !shouldKeepCandidate(candidate));
     const selectedRefIds = selected
       .slice(0, this.options.maxPrimaryRefs + this.options.maxSecondaryRefs)
@@ -177,9 +181,14 @@ function scoreCandidate(
   options: Pick<PlannerWorkingSetOptions, 'readablePhraseBonus'> = {},
   isReadable: boolean,
   allowSemanticOffscreen: boolean,
+  isEvidenceRef: boolean,
 ): Candidate {
   const reasons = new Set<WorkingSetIncludeReason>();
   let score = item.score;
+  if (isEvidenceRef) {
+    reasons.add('answer_candidate');
+    score += 120;
+  }
   if (item.visibility === 'visible' && item.actionability === 'ready') {
     reasons.add('visible_ready');
     score += 100;
@@ -211,7 +220,7 @@ function scoreCandidate(
     reasons.add('last_failure');
   }
   const lowValueReason = classifyLowValue(item, allowSemanticOffscreen);
-  const dropReason = evidence.failedRefs.has(item.refId) || evidence.changedRefs.has(item.refId)
+  const dropReason = isEvidenceRef || evidence.failedRefs.has(item.refId) || evidence.changedRefs.has(item.refId)
     ? undefined
     : lowValueReason;
   return { item, score, reasons, dropReason };
@@ -224,6 +233,13 @@ function shouldKeepCandidate(candidate: Candidate): boolean {
 function compareCandidates(left: Candidate, right: Candidate): number {
   if (right.score !== left.score) return right.score - left.score;
   return left.item.refId.localeCompare(right.item.refId);
+}
+
+function compareCandidatesWithEvidence(left: Candidate, right: Candidate): number {
+  const leftIsEvidence = left.reasons.has('answer_candidate');
+  const rightIsEvidence = right.reasons.has('answer_candidate');
+  if (leftIsEvidence !== rightIsEvidence) return leftIsEvidence ? -1 : 1;
+  return compareCandidates(left, right);
 }
 
 function classifyLowValue(item: ProjectionItem, allowSemanticOffscreen = false): WorkingSetDropReason | undefined {
@@ -326,14 +342,43 @@ function buildQuarantinedActions(input: PlannerWorkingSetSelectorInput): Planner
     });
   }
 
-  actions.push(...quarantinedActionsFromUncertainty(input.uncertaintySignals));
+  actions.push(...quarantinedActionsFromUncertainty(
+    input.uncertaintySignals,
+    input.projection,
+  ));
 
   return uniqueQuarantinedActions(actions);
 }
 
-function quarantinedActionsFromUncertainty(signals: readonly string[] | undefined): PlannerQuarantinedAction[] {
+function quarantinedActionsFromUncertainty(
+  signals: readonly string[] | undefined,
+  projection: OperationalProjection,
+): PlannerQuarantinedAction[] {
   const actions: PlannerQuarantinedAction[] = [];
   for (const signal of signals ?? []) {
+    const persistentTargetMatch = signal.match(/^repeated_persistent_target:([^:]+):(\d+)$/);
+    if (persistentTargetMatch) {
+      const count = Number.parseInt(persistentTargetMatch[2], 10);
+      if (Number.isFinite(count) && count >= 2) {
+        const targetKey = persistentTargetMatch[1];
+        const currentTargetRefs = projection.interactions
+          .filter(item => item.targetId && normalizeTargetIdentity(item.targetId) === targetKey)
+          .map(item => item.refId);
+        for (const targetRef of currentTargetRefs) {
+          for (const tool of ['click', 'type', 'select']) {
+            actions.push({
+              refId: targetRef,
+              tool,
+              failureKind: 'persistent_target_failure',
+              retryable: false,
+              persistence: 'persistent',
+            });
+          }
+        }
+      }
+      continue;
+    }
+
     const noProgressMatch = signal.match(/^repeated_no_progress_transition:([^:]+):([^:]+):(\d+)$/);
     if (noProgressMatch) {
       const [, tool, refId, countText] = noProgressMatch;
@@ -503,6 +548,10 @@ function serializeSelectedProjection(
       role: item.role,
       name: item.name,
       text: item.text && normalizeText(item.text) !== normalizeText(item.name) ? compactText(item.text, options.maxTextLengthPerRef) : undefined,
+      ariaAutocomplete: item.ariaAutocomplete,
+      ariaHasPopup: item.ariaHasPopup,
+      value: item.value,
+      placeholder: item.placeholder,
       visibility: item.visibility,
       actionability: item.actionability,
       state: item.state,
@@ -715,4 +764,8 @@ function compactText(value: string, maxLength: number): string {
 
 function normalizeText(value: string | undefined): string {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function normalizeTargetIdentity(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_.-]+/g, '_').slice(0, 80) || 'unknown';
 }

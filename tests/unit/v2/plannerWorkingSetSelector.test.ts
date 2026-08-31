@@ -86,6 +86,38 @@ test('PlannerWorkingSetSelector promotes goal-matching refs over generic visible
   assert.ok(selection.workingSet.primaryRefs[0].score > (selection.current.refs.ref_docs.score ?? 0));
 });
 
+test('PlannerWorkingSetSelector promotes current evidence refs without admitting stale refs', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_result',
+      role: 'link',
+      name: 'owner/repository',
+      text: 'owner/repository',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+    makeRef({
+      refId: 'ref_distractor',
+      role: 'button',
+      name: 'Account menu',
+      text: 'Account menu',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 1, maxSecondaryRefs: 0 }).select({
+    goal: 'Find the repository with the most stars',
+    projection,
+    evidenceRefIds: ['ref_result', 'ref_stale'],
+  });
+
+  assert.deepEqual(selection.selectedRefIds, ['ref_result']);
+  assert.ok(selection.workingSet.primaryRefs[0]?.reasons.includes('answer_candidate'));
+  assert.ok(selection.workingSet.actionSurface.clickableRefs.includes('ref_result'));
+  assert.equal(selection.current.refs.ref_stale, undefined);
+});
+
 test('P2 opts into named semantic offscreen evidence and sorts readable evidence by candidate score', () => {
   const projection = new ProjectionService().project(makeObservation([
     makeRef({
@@ -488,6 +520,137 @@ test('PlannerWorkingSetSelector preserves failed refs as evidence without keepin
   assert.equal(selection.current.refs.ref_bad_button?.name, 'Search');
   assert.equal(selection.workingSet.actionSurface.clickableRefs.includes('ref_bad_button'), false);
   assert.ok(selection.workingSet.actionSurface.typeableRefs.includes('ref_search'));
+});
+
+test('PlannerWorkingSetSelector quarantines every mutation lane for a persistently failed target', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_failed_target',
+      targetId: 'target_failed',
+      role: 'textbox',
+      name: 'Search',
+      text: 'Search',
+      capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
+    }),
+    makeRef({
+      refId: 'ref_alternative',
+      targetId: 'target_alternative',
+      role: 'textbox',
+      name: 'Alternative search',
+      text: 'Alternative search',
+      capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 4, maxSecondaryRefs: 4 }).select({
+    goal: 'Search for Paris',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_failed_target',
+      error: { code: 'target_blocked', message: 'Target is blocked.', retryable: false },
+      traceStepId: 'step_blocked',
+    },
+    failureEvidence: [
+      {
+        failureId: 'failure_input_not_applied',
+        kind: 'input_not_applied',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'Input did not apply.',
+        source: 'test',
+        generationId: 1,
+        url: 'https://example.test',
+        targetRef: 'ref_failed_target',
+        signals: ['error:input_not_applied'],
+      },
+      {
+        failureId: 'failure_target_blocked',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'Target is blocked.',
+        source: 'test',
+        generationId: 1,
+        url: 'https://example.test',
+        targetRef: 'ref_failed_target',
+        signals: ['error:target_blocked'],
+      },
+    ],
+    uncertaintySignals: ['repeated_persistent_target:target_failed:2'],
+  });
+
+  assert.equal(selection.workingSet.actionSurface.clickableRefs.includes('ref_failed_target'), false);
+  assert.equal(selection.workingSet.actionSurface.typeableRefs.includes('ref_failed_target'), false);
+  assert.ok(selection.workingSet.actionSurface.clickableRefs.includes('ref_alternative'));
+  assert.ok(selection.workingSet.actionSurface.typeableRefs.includes('ref_alternative'));
+  assert.ok(selection.workingSet.actionSurface.readableRefs.includes('ref_failed_target'));
+  assert.ok(selection.workingSet.quarantinedActions.some(action =>
+    action.refId === 'ref_failed_target'
+    && action.tool === 'type'
+    && action.failureKind === 'persistent_target_failure'
+  ));
+});
+
+test('PlannerWorkingSetSelector applies semantic-target quarantine after ref identity churn', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_reissued',
+      targetId: 'target_failed',
+      role: 'combobox',
+      name: 'Destination',
+      capabilities: { clickable: true, typeable: true, selectable: true, readable: true },
+    }),
+    makeRef({
+      refId: 'ref_alternative',
+      targetId: 'target_alternative',
+      role: 'textbox',
+      name: 'Alternative destination',
+      capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 4, maxSecondaryRefs: 4 }).select({
+    goal: 'Search for Paris',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_old',
+      error: { code: 'target_blocked', message: 'Target is blocked.', retryable: false },
+      traceStepId: 'step_blocked',
+    },
+    failureEvidence: [{
+      failureId: 'failure_target_blocked_ref_old',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'Target is blocked.',
+      source: 'test',
+      generationId: 1,
+      url: 'https://example.test',
+      targetRef: 'ref_old',
+      signals: ['error:target_blocked'],
+    }],
+    uncertaintySignals: ['repeated_persistent_target:target_failed:2'],
+  });
+
+  assert.equal(selection.workingSet.actionSurface.clickableRefs.includes('ref_reissued'), false);
+  assert.equal(selection.workingSet.actionSurface.typeableRefs.includes('ref_reissued'), false);
+  assert.equal(selection.workingSet.actionSurface.selectableRefs.includes('ref_reissued'), false);
+  assert.ok(selection.workingSet.actionSurface.clickableRefs.includes('ref_alternative'));
+  assert.ok(selection.workingSet.quarantinedActions.some(action =>
+    action.refId === 'ref_reissued'
+    && action.tool === 'type'
+    && action.failureKind === 'persistent_target_failure'
+  ));
 });
 
 test('PlannerWorkingSetSelector does not quarantine retryable transient failures', () => {
