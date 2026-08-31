@@ -182,3 +182,28 @@ test('buildV2PlannerUserMessage treats explicit undefined mode as JSON', () => {
   const message = buildV2PlannerUserMessage(input, { mode: 'json' });
   assert.match(message, /^Planner input JSON:\n\{/);
 });
+
+test('buildV2PlannerUserMessage renders relation-bound evidence snapshots', () => {
+  const input = makeMinimalPlannerInputForPromptTest();
+  input.evidenceSnapshot = {
+    activeSort: { dimension: 'stars', direction: 'desc', source: 'url_query' },
+    cards: [{
+      position: 0,
+      entity: 'owner/repo-one',
+      provenRank: 1,
+      metrics: { stars: 73 },
+      refIds: ['ref_repo_one', 'ref_stars_one'],
+    }],
+  };
+
+  const expanded = buildV2PlannerUserMessage(input, { mode: 'prc' });
+  assert.match(expanded, /EVIDENCE SNAPSHOT/);
+  assert.match(expanded, /Rank #1/);
+  assert.match(expanded, /owner\/repo-one/);
+  assert.match(expanded, /73 stars/);
+
+  const compact = buildV2PlannerUserMessage(input, { mode: 'prc', compactDataPlane: true });
+  assert.match(compact, /facts=/);
+  assert.match(compact, /owner\/repo-one/);
+  assert.match(compact, /73/);
+});

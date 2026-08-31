@@ -30,6 +30,7 @@ Valid tools:
 - wait: optional pattern and timeout
 
 Planner input shape: current.refs contains selected ref facts only. workingSet explains why selected refs were included, what was omitted, and which compact evidence is currently available. interactions, readables, navigation, and regions are bounded views over selected refs, not the full page.
+  If evidenceSnapshot is present, it is a bounded relation-preserving summary of observed result cards. Treat a proven Rank #N card as stronger than an unranked position; an unranked entity is not proof of ordering. Use a snapshot refId for targeted verification only when it is also present in current.refs; a card without a current refId is read-only historical evidence.
   In JSON mode, workingSet.actionSurface lists refs compatible with click/type/select/read operations. In PRC mode, each element in PLANNER SURFACE has a tools attribute (e.g. tools="c,r") listing compatible operations: c (click/close), t (type), s (select), r (read). Prefer tool-compatible refs. Ambiguous refs may be tried only when evidence supports them, but do not use a known incompatible ref for a tool.
   If no current ref is compatible with type (no typeableRefs in JSON or no "t" tool in PRC), never emit type. Click a compatible launcher and reobserve before typing; otherwise use wait, scroll, search_page, or escalate.
 
@@ -63,7 +64,7 @@ Use refs from the planner input. Selectors are not valid v2 planner output.`;
 
   return `${base}
 
-PRC compact data-plane notation is enabled for this request. Read the compact S:/LAST:/EVIDENCE:/W: markers plus SURFACE:/PROBLEMS: lines. SURFACE keeps ref IDs, element kinds, names, roles, lanes, scores, state, failures, options, and tools. W keeps primary/secondary/navigation/failed refs, c/t/s/r/a action lanes, readable evidence, changed refs, quarantine, regions, and omitted counts. EVIDENCE keeps supporting read indexes; LAST keeps bounded lineage; PROBLEMS keeps answer feedback, dead state, recovery, and failures. Do not infer that abbreviated formatting means omitted evidence.`;
+PRC compact data-plane notation is enabled for this request. Read the compact S:/LAST:/EVIDENCE:/W: markers plus SURFACE:/PROBLEMS: lines. SURFACE keeps ref IDs, element kinds, names, roles, lanes, scores, state, failures, options, and tools. For an element, ac=aria-autocomplete, popup=aria-haspopup, value=current non-password control value, and ph=placeholder. W keeps primary/secondary/navigation/failed refs, c/t/s/r/a action lanes, readable evidence, changed refs, quarantine, regions, and omitted counts. EVIDENCE keeps supporting read indexes and relation-bound result facts; LAST keeps bounded lineage; PROBLEMS keeps answer feedback, dead state, recovery, and failures. Do not infer that abbreviated formatting means omitted evidence.`;
 }
 
 export function buildV2PlannerUserMessage(
