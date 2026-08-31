@@ -151,6 +151,38 @@ export class InputService {
       return String(element.textContent ?? '');
     });
 
+    // Playwright can complete a fill against a controlled or stale widget
+    // without the widget retaining the requested non-empty value. Do not
+    // report that mutation as successful; the planner needs a truthful
+    // failure so it can re-observe and choose another interaction.
+    if (text.trim() && !inputValue.trim()) {
+      const retention = await locator.evaluate((element) => ({
+        activeElement: document.activeElement?.tagName?.toLowerCase(),
+        targetConnected: element.isConnected,
+      })).catch(() => undefined);
+      const diagnostics: Record<string, unknown> = {
+        requestedLength: text.length,
+        observedLength: inputValue.length,
+        targetRole: ref.role,
+        targetName: ref.name,
+        requestedValue: isSensitiveInput(ref) ? undefined : compactDiagnosticValue(text),
+        retainedValue: isSensitiveInput(ref) ? undefined : compactDiagnosticValue(inputValue),
+      };
+      if (retention && typeof retention === 'object') {
+        diagnostics.activeElement = retention.activeElement;
+        diagnostics.targetConnected = retention.targetConnected;
+      }
+
+      throw new V2OperationalError(
+        'input_not_applied',
+        'The target accepted the fill call but did not retain a non-empty input value.',
+        {
+          retryable: false,
+          diagnostics,
+        },
+      );
+    }
+
     return {
       kind: 'type',
       value: { inputValue },
@@ -279,4 +311,13 @@ function mapPlaywrightError(error: unknown, action: 'click' | 'type' | 'select')
   }
 
   return new V2OperationalError('timeout', `${action} failed before completion: ${message}`, { retryable: true });
+}
+
+function isSensitiveInput(ref: V2Ref): boolean {
+  return ref.inputType?.trim().toLowerCase() === 'password';
+}
+
+function compactDiagnosticValue(value: string, maxLength = 160): string {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 3)}...` : normalized;
 }

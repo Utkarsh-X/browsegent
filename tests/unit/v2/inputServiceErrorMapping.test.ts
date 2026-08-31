@@ -114,6 +114,63 @@ test('InputService keeps pointer interception classified as target_blocked', asy
   );
 });
 
+test('InputService rejects a non-empty fill that is not retained by the target', async () => {
+  const locator = {
+    scrollIntoViewIfNeeded: async () => undefined,
+    evaluate: async (_fn: unknown, input?: unknown) => input
+      ? { score: 100, identityKey: 'controlled-combobox' }
+      : '',
+    fill: async () => undefined,
+  };
+  const page = {
+    locator: () => ({
+      count: async () => 1,
+      nth: () => locator,
+    }),
+  };
+
+  await assert.rejects(
+    () => new InputService().type({
+      ...makeRef(),
+      refId: 'ref_controlled_combobox',
+      role: 'combobox',
+      name: 'Destination',
+    }, 'Paris', page as never),
+    (error: unknown) => {
+      assert.ok(error instanceof Error);
+      assert.equal((error as { code?: string }).code, 'input_not_applied');
+      assert.deepEqual((error as { diagnostics?: Record<string, unknown> }).diagnostics, {
+        requestedLength: 5,
+        observedLength: 0,
+        targetRole: 'combobox',
+        targetName: 'Destination',
+        requestedValue: 'Paris',
+        retainedValue: '',
+      });
+      return true;
+    },
+  );
+});
+
+test('InputService allows an empty fill to clear a target', async () => {
+  const locator = {
+    scrollIntoViewIfNeeded: async () => undefined,
+    evaluate: async (_fn: unknown, input?: unknown) => input
+      ? { score: 100, identityKey: 'clearable-input' }
+      : '',
+    fill: async () => undefined,
+  };
+  const page = {
+    locator: () => ({
+      count: async () => 1,
+      nth: () => locator,
+    }),
+  };
+
+  const result = await new InputService().type(makeRef(), '', page as never);
+  assert.deepEqual(result.value, { inputValue: '' });
+});
+
 test('InputService leaves navigation settling to the post-action observation path', async () => {
   let clickOptions: Record<string, unknown> | undefined;
   const handle = {

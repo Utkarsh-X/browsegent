@@ -5,6 +5,7 @@ export const V2_OPERATIONAL_ERROR_CODES = [
   'target_disabled',
   'target_blocked',
   'target_not_editable',
+  'input_not_applied',
   'target_not_clickable',
   'target_not_selectable',
   'stale_ref',
