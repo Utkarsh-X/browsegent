@@ -160,6 +160,56 @@ test('ObservationService.capture succeeds on first attempt (no retry, waitForLoa
   assert.equal(evaluateCallCount, 2); // 1 for capture, 1 for cleanupBackendMarkers
 });
 
+test('ObservationService.capture retries one empty navigation capture when readiness retry is enabled', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let waitForLoadStateCalled = false;
+  let evaluateCallCount = 0;
+  let titleCallCount = 0;
+
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => {
+      titleCallCount += 1;
+      return titleCallCount === 1 ? '' : 'Loaded Title';
+    },
+    evaluate: async () => {
+      evaluateCallCount += 1;
+      if (evaluateCallCount === 1) {
+        return [] as any[];
+      }
+      if (evaluateCallCount === 2) {
+        return [{ targetId: 'target_1', selectorCandidates: ['#search'] }] as any[];
+      }
+      return undefined;
+    },
+    waitForLoadState: async (state: string) => {
+      if (state === 'domcontentloaded') {
+        waitForLoadStateCalled = true;
+      }
+    },
+    waitForTimeout: async () => undefined,
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  const result = await service.capture({
+    page: mockPage as any,
+    sessionId: 'session_123',
+    generationId: 1,
+    retryEmptyNavigationCapture: true,
+  });
+
+  assert.equal(waitForLoadStateCalled, true);
+  assert.equal(evaluateCallCount, 3); // empty capture, retry capture, marker cleanup
+  assert.equal(result.title, 'Loaded Title');
+  assert.equal(result.refs.length, 1);
+});
+
 test('ObservationService.capture throws Execution context was destroyed on first attempt -> retries once after waitForLoadState -> succeeds on second attempt', async () => {
   const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
 
@@ -293,4 +343,90 @@ test('ObservationService.capture fails on both attempts with navigation race err
 
   assert.equal(waitForLoadStateCalled, true);
   assert.equal(evaluateCallCount, 2);
+});
+
+test('ObservationService.capture keeps polling through a navigation race inside the bounded wait and recovers', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let evaluateCallCount = 0;
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => 'Loaded Title',
+    evaluate: async () => {
+      evaluateCallCount += 1;
+      if (evaluateCallCount === 1) {
+        return [] as any[]; // initial empty capture triggers the bounded wait
+      }
+      if (evaluateCallCount === 2) {
+        // A navigation commits under the poll while waiting for content.
+        throw new Error('page.evaluate: Execution context was destroyed, most likely because of a navigation');
+      }
+      if (evaluateCallCount === 3) {
+        return [{ targetId: 'target_1', selectorCandidates: ['#btn'] }] as any[];
+      }
+      return undefined; // cleanupBackendMarkers
+    },
+    waitForLoadState: async () => undefined,
+    waitForTimeout: async () => undefined,
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  const result = await service.capture({
+    page: mockPage as any,
+    sessionId: 'session_123',
+    generationId: 1,
+    retryEmptyNavigationCapture: true,
+  });
+
+  assert.equal(result.refs.length, 1);
+  assert.equal(result.title, 'Loaded Title');
+  assert.equal(evaluateCallCount, 4); // empty, race (survived), refs, cleanup
+});
+
+test('ObservationService.capture waits out a titled interactive-free shell and recovers when refs hydrate', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let evaluateCallCount = 0;
+  const mockPage = {
+    url: async () => 'https://example.com/results',
+    // Titled shell with body text and zero interactive elements: the exact
+    // mid-transition shape that previously bypassed the bounded wait.
+    title: async () => 'Results shell title',
+    evaluate: async () => {
+      evaluateCallCount += 1;
+      if (evaluateCallCount === 1) {
+        return [] as any[];
+      }
+      if (evaluateCallCount === 2) {
+        return [] as any[];
+      }
+      if (evaluateCallCount === 3) {
+        return [{ targetId: 'target_9', selectorCandidates: ['#row'] }] as any[];
+      }
+      return undefined;
+    },
+    waitForLoadState: async () => undefined,
+    waitForTimeout: async () => undefined,
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  const result = await service.capture({
+    page: mockPage as any,
+    sessionId: 'session_123',
+    generationId: 1,
+    retryEmptyNavigationCapture: true,
+  });
+
+  assert.equal(result.refs.length, 1);
+  assert.equal(evaluateCallCount, 4); // empty, empty (waited), refs, cleanup
 });

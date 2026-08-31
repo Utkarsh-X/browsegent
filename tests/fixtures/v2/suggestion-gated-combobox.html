@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Suggestion-Gated Combobox Fixture</title>
+  </head>
+  <body>
+    <form id="search-form">
+      <label for="destination">Destination</label>
+      <input
+        id="destination"
+        type="text"
+        role="combobox"
+        aria-label="Destination"
+        aria-autocomplete="list"
+        aria-haspopup="listbox"
+        aria-controls="destinations"
+        autocomplete="off"
+      >
+      <ul id="destinations" role="listbox" hidden>
+        <li role="option">Paris</li>
+        <li role="option">Prague</li>
+      </ul>
+      <button type="submit">Search</button>
+    </form>
+    <p id="result" aria-live="polite">submitted:New Delhi</p>
+    <script>
+      const input = document.querySelector('#destination');
+      const list = document.querySelector('#destinations');
+      const result = document.querySelector('#result');
+      let selectedDestination = 'New Delhi';
+
+      input.addEventListener('click', () => {
+        list.hidden = false;
+      });
+
+      input.addEventListener('input', () => {
+        const value = input.value.trim();
+        const matchesOption = !list.hidden && Array.from(list.querySelectorAll('[role="option"]'))
+          .some(option => option.textContent.trim().toLowerCase() === value.toLowerCase());
+        if (!matchesOption) {
+          input.value = '';
+        }
+      });
+
+      for (const option of list.querySelectorAll('[role="option"]')) {
+        option.addEventListener('mousedown', event => event.preventDefault());
+        option.addEventListener('click', () => {
+          selectedDestination = option.textContent.trim();
+          input.value = selectedDestination;
+          list.hidden = true;
+        });
+      }
+
+      document.querySelector('#search-form').addEventListener('submit', event => {
+        event.preventDefault();
+        result.textContent = `submitted:${selectedDestination}`;
+      });
+    </script>
+  </body>
+</html>

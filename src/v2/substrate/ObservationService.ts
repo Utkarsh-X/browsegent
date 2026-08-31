@@ -6,6 +6,8 @@ import { CdpBridge } from './CdpBridge';
 import type { BuildObservationInput, CapturedElement, ObservationCaptureInput } from './types';
 
 const MAX_CDP_IDENTITY_ELEMENTS = 150;
+const EMPTY_NAVIGATION_RETRY_WAIT_MS = 100;
+const EMPTY_NAVIGATION_MAX_WAIT_MS = 2_500;
 
 function isNavigationRaceError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
@@ -17,26 +19,23 @@ export class ObservationService {
 
   async capture(input: ObservationCaptureInput): Promise<BrowserObservation> {
     const startedAt = Date.now();
-    let url: string;
-    let title: string;
-    let captured: CapturedElement[];
+    let state: PageCaptureState;
 
     try {
-      [url, title, captured] = await Promise.all([
-        input.page.url(),
-        input.page.title(),
-        input.page.evaluate<CapturedElement[]>(COLLECT_INTERACTIVE_ELEMENTS_SCRIPT),
-      ]);
+      state = await capturePageState(input.page);
     } catch (error) {
       if (!isNavigationRaceError(error)) throw error;
       // Wait for navigation to settle, then retry once
       await input.page.waitForLoadState('domcontentloaded').catch(() => undefined);
-      [url, title, captured] = await Promise.all([
-        input.page.url(),
-        input.page.title(),
-        input.page.evaluate<CapturedElement[]>(COLLECT_INTERACTIVE_ELEMENTS_SCRIPT),
-      ]);
+      state = await capturePageState(input.page);
     }
+
+    if (input.retryEmptyNavigationCapture && shouldWaitForEmptyNavigation(state)) {
+      await input.page.waitForLoadState('domcontentloaded').catch(() => undefined);
+      state = await waitForInteractiveNavigationState(input.page, state);
+    }
+
+    const { url, title, captured } = state;
 
     const identities = await resolveBackendNodeIds(input.page, captured.length);
     const refs = captured.map((candidate, index): V2Ref => ({
@@ -51,6 +50,8 @@ export class ObservationService {
       text: candidate.text,
       tagName: candidate.tagName,
       inputType: candidate.inputType,
+      value: candidate.value,
+      placeholder: candidate.placeholder,
       editableKind: candidate.editableKind,
       ariaAutocomplete: candidate.ariaAutocomplete,
       ariaHasPopup: candidate.ariaHasPopup,
@@ -79,6 +80,72 @@ export class ObservationService {
       warnings: [],
     });
   }
+}
+
+interface PageReadiness {
+  readyState: string;
+  bodyTextLength: number;
+  bodyChildCount: number;
+}
+
+interface PageCaptureState {
+  url: string;
+  title: string;
+  captured: CapturedElement[];
+  readiness: PageReadiness;
+}
+
+interface PageCaptureContent {
+  captured: CapturedElement[];
+  readiness: PageReadiness;
+}
+
+async function capturePageState(page: Page): Promise<PageCaptureState> {
+  const [url, title, content] = await Promise.all([
+    page.url(),
+    page.title(),
+    page.evaluate<PageCaptureContent | CapturedElement[]>(CAPTURE_PAGE_CONTENT_SCRIPT),
+  ]);
+
+  // The array branch keeps lightweight test doubles and older embedders
+  // compatible while real pages use the combined capture payload.
+  const captured = Array.isArray(content) ? content : content.captured;
+  const readiness = Array.isArray(content)
+    ? { readyState: 'unknown', bodyTextLength: 0, bodyChildCount: 0 }
+    : content.readiness;
+  return { url, title, captured, readiness };
+}
+
+function shouldWaitForEmptyNavigation(state: PageCaptureState): boolean {
+  // A transition capture that found zero interactive elements is worth a
+  // bounded wait regardless of title or body text: SPA shells routinely ship
+  // a title and server-rendered text before hydrating interactive content
+  // (observed: titled search-results shell with zero refs mid-transition).
+  return state.captured.length === 0;
+}
+
+async function waitForInteractiveNavigationState(page: Page, initial: PageCaptureState): Promise<PageCaptureState> {
+  const deadline = Date.now() + EMPTY_NAVIGATION_MAX_WAIT_MS;
+  let state = initial;
+
+  while (Date.now() < deadline) {
+    const remaining = deadline - Date.now();
+    await page.waitForTimeout(Math.min(EMPTY_NAVIGATION_RETRY_WAIT_MS, Math.max(1, remaining))).catch(() => undefined);
+    try {
+      state = await capturePageState(page);
+    } catch (error) {
+      // A navigation committing under a poll is "not ready yet", not a
+      // capture failure. Keep polling until the deadline, then return the
+      // last known state instead of crashing the run.
+      if (!isNavigationRaceError(error)) throw error;
+      continue;
+    }
+    if (state.captured.length > 0) {
+      return state;
+    }
+  }
+
+  return state;
 }
 
 export function buildBrowserObservation(input: BuildObservationInput): BrowserObservation {
@@ -204,6 +271,14 @@ async function cleanupBackendMarkers(page: Page): Promise<void> {
 
 const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
 (() => {
+  const previousMarkers = window.__browsegentV2MarkedElements || [];
+  for (const element of previousMarkers) {
+    if (element instanceof Element) {
+      element.removeAttribute('data-browsegent-v2-marker');
+    }
+  }
+  delete window.__browsegentV2MarkedElements;
+
   const elements = [];
 
   function walk(root) {
@@ -218,6 +293,18 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
 
   function normalizedText(text) {
     return String(text || '').replace(/\\s+/g, ' ').trim();
+  }
+
+  function boundedText(text, maxLength) {
+    const normalized = normalizedText(text);
+    return normalized ? normalized.slice(0, maxLength) : undefined;
+  }
+
+  function currentValue(element, inputType) {
+    if (inputType === 'password') return undefined;
+    if ('value' in element) return boundedText(element.value, 160);
+    if (element.isContentEditable) return boundedText(element.textContent, 160);
+    return undefined;
   }
 
   function normalizedSemanticIdentity(text) {
@@ -435,6 +522,8 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
       const isContentEditable = element.getAttribute('contenteditable') === 'true' || element.isContentEditable === true;
       const ariaAutocomplete = element.getAttribute('aria-autocomplete') || undefined;
       const ariaHasPopup = element.getAttribute('aria-haspopup') || undefined;
+      const value = currentValue(element, inputType);
+      const placeholder = boundedText(element.getAttribute('placeholder'), 160);
       const editableKind = isContentEditable
         ? 'contenteditable'
         : tagName === 'textarea'
@@ -463,6 +552,8 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
         selectorCandidates,
         tagName,
         inputType,
+        value,
+        placeholder,
         editableKind,
         ariaAutocomplete,
         ariaHasPopup,
@@ -478,4 +569,19 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
       };
     });
 })()
+`;
+
+const READ_PAGE_READINESS_SCRIPT = `
+(() => ({
+  readyState: document.readyState,
+  bodyTextLength: (document.body?.innerText || '').trim().length,
+  bodyChildCount: document.body?.children.length || 0,
+}))()
+`;
+
+const CAPTURE_PAGE_CONTENT_SCRIPT = `
+(() => ({
+  captured: ${COLLECT_INTERACTIVE_ELEMENTS_SCRIPT},
+  readiness: ${READ_PAGE_READINESS_SCRIPT},
+}))()
 `;

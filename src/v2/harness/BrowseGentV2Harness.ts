@@ -52,7 +52,7 @@ export class BrowseGentV2Harness {
     this.generationId += 1;
     await this.session.open(url);
     await this.stabilizationService.waitForSettledState(this.session.currentPage());
-    return this.captureCurrentObservation();
+    return this.captureCurrentObservation(true);
   }
 
   async observe(): Promise<BrowserObservation> {
@@ -165,7 +165,7 @@ export class BrowseGentV2Harness {
       await this.stabilizationService.waitForSettledState(this.session.currentPage());
       this.ledger?.recordPhase('stabilization_wait', Date.now() - stabStart);
       const obsStart = Date.now();
-      const after = await this.captureCurrentObservation();
+      const after = await this.captureCurrentObservation(true);
       this.ledger?.recordPhase('observation_capture', Date.now() - obsStart);
       const evidence = this.transitionService.compare(before, after);
       const result: V2ToolResult<{ url: string }> = {
@@ -682,11 +682,12 @@ export class BrowseGentV2Harness {
     }
   }
 
-  private async captureCurrentObservation(): Promise<BrowserObservation> {
+  private async captureCurrentObservation(retryEmptyNavigationCapture = false): Promise<BrowserObservation> {
     const observation = await this.observer.capture({
       sessionId: this.sessionId,
       generationId: this.generationId,
       page: this.session.currentPage(),
+      retryEmptyNavigationCapture,
     });
     const assigned = this.refService.assign(observation);
     this.current = assigned;

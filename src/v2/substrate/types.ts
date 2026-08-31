@@ -14,6 +14,7 @@ export interface ObservationCaptureInput {
   sessionId: string;
   generationId: number;
   page: Page;
+  retryEmptyNavigationCapture?: boolean;
 }
 
 export interface BuildObservationInput {
@@ -34,6 +35,8 @@ export interface CapturedElement {
   selectorCandidates: string[];
   tagName: string;
   inputType?: string;
+  value?: string;
+  placeholder?: string;
   editableKind?: EditableKind;
   ariaAutocomplete?: string;
   ariaHasPopup?: string;

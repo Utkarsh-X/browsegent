@@ -4,6 +4,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { BrowserSession } from '../../../src/v2/substrate/BrowserSession';
+import { InputService } from '../../../src/v2/substrate/InputService';
 import { ObservationService } from '../../../src/v2/substrate/ObservationService';
 
 function fixtureUrl(name: string): string {
@@ -63,6 +64,76 @@ test('ObservationService gives repeated controls distinct ref and target identit
     assert.equal(new Set(openButtons.map(ref => ref.refId)).size, 3);
     assert.equal(new Set(openButtons.map(ref => ref.targetId)).size, 3);
     assert.ok(openButtons.every(ref => ref.generationId === 3));
+  } finally {
+    await session.close();
+  }
+});
+
+test('InputService exposes suggestion-gated fill failure while the generic option protocol remains operable', async () => {
+  const session = new BrowserSession({ headed: false });
+  const observer = new ObservationService();
+
+  try {
+    await session.open(fixtureUrl('suggestion-gated-combobox.html'));
+    const page = session.currentPage();
+    const observation = await observer.capture({
+      sessionId: 'session_suggestion_gated',
+      generationId: 1,
+      page,
+    });
+    const input = observation.refs.find(ref => ref.name === 'Destination');
+    assert.ok(input);
+    assert.equal(input.ariaAutocomplete, 'list');
+    assert.equal(input.ariaHasPopup, 'listbox');
+    assert.equal(input.placeholder, undefined);
+
+    await assert.rejects(
+      () => new InputService().type(input, 'Paris', page),
+      (error: unknown) => {
+        assert.equal((error as { code?: string }).code, 'input_not_applied');
+        const diagnostics = (error as { diagnostics?: Record<string, unknown> }).diagnostics;
+        assert.equal(diagnostics?.requestedValue, 'Paris');
+        assert.equal(diagnostics?.retainedValue, '');
+        assert.equal(diagnostics?.activeElement, 'input');
+        assert.equal(diagnostics?.targetConnected, true);
+        return true;
+      },
+    );
+    assert.equal(await page.locator('#destination').inputValue(), '');
+
+    await page.locator('#destination').click();
+    await page.locator('#destination').fill('Paris');
+    await page.getByRole('option', { name: 'Paris' }).click();
+    await page.locator('button[type="submit"]').click();
+    assert.equal(await page.locator('#result').textContent(), 'submitted:Paris');
+  } finally {
+    await session.close();
+  }
+});
+
+test('ObservationService can capture a titled page before delayed hydration exposes interactive refs', async () => {
+  const session = new BrowserSession({ headed: false });
+  const observer = new ObservationService();
+
+  try {
+    await session.open(fixtureUrl('delayed-hydration.html'));
+    const early = await observer.capture({
+      sessionId: 'session_delayed_hydration',
+      generationId: 1,
+      page: session.currentPage(),
+    });
+
+    assert.equal(early.title, 'Delayed Hydration Fixture');
+    assert.equal(early.refs.length, 0);
+
+    const hydrated = await observer.capture({
+      sessionId: 'session_delayed_hydration',
+      generationId: 1,
+      page: session.currentPage(),
+      retryEmptyNavigationCapture: true,
+    });
+
+    assert.equal(hydrated.refs.some(ref => ref.name === 'Hydrated action'), true);
   } finally {
     await session.close();
   }
