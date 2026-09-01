@@ -768,6 +768,9 @@ test('V2AgentLoop executes planner plan and feeds runtime evidence into next pla
   assert.equal(dispatcher.steps?.[0].ref, 'ref_submit');
   assert.equal(planner.inputs[1].lastResult?.kind, 'click');
   assert.equal(planner.inputs[1].transition?.transitionClass, 'structural_local');
+  assert.equal(planner.inputs[1].lineage?.totalSteps, 1);
+  assert.deepEqual(planner.inputs[1].lineage?.steps.map(step => step.stepId), ['tool_1']);
+  assert.equal(planner.inputs[1].lineage?.steps[0].strength, 'moderate');
 });
 
 test('V2AgentLoop retries an incompatible type through the real planner client before dispatch', async () => {

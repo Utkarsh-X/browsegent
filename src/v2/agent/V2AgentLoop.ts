@@ -30,6 +30,7 @@ import { UncertaintySignals, type RuntimeUncertainty } from '../runtime/Uncertai
 import { V2ToolDispatcher } from '../tools/V2ToolDispatcher';
 import { LatencyLedger } from '../trace/LatencyLedger';
 import { ActionOutcomeRecorder } from '../trace/ActionOutcomeRecord';
+import type { TraceJsonValue, TraceStep } from '../trace/types';
 import type {
   V2AgentHarnessRuntime,
   V2AgentLoopInput,
@@ -81,6 +82,7 @@ export class V2AgentLoop {
       let lastRejectedAnswerKey: string | undefined;
       let repeatedRejectedAnswerCount = 0;
       const evidenceLedger = new EvidenceLedger();
+      const plannerTraceSteps: TraceStep[] = [];
 
       for (let stepIndex = 0; stepIndex < maxSteps; stepIndex += 1) {
         ledger.beginStep(stepIndex);
@@ -104,6 +106,8 @@ export class V2AgentLoop {
           evidenceCoverage,
           evidenceSnapshot: evidenceLedger.getPlannerEvidenceSnapshot(),
           workingSetOptions: input.workingSetOptions,
+          trace: plannerTraceSteps.length > 0 ? plannerTraceSteps : undefined,
+          maxLineageSteps: 5,
         });
         harness.recordPlannerInput?.(plannerInput.episodeId, plannerInput);
         ledger.recordPhase('local_compute', Date.now() - composeStart);
@@ -364,6 +368,14 @@ export class V2AgentLoop {
             });
           }
 
+          plannerTraceSteps.push(buildPlannerLineageStep(
+            plannerTraceSteps.length,
+            plannedStep,
+            lastResult!,
+            actionObservation.observationId,
+            observation.observationId,
+          ));
+
           // Record progress for ALL outcomes (dispatched and pre-execution)
           const progressSignals = progressMemory.record(lastResult!, plannedStep, actionObservation);
           if (!preExecutionRejected && lastResult!.success) {
@@ -457,6 +469,7 @@ export class V2AgentLoop {
           input.goal, lastSuccessfulEvidenceValue, readEvidenceHistory, metrics, ledger, outcomeRecorder,
           input.workingSetOptions,
           evidenceLedger,
+          plannerTraceSteps,
         );
         if (finalizationResult) return finalizationResult;
 
@@ -562,6 +575,7 @@ export class V2AgentLoop {
     outcomeRecorder?: ActionOutcomeRecorder,
     workingSetOptions?: PlannerWorkingSetOptions,
     evidenceLedger?: EvidenceLedger,
+    trace?: TraceStep[],
   ): Promise<V2AgentLoopResult | undefined> {
     const projection = this.projectionService.project(observation, graphSnapshot);
     const ledgerInstance = evidenceLedger ?? new EvidenceLedger();
@@ -584,6 +598,8 @@ export class V2AgentLoop {
       evidenceCoverage,
       evidenceSnapshot: ledgerInstance.getPlannerEvidenceSnapshot(),
       workingSetOptions,
+      trace: trace && trace.length > 0 ? trace : undefined,
+      maxLineageSteps: 5,
     });
     harness.recordPlannerInput?.(finalizationInput.episodeId, finalizationInput);
     metrics.plannerCalls += 1;
@@ -653,6 +669,7 @@ export class V2AgentLoop {
           ledger,
           outcomeRecorder,
           workingSetOptions,
+          trace,
         });
         return await this.complete(harness, {
           success: true,
@@ -692,6 +709,7 @@ export class V2AgentLoop {
     ledger?: LatencyLedger;
     outcomeRecorder?: ActionOutcomeRecorder;
     workingSetOptions?: PlannerWorkingSetOptions;
+    trace?: TraceStep[];
   }): Promise<string> {
     const grounding = detectAnswerEvidenceConflicts(input.draftAnswer, input.validationEvidence);
     if (grounding.conflicts.length === 0) {
@@ -716,6 +734,8 @@ export class V2AgentLoop {
       graphSnapshot: input.graphSnapshot,
       evidenceCoverage: input.evidenceCoverage,
       workingSetOptions: input.workingSetOptions,
+      trace: input.trace && input.trace.length > 0 ? input.trace : undefined,
+      maxLineageSteps: 5,
     });
     input.harness.recordPlannerInput?.(reconciliationInput.episodeId, reconciliationInput);
     input.metrics.plannerCalls += 1;
@@ -807,6 +827,62 @@ function recordCompactPlannerTelemetry(input: {
     view: compactView,
     plainInteractiveBaseline: baseline,
   });
+}
+
+function buildPlannerLineageStep(
+  index: number,
+  plannedStep: PlannerOutputStep,
+  result: V2ToolResult,
+  beforeObservationId: string,
+  afterObservationId: string,
+): TraceStep {
+  const resultSummary: Record<string, TraceJsonValue> = {
+    success: result.success,
+    kind: result.kind,
+  };
+  const targetRef = result.targetRef ?? plannedStep.ref;
+  if (targetRef) {
+    resultSummary.targetRef = targetRef;
+  }
+  if (result.error) {
+    resultSummary.error = {
+      code: result.error.code,
+      retryable: result.error.retryable,
+    };
+  }
+  if (result.evidence) {
+    resultSummary.evidence = {
+      transitionClass: result.evidence.transitionClass,
+      strength: result.evidence.strength,
+    };
+  }
+
+  const now = Date.now();
+  const actionInput: Record<string, TraceJsonValue> = {};
+  for (const [key, value] of Object.entries({
+    text: plannedStep.text,
+    value: plannedStep.value,
+    url: plannedStep.url,
+    pattern: plannedStep.pattern,
+  })) {
+    if (typeof value === 'string' && value.length > 0) {
+      actionInput[key] = value.slice(0, 160);
+    }
+  }
+  return {
+    stepId: result.traceStepId,
+    index,
+    kind: plannedStep.tool,
+    status: result.success ? 'completed' : 'failed',
+    startedAt: now,
+    endedAt: now,
+    targetRef,
+    beforeObservationId,
+    afterObservationId,
+    input: Object.keys(actionInput).length > 0 ? actionInput : undefined,
+    warnings: [],
+    result: resultSummary,
+  };
 }
 
 function appendBoundedFailure(existing: FailureEvidence[], next: FailureEvidence): FailureEvidence[] {
@@ -996,7 +1072,6 @@ function hasProgressAfterError(result: V2ToolResult): boolean {
 const PROGRESS_HISTORY_LIMIT = 8;
 const READ_EVIDENCE_HISTORY_LIMIT = 8;
 const REPEAT_SIGNAL_THRESHOLD = 2;
-
 interface ActionProgressEntry {
   kind: string;
   targetKey: string;
