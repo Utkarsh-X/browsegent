@@ -98,6 +98,66 @@ test('InputService opens a closed suggestion control before filling it', async (
   }
 });
 
+test('InputService fills a blocked suggestion control before requiring a physical click', async () => {
+  const session = new BrowserSession({ headed: false });
+  const observer = new ObservationService();
+
+  try {
+    await session.open(fixtureUrl('blocked-suggestion-combobox.html'));
+    const page = session.currentPage();
+    const observation = await observer.capture({
+      sessionId: 'session_blocked_suggestion',
+      generationId: 1,
+      page,
+    });
+    const input = observation.refs.find(ref => ref.name === 'Destination');
+    assert.ok(input);
+    assert.equal(input.role, 'combobox');
+    assert.equal(input.ariaHasPopup, 'listbox');
+    assert.equal(await page.locator('#destination').evaluate(element => {
+      const rect = element.getBoundingClientRect();
+      return document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)?.id;
+    }), 'destination-blocker');
+
+    const result = await new InputService().type(input, 'Paris', page);
+
+    assert.equal(result.value?.inputValue, 'Paris');
+    assert.equal(await page.getByRole('option', { name: 'Paris' }).isVisible(), true);
+    await page.getByRole('option', { name: 'Paris' }).click();
+    await page.locator('button[type="submit"]').click();
+    assert.equal(await page.locator('#result').textContent(), 'submitted:Paris');
+  } finally {
+    await session.close();
+  }
+});
+
+test('InputService opens a blocked closed suggestion control with keyboard semantics', async () => {
+  const session = new BrowserSession({ headed: false });
+  const observer = new ObservationService();
+
+  try {
+    await session.open(fixtureUrl('keyboard-open-suggestion-combobox.html'));
+    const page = session.currentPage();
+    const observation = await observer.capture({
+      sessionId: 'session_keyboard_open_suggestion',
+      generationId: 1,
+      page,
+    });
+    const input = observation.refs.find(ref => ref.name === 'Destination');
+    assert.ok(input);
+
+    const result = await new InputService().type(input, 'Paris', page);
+
+    assert.equal(result.value?.inputValue, 'Paris');
+    assert.equal(await page.getByRole('option', { name: 'Paris' }).isVisible(), true);
+    await page.getByRole('option', { name: 'Paris' }).click();
+    await page.locator('button[type="submit"]').click();
+    assert.equal(await page.locator('#result').textContent(), 'submitted:Paris');
+  } finally {
+    await session.close();
+  }
+});
+
 test('InputService does not reopen a suggestion control with visible options', async () => {
   const session = new BrowserSession({ headed: false });
   const observer = new ObservationService();
@@ -115,8 +175,14 @@ test('InputService does not reopen a suggestion control with visible options', a
 
     await page.locator('#query').evaluate(element => {
       let clicks = 0;
+      let keyups = 0;
       element.addEventListener('click', () => { clicks += 1; });
-      (element as HTMLElement & { __testClickCount?: () => number }).__testClickCount = () => clicks;
+      element.addEventListener('keyup', () => { keyups += 1; });
+      (element as HTMLElement & {
+        __testClickCount?: () => number;
+        __testKeyupCount?: () => number;
+      }).__testClickCount = () => clicks;
+      (element as HTMLElement & { __testKeyupCount?: () => number }).__testKeyupCount = () => keyups;
     });
     const result = await new InputService().type(input, 'Paris', page);
 
@@ -125,7 +191,65 @@ test('InputService does not reopen a suggestion control with visible options', a
     const clickCount = await page.locator('#query').evaluate(element =>
       (element as HTMLElement & { __testClickCount?: () => number }).__testClickCount?.() ?? -1,
     );
+    const keyupCount = await page.locator('#query').evaluate(element =>
+      (element as HTMLElement & { __testKeyupCount?: () => number }).__testKeyupCount?.() ?? -1,
+    );
     assert.equal(clickCount, 0);
+    assert.equal(keyupCount, 0);
+  } finally {
+    await session.close();
+  }
+});
+
+test('InputService uses keyboard events when fill leaves suggestion options unrelated', async () => {
+  const session = new BrowserSession({ headed: false });
+  const observer = new ObservationService();
+
+  try {
+    await session.open(fixtureUrl('keyboard-filter-combobox.html'));
+    const page = session.currentPage();
+    const observation = await observer.capture({
+      sessionId: 'session_keyboard_filter',
+      generationId: 1,
+      page,
+    });
+    const input = observation.refs.find(ref => ref.name === 'Destination');
+    assert.ok(input);
+
+    const result = await new InputService().type(input, 'Paris', page);
+
+    assert.equal(result.value?.inputValue, 'Paris');
+    assert.equal(await page.getByRole('option', { name: 'Paris' }).isVisible(), true);
+    assert.equal(await page.getByRole('option', { name: 'New Delhi' }).isVisible(), false);
+  } finally {
+    await session.close();
+  }
+});
+
+test('InputService waits briefly for delayed unrelated suggestions before keyboard fallback', async () => {
+  const session = new BrowserSession({ headed: false });
+  const observer = new ObservationService();
+
+  try {
+    await session.open(fixtureUrl('delayed-keyboard-filter-combobox.html'));
+    const page = session.currentPage();
+    const observation = await observer.capture({
+      sessionId: 'session_delayed_keyboard_filter',
+      generationId: 1,
+      page,
+    });
+    const input = observation.refs.find(ref => ref.name === 'Destination');
+    assert.ok(input);
+
+    const result = await new InputService().type(input, 'Paris', page);
+
+    assert.equal(result.value?.inputValue, 'Paris');
+    assert.equal(await page.getByRole('option', { name: 'Paris' }).isVisible(), true);
+    assert.equal(await page.getByRole('option', { name: 'New Delhi' }).isVisible(), false);
+    const keyupCount = await page.locator('#destination').evaluate(element =>
+      (element as HTMLElement & { __testKeyupCount?: () => number }).__testKeyupCount?.() ?? -1,
+    );
+    assert.ok(keyupCount > 0);
   } finally {
     await session.close();
   }

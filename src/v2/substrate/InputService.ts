@@ -12,6 +12,13 @@ interface SuggestionControlMetadata {
   ariaHasPopup?: string;
 }
 
+interface SuggestionControlState {
+  requiresOpen: boolean;
+  useKeyboardInput: boolean;
+  suggestionBacked: boolean;
+  visibleOptionCount: number;
+}
+
 export interface InputExecutionResult<TValue = unknown> {
   kind: 'click' | 'type' | 'select';
   value?: TValue;
@@ -145,26 +152,73 @@ export class InputService {
     await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
 
     const suggestionState = await inspectSuggestionControl(locator, ref);
-    if (suggestionState.requiresOpen) {
-      // Some ARIA comboboxes reject values until their suggestion surface is open.
-      // Use the normal semantic click path, then resolve again in case the widget rerendered.
-      await this.click(ref, page);
-      ({ locator } = await this.resolver.resolve(ref, page));
-      await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
-    }
-
+    // Try the editable control directly before opening it physically. A widget
+    // can accept input while a decorative or transient element covers its click
+    // point; a click-first protocol would turn valid input into target_blocked.
     try {
       await locator.fill(text, { timeout: 1_500 });
     } catch (error) {
       throw mapPlaywrightError(error, 'type');
     }
 
-    const inputValue = await locator.evaluate((element) => {
+    let inputValue = await locator.evaluate((element) => {
       if ('value' in element) {
         return String((element as HTMLInputElement | HTMLTextAreaElement).value);
       }
       return String(element.textContent ?? '');
     });
+
+    if (suggestionState.requiresOpen && !inputValue.trim()) {
+      // Some ARIA comboboxes reject values until their suggestion surface is
+      // open. Prefer keyboard semantics because the control may be editable
+      // while its physical click point is covered by a transient element.
+      let keyboardOpened = false;
+      try {
+        await locator.press('ArrowDown', { timeout: 1_500 });
+        keyboardOpened = (await waitForSuggestionState(locator, ref, text, 250)).visibleOptionCount > 0;
+      } catch {
+        keyboardOpened = false;
+      }
+
+      if (!keyboardOpened) {
+        await this.click(ref, page);
+        ({ locator } = await this.resolver.resolve(ref, page));
+        await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
+      }
+
+      try {
+        await locator.fill(text, { timeout: 1_500 });
+      } catch (error) {
+        throw mapPlaywrightError(error, 'type');
+      }
+
+      inputValue = await locator.evaluate((element) => {
+        if ('value' in element) {
+          return String((element as HTMLInputElement | HTMLTextAreaElement).value);
+        }
+        return String(element.textContent ?? '');
+      });
+    }
+
+    // Some suggestion widgets retain fill()'s value but only refresh their
+    // options from keyboard events. Retry that interaction path only when the
+    // visible suggestion surface is clearly unrelated to the requested text.
+    const postFillSuggestion = await waitForSuggestionState(locator, ref, text);
+    if (postFillSuggestion.useKeyboardInput) {
+      try {
+        await locator.fill('', { timeout: 1_500 });
+        await locator.pressSequentially(text, { delay: 10, timeout: 1_500 });
+      } catch (error) {
+        throw mapPlaywrightError(error, 'type');
+      }
+
+      inputValue = await locator.evaluate((element) => {
+        if ('value' in element) {
+          return String((element as HTMLInputElement | HTMLTextAreaElement).value);
+        }
+        return String(element.textContent ?? '');
+      });
+    }
 
     // Playwright can complete a fill against a controlled or stale widget
     // without the widget retaining the requested non-empty value. Do not
@@ -328,7 +382,11 @@ function mapPlaywrightError(error: unknown, action: 'click' | 'type' | 'select')
   return new V2OperationalError('timeout', `${action} failed before completion: ${message}`, { retryable: true });
 }
 
-async function inspectSuggestionControl(locator: Locator, ref: SuggestionControlMetadata): Promise<{ requiresOpen: boolean }> {
+async function inspectSuggestionControl(
+  locator: Locator,
+  ref: SuggestionControlMetadata,
+  expectedText?: string,
+): Promise<SuggestionControlState> {
   const state = await locator.evaluate((element, metadata) => {
     const helpers = {
       normalize(value: string | null | undefined): string {
@@ -344,6 +402,12 @@ async function inspectSuggestionControl(locator: Locator, ref: SuggestionControl
           && rect.width > 0
           && rect.height > 0;
       },
+      matchesExpected(candidate: Element, expected: string): boolean {
+        const optionText = helpers.normalize(candidate.textContent);
+        const expectedText = helpers.normalize(expected);
+        return expectedText.length > 1
+          && (optionText === expectedText || optionText.includes(expectedText));
+      },
     };
     const role = helpers.normalize(element.getAttribute('role') || metadata.role);
     const autocomplete = helpers.normalize(element.getAttribute('aria-autocomplete') || metadata.ariaAutocomplete);
@@ -352,21 +416,63 @@ async function inspectSuggestionControl(locator: Locator, ref: SuggestionControl
       && (autocomplete === 'list' || autocomplete === 'both' || autocomplete === 'inline' || hasPopup === 'listbox');
 
     if (!suggestionBacked) {
-      return { requiresOpen: false };
+      return {
+        requiresOpen: false,
+        useKeyboardInput: false,
+        suggestionBacked: false,
+        visibleOptionCount: 0,
+      };
     }
 
     const controlledId = element.getAttribute('aria-controls');
     const controlled = controlledId ? document.getElementById(controlledId) : undefined;
     const optionRoot: ParentNode = controlled ?? document;
-    const visibleOptionCount = Array.from(optionRoot.querySelectorAll('[role="option"]')).filter(helpers.isVisible).length;
+    const visibleOptions = Array.from(optionRoot.querySelectorAll('[role="option"]')).filter(helpers.isVisible);
+    const visibleOptionCount = visibleOptions.length;
     const expanded = helpers.normalize(element.getAttribute('aria-expanded')) === 'true';
+    const expected = String(metadata.expectedText ?? '');
+    const hasExpectedOption = expected.length > 1
+      && visibleOptions.some(option => helpers.matchesExpected(option, expected));
 
-    return { requiresOpen: !expanded && visibleOptionCount === 0 };
+    return {
+      requiresOpen: !expanded && visibleOptionCount === 0,
+      useKeyboardInput: expected.length > 1 && visibleOptionCount > 0 && !hasExpectedOption,
+      suggestionBacked: true,
+      visibleOptionCount,
+    };
   }, {
     role: ref.role,
     ariaAutocomplete: ref.ariaAutocomplete,
     ariaHasPopup: ref.ariaHasPopup,
+    expectedText,
   });
+
+  return state;
+}
+
+async function waitForSuggestionState(
+  locator: Locator,
+  ref: SuggestionControlMetadata,
+  expectedText: string,
+  maxWaitMs = 750,
+): Promise<SuggestionControlState> {
+  let state = await inspectSuggestionControl(locator, ref, expectedText);
+  if (!state.suggestionBacked || state.useKeyboardInput || state.visibleOptionCount > 0) {
+    return state;
+  }
+
+  const deadline = Date.now() + maxWaitMs;
+  while (Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 50));
+    try {
+      state = await inspectSuggestionControl(locator, ref, expectedText);
+    } catch {
+      return state;
+    }
+    if (!state.suggestionBacked || state.useKeyboardInput || state.visibleOptionCount > 0) {
+      return state;
+    }
+  }
 
   return state;
 }

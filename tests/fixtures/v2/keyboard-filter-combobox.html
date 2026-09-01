@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Keyboard Filter Combobox Fixture</title>
+  </head>
+  <body>
+    <label for="destination">Destination</label>
+    <input
+      id="destination"
+      type="text"
+      role="combobox"
+      aria-label="Destination"
+      aria-autocomplete="list"
+      aria-haspopup="listbox"
+      aria-controls="destinations"
+    >
+    <ul id="destinations" role="listbox">
+      <li role="option">New Delhi</li>
+    </ul>
+    <script>
+      const input = document.querySelector('#destination');
+      const list = document.querySelector('#destinations');
+
+      function renderDefaultOptions() {
+        list.innerHTML = '<li role="option">New Delhi</li>';
+      }
+
+      function renderMatchingOptions() {
+        if (input.value.trim().toLowerCase() === 'paris') {
+          list.innerHTML = '<li role="option">Paris</li>';
+        } else {
+          renderDefaultOptions();
+        }
+      }
+
+      // This widget updates its suggestions from keyboard events; a fill/input
+      // event retains the value but leaves the default list visible.
+      input.addEventListener('input', renderDefaultOptions);
+      input.addEventListener('keyup', renderMatchingOptions);
+    </script>
+  </body>
+</html>
