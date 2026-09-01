@@ -72,7 +72,11 @@ def call_openrouter(
     model: str,
     api_key: str,
 ) -> tuple[str, int, int, int]:
-    url = "https://openrouter.ai/api/v1/chat/completions"
+    base_url = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
+    if not base_url.endswith("/chat/completions"):
+        url = f"{base_url}/chat/completions"
+    else:
+        url = base_url
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
