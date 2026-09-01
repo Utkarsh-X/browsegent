@@ -1,3 +1,4 @@
+import type { OperationalProjection } from '../brain1/projectionTypes';
 import type { FailureEvidence } from './FailureClassifier';
 import type { V2ToolResult } from './types';
 
@@ -7,6 +8,7 @@ export type PlannerRecoveryStateKind =
   | 'same_action_loop'
   | 'repeated_read_same_value'
   | 'zero_result_read_loop'
+  | 'empty_navigation_surface'
   | 'unselected_ref'
   | 'invalid_output_repeat'
   | 'max_step_risk';
@@ -23,6 +25,7 @@ export interface PlannerRecoveryState {
 }
 
 export interface RecoveryStateBuilderInput {
+  projection?: OperationalProjection;
   lastResult?: V2ToolResult;
   failures?: FailureEvidence[];
   uncertaintySignals?: string[];
@@ -36,6 +39,9 @@ export class RecoveryStateBuilder {
 
     const wrongTarget = buildWrongTargetRecovery(input.lastResult, signals);
     if (wrongTarget) return wrongTarget;
+
+    const emptyNavigation = buildEmptyNavigationRecovery(input, signals);
+    if (emptyNavigation) return emptyNavigation;
 
     if (signals.some(signal => signal.startsWith('repeated_no_progress_transition:'))) {
       return {
@@ -108,6 +114,36 @@ export class RecoveryStateBuilder {
 
     return undefined;
   }
+}
+
+function buildEmptyNavigationRecovery(
+  input: RecoveryStateBuilderInput,
+  signals: string[],
+): PlannerRecoveryState | undefined {
+  const projection = input.projection;
+  const lastResult = input.lastResult;
+  if (
+    !projection
+    || !lastResult?.success
+    || lastResult.kind !== 'navigate'
+    || projection.stats.interactionCount > 0
+    || projection.stats.readableCount > 0
+    || projection.stats.navigationCount > 0
+  ) {
+    return undefined;
+  }
+
+  return {
+    state: 'empty_navigation_surface',
+    severity: 'warning',
+    nextMechanisms: [
+      'wait_for_hydration',
+      'reobserve_current_surface',
+      'avoid_navigation_churn',
+      'escalate_if_surface_remains_empty',
+    ],
+    signals: [...signals, 'successful_navigation_empty_surface'],
+  };
 }
 
 function buildPersistentBlockerRecovery(
@@ -217,14 +253,23 @@ function buildWrongTargetRecovery(
       tool: lastResult?.kind ?? 'unknown',
       ref: lastResult?.targetRef,
     },
-    nextMechanisms: mechanismsForErrorCode(code),
+    nextMechanisms: mechanismsForErrorCode(code, lastResult),
     signals,
   };
 }
 
-function mechanismsForErrorCode(code: string): string[] {
+function mechanismsForErrorCode(code: string, lastResult?: V2ToolResult): string[] {
   if (code === 'target_not_editable' || code === 'input_not_applied') {
     return ['choose_typeable_ref', 'click_launcher_then_type', 'expand_or_reobserve'];
+  }
+  if (code === 'target_blocked' && lastResult?.error?.diagnostics?.hitTestOutcome === 'hard_blocker') {
+    return [
+      'avoid_repeating_blocked_action',
+      'find_dismiss_or_close_control',
+      'reobserve_current_surface',
+      'choose_alternative_ref',
+      'expand_or_reobserve',
+    ];
   }
   if (code === 'target_not_clickable' || code === 'target_blocked' || code === 'low_confidence_ref') {
     return ['avoid_repeating_blocked_action', 'choose_alternative_ref', 'use_readable_evidence_if_goal_is_answerable', 'expand_or_reobserve'];

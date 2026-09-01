@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { RecoveryStateBuilder } from '../../../src/v2/runtime/RecoveryState';
 import type { FailureEvidence } from '../../../src/v2/runtime/FailureClassifier';
+import type { OperationalProjection } from '../../../src/v2/brain1/projectionTypes';
 
 test('RecoveryStateBuilder detects wrong target type for non-editable type failures', () => {
   const recovery = new RecoveryStateBuilder().build({
@@ -64,6 +65,32 @@ test('RecoveryStateBuilder preserves a non-applied input as a type-target recove
   assert.equal(recovery?.blockedAction?.tool, 'type');
   assert.equal(recovery?.blockedAction?.ref, 'ref_search');
   assert.ok(recovery?.nextMechanisms.includes('choose_typeable_ref'));
+});
+
+test('RecoveryStateBuilder exposes blocker recovery for a hard target block', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_search',
+      error: {
+        code: 'target_blocked',
+        message: 'The target is covered by another element.',
+        retryable: false,
+        diagnostics: {
+          blockerTagName: 'div',
+          hitTestOutcome: 'hard_blocker',
+        },
+      },
+      traceStepId: 'step_target_blocked',
+    },
+    failures: [],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery?.state, 'wrong_target_type');
+  assert.ok(recovery?.nextMechanisms.includes('find_dismiss_or_close_control'));
+  assert.ok(recovery?.nextMechanisms.includes('reobserve_current_surface'));
 });
 
 test('RecoveryStateBuilder treats repeated no-progress tool use as a strategy pivot', () => {
@@ -248,6 +275,34 @@ test('RecoveryStateBuilder returns undefined when no recovery signal is present'
   });
 
   assert.equal(recovery, undefined);
+});
+
+test('RecoveryStateBuilder identifies a successful navigation to an empty operational surface', () => {
+  const projection = {
+    stats: {
+      interactionCount: 0,
+      readableCount: 0,
+      navigationCount: 0,
+      regionCount: 0,
+    },
+  } as OperationalProjection;
+  const recovery = new RecoveryStateBuilder().build({
+    projection,
+    lastResult: {
+      success: true,
+      kind: 'navigate',
+      traceStepId: 'step_navigation',
+      value: { url: 'https://example.test/results' },
+    },
+    failures: [],
+    uncertaintySignals: ['empty_interactions'],
+  });
+
+  assert.equal(recovery?.state, 'empty_navigation_surface');
+  assert.equal(recovery?.severity, 'warning');
+  assert.ok(recovery?.nextMechanisms.includes('wait_for_hydration'));
+  assert.ok(recovery?.nextMechanisms.includes('reobserve_current_surface'));
+  assert.ok(recovery?.nextMechanisms.includes('avoid_navigation_churn'));
 });
 
 test('RecoveryStateBuilder blocks persistent target failure as same action pair', () => {

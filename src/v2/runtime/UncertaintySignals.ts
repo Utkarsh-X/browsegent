@@ -18,6 +18,8 @@ export interface RuntimeUncertainty {
   signals: string[];
 }
 
+const MAX_EXPLICIT_LOW_CONFIDENCE_REFS = 4;
+
 export class UncertaintySignals {
   fromRuntimeState(input: RuntimeUncertaintyInput): RuntimeUncertainty {
     const signals = collectSignals(input);
@@ -36,9 +38,15 @@ function collectSignals(input: RuntimeUncertaintyInput): string[] {
     signals.push('empty_interactions');
   }
 
-  for (const item of input.projection?.interactions ?? []) {
-    if (item.state === 'weakened' || item.continuityConfidence < 0.7) {
-      signals.push(`low_confidence_ref:${item.refId}`);
+  const lowConfidenceRefIds = Array.from(new Set(
+    (input.projection?.interactions ?? [])
+      .filter(item => item.state === 'weakened' || item.continuityConfidence < 0.7)
+      .map(item => item.refId),
+  ));
+  if (lowConfidenceRefIds.length > 0) {
+    signals.push(`low_confidence_refs:${lowConfidenceRefIds.length}`);
+    for (const refId of lowConfidenceRefIds.slice(0, MAX_EXPLICIT_LOW_CONFIDENCE_REFS)) {
+      signals.push(`low_confidence_ref:${refId}`);
     }
   }
 
@@ -92,6 +100,7 @@ function chooseLevel(signals: string[]): RuntimeUncertainty['level'] {
     signals.some(signal =>
       signal.startsWith('failure:')
       || signal.startsWith('low_confidence_ref:')
+      || signal.startsWith('low_confidence_refs:')
       || signal.startsWith('weakened_refs:')
       || signal.startsWith('repeated_no_progress_transition:')
       || signal.startsWith('repeated_no_progress_target:')
