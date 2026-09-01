@@ -14,6 +14,7 @@ export class PromptLayoutEngine {
       renderState(ir),
       renderRecentEvents(ir),
       renderEvidenceCoverage(ir),
+      renderTaskProgress(ir),
       renderEvidenceSnapshot(ir),
       renderProblems(ir),
       renderSurface(ir, options),
@@ -35,6 +36,7 @@ function renderCompactDataPlane(
     renderCompactState(ir),
     renderCompactLast(ir),
     renderCompactEvidence(ir),
+    renderCompactTaskProgress(ir),
     renderCompactProblems(ir),
     renderCompactSurface(ir, options),
     renderCompactWorkingSet(ir),
@@ -98,6 +100,17 @@ function renderCompactEvidence(ir: PlannerRepresentationIR): string {
     parts.push(`facts=${renderCompactEvidenceFacts(snapshot)}`);
   }
   return parts.length > 0 ? `EVIDENCE: ${parts.join(' ')}` : '';
+}
+
+function renderCompactTaskProgress(ir: PlannerRepresentationIR): string {
+  const progress = ir.execution.taskProgress;
+  if (!progress || progress.items.length === 0) return '';
+
+  const items = progress.items.map(item => {
+    const evidence = item.evidence?.length ? `@${item.evidence.join(',')}` : '';
+    return `${item.key}:${item.status}="${escapeAttr(compactValue(item.requested, 120))}"${evidence}`;
+  }).join(';');
+  return `PROGRESS: state=${progress.status} items=${items}`;
 }
 
 function renderEvidenceSnapshot(ir: PlannerRepresentationIR): string {
@@ -268,6 +281,18 @@ function renderEvidenceCoverage(ir: PlannerRepresentationIR): string {
       ? ` reads=${requirement.supportingReadIndexes.join(',')}`
       : '';
     lines.push(`  ${requirement.key}: ${requirement.status}${reads}`);
+  }
+  return lines.join('\n');
+}
+
+function renderTaskProgress(ir: PlannerRepresentationIR): string {
+  const progress = ir.execution.taskProgress;
+  if (!progress || progress.items.length === 0) return '';
+
+  const lines = [`TASK PROGRESS\n  state: ${progress.status}`];
+  for (const item of progress.items) {
+    const evidence = item.evidence?.length ? ` evidence=${item.evidence.join(',')}` : '';
+    lines.push(`  ${item.key}: ${item.status} requested="${escapeAttr(compactValue(item.requested, 120))}"${evidence}`);
   }
   return lines.join('\n');
 }

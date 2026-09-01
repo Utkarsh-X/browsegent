@@ -1,7 +1,7 @@
 import type { TransitionClass, TransitionEvidence, TransitionStrength, V2ToolResult } from '../runtime/types';
 import type { SerializedProjection } from '../brain1/projectionTypes';
 import type { ContinuityGraphSnapshot } from '../graph/types';
-import type { TraceManifest } from '../trace/types';
+import type { TraceManifest, TraceStep } from '../trace/types';
 import type { DeadStateEvidence } from '../runtime/DeadStateDetector';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { RuntimeUncertainty } from '../runtime/UncertaintySignals';
@@ -41,7 +41,7 @@ export interface PlannerInputComposerInput {
   graphSnapshot?: ContinuityGraphSnapshot;
   transitionEvidence?: TransitionEvidence;
   lastResult?: V2ToolResult;
-  trace?: TraceManifest;
+  trace?: TraceManifest | TraceStep[];
   maxLineageSteps?: number;
   failureEvidence?: FailureEvidence[];
   deadStateEvidence?: DeadStateEvidence;
@@ -67,10 +67,27 @@ export interface PlannerInput {
   recovery?: PlannerRecoveryState;
   answerFeedback?: PlannerAnswerFeedback;
   evidenceCoverage?: PlannerEvidenceCoverage;
+  taskProgress?: PlannerTaskProgress;
   evidenceSnapshot?: PlannerEvidenceSnapshot;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
   sizeDiagnostics?: ProjectionSizeDiagnostics;
+}
+
+export type PlannerTaskProgressItemStatus = 'pending' | 'observed' | 'applied' | 'conflicting';
+export type PlannerTaskProgressState = 'unknown' | 'incomplete' | 'ready' | 'conflicting';
+
+export interface PlannerTaskProgressItem {
+  key: string;
+  requested: string;
+  status: PlannerTaskProgressItemStatus;
+  evidence?: string[];
+}
+
+/** Advisory state for explicit operational constraints found in the user goal. */
+export interface PlannerTaskProgress {
+  status: PlannerTaskProgressState;
+  items: PlannerTaskProgressItem[];
 }
 
 export interface PlannerAnswerFeedback {

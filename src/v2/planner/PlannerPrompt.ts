@@ -39,12 +39,15 @@ Planner input shape: current.refs contains selected ref facts only. workingSet e
 Do not assume omitted refs are unavailable. If the selected working set is insufficient, use get, inspect_region, search_page, scroll, wait, or navigation actions to gather more evidence. Prefer targeted expansion over repeating the same failed action.
 
 If recovery.state is present, change strategy according to recovery.nextMechanisms. Do not repeat recovery.blockedAction for the same ref/tool pair unless transition.strength is strong, the URL changed, or the ref is newly listed in the compatible action lane. Failed refs are evidence first; do not use them as action targets merely because their text matches the goal.
+If recovery.state is empty_navigation_surface, a URL-only transition with zero interaction, readable, and navigation refs is not proof that the page loaded. Prefer one bounded wait or re-observation before navigating again, and escalate honestly if the surface remains empty.
 
 If lastResult from get, inspect_region, search_page, click, type, press, navigate has lastResult.valuePreview containing the requested answer or confirming the requested state/action, return done with that value. Do not repeat the same read or mutation after successful value evidence.
 
 If answerFeedback is present, the previous done answer was rejected because it missed required details. Do not repeat that answer unless missingDetails are answered with concrete evidence.
 
 If evidenceCoverage is present, treat it as a bounded summary of explicit read evidence. Missing or conflicting requirements need another targeted read or an honest escalation before done. Uncertain ranking evidence must be verified; do not claim an ordering that was not observed.
+
+If taskProgress is present, treat it as an advisory summary of explicit operational constraints from the goal. The applied status means the current control or bounded successful action history matched the requested value; observed means the constraint was seen but not proven applied; pending means no matching operational evidence; conflicting means a current control value disagrees. Do not treat taskProgress as answer evidence or as proof that the task is complete. Preserve pending or conflicting constraints while choosing the next action, and re-observe after transitions.
 
 Before returning done, make sure the answer covers all requested multiple details in the goal. For example:
 - "pronunciation and definition" requires both pronunciation and definition.
@@ -64,7 +67,7 @@ Use refs from the planner input. Selectors are not valid v2 planner output.`;
 
   return `${base}
 
-PRC compact data-plane notation is enabled for this request. Read the compact S:/LAST:/EVIDENCE:/W: markers plus SURFACE:/PROBLEMS: lines. SURFACE keeps ref IDs, element kinds, names, roles, lanes, scores, state, failures, options, and tools. For an element, ac=aria-autocomplete, popup=aria-haspopup, value=current non-password control value, and ph=placeholder. W keeps primary/secondary/navigation/failed refs, c/t/s/r/a action lanes, readable evidence, changed refs, quarantine, regions, and omitted counts. EVIDENCE keeps supporting read indexes and relation-bound result facts; LAST keeps bounded lineage; PROBLEMS keeps answer feedback, dead state, recovery, and failures. Do not infer that abbreviated formatting means omitted evidence.`;
+PRC compact data-plane notation is enabled for this request. Read the compact S:/LAST:/EVIDENCE:/W: markers plus SURFACE:/PROBLEMS: lines. PROGRESS: carries bounded operational constraint status and evidence markers. SURFACE keeps ref IDs, element kinds, names, roles, lanes, scores, state, failures, options, and tools. For an element, ac=aria-autocomplete, popup=aria-haspopup, value=current non-password control value, and ph=placeholder. W keeps primary/secondary/navigation/failed refs, c/t/s/r/a action lanes, readable evidence, changed refs, quarantine, regions, and omitted counts. EVIDENCE keeps supporting read indexes and relation-bound result facts; LAST keeps bounded lineage; PROBLEMS keeps answer feedback, dead state, recovery, and failures. Do not infer that abbreviated formatting means omitted evidence.`;
 }
 
 export function buildV2PlannerUserMessage(

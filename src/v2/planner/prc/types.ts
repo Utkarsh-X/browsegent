@@ -4,6 +4,7 @@ import type {
   PlannerDeadStateSummary,
   PlannerFailureSummary,
   PlannerLastResultSummary,
+  PlannerTaskProgress,
   PlannerTransitionSummary,
   PlannerUncertainty,
   CompressedLineage,
@@ -73,6 +74,7 @@ export interface ExecutionContextIR {
   recovery?: PlannerRecoveryState;
   answerFeedback?: PlannerAnswerFeedback;
   evidenceCoverage?: import('../types').PlannerEvidenceCoverage;
+  taskProgress?: PlannerTaskProgress;
   evidenceSnapshot?: import('../types').PlannerEvidenceSnapshot;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;

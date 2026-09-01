@@ -25,6 +25,7 @@ export class PlannerRepresentationCompiler {
         recovery: input.recovery,
         answerFeedback: input.answerFeedback,
         evidenceCoverage: input.evidenceCoverage,
+        taskProgress: input.taskProgress,
         evidenceSnapshot: input.evidenceSnapshot,
         uncertainty: input.uncertainty,
         lineage: input.lineage,

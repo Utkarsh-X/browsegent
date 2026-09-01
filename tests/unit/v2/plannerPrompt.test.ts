@@ -54,6 +54,14 @@ test('buildV2PlannerSystemPrompt describes recovery state', () => {
   assert.match(prompt, /blockedAction/);
 });
 
+test('buildV2PlannerSystemPrompt treats empty navigation surfaces as unproven progress', () => {
+  const prompt = buildV2PlannerSystemPrompt();
+
+  assert.match(prompt, /empty_navigation_surface/);
+  assert.match(prompt, /URL-only transition/);
+  assert.match(prompt, /bounded wait or re-observation/);
+});
+
 test('buildV2PlannerSystemPrompt exposes bounded press keys', () => {
   const prompt = buildV2PlannerSystemPrompt();
 

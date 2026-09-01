@@ -470,6 +470,25 @@ test('LineageCompressor keeps bounded recent execution lineage without raw resul
   assert.doesNotMatch(json, /cdp/i);
 });
 
+test('PlannerInputComposer accepts bounded live action lineage for the next planner call', () => {
+  const { after, graph } = makeTransition();
+  const projection = new ProjectionService().project(after, graph.snapshot());
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_live_lineage',
+    goal: 'Continue the task',
+    projection,
+    graphSnapshot: graph.snapshot(),
+    trace: [
+      makeTraceStep('step_live_1', 'click', 'completed', 'ref_primary'),
+      makeTraceStep('step_live_2', 'type', 'failed', 'ref_secondary', 'input_not_applied'),
+    ],
+  });
+
+  assert.equal(input.lineage?.totalSteps, 2);
+  assert.deepEqual(input.lineage?.steps.map(step => step.stepId), ['step_live_1', 'step_live_2']);
+  assert.equal(input.lineage?.steps[1].errorCode, 'input_not_applied');
+});
+
 test('TraceStore writes planner input and output replay artifacts passively', async () => {
   const traceDir = await freshTraceDir('planner');
   const store = new TraceStore({

@@ -4,6 +4,7 @@ import { LineageCompressor } from './LineageCompressor';
 import { measureProjectionSize } from './ProjectionSizeDiagnostics';
 import { PlannerWorkingSetSelector } from './PlannerWorkingSetSelector';
 import { RecoveryStateBuilder } from '../runtime/RecoveryState';
+import { buildTaskProgress } from '../agent/TaskProgress';
 import type {
   PlannerContinuitySummary,
   PlannerDeadStateSummary,
@@ -44,7 +45,14 @@ export class PlannerInputComposer {
       uncertaintySignals: input.runtimeUncertainty?.signals,
     });
     const current = workingSetSelection.current;
+    const taskProgress = buildTaskProgress({
+      goal: input.goal,
+      projection: input.projection,
+      lastResult: input.lastResult,
+      trace: input.trace,
+    });
     const recovery = this.recoveryStateBuilder.build({
+      projection: input.projection,
       lastResult: input.lastResult,
       failures: input.failureEvidence,
       uncertaintySignals: input.runtimeUncertainty?.signals,
@@ -65,6 +73,7 @@ export class PlannerInputComposer {
       recovery,
       answerFeedback: input.answerFeedback,
       evidenceCoverage: input.evidenceCoverage,
+      taskProgress: taskProgress.items.length > 0 ? taskProgress : undefined,
       evidenceSnapshot,
       uncertainty: buildUncertainty(input),
       lineage: input.trace
