@@ -16,8 +16,10 @@ export type WorkingSetIncludeReason =
   | 'last_target'
   | 'last_success'
   | 'last_failure'
+  | 'recovery_control'
   | 'dead_state_evidence'
   | 'answer_candidate'
+  | 'suggestion_option'
   | 'navigation_candidate'
   | 'form_candidate'
   | 'region_representative';
@@ -26,6 +28,7 @@ export type WorkingSetDropReason =
   | 'hidden_low_value'
   | 'offscreen_low_value'
   | 'generic_low_value'
+  | 'unlabeled_action'
   | 'duplicate_region_member'
   | 'navigation_overflow'
   | 'readable_overflow'

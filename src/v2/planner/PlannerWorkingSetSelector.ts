@@ -64,15 +64,35 @@ export class PlannerWorkingSetSelector {
     const evidence = buildEvidenceSets(input);
     const readableRefs = new Set(input.projection.readables.map(item => item.refId));
     const evidenceRefIds = new Set(input.evidenceRefIds ?? []);
-    const candidates = input.projection.interactions.map(item => scoreCandidate(
-      item,
-      input.goal,
-      evidence,
-      { readablePhraseBonus: this.options.readablePhraseBonus },
-      readableRefs.has(item.refId),
-      this.options.readablePhraseBonus !== undefined,
-      evidenceRefIds.has(item.refId),
-    ));
+    const suggestionOptionRefs = visibleSuggestionOptionRefs(input.projection.interactions);
+    const prioritizeRecoveryControls = shouldPrioritizeRecoveryControls(input);
+    const candidates = input.projection.interactions.map(item => {
+      const candidate = scoreCandidate(
+        item,
+        input.goal,
+        evidence,
+        { readablePhraseBonus: this.options.readablePhraseBonus },
+        readableRefs.has(item.refId),
+        this.options.readablePhraseBonus !== undefined,
+        evidenceRefIds.has(item.refId),
+      );
+      if (suggestionOptionRefs.has(item.refId)) {
+        // Visible options are the only actionable confirmation surface for an
+        // open ARIA suggestion control. Retain a bounded, high-priority set
+        // even when option labels do not contain goal words.
+        candidate.reasons.add('suggestion_option');
+        candidate.score += 80;
+        candidate.dropReason = undefined;
+      }
+      if (prioritizeRecoveryControls && isGenericRecoveryControl(item)) {
+        // A hard blocker needs a nearby way out to remain visible to the
+        // planner, but this is only a ranking prior, never an auto-action.
+        candidate.reasons.add('recovery_control');
+        candidate.score += 180;
+        candidate.dropReason = undefined;
+      }
+      return candidate;
+    });
     const scoreByRef = new Map(candidates.map(candidate => [candidate.item.refId, candidate.score]));
     const selected = candidates
       .filter(candidate => shouldKeepCandidate(candidate))
@@ -220,9 +240,11 @@ function scoreCandidate(
     reasons.add('last_failure');
   }
   const lowValueReason = classifyLowValue(item, allowSemanticOffscreen);
-  const dropReason = isEvidenceRef || evidence.failedRefs.has(item.refId) || evidence.changedRefs.has(item.refId)
-    ? undefined
-    : lowValueReason;
+  const dropReason = isUnlabeledActionControl(item) && !isEvidenceRef && !evidence.failedRefs.has(item.refId)
+    ? 'unlabeled_action'
+    : isEvidenceRef || evidence.failedRefs.has(item.refId) || evidence.changedRefs.has(item.refId)
+      ? undefined
+      : lowValueReason;
   return { item, score, reasons, dropReason };
 }
 
@@ -233,6 +255,51 @@ function shouldKeepCandidate(candidate: Candidate): boolean {
 function compareCandidates(left: Candidate, right: Candidate): number {
   if (right.score !== left.score) return right.score - left.score;
   return left.item.refId.localeCompare(right.item.refId);
+}
+
+function shouldPrioritizeRecoveryControls(input: PlannerWorkingSetSelectorInput): boolean {
+  return input.lastResult?.success === false
+    && input.lastResult.error?.code === 'target_blocked'
+    && input.lastResult.error.retryable === false;
+}
+
+function isGenericRecoveryControl(item: ProjectionItem): boolean {
+  const role = item.role?.trim().toLowerCase();
+  if (item.visibility !== 'visible' || item.actionability !== 'ready') return false;
+  if (item.kind !== 'button' && role !== 'button') return false;
+
+  const label = `${item.name ?? ''} ${item.text ?? ''}`
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+  if (!label) return false;
+
+  // Keep this list language-agnostic at the call site: these are common
+  // accessible labels for dismiss/close actions, not website selectors.
+  return /\b(?:dismiss|close|got it|no thanks)\b/.test(label)
+    || label.includes('खारिज')
+    || label.includes('बंद करें')
+    || label.includes('बन्द करें');
+}
+
+function visibleSuggestionOptionRefs(items: ProjectionItem[]): Set<string> {
+  const hasSuggestionControl = items.some(item => {
+    const role = item.role?.trim().toLowerCase();
+    const autocomplete = item.ariaAutocomplete?.trim().toLowerCase();
+    const hasPopup = item.ariaHasPopup?.trim().toLowerCase();
+    return item.visibility === 'visible'
+      && item.actionability === 'ready'
+      && (role === 'combobox' || role === 'searchbox')
+      && (autocomplete === 'list' || autocomplete === 'both' || autocomplete === 'inline' || hasPopup === 'listbox');
+  });
+  if (!hasSuggestionControl) return new Set();
+
+  return new Set(items
+    .filter(item => item.role?.trim().toLowerCase() === 'option')
+    .filter(item => item.visibility === 'visible' && item.actionability === 'ready')
+    .filter(item => item.state !== 'stale' && item.state !== 'invalid')
+    .filter(item => Boolean(item.name?.trim() || item.text?.trim()))
+    .map(item => item.refId));
 }
 
 function compareCandidatesWithEvidence(left: Candidate, right: Candidate): number {
@@ -253,6 +320,12 @@ function classifyLowValue(item: ProjectionItem, allowSemanticOffscreen = false):
   if (item.visibility === 'offscreen' && item.kind === 'generic') return 'offscreen_low_value';
   if (item.kind === 'generic' && !hasText) return 'generic_low_value';
   return undefined;
+}
+
+function isUnlabeledActionControl(item: ProjectionItem): boolean {
+  const role = item.role?.trim().toLowerCase();
+  const isButton = item.kind === 'button' || role === 'button';
+  return isButton && !item.name?.trim() && !item.text?.trim();
 }
 
 function goalTokens(goal: string): string[] {
