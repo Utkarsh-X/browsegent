@@ -125,6 +125,88 @@ def call_openrouter(
     raise RuntimeError("Exceeded maximum OpenRouter retries")
 
 
+def call_gemini(
+    messages: list[dict[str, str]],
+    model: str,
+    api_key: str,
+) -> tuple[str, int, int, int]:
+    model_name = model.removeprefix("gemini/")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+    headers = {"Content-Type": "application/json"}
+
+    system_text = ""
+    user_text = ""
+    for msg in messages:
+        if msg["role"] == "system":
+            system_text = msg["content"]
+        elif msg["role"] == "user":
+            user_text = msg["content"]
+
+    payload: dict[str, Any] = {
+        "contents": [{"parts": [{"text": user_text}]}],
+        "generationConfig": {
+            "temperature": 0.1,
+            "maxOutputTokens": 1024,
+            "responseMimeType": "application/json",
+        },
+    }
+    if system_text:
+        payload["system_instruction"] = {"parts": [{"text": system_text}]}
+
+    data = json.dumps(payload).encode("utf-8")
+    rate_limit_wait_ms = 0
+    max_retries = 6
+    backoff = [3, 6, 12, 24, 30, 30]
+
+    for attempt in range(max_retries):
+        req = urllib.request.Request(url, data=data, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=150) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+                candidates = body.get("candidates", [])
+                content = ""
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        content = parts[0].get("text", "")
+                usage = body.get("usageMetadata", {})
+                in_tok = int(usage.get("promptTokenCount", 0))
+                out_tok = int(usage.get("candidatesTokenCount", 0))
+                return content, in_tok, out_tok, rate_limit_wait_ms
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 500, 502, 503, 504) and attempt < max_retries - 1:
+                wait_s = backoff[min(attempt, len(backoff) - 1)]
+                print(f"[browser-control] Gemini HTTP {e.code}, backing off {wait_s}s (attempt {attempt + 1}/{max_retries})...", file=sys.stderr)
+                time.sleep(wait_s)
+                rate_limit_wait_ms += wait_s * 1000
+                continue
+            err_msg = e.read().decode("utf-8", errors="ignore")
+            raise RuntimeError(f"Gemini HTTP {e.code}: {err_msg}") from e
+        except Exception as e:
+            if attempt < max_retries - 1:
+                wait_s = backoff[min(attempt, len(backoff) - 1)]
+                print(f"[browser-control] Gemini network error ({e}), retrying in {wait_s}s...", file=sys.stderr)
+                time.sleep(wait_s)
+                rate_limit_wait_ms += wait_s * 1000
+                continue
+            raise
+
+    raise RuntimeError("Exceeded maximum Gemini retries")
+
+
+def call_model(
+    messages: list[dict[str, str]],
+    model: str,
+    openrouter_api_key: str,
+    gemini_api_key: str,
+) -> tuple[str, int, int, int]:
+    if model.startswith("gemini/") or model.startswith("google/"):
+        if not gemini_api_key:
+            raise RuntimeError("GEMINI_API_KEY environment variable is not set for Gemini model")
+        return call_gemini(messages, model, gemini_api_key)
+    return call_openrouter(messages, model, openrouter_api_key)
+
+
 def run_bc_cmd(bc_bin: str, args: list[str], env: dict[str, str], timeout: int = 30) -> tuple[int, str, str]:
     cmd = [bc_bin] + args
     try:
@@ -162,6 +244,7 @@ def run_browser_control(input_path: Path, output_path: Path) -> int:
     max_steps = int(payload.get("maxSteps") or 8)
     min_interval_ms = int(payload.get("requestMinIntervalMs") or 0)
     api_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY", "")
+    gemini_api_key = os.environ.get("GEMINI_API_KEY", "")
 
     env = os.environ.copy()
     env["BROWSER_CONTROL_CDP_URL"] = f"http://127.0.0.1:{port}"
@@ -240,7 +323,7 @@ def run_browser_control(input_path: Path, output_path: Path) -> int:
             ]
 
             # Step 3: Query model
-            content, in_tok, out_tok, rl_wait = call_openrouter(messages, model, api_key)
+            content, in_tok, out_tok, rl_wait = call_model(messages, model, api_key, gemini_api_key)
             total_in_tokens += in_tok
             total_out_tokens += out_tok
             total_rate_limit_wait_ms += rl_wait
@@ -303,7 +386,7 @@ def run_browser_control(input_path: Path, output_path: Path) -> int:
                 {"role": "system", "content": 'Extract the final answer to the user goal from the current visible webpage text. Output only JSON: {"answer": "..."}'},
                 {"role": "user", "content": f"GOAL: {goal}\n\nVISIBLE TEXT:\n{text_out[:8000]}"},
             ]
-            content, in_tok, out_tok, rl_wait = call_openrouter(final_messages, model, api_key)
+            content, in_tok, out_tok, rl_wait = call_model(final_messages, model, api_key, gemini_api_key)
             total_in_tokens += in_tok
             total_out_tokens += out_tok
             total_rate_limit_wait_ms += rl_wait
