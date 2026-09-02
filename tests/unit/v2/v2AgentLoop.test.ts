@@ -218,6 +218,7 @@ class FakeHarness {
 
 class FakePlanner {
   readonly inputs: PlannerInput[] = [];
+  readonly modes: Array<'normal' | 'finalization' | undefined> = [];
   private readonly outputs: PlannerOutput[];
 
   constructor(outputs: PlannerOutput[]) {
@@ -226,6 +227,7 @@ class FakePlanner {
 
   async call(input: { plannerInput: PlannerInput; model?: string; mode?: 'normal' | 'finalization' }) {
     this.inputs.push(input.plannerInput);
+    this.modes.push(input.mode);
     const output = this.outputs.shift() ?? { escalate: 'dead_end', reason: 'no planner output' };
     return {
       output,
@@ -3495,4 +3497,132 @@ test('V2AgentLoop replans when surface contains only control-only ranking labels
   assert.ok(planner.inputs[1].answerFeedback);
   assert.deepEqual(planner.inputs[1].answerFeedback.missingDetails, ['missing_ranking_evidence']);
 });
+test('V2AgentLoop grants exactly one terminal continuation when the budget ends on a newly opened actionable surface', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'Visible answer' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    traceStepId: 'fake_click_surface',
+    evidence: {
+      beforeObservationId: 'obs_initial',
+      afterObservationId: 'obs_after_action',
+      transitionClass: 'structural_local',
+      strength: 'moderate',
+      generationChanged: false,
+      urlChanged: false,
+      refChanges: {
+        appeared: ['ref_calendar_next'],
+        disappeared: [],
+        weakened: [],
+        preserved: ['ref_submit'],
+      },
+      notes: [],
+    },
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
 
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read the visible text',
+    maxSteps: 1,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Visible answer');
+  assert.equal(result.metrics.plannerCalls, 2);
+  assert.equal(result.metrics.terminalContinuations, 1);
+  assert.deepEqual(planner.modes, ['normal', 'normal']);
+});
+
+test('V2AgentLoop does not grant a terminal continuation without a newly opened actionable surface', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    traceStepId: 'fake_click_noop',
+    evidence: makeNoProgressEvidence('obs_initial', 'obs_after_action'),
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read the visible text',
+    maxSteps: 1,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'v2_max_steps_exhausted');
+  assert.equal(result.metrics.plannerCalls, 1);
+  assert.equal(result.metrics.terminalContinuations, 0);
+});
+
+test('V2AgentLoop caps the terminal continuation at one per run', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const surfaceOpeningClick: V2ToolResult = {
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    target: { refId: 'ref_submit', name: 'Open calendar', text: 'Open calendar', role: 'button' },
+    traceStepId: 'fake_click_surface',
+    evidence: {
+      beforeObservationId: 'obs_initial',
+      afterObservationId: 'obs_after_action',
+      transitionClass: 'structural_local',
+      strength: 'moderate',
+      generationChanged: false,
+      urlChanged: false,
+      refChanges: {
+        appeared: ['ref_calendar_next'],
+        disappeared: [],
+        weakened: [],
+        preserved: ['ref_submit'],
+      },
+      notes: [],
+    },
+  };
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: false },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(surfaceOpeningClick, surfaceOpeningClick);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read the visible text',
+    maxSteps: 1,
+  });
+
+  assert.equal(result.metrics.terminalContinuations, 1);
+  assert.equal(result.metrics.plannerCalls, 3); // iteration 1, continuation, finalization
+  assert.deepEqual(planner.modes, ['normal', 'normal', 'finalization']);
+  assert.equal(result.failureReason, 'v2_max_steps_exhausted');
+});

@@ -30,6 +30,7 @@ export interface V2AgentLoopResult {
     toolExecutions: number;
     postActionObservationReuseCount?: number;
     postActionObservationRecaptureCount?: number;
+    terminalContinuations?: number;
   };
 }
 

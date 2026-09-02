@@ -54,6 +54,8 @@ export class V2AgentLoop {
     const dispatcher = this.options.dispatcherFactory?.(harness) ?? new V2ToolDispatcher(harness);
     const graph = new ContinuityGraph();
     const maxSteps = Math.max(1, input.maxSteps);
+    let stepBudget = maxSteps;
+    let terminalContinuationUsed = false;
     const progressMemory = new ActionProgressMemory();
     const metrics = {
       plannerCalls: 0,
@@ -63,6 +65,7 @@ export class V2AgentLoop {
       toolExecutions: 0,
       postActionObservationReuseCount: 0,
       postActionObservationRecaptureCount: 0,
+      terminalContinuations: 0,
     };
 
     try {
@@ -84,7 +87,7 @@ export class V2AgentLoop {
       const evidenceLedger = new EvidenceLedger();
       const plannerTraceSteps: TraceStep[] = [];
 
-      for (let stepIndex = 0; stepIndex < maxSteps; stepIndex += 1) {
+      for (let stepIndex = 0; stepIndex < stepBudget; stepIndex += 1) {
         ledger.beginStep(stepIndex);
         const stepStartMs = Date.now();
         const composeStart = Date.now();
@@ -119,6 +122,7 @@ export class V2AgentLoop {
           plannerResult = await plannerClient.call({
             plannerInput,
             model: input.model,
+            mode: 'normal',
             onPacingWait: durationMs => {
               pacingWaitMs += durationMs;
               ledger.recordPhase('provider_pacing_wait', durationMs);
@@ -465,6 +469,24 @@ export class V2AgentLoop {
         }
 
         ledger.endStep(stepIndex, Date.now() - stepStartMs);
+
+        // One-shot terminal continuation: the budget must not end on the exact
+        // action that opened a new actionable surface, or finalization runs
+        // before the planner ever sees that surface. Strictly capped at one
+        // extra iteration per run; every guard below must hold.
+        if (
+          stepIndex + 1 >= stepBudget
+          && !terminalContinuationUsed
+          && shouldGrantTerminalContinuation({
+            lastResult,
+            transitionEvidence,
+            observation,
+          })
+        ) {
+          stepBudget += 1;
+          terminalContinuationUsed = true;
+          metrics.terminalContinuations += 1;
+        }
 
       }
 
@@ -1382,6 +1404,42 @@ function normalizeSignalToken(value: string): string {
 
 function normalizeProgressValue(value: string): string {
   return value.toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 240);
+}
+
+/**
+ * One-shot terminal continuation guard: grant a single extra planning
+ * iteration only when the step budget ended immediately after a successful
+ * action that opened a new actionable surface — a meaningful structural
+ * transition whose fresh observation contains new appeared refs and at least
+ * one visible, ready control. Failures, read-only endings, and empty or
+ * stale surfaces never qualify; the caller caps this at one per run.
+ */
+function shouldGrantTerminalContinuation(input: {
+  lastResult: V2ToolResult | undefined;
+  transitionEvidence: TransitionEvidence | undefined;
+  observation: BrowserObservation | undefined;
+}): boolean {
+  if (!input.lastResult?.success) {
+    return false;
+  }
+  const evidence = input.transitionEvidence;
+  if (!evidence) {
+    return false;
+  }
+  const openedSurface =
+    evidence.transitionClass === 'structural_local'
+    || evidence.transitionClass === 'structural_macrostate'
+    || evidence.urlChanged
+    || evidence.generationChanged;
+  if (!openedSurface) {
+    return false;
+  }
+  if ((evidence.refChanges?.appeared?.length ?? 0) === 0) {
+    return false;
+  }
+  return (input.observation?.refs ?? []).some(
+    ref => ref.visibility === 'visible' && ref.actionability === 'ready',
+  );
 }
 
 function shouldContinueMiniPlan(input: {
