@@ -224,7 +224,7 @@ class FakePlanner {
     this.outputs = [...outputs];
   }
 
-  async call(input: { plannerInput: PlannerInput; model?: string }) {
+  async call(input: { plannerInput: PlannerInput; model?: string; mode?: 'normal' | 'finalization' }) {
     this.inputs.push(input.plannerInput);
     const output = this.outputs.shift() ?? { escalate: 'dead_end', reason: 'no planner output' };
     return {
@@ -1031,6 +1031,61 @@ test('V2AgentLoop clears stale recovery context after a URL or generation change
   assert.equal(planner.inputs[2].deadState, undefined);
   assert.equal(planner.inputs[2].failures, undefined);
   assert.equal(planner.inputs[2].uncertainty.signals.includes('failure:target_blocked'), false);
+});
+
+test('V2AgentLoop clears dead-state evidence after meaningful same-page recovery progress', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_dismiss' }], confidence: 'high' },
+    { escalate: 'dead_end', reason: 'bounded recovery evidence received' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      error: {
+        code: 'target_blocked',
+        message: 'Target was blocked.',
+        retryable: false,
+        diagnostics: { candidateCount: 1 },
+      },
+      traceStepId: 'failed_click',
+    },
+    {
+      success: true,
+      kind: 'click',
+      targetRef: 'ref_dismiss',
+      evidence: {
+        ...makeEvidence(),
+        refChanges: {
+          appeared: ['ref_after_dismiss'],
+          disappeared: ['ref_overlay'],
+          weakened: [],
+          preserved: ['ref_dismiss'],
+        },
+        notes: ['overlay dismissed'],
+      },
+      traceStepId: 'dismiss_click',
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Dismiss the blocking overlay',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(planner.inputs[1].deadState?.deadState, true);
+  assert.equal(planner.inputs[2].deadState, undefined);
 });
 
 test('V2AgentLoop replans after a timeout when post-action transition proves progress', async () => {
@@ -2379,6 +2434,63 @@ test('V2AgentLoop re-observes before pressing Enter after typing into a combobox
   assert.equal(planner.inputs.length, 2);
 });
 
+test('V2AgentLoop preserves suggestion target metadata for task progress history', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    {
+      plan: [{ tool: 'type', ref: 'ref_destination', text: 'Paris' }],
+      confidence: 'high',
+    },
+    { done: true, val: 'Destination remains uncommitted.' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'type',
+    targetRef: 'ref_destination',
+    value: { inputValue: 'Paris' },
+    target: { refId: 'ref_destination', role: 'combobox', name: 'Destination', text: 'Paris' },
+    evidence: makeNoProgressEvidence(),
+    traceStepId: 'tool_type_suggestion',
+  });
+  const harness = new FakeHarness([
+    makeObservation('obs_initial', {
+      refs: [makeRef({
+        refId: 'ref_destination',
+        role: 'combobox',
+        name: 'Destination',
+        ariaAutocomplete: 'list',
+        ariaHasPopup: 'listbox',
+      })],
+    }),
+    makeObservation('obs_after_type', {
+      refs: [makeRef({
+        refId: 'ref_destination',
+        role: 'combobox',
+        name: 'Destination',
+        value: 'Paris',
+        text: 'Paris',
+        ariaAutocomplete: 'list',
+        ariaHasPopup: 'listbox',
+      })],
+    }),
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/travel',
+    goal: 'Find a hotel in Paris',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs[1].taskProgress?.items[0].status, 'observed');
+});
+
 test('V2AgentLoop interrupts mini-plan after type when new refs appeared (dropdown opened)', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([
@@ -3383,3 +3495,4 @@ test('V2AgentLoop replans when surface contains only control-only ranking labels
   assert.ok(planner.inputs[1].answerFeedback);
   assert.deepEqual(planner.inputs[1].answerFeedback.missingDetails, ['missing_ranking_evidence']);
 });
+

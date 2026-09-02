@@ -439,6 +439,11 @@ export class V2AgentLoop {
             // make the planner recover from a target it can no longer see.
             failureEvidence = [];
             deadStateEvidence = undefined;
+          } else if (hasMeaningfulRecoveryProgress(transitionEvidence)) {
+            // A successful same-page recovery action can make an earlier
+            // blocker obsolete (for example, dismissing a modal). Do not
+            // carry that old terminal signal into the next planner call.
+            deadStateEvidence = undefined;
           }
           runtimeUncertainty = undefined;
           if (progressSignals.length > 0) {
@@ -855,6 +860,21 @@ function buildPlannerLineageStep(
       transitionClass: result.evidence.transitionClass,
       strength: result.evidence.strength,
     };
+  }
+  if (result.target) {
+    const targetSummary: Record<string, TraceJsonValue> = {};
+    for (const [key, value] of Object.entries({
+      role: result.target.role,
+      name: result.target.name,
+      text: result.target.text,
+    })) {
+      if (typeof value === 'string' && value.length > 0) {
+        targetSummary[key] = value.slice(0, 160);
+      }
+    }
+    if (Object.keys(targetSummary).length > 0) {
+      resultSummary.target = targetSummary;
+    }
   }
 
   const now = Date.now();
@@ -1288,6 +1308,19 @@ function hasObservablePageChange(evidence: TransitionEvidence): boolean {
 
 function hasPageBoundary(evidence: TransitionEvidence | undefined): boolean {
   return Boolean(evidence?.urlChanged || evidence?.generationChanged);
+}
+
+function hasMeaningfulRecoveryProgress(evidence: TransitionEvidence | undefined): boolean {
+  if (!evidence || evidence.strength === 'none' || evidence.strength === 'negative') {
+    return false;
+  }
+
+  if (evidence.urlChanged || evidence.generationChanged) {
+    return true;
+  }
+
+  return evidence.transitionClass === 'structural_local'
+    && (evidence.refChanges.appeared.length > 0 || evidence.refChanges.disappeared.length > 0);
 }
 
 /**
