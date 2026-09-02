@@ -152,6 +152,11 @@ export class InputService {
     await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
 
     const suggestionState = await inspectSuggestionControl(locator, ref);
+    let keyboardOpened = false;
+    if (suggestionState.requiresOpen) {
+      keyboardOpened = await tryOpenSuggestionWithKeyboard(locator, ref, text);
+    }
+
     // Try the editable control directly before opening it physically. A widget
     // can accept input while a decorative or transient element covers its click
     // point; a click-first protocol would turn valid input into target_blocked.
@@ -168,36 +173,39 @@ export class InputService {
       return String(element.textContent ?? '');
     });
 
-    if (suggestionState.requiresOpen && !inputValue.trim()) {
+    if (suggestionState.requiresOpen && !keyboardOpened && !inputValue.trim()) {
       // Some ARIA comboboxes reject values until their suggestion surface is
-      // open. Prefer keyboard semantics because the control may be editable
-      // while its physical click point is covered by a transient element.
-      let keyboardOpened = false;
-      try {
-        await locator.press('ArrowDown', { timeout: 1_500 });
-        keyboardOpened = (await waitForSuggestionState(locator, ref, text, 250)).visibleOptionCount > 0;
-      } catch {
-        keyboardOpened = false;
-      }
+      // open. Retry keyboard semantics after the first fill because some
+      // widgets only expose their list after receiving input.
+      keyboardOpened = await tryOpenSuggestionWithKeyboard(locator, ref, text);
 
       if (!keyboardOpened) {
-        await this.click(ref, page);
-        ({ locator } = await this.resolver.resolve(ref, page));
-        await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
-      }
-
-      try {
-        await locator.fill(text, { timeout: 1_500 });
-      } catch (error) {
-        throw mapPlaywrightError(error, 'type');
-      }
-
-      inputValue = await locator.evaluate((element) => {
-        if ('value' in element) {
-          return String((element as HTMLInputElement | HTMLTextAreaElement).value);
+        // A pointer-blocked control may still accept focus and real keyboard
+        // input. Try that path before asking semantic hit testing to click it.
+        const keyboardInputValue = await tryKeyboardInput(locator, text);
+        if (keyboardInputValue.trim()) {
+          inputValue = keyboardInputValue;
+        } else {
+          await this.click(ref, page);
+          ({ locator } = await this.resolver.resolve(ref, page));
+          await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
         }
-        return String(element.textContent ?? '');
-      });
+      }
+
+      if (!inputValue.trim()) {
+        try {
+          await locator.fill(text, { timeout: 1_500 });
+        } catch (error) {
+          throw mapPlaywrightError(error, 'type');
+        }
+
+        inputValue = await locator.evaluate((element) => {
+          if ('value' in element) {
+            return String((element as HTMLInputElement | HTMLTextAreaElement).value);
+          }
+          return String(element.textContent ?? '');
+        });
+      }
     }
 
     // Some suggestion widgets retain fill()'s value but only refresh their
@@ -475,6 +483,35 @@ async function waitForSuggestionState(
   }
 
   return state;
+}
+
+async function tryOpenSuggestionWithKeyboard(
+  locator: Locator,
+  ref: SuggestionControlMetadata,
+  expectedText: string,
+): Promise<boolean> {
+  try {
+    await locator.press('ArrowDown', { timeout: 1_500 });
+    return (await waitForSuggestionState(locator, ref, expectedText)).visibleOptionCount > 0;
+  } catch {
+    return false;
+  }
+}
+
+async function tryKeyboardInput(locator: Locator, text: string): Promise<string> {
+  try {
+    await locator.focus({ timeout: 1_500 });
+    await locator.fill('', { timeout: 1_500 });
+    await locator.pressSequentially(text, { delay: 10, timeout: 1_500 });
+    return await locator.evaluate((element) => {
+      if ('value' in element) {
+        return String((element as HTMLInputElement | HTMLTextAreaElement).value);
+      }
+      return String(element.textContent ?? '');
+    });
+  } catch {
+    return '';
+  }
 }
 
 function isSensitiveInput(ref: V2Ref): boolean {

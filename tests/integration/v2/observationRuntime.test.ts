@@ -155,6 +155,30 @@ test('InputService opens a closed suggestion control before filling it', async (
   }
 });
 
+test('InputService opens a closed suggestion control when fill retains its value', async () => {
+  const session = new BrowserSession({ headed: false });
+  const observer = new ObservationService();
+
+  try {
+    await session.open(fixtureUrl('retained-fill-suggestion-combobox.html'));
+    const page = session.currentPage();
+    const observation = await observer.capture({
+      sessionId: 'session_retained_fill_suggestion',
+      generationId: 1,
+      page,
+    });
+    const input = observation.refs.find(ref => ref.name === 'Destination');
+    assert.ok(input);
+
+    const result = await new InputService().type(input, 'Paris', page);
+
+    assert.equal(result.value?.inputValue, 'Paris');
+    assert.equal(await page.getByRole('option', { name: 'Paris' }).isVisible(), true);
+  } finally {
+    await session.close();
+  }
+});
+
 test('InputService fills a blocked suggestion control before requiring a physical click', async () => {
   const session = new BrowserSession({ headed: false });
   const observer = new ObservationService();
@@ -210,6 +234,54 @@ test('InputService opens a blocked closed suggestion control with keyboard seman
     await page.getByRole('option', { name: 'Paris' }).click();
     await page.locator('button[type="submit"]').click();
     assert.equal(await page.locator('#result').textContent(), 'submitted:Paris');
+  } finally {
+    await session.close();
+  }
+});
+
+test('InputService uses keyboard entry before clicking a blocked suggestion control', async () => {
+  const session = new BrowserSession({ headed: false });
+  const observer = new ObservationService();
+
+  try {
+    await session.open(fixtureUrl('keyboard-entry-blocked-suggestion-combobox.html'));
+    const page = session.currentPage();
+    const observation = await observer.capture({
+      sessionId: 'session_keyboard_entry_blocked_suggestion',
+      generationId: 1,
+      page,
+    });
+    const input = observation.refs.find(ref => ref.name === 'Destination');
+    assert.ok(input);
+
+    const result = await new InputService().type(input, 'Paris', page);
+
+    assert.equal(result.value?.inputValue, 'Paris');
+    assert.equal(await page.getByRole('option', { name: 'Paris' }).isVisible(), true);
+  } finally {
+    await session.close();
+  }
+});
+
+test('InputService primes a suggestion control with keyboard input before filling', async () => {
+  const session = new BrowserSession({ headed: false });
+  const observer = new ObservationService();
+
+  try {
+    await session.open(fixtureUrl('keyboard-prime-suggestion-combobox.html'));
+    const page = session.currentPage();
+    const observation = await observer.capture({
+      sessionId: 'session_keyboard_prime_suggestion',
+      generationId: 1,
+      page,
+    });
+    const input = observation.refs.find(ref => ref.name === 'Destination');
+    assert.ok(input);
+
+    const result = await new InputService().type(input, 'Paris', page);
+
+    assert.equal(result.value?.inputValue, 'Paris');
+    assert.equal(await page.getByRole('option', { name: 'Paris' }).isVisible(), true);
   } finally {
     await session.close();
   }
