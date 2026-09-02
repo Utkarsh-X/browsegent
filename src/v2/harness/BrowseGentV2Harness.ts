@@ -107,7 +107,7 @@ export class BrowseGentV2Harness {
       await this.stabilizationService.waitForSettledState(this.session.currentPage());
       this.ledger?.recordPhase('stabilization_wait', Date.now() - stabStart);
       const obsStart = Date.now();
-      const after = await this.captureCurrentObservation();
+      const after = await this.captureAfterMutationObservation(before);
       this.ledger?.recordPhase('observation_capture', Date.now() - obsStart);
       const evidence = this.transitionService.compare(before, after);
       const result: V2ToolResult<{ key: PlannerPressKey }> = {
@@ -486,7 +486,7 @@ export class BrowseGentV2Harness {
     await this.stabilizationService.waitForSettledState(this.session.currentPage());
     this.ledger?.recordPhase('stabilization_wait', Date.now() - stabStart);
     const obsStart = Date.now();
-    const after = await this.captureCurrentObservation();
+    const after = await this.captureAfterMutationObservation(before);
     this.ledger?.recordPhase('observation_capture', Date.now() - obsStart);
     const evidence = this.transitionService.compare(before, after);
     return {
@@ -498,6 +498,15 @@ export class BrowseGentV2Harness {
       evidence,
       traceStepId: stepId,
     };
+  }
+
+  private async captureAfterMutationObservation(before: BrowserObservation): Promise<BrowserObservation> {
+    const after = await this.captureCurrentObservation();
+    const pageIdentityChanged = after.url !== before.url || after.title !== before.title;
+    if (after.refs.length === 0 && pageIdentityChanged) {
+      return this.captureCurrentObservation(true);
+    }
+    return after;
   }
 
   private async retryAfterDetachedMutation<TValue>(

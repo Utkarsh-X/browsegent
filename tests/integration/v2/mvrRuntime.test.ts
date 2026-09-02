@@ -199,6 +199,30 @@ test('BrowseGentV2Harness click opens a modal and records structural local evide
   }
 });
 
+test('BrowseGentV2Harness retries an empty capture after a page-identity transition', async () => {
+  const traceDir = await freshTraceDir('delayed_navigation');
+  const harness = new BrowseGentV2Harness({
+    headed: false,
+    runId: 'run_delayed_navigation',
+    traceDir,
+  });
+
+  try {
+    const observation = await harness.open(fixtureUrl('delayed-navigation.html'));
+    const openResults = observation.refs.find(ref => ref.name === 'Open results');
+    assert.ok(openResults);
+
+    const result = await harness.click(openResults.refId);
+    const current = harness.getCurrentObservation();
+
+    assert.equal(result.success, true);
+    assert.equal(current?.title, 'Delayed Results Fixture');
+    assert.ok(current?.refs.some(ref => ref.name === 'Result action'));
+  } finally {
+    await harness.close();
+  }
+});
+
 test('BrowseGentV2Harness type mutates an input and emits operational transition evidence', async () => {
   const harness = new BrowseGentV2Harness({
     headed: false,
