@@ -6,10 +6,67 @@ import { pathToFileURL } from 'node:url';
 import { BrowserSession } from '../../../src/v2/substrate/BrowserSession';
 import { InputService } from '../../../src/v2/substrate/InputService';
 import { ObservationService } from '../../../src/v2/substrate/ObservationService';
+import { RefResolver } from '../../../src/v2/substrate/RefResolver';
 
 function fixtureUrl(name: string): string {
   return pathToFileURL(path.resolve('tests/fixtures/v2', name)).toString();
 }
+
+test('RefResolver reaches an exact semantic target beyond a broad selector sample', async () => {
+  const session = new BrowserSession({ headed: false });
+  const resolver = new RefResolver();
+
+  try {
+    await session.open(fixtureUrl('overflowed-semantic-button.html'));
+    const target = await resolver.resolve({
+      refId: 'ref_done',
+      generationId: 1,
+      targetId: 'target_done',
+      selectorCandidates: ['button[type="button"]'],
+      role: 'button',
+      name: 'Done',
+      text: 'Done',
+      visibility: 'visible',
+      actionability: 'ready',
+      continuityConfidence: 1,
+      state: 'live',
+      nthRoleName: 1,
+    }, session.currentPage());
+
+    assert.equal(await target.locator.textContent(), 'Done');
+    assert.equal(target.resolution, 'semantic_selector');
+    assert.equal(target.diagnostics?.reason, 'resolved_exact_accessible_name');
+  } finally {
+    await session.close();
+  }
+});
+
+test('RefResolver uses current geometry to disambiguate an unnamed sampled target', async () => {
+  const session = new BrowserSession({ headed: false });
+  const resolver = new RefResolver();
+
+  try {
+    await session.open(fixtureUrl('geometric-button.html'));
+    const target = await resolver.resolve({
+      refId: 'ref_icon',
+      generationId: 1,
+      targetId: 'target_icon',
+      selectorCandidates: ['button[type="button"]'],
+      role: 'button',
+      tagName: 'button',
+      box: { x: 90, y: 10, width: 16, height: 16 },
+      visibility: 'visible',
+      actionability: 'ready',
+      continuityConfidence: 1,
+      state: 'live',
+      nthRoleName: 1,
+    }, session.currentPage());
+
+    assert.equal(await target.locator.getAttribute('id'), 'target');
+  } finally {
+    await session.close();
+  }
+});
 
 test('ObservationService captures basic interactive browser truth from a local fixture', async () => {
   const session = new BrowserSession({ headed: false });
@@ -282,3 +339,4 @@ test('ObservationService can capture a titled page before delayed hydration expo
     await session.close();
   }
 });
+
