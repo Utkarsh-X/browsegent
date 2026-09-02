@@ -65,6 +65,90 @@ test('PlannerInputComposer exposes bounded progress for explicit operational con
   });
 });
 
+test('suggestion-backed input remains observed until a matching option is selected', () => {
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_task_progress_suggestion',
+    goal: bookingGoal,
+    projection: makeProjection([
+      makeRef({
+        refId: 'ref_destination',
+        role: 'combobox',
+        name: 'Destination',
+        value: 'Paris',
+        text: 'Paris',
+        ariaAutocomplete: 'list',
+        ariaHasPopup: 'listbox',
+      }),
+    ]),
+    trace: [{
+      stepId: 'step_destination_type',
+      index: 0,
+      kind: 'type',
+      status: 'completed',
+      startedAt: 1,
+      endedAt: 2,
+      targetRef: 'ref_destination',
+      input: { text: 'Paris' },
+      warnings: [],
+      result: {
+        success: true,
+        kind: 'type',
+        targetRef: 'ref_destination',
+        value: { inputValue: 'Paris' },
+        target: { role: 'combobox', name: 'Destination' },
+      },
+    }],
+  });
+
+  assert.deepEqual(input.taskProgress?.items.find(item => item.key === 'destination'), {
+    key: 'destination',
+    requested: 'Paris',
+    status: 'observed',
+    evidence: ['ref_destination'],
+  });
+});
+
+test('successful option selection commits a suggestion-backed constraint', () => {
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_task_progress_option',
+    goal: bookingGoal,
+    projection: makeProjection([
+      makeRef({
+        refId: 'ref_destination',
+        role: 'combobox',
+        name: 'Destination',
+        value: 'Paris',
+        text: 'Paris',
+        ariaAutocomplete: 'list',
+        ariaHasPopup: 'listbox',
+      }),
+    ]),
+    trace: [{
+      stepId: 'step_destination_option',
+      index: 1,
+      kind: 'click',
+      status: 'completed',
+      startedAt: 3,
+      endedAt: 4,
+      targetRef: 'ref_option',
+      warnings: [],
+      result: {
+        success: true,
+        kind: 'click',
+        targetRef: 'ref_option',
+        target: { role: 'option', name: 'Paris' },
+      },
+    }],
+  });
+
+  assert.deepEqual(input.taskProgress?.items.find(item => item.key === 'destination'), {
+    key: 'destination',
+    requested: 'Paris',
+    status: 'applied',
+    evidence: ['ref_destination', 'step_destination_option'],
+  });
+});
+
 test('task progress retains a successful requested value from bounded action history', () => {
   const input = new PlannerInputComposer().compose({
     episodeId: 'episode_task_progress_history',
@@ -153,5 +237,6 @@ test('PRC carries task progress without turning it into a completion gate', () =
   assert.match(message, /PROGRESS: state=incomplete/);
   assert.match(message, /destination:applied/);
   assert.match(buildV2PlannerSystemPrompt({ compactDataPlane: true }), /advisory summary of explicit operational constraints/);
+  assert.match(buildV2PlannerSystemPrompt(), /matching value typed into a suggestion-backed control is only observed/i);
   assert.doesNotMatch(buildV2PlannerSystemPrompt({ compactDataPlane: true }), /taskProgress.*return done/i);
 });

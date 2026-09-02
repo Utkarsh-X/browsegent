@@ -108,7 +108,11 @@ function evaluateConstraint(
 
     if (matchesConstraint(constraint, valueText || visibleText, requestedText)) {
       evidence.push(interaction.refId);
-      bestStatus = valueText && matchesConstraint(constraint, valueText, requestedText) ? 'applied' : 'observed';
+      const valueMatches = valueText && matchesConstraint(constraint, valueText, requestedText);
+      // A suggestion-backed control can retain fill()'s text before the
+      // widget accepts a real option. Treat that text as observed until a
+      // selection action supplies explicit commitment evidence.
+      bestStatus = valueMatches && !isSuggestionBackedControl(interaction) ? 'applied' : 'observed';
       continue;
     }
 
@@ -173,6 +177,14 @@ function isFieldControl(constraint: RequestedConstraint, interaction: Projection
   return interaction.kind === 'input' || interaction.kind === 'editable' || interaction.role === 'combobox';
 }
 
+function isSuggestionBackedControl(interaction: ProjectionItem): boolean {
+  const role = normalize(interaction.role);
+  const autocomplete = normalize(interaction.ariaAutocomplete);
+  const hasPopup = normalize(interaction.ariaHasPopup);
+  return (role === 'combobox' || role === 'searchbox')
+    && (autocomplete === 'list' || autocomplete === 'both' || autocomplete === 'inline' || hasPopup === 'listbox');
+}
+
 function matchesConstraint(constraint: RequestedConstraint, candidate: string, requested: string): boolean {
   const normalizedCandidate = normalize(candidate);
   if (!normalizedCandidate) return false;
@@ -191,17 +203,43 @@ function matchesConstraint(constraint: RequestedConstraint, candidate: string, r
 
 function collectSuccessfulIntents(trace: TraceStep[], lastResult?: V2ToolResult): SuccessfulIntent[] {
   const intents = trace
-    .filter(step => isSuccessfulTraceStep(step) && (step.kind === 'type' || step.kind === 'select'))
+    .filter(step => isSuccessfulTraceStep(step) && (step.kind === 'type' || step.kind === 'select' || step.kind === 'click'))
     .map(step => {
-      const text = traceInputText(step.input);
+      const result = asRecord(step.result);
+      const target = result ? asRecord(result.target) : undefined;
+      const isSelectionClick = step.kind === 'click' && isSelectionTarget(target);
+      if (step.kind === 'click' && !isSelectionClick) return undefined;
+      if (step.kind === 'type' && isSuggestionBackedTarget(target)) return undefined;
+      const text = step.kind === 'click' ? targetText(target) : traceInputText(step.input);
       return text ? { text, evidence: step.stepId } : undefined;
     })
     .filter((value): value is SuccessfulIntent => Boolean(value));
-  if (lastResult?.success && (lastResult.kind === 'type' || lastResult.kind === 'select')) {
+  if (
+    lastResult?.success
+    && (lastResult.kind === 'type' || lastResult.kind === 'select')
+    && !(lastResult.kind === 'type' && isSuggestionBackedTarget(lastResult.target))
+  ) {
     const resultText = resultInputText(lastResult.value);
     if (resultText) intents.push({ text: resultText, evidence: lastResult.traceStepId });
   }
   return intents.map(intent => ({ ...intent, text: clip(intent.text) }));
+}
+
+function isSelectionTarget(target: Record<string, TraceJsonValue> | undefined): boolean {
+  const role = normalize(typeof target?.role === 'string' ? target.role : undefined);
+  return role === 'option' || role === 'menuitemradio' || role === 'menuitemcheckbox';
+}
+
+function isSuggestionBackedTarget(target: Record<string, TraceJsonValue> | V2ToolResult['target'] | undefined): boolean {
+  const role = normalize(typeof target?.role === 'string' ? target.role : undefined);
+  return role === 'combobox' || role === 'searchbox';
+}
+
+function targetText(target: Record<string, TraceJsonValue> | undefined): string | undefined {
+  if (!target) return undefined;
+  return [target.name, target.text]
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    .join(' ');
 }
 
 function isSuccessfulTraceStep(step: TraceStep): boolean {

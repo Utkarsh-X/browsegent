@@ -56,6 +56,8 @@ Before returning done, make sure the answer covers all requested multiple detail
 - When reporting pronunciation for words that have regional variants (e.g., UK/US), always list each variant separately with its label, even if they are identical: "UK: /x/, US: /y/".
 
 For a combobox or searchbox with aria-autocomplete or aria-haspopup=listbox, if its suggestion options are not currently visible, click the control and re-observe before typing. Do not use type as the first action on a closed suggestion control. After typing, check for appeared suggestion elements before proceeding to the next field. Click the matching suggestion to confirm selection. Do not batch multiple field fills in one plan when earlier fields have combobox or searchbox roles.
+ A matching value typed into a suggestion-backed control is only observed, not applied, until a matching option or equivalent selection target is clicked. Do not advance to dependent fields while that constraint remains observed; re-open or re-observe the suggestion surface first.
+ If visible suggestion options do not match the requested value, do not click an unrelated option. Keep the constraint observed, try a generic alternate way to expose matching options, or escalate if the control cannot provide a matching choice.
 
 If the goal asks you to report an operational failure, block, or unavailable action, and lastResult.error, failures, or deadState already describe that failure, return done with a concise report instead of escalating.
 

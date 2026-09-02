@@ -44,6 +44,8 @@ test('buildV2PlannerSystemPrompt requires opening closed suggestion controls bef
   assert.match(prompt, /aria-autocomplete or aria-haspopup=listbox/i);
   assert.match(prompt, /click the control and re-observe before typing/i);
   assert.match(prompt, /do not use type as the first action on a closed suggestion control/i);
+  assert.match(prompt, /visible suggestion options do not match/i);
+  assert.match(prompt, /do not click an unrelated option/i);
 });
 
 test('buildV2PlannerSystemPrompt describes recovery state', () => {
