@@ -412,3 +412,30 @@ test('ObservationService can capture a titled page before delayed hydration expo
   }
 });
 
+test('ObservationService waits long enough to capture a slow-hydrating SPA surface', async () => {
+  const session = new BrowserSession({ headed: false });
+  const observer = new ObservationService();
+
+  try {
+    await session.open(fixtureUrl('slow-hydration.html'));
+    const early = await observer.capture({
+      sessionId: 'session_slow_hydration',
+      generationId: 1,
+      page: session.currentPage(),
+    });
+
+    assert.equal(early.title, 'Slow Hydration Fixture');
+    assert.equal(early.refs.length, 0);
+
+    const hydrated = await observer.capture({
+      sessionId: 'session_slow_hydration',
+      generationId: 1,
+      page: session.currentPage(),
+      retryEmptyNavigationCapture: true,
+    });
+
+    assert.equal(hydrated.refs.some(ref => ref.name === 'Slow action'), true);
+  } finally {
+    await session.close();
+  }
+});

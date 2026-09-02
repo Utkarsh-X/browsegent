@@ -7,7 +7,7 @@ import type { BuildObservationInput, CapturedElement, ObservationCaptureInput } 
 
 const MAX_CDP_IDENTITY_ELEMENTS = 150;
 const EMPTY_NAVIGATION_RETRY_WAIT_MS = 100;
-const EMPTY_NAVIGATION_MAX_WAIT_MS = 2_500;
+const EMPTY_NAVIGATION_MAX_WAIT_MS = 6_000;
 
 function isNavigationRaceError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
