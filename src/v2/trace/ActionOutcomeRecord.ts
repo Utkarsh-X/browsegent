@@ -11,6 +11,7 @@ export interface ActionOutcome {
   observableEffect?: boolean;    // any transition with non-none strength
   readEvidenceProduced: boolean;  // ONLY for successful get | inspect_region | nonempty search_page
   inputApplied?: boolean;         // successful type/select action accepted by the browser
+  implicitSeek?: { iterations: number; stopReason?: string }; // manual horizon click extended substrate-side
 }
 
 export interface ActionOutcomeSummary {

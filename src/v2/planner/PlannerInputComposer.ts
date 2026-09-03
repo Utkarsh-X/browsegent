@@ -153,7 +153,7 @@ function detectHorizonForFocus(
   if (!goalProgress || goalProgress.focus !== 'dates') return undefined;
 
   const datesEntry = goalProgress.entries.find(entry => entry.key === 'dates');
-  if (!datesEntry || datesEntry.state !== 'NOT_SET') return undefined;
+  if (!datesEntry || !(datesEntry.state === 'NOT_SET' || datesEntry.state.startsWith('partial:'))) return undefined;
 
   const requirements = parseGoalRequirements(goal);
   if (!requirements) return undefined;
@@ -172,7 +172,7 @@ function findTargetValueRefs(
   if (!goalProgress || goalProgress.focus !== 'dates') return undefined;
 
   const datesEntry = goalProgress.entries.find(entry => entry.key === 'dates');
-  if (!datesEntry || datesEntry.state !== 'NOT_SET') return undefined;
+  if (!datesEntry || !(datesEntry.state === 'NOT_SET' || datesEntry.state.startsWith('partial:'))) return undefined;
 
   const requirements = parseGoalRequirements(goal);
   if (!requirements) return undefined;

@@ -335,12 +335,15 @@ function latestCompletedTypeState(
  * element whose accessible name parses to that date in the page locale.
  * Returns the goal's own date label for rendering, or undefined when the
  * selection is incomplete or the surface language cannot resolve month names.
+ * Also reports how many endpoints are committed so partially selected ranges
+ * steer the model at the missing endpoint instead of re-clicking the chosen
+ * one.
  */
 function matchSelectedDatesInLineage(
   lineageSteps: CompressedLineageStep[],
   reqs: GoalRequirements,
   lang: string,
-): string | undefined {
+): { label: string; matched: number; total: number } | undefined {
   const targets = targetDates(reqs);
   if (targets.length === 0) return undefined;
 
@@ -368,8 +371,9 @@ function matchSelectedDatesInLineage(
     if (matched.size === targets.length) break;
   }
 
-  if (matched.size < targets.length) return undefined;
-  return reqs.dateLabel ?? [reqs.dateFrom, reqs.dateTo].filter(Boolean).join('..');
+  if (matched.size === 0) return undefined;
+  const label = reqs.dateLabel ?? [reqs.dateFrom, reqs.dateTo].filter(Boolean).join('..');
+  return { label, matched: matched.size, total: targets.length };
 }
 
 /**
@@ -437,9 +441,11 @@ export function evaluateGoalProgress(
       }
     }
     if (state === 'NOT_SET' && context.lang) {
-      const selectedLabel = matchSelectedDatesInLineage(lineageSteps, reqs, context.lang);
-      if (selectedLabel) {
-        state = `selected:"${selectedLabel}"`;
+      const selection = matchSelectedDatesInLineage(lineageSteps, reqs, context.lang);
+      if (selection) {
+        state = selection.matched === selection.total
+          ? `selected:"${selection.label}"`
+          : `partial:"${selection.label}" (${selection.matched}/${selection.total} selected)`;
       }
     }
     entries.push({ key: 'dates', state });

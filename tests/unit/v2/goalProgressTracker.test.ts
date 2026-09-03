@@ -314,7 +314,7 @@ test('evaluateGoalProgress detects committed date selection from click lineage i
   assert.equal(progress.focus, undefined);
 });
 
-test('evaluateGoalProgress keeps dates NOT_SET when only one endpoint of the range was selected', () => {
+test('evaluateGoalProgress marks partial selection when only one endpoint of the range was clicked', () => {
   const goal = 'Find a Mexico hotel with deals for December 25-26';
   const lineage: CompressedLineage = {
     totalSteps: 1,
@@ -326,7 +326,7 @@ test('evaluateGoalProgress keeps dates NOT_SET when only one endpoint of the ran
 
   const progress = evaluateGoalProgress(goal, { url: 'https://example.test/', lineage, lang: 'hi' });
   assert.ok(progress);
-  assert.equal(progress.entries.find(e => e.key === 'dates')?.state, 'NOT_SET');
+  assert.equal(progress.entries.find(e => e.key === 'dates')?.state, 'partial:"December 25-26" (1/2 selected)');
 });
 
 test('evaluateGoalProgress does not mark selection from unrelated month clicks', () => {
@@ -379,4 +379,20 @@ test('evaluateGoalProgress accepts a confirmation-field click whose name carries
   assert.ok(progress);
   assert.equal(progress.entries.find(e => e.key === 'dates')?.state, 'selected:"December 25-26"');
   assert.equal(progress.focus, undefined);
+});
+
+test('evaluateGoalProgress marks a partially selected range so the missing endpoint is steered', () => {
+  const goal = "Find a hotel in Paris for February 14-21, 2027";
+  const lineage: CompressedLineage = {
+    totalSteps: 2,
+    truncated: false,
+    steps: [
+      { stepId: 's1', index: 0, kind: 'type', status: 'completed', value: 'Paris' },
+      { stepId: 's2', index: 1, kind: 'click', status: 'completed', targetName: 'Sunday, 14 February 2027' },
+    ],
+  };
+
+  const progress = evaluateGoalProgress(goal, { url: 'https://example.test/', lineage, lang: 'en' });
+  assert.ok(progress);
+  assert.equal(progress.entries.find(e => e.key === 'dates')?.state, 'partial:"February 14-21, 2027" (1/2 selected)');
 });

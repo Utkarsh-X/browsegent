@@ -373,11 +373,13 @@ export class V2AgentLoop {
                 sourceKind: 'tool_read',
               });
             }
+            const implicitSeek = extractImplicitSeek(lastResult);
             outcomeRecorder.record({
               stepIndex, tool: plannedStep.tool, targetRef: plannedStep.ref,
               source: 'dispatch', success: lastResult.success, errorCode: lastResult.error?.code,
               stateChanged: !!(lastResult.evidence?.urlChanged || lastResult.evidence?.generationChanged),
               observableEffect: hasObservableEffect(lastResult.evidence),
+              implicitSeek,
               readEvidenceProduced: isReadEvidence(lastResult),
               inputApplied: lastResult.success && (plannedStep.tool === 'type' || plannedStep.tool === 'select'),
             });
@@ -1329,6 +1331,11 @@ class ActionProgressMemory {
 
     return signals;
   }
+}
+
+function extractImplicitSeek(result: V2ToolResult): { iterations: number; stopReason?: string } | undefined {
+  const value = result.value as { implicitSeek?: { iterations: number; stopReason?: string } } | undefined;
+  return value?.implicitSeek;
 }
 
 function shouldRefreshAfterLowInformationAction(
