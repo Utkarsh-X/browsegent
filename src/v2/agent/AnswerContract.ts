@@ -151,8 +151,19 @@ function isUrlOnly(value: string): boolean {
 function hasExplicitIncompleteResult(value: string): boolean {
   return [
     /\b(?:has|have) not been (?:executed|completed|found|loaded)\b/i,
+    /\b(?:have|has) not yet (?:performed|booked|executed|completed|entered|selected|searched)\b/i,
+    /\b(?:is|are) not yet complete\b/i,
+    /\b(?:need|needs) to (?:input|enter|select|execute|perform|book)\b/i,
     /\b(?:unable to|cannot|can't) (?:find|provide|extract|determine|complete|answer)\b/i,
     /\b(?:lowest|cheapest|requested|search|result|answer|option|price|information|details?)\b[^.]{0,60}\bnot currently available\b/i,
+    /\bplease (?:provide|enter|select|input|interact|proceed)\b/i,
+    /\b(?:you can|please)\s+(?:now\s+)?proceed with (?:your\s+)?(?:search|booking|request|selection)\b/i,
+    /\bif you would like me to\b/i,
+    /\b(?:i can|allow me to)\s+(?:escalate|attempt|proceed)\b/i,
+    /\b404\s+error\b/i,
+    /\b(?:page does not exist|page is unavailable)\b/i,
+    /\bsecurity verification page\b/i,
+    /\b(?:captcha|cloudflare)\b/i,
   ].some(pattern => pattern.test(value));
 }
 

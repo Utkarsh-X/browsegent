@@ -258,3 +258,116 @@ test('validateAnswerAgainstContract preserves direct ranked answers when no read
 
   assert.equal(validation.ok, true, `Unexpected reasons: ${validation.reasons.join(', ')}`);
 });
+
+// ---- 2026-09-03 answer-fidelity work: refusal-shaped done detection ----
+
+test('rejects a done answer that delegates the required action back to the user', () => {
+  const contract = inferAnswerContract(
+    'Book a journey with return option on same day from Edinburg to Manchester on December 28th and show me the lowest price option available.',
+  );
+  const validation = validateAnswerAgainstContract(
+    'I have not yet performed the search for flights from Edinburgh to Manchester. Please provide the necessary interaction to proceed with the search, or I can escalate if you would like me to attempt the search myself.',
+    contract,
+  );
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('incomplete_answer'));
+});
+
+test('rejects a done answer that admits the task action was never completed', () => {
+  const contract = inferAnswerContract('Find the lowest price option available.');
+  const validation = validateAnswerAgainstContract(
+    'The flight search for Edinburgh to Manchester on December 28th is not yet complete. The destination has not been entered, and I need to input these details and execute the search to find the lowest price.',
+    contract,
+  );
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('incomplete_answer'));
+});
+
+test('rejects a done answer reporting a missing page or captcha wall', () => {
+  const contract = inferAnswerContract('Find the model that performed sentiment analysis');
+  const notFound = validateAnswerAgainstContract(
+    'The requested space resulted in a 404 error on the site, meaning the page does not exist or is unavailable.',
+    contract,
+  );
+  assert.equal(notFound.ok, false);
+  assert.ok(notFound.reasons.includes('incomplete_answer'));
+
+  const captcha = validateAnswerAgainstContract(
+    'The requested information could not be retrieved because the website is currently displaying a security verification page.',
+    contract,
+  );
+  assert.equal(captcha.ok, false);
+  assert.ok(captcha.reasons.includes('incomplete_answer'));
+});
+
+test('accepts an evidence-grounded report of what the page shows even when the target is absent', () => {
+  // Trace-backed shape (runs 1788091487187 / 1788244732279): the judge accepted this
+  // honest page-state answer. It must keep passing the gate.
+  const contract = inferAnswerContract(
+    'Check ESPN for the score and a brief recap of the latest college football championship game.',
+  );
+  const validation = validateAnswerAgainstContract(
+    "The latest college football championship game information is not currently displayed on the ESPN scoreboard page. The page shows recent regular season games, such as USC's 42-26 win over San Jose State.",
+    contract,
+  );
+
+  assert.equal(validation.ok, true, `Unexpected reasons: ${validation.reasons.join(', ')}`);
+});
+
+// ---- 2026-09-03 answer-fidelity work: semantic top-ranked entity matching ----
+
+test('accepts a top-ranked entity answer that rewords the card entity while staying grounded', () => {
+  const contract = inferAnswerContract(
+    'Find the open-source project related to climate change data visualization with the most stars on GitHub and record its name.',
+  );
+  const evidenceText = [
+    '[Active Sort: stars (desc) via url_query]',
+    '[Card 1: Rank #1 | resource-watch/resource-watch | 73 stars | Resource Watch — Climate data visualization platform]',
+    '[Card 2: Rank #2 | Beckybams/AI-Enhanced-Climate-Education-Tools- | 40 stars]',
+  ].join('\n');
+
+  // Reworded: display name instead of the owner/repo slug.
+  const reworded = validateAnswerAgainstContract(
+    'The project with the most stars is Resource Watch, with 73 stars.',
+    contract,
+    { evidenceText },
+  );
+  assert.equal(reworded.ok, true, `Unexpected reasons: ${reworded.reasons.join(', ')}`);
+});
+
+test('still rejects a ranked answer naming a lower-ranked card whose tokens differ', () => {
+  const contract = inferAnswerContract(
+    'Find the open-source project related to climate change data visualization with the most stars on GitHub and record its name.',
+  );
+  const evidenceText = [
+    '[Active Sort: stars (desc) via url_query]',
+    '[Card 1: Rank #1 | resource-watch/resource-watch | 73 stars]',
+    '[Card 2: Rank #2 | akshaysonvane/Climate-Change-Data-Analytics-Visualization | 8 stars]',
+  ].join('\n');
+
+  const wrong = validateAnswerAgainstContract(
+    'The project with the most stars is akshaysonvane/Climate-Change-Data-Analytics-Visualization.',
+    contract,
+    { evidenceText },
+  );
+  assert.equal(wrong.ok, false);
+  assert.ok(wrong.reasons.includes('answer_does_not_match_top_ranked_evidence'));
+});
+
+test('still rejects a ranked answer that only partially matches the top entity variant', () => {
+  const contract = inferAnswerContract('Find the most starred repository');
+  const evidenceText = [
+    '[Card 1: Rank #1 | Lady Neptune Hair Salon (Capitol Hill) | 5.0 rating]',
+    '[Card 2: Rank #2 | Lady Neptune Hair Salon (University District) | 5.0 rating]',
+  ].join('\n');
+
+  const wrongBranch = validateAnswerAgainstContract(
+    'The top result is Lady Neptune Hair Salon (University District).',
+    contract,
+    { evidenceText },
+  );
+  assert.equal(wrongBranch.ok, false);
+  assert.ok(wrongBranch.reasons.includes('answer_does_not_match_top_ranked_evidence'));
+});
