@@ -9,6 +9,8 @@ import type {
   PlannerUncertainty,
   CompressedLineage,
 } from '../types';
+import type { PlannerGoalProgress } from '../GoalProgressTracker';
+import type { SurfaceHorizon } from '../HorizonDetector';
 import type { PlannerRecoveryState } from '../../runtime/RecoveryState';
 import type {
   PlannerActionSurface,
@@ -78,6 +80,8 @@ export interface ExecutionContextIR {
   evidenceSnapshot?: import('../types').PlannerEvidenceSnapshot;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
+  goalProgress?: PlannerGoalProgress;
+  horizon?: SurfaceHorizon;
 }
 
 export interface WorkingSetIR {

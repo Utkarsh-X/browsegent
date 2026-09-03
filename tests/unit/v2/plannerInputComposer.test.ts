@@ -728,3 +728,306 @@ test('PlannerInputComposer applies working-set options per call without changing
   assert.equal(defaultInput.workingSetDiagnostics?.selectedRefCount, 2);
   assert.equal(boundedInput.workingSetDiagnostics?.selectedRefCount, 1);
 });
+
+test('LineageCompressor populates bounded value for type, select, navigate, and press', () => {
+  const compressor = new LineageCompressor();
+  const stepType: TraceStep = {
+    stepId: 'step_type',
+    index: 0,
+    kind: 'type',
+    status: 'completed',
+    startedAt: 1000,
+    input: { text: '  Paris  ' },
+    warnings: [],
+  };
+  const stepSelect: TraceStep = {
+    stepId: 'step_select',
+    index: 1,
+    kind: 'select',
+    status: 'completed',
+    startedAt: 1001,
+    input: { value: '2' },
+    warnings: [],
+  };
+  const stepNav: TraceStep = {
+    stepId: 'step_nav',
+    index: 2,
+    kind: 'navigate',
+    status: 'completed',
+    startedAt: 1002,
+    input: { url: 'https://example.test/' + 'a'.repeat(200) },
+    warnings: [],
+  };
+  const stepPress: TraceStep = {
+    stepId: 'step_press',
+    index: 3,
+    kind: 'press',
+    status: 'completed',
+    startedAt: 1003,
+    input: { key: 'Enter' },
+    warnings: [],
+  };
+  const stepClick: TraceStep = {
+    stepId: 'step_click',
+    index: 4,
+    kind: 'click',
+    status: 'completed',
+    startedAt: 1004,
+    warnings: [],
+  };
+
+  const lineage = compressor.compress([stepType, stepSelect, stepNav, stepPress, stepClick]);
+  assert.equal(lineage.steps[0].value, 'Paris');
+  assert.equal(lineage.steps[1].value, '2');
+  assert.equal(lineage.steps[2].value?.length, 120);
+  assert.equal(lineage.steps[3].value, 'Enter');
+  assert.equal(lineage.steps[4].value, undefined);
+});
+
+test('PlannerInputComposer sets goalProgress for parsing goals and guarantees byte-identical absence for non-parsing goals', () => {  const observation = makeObservation({ observationId: 'obs_gp' });
+  const projection = new ProjectionService().project(observation);
+  const composer = new PlannerInputComposer();
+
+  // Parsing goal
+  const parsingInput = composer.compose({
+    episodeId: 'ep_gp_1',
+    goal: 'Find a hotel in Paris for February 14-21, 2027',
+    projection,
+  });
+  assert.ok(parsingInput.goalProgress);
+  assert.equal(parsingInput.goalProgress.entries[0].key, 'destination');
+  assert.equal(parsingInput.goalProgress.entries[0].state, 'NOT_SET');
+
+  // Non-parsing goal
+  const nonParsingInput = composer.compose({
+    episodeId: 'ep_gp_2',
+    goal: 'Click the submit button',
+    projection,
+  });
+  // Must NOT have the goalProgress property on the object
+  assert.equal('goalProgress' in nonParsingInput, false);
+  assert.equal(Object.prototype.hasOwnProperty.call(nonParsingInput, 'goalProgress'), false);
+
+  // Byte identity check against keys without goalProgress
+  const expectedKeys = Object.keys(parsingInput).filter(k => k !== 'goalProgress');
+  assert.deepEqual(Object.keys(nonParsingInput), expectedKeys);
+});
+
+
+const HORIZON_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+function makeCalendarRef(
+  refId: string,
+  label: string,
+  position: number,
+  overrides: Partial<V2Ref> = {},
+): V2Ref {
+  return makeRef({
+    refId,
+    targetId: `target_${refId}`,
+    role: 'checkbox',
+    name: label,
+    text: label,
+    box: {
+      x: 100 + (position % 30) * 40,
+      y: 500 + Math.floor(position / 30) * 40,
+      width: 40,
+      height: 40,
+    },
+    ...overrides,
+  });
+}
+
+function makeCalendarObservation(): BrowserObservation {
+  const refs: V2Ref[] = [];
+  let position = 0;
+  for (const [monthIndex, monthCount] of [[8, 30], [9, 31]] as Array<[number, number]>) {
+    for (let day = 1; day <= monthCount; day += 1) {
+      refs.push(makeCalendarRef(`ref_cell_${monthIndex}_${day}`, `${day} ${HORIZON_MONTHS[monthIndex]} 2026`, position));
+      position += 1;
+    }
+  }
+  refs.push(makeRef({
+    refId: 'ref_prev_month',
+    targetId: 'target_prev_month',
+    name: 'Previous month',
+    text: 'Previous month',
+    box: { x: 60, y: 505, width: 30, height: 30 },
+  }));
+  refs.push(makeRef({
+    refId: 'ref_next_month',
+    targetId: 'target_next_month',
+    name: 'Next month',
+    text: 'Next month',
+    box: { x: 1240, y: 505, width: 30, height: 30 },
+  }));
+  // High-score filler competition: pushes the nav controls out of the top slice
+  for (let index = 0; index < 40; index += 1) {
+    refs.push(makeRef({
+      refId: `ref_filler_${index}`,
+      targetId: `target_filler_${index}`,
+      name: `Operational control ${index}`,
+      text: `Operational control ${index}`,
+      box: { x: 1600, y: 800 + index * 20, width: 80, height: 20 },
+    }));
+  }
+
+  return {
+    ...makeObservation({ observationId: 'obs_horizon', refs }),
+    lang: 'en',
+  };
+}
+
+const HORIZON_GOAL = 'Find a hotel in Paris for February 14-21, 2027';
+const HORIZON_TRACE: TraceStep[] = [{
+  stepId: 'step_type_paris',
+  index: 0,
+  kind: 'type',
+  status: 'completed',
+  startedAt: 1000,
+  warnings: [],
+  targetRef: 'ref_destination',
+  input: { text: 'Paris' },
+  result: { success: true },
+}];
+
+test('PlannerInputComposer attaches a horizon when the focused dates target is outside the visible window', () => {
+  const projection = new ProjectionService().project(makeCalendarObservation());
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_horizon',
+    goal: HORIZON_GOAL,
+    projection,
+    trace: HORIZON_TRACE,
+  });
+
+  assert.ok(input.goalProgress);
+  assert.equal(input.goalProgress.focus, 'dates');
+  assert.ok(input.horizon);
+  assert.deepEqual(input.horizon.visibleMonths, ['September 2026', 'October 2026']);
+  assert.deepEqual(input.horizon.targetMonths, ['February 2027']);
+  assert.ok(input.horizon.navControls.some(control => control.refId === 'ref_next_month'));
+});
+
+test('PlannerInputComposer force-selects horizon nav controls into the working set', () => {
+  const projection = new ProjectionService().project(makeCalendarObservation());
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_horizon_force',
+    goal: HORIZON_GOAL,
+    projection,
+    trace: HORIZON_TRACE,
+  });
+
+  const workingSet = input.workingSet;
+  assert.ok(workingSet);
+  const laneRefs = [...workingSet.primaryRefs, ...workingSet.secondaryRefs];
+  const nextRef = laneRefs.find(ref => ref.refId === 'ref_next_month');
+  assert.ok(nextRef);
+  assert.ok(nextRef.reasons.includes('horizon_control'));
+  assert.ok(input.current.refs.ref_next_month);
+  assert.ok(input.current.refs.ref_prev_month);
+});
+
+test('PlannerInputComposer omits horizon for non-date goals and non-calendar surfaces', () => {
+  const composer = new PlannerInputComposer();
+  const calendarProjection = new ProjectionService().project(makeCalendarObservation());
+  const plainProjection = new ProjectionService().project(makeObservation({ observationId: 'obs_plain' }));
+
+  const nonTravel = composer.compose({
+    episodeId: 'episode_horizon_non_travel',
+    goal: 'Find wireless noise-cancelling headphones under $50',
+    projection: calendarProjection,
+    trace: HORIZON_TRACE,
+  });
+  assert.equal('horizon' in nonTravel, false);
+
+  const noWidget = composer.compose({
+    episodeId: 'episode_horizon_no_widget',
+    goal: HORIZON_GOAL,
+    projection: plainProjection,
+    trace: HORIZON_TRACE,
+  });
+  assert.equal('horizon' in noWidget, false);
+  assert.equal('horizon' in composer.compose({
+    episodeId: 'episode_horizon_non_parsing',
+    goal: 'Click the submit button',
+    projection: calendarProjection,
+  }), false);
+});
+
+test('LineageCompressor carries the bounded target name for click evidence', () => {
+  const manifest = makeTraceManifest([]);
+  manifest.steps = [{
+    stepId: 'step_click_day',
+    index: 0,
+    kind: 'click',
+    status: 'completed',
+    startedAt: 1000,
+    warnings: [],
+    targetRef: 'ref_day',
+    result: {
+      success: true,
+      target: { refId: 'ref_day', name: 'Friday, 25 December 2026', text: '25', role: 'checkbox' },
+    },
+  } as unknown as TraceStep];
+
+  const lineage = new LineageCompressor().compress(manifest, { maxSteps: 5 });
+  assert.equal(lineage.steps[0].targetName, 'Friday, 25 December 2026');
+});
+
+test('PlannerInputComposer keeps dismissal controls prioritized while a blocker at the current URL is unresolved', () => {
+  const blocker = {
+    blockerDescription: 'div#promo-overlay',
+    blockerTagName: 'div',
+    hitTestOutcome: 'hard_blocker',
+  };
+  const dismissRef = makeRef({
+    refId: 'ref_dismiss',
+    targetId: 'target_dismiss',
+    name: 'Dismiss sign in information.',
+    text: 'Dismiss sign in information.',
+  });
+  const fillers = Array.from({ length: 40 }, (_, index) => makeRef({
+    refId: `ref_comp_${index}`,
+    targetId: `target_comp_${index}`,
+    name: `Page control ${index}`,
+    text: `Page control ${index}`,
+  }));
+  const observation = makeObservation({
+    observationId: 'obs_unresolved_blocker',
+    refs: [dismissRef, ...fillers],
+  });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_unresolved_blocker',
+    goal: 'Search for docs',
+    projection,
+    failureEvidence: [{
+      failureId: 'failure_blocked',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'Target was blocked.',
+      source: 'test',
+      observationId: 'obs_blocked',
+      generationId: 1,
+      url: projection.url,
+      targetRef: 'ref_search_input',
+      signals: ['error:target_blocked'],
+      diagnostics: blocker,
+    }],
+    // Last action succeeded (a navigation back to the same surface), but the
+    // blocker was never dismissed.
+    lastResult: {
+      success: true,
+      kind: 'navigate',
+      traceStepId: 'step_navigate',
+    },
+  });
+
+  const lanes = [...(input.workingSet?.primaryRefs ?? []), ...(input.workingSet?.secondaryRefs ?? [])];
+  const dismiss = lanes.find(ref => ref.refId === 'ref_dismiss');
+  assert.ok(dismiss);
+  assert.ok(dismiss.reasons.includes('recovery_control'));
+});

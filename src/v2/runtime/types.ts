@@ -69,6 +69,8 @@ export interface BrowserObservation {
   generationId: number;
   url: string;
   title: string;
+  /** Page-declared language (html lang attribute); enables locale-aware deterministic parsing. */
+  lang?: string;
   timestamp: number;
   refs: V2Ref[];
   warnings: RuntimeWarning[];

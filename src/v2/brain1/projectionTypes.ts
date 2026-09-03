@@ -1,6 +1,7 @@
 import type {
   ActionabilityState,
   EditableKind,
+  Rect,
   RefState,
   RuntimeWarning,
   V2RefCapabilities,
@@ -26,6 +27,8 @@ export interface ProjectionItem {
   ariaHasPopup?: string;
   editableKind?: EditableKind;
   capabilities?: V2RefCapabilities;
+  /** Viewport geometry from the substrate capture; internal, never serialized to the planner. */
+  box?: Rect;
   visibility: VisibilityState;
   actionability: ActionabilityState;
   state: RefState;
@@ -59,6 +62,8 @@ export interface OperationalProjection {
   generationId: number;
   url: string;
   title: string;
+  /** Page-declared language; internal, never serialized to the planner verbatim. */
+  lang?: string;
   interactions: ProjectionItem[];
   readables: ProjectionItem[];
   navigation: ProjectionItem[];

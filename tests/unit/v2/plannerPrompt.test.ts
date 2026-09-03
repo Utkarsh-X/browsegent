@@ -42,8 +42,10 @@ test('buildV2PlannerSystemPrompt requires opening closed suggestion controls bef
   const prompt = buildV2PlannerSystemPrompt();
 
   assert.match(prompt, /aria-autocomplete or aria-haspopup=listbox/i);
-  assert.match(prompt, /click the control and re-observe before typing/i);
-  assert.match(prompt, /do not use type as the first action on a closed suggestion control/i);
+  assert.match(prompt, /click the control once/i);
+  assert.match(prompt, /no read tool is ever needed just to re-observe/i);
+  assert.match(prompt, /type the requested value into the control in your very next plan/i);
+  assert.match(prompt, /never use search_page, get, or inspect_region to look for controls or suggestion options/i);
   assert.match(prompt, /visible suggestion options do not match/i);
   assert.match(prompt, /do not click an unrelated option/i);
 });

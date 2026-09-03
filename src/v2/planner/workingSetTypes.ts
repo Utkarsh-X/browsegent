@@ -17,6 +17,8 @@ export type WorkingSetIncludeReason =
   | 'last_success'
   | 'last_failure'
   | 'recovery_control'
+  | 'horizon_control'
+  | 'target_value'
   | 'dead_state_evidence'
   | 'answer_candidate'
   | 'suggestion_option'

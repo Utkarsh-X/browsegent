@@ -14,6 +14,8 @@ export class PromptLayoutEngine {
       renderState(ir),
       renderRecentEvents(ir),
       renderEvidenceCoverage(ir),
+      renderGoalProgress(ir),
+      renderHorizon(ir),
       renderTaskProgress(ir),
       renderEvidenceSnapshot(ir),
       renderProblems(ir),
@@ -36,6 +38,8 @@ function renderCompactDataPlane(
     renderCompactState(ir),
     renderCompactLast(ir),
     renderCompactEvidence(ir),
+    renderCompactGoalProgress(ir),
+    renderCompactHorizon(ir),
     renderCompactTaskProgress(ir),
     renderCompactProblems(ir),
     renderCompactSurface(ir, options),
@@ -100,6 +104,32 @@ function renderCompactEvidence(ir: PlannerRepresentationIR): string {
     parts.push(`facts=${renderCompactEvidenceFacts(snapshot)}`);
   }
   return parts.length > 0 ? `EVIDENCE: ${parts.join(' ')}` : '';
+}
+
+function renderCompactGoalProgress(ir: PlannerRepresentationIR): string {
+  const progress = ir.execution.goalProgress;
+  if (!progress || progress.entries.length === 0) return '';
+
+  const parts = progress.entries.map(e => `${e.key}=${e.state}`);
+  if (progress.focus) {
+    parts.push(`focus=${progress.focus}`);
+  }
+  return `GP: ${parts.join(' ')}`;
+}
+
+function renderCompactHorizon(ir: PlannerRepresentationIR): string {
+  const horizon = ir.execution.horizon;
+  if (!horizon) return '';
+
+  const ordered = [...horizon.navControls].sort((left, right) =>
+    Number(right.recommended ?? false) - Number(left.recommended ?? false),
+  );
+  const nav = ordered.map(control => {
+    const name = control.name ? `"${escapeAttr(compactValue(control.name, 60))}"` : '';
+    const flag = control.recommended ? '*' : '';
+    return `${control.refId}${name}:${control.directionHint}${flag}${control.actionability !== 'ready' ? `:${control.actionability}` : ''}`;
+  }).join(' ');
+  return `HORIZON: visible=[${horizon.visibleMonths.join(',')}] need=[${horizon.targetMonths.join(',')}] nav=${nav}`;
 }
 
 function renderCompactTaskProgress(ir: PlannerRepresentationIR): string {
@@ -282,6 +312,38 @@ function renderEvidenceCoverage(ir: PlannerRepresentationIR): string {
       : '';
     lines.push(`  ${requirement.key}: ${requirement.status}${reads}`);
   }
+  return lines.join('\n');
+}
+
+function renderGoalProgress(ir: PlannerRepresentationIR): string {
+  const progress = ir.execution.goalProgress;
+  if (!progress || progress.entries.length === 0) return '';
+
+  const lines = ['GOAL PROGRESS'];
+  for (const entry of progress.entries) {
+    lines.push(`  ${entry.key}: ${entry.state}`);
+  }
+  if (progress.focus) {
+    lines.push(`  focus: ${progress.focus}`);
+  }
+  return lines.join('\n');
+}
+
+function renderHorizon(ir: PlannerRepresentationIR): string {
+  const horizon = ir.execution.horizon;
+  if (!horizon) return '';
+
+  const ordered = [...horizon.navControls].sort((left, right) =>
+    Number(right.recommended ?? false) - Number(left.recommended ?? false),
+  );
+  const lines = ['HORIZON'];
+  lines.push(`  visible months: ${horizon.visibleMonths.join(', ')}`);
+  lines.push(`  goal needs: ${horizon.targetMonths.join(', ')} (outside the currently visible window)`);
+  lines.push(`  advance with: ${ordered.map(control => {
+    const name = control.name ? ` "${escapeAttr(compactValue(control.name, 60))}"` : '';
+    const recommended = control.recommended ? ' [recommended]' : '';
+    return `${control.refId}${name} (hint: ${control.directionHint}${recommended}, ${control.actionability})`;
+  }).join(' | ')}`);
   return lines.join('\n');
 }
 

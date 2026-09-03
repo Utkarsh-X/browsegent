@@ -35,7 +35,7 @@ export class ObservationService {
       state = await waitForInteractiveNavigationState(input.page, state);
     }
 
-    const { url, title, captured } = state;
+    const { url, title, captured, lang } = state;
 
     const identities = await resolveBackendNodeIds(input.page, captured.length);
     const refs = captured.map((candidate, index): V2Ref => ({
@@ -74,6 +74,7 @@ export class ObservationService {
       generationId: input.generationId,
       url,
       title,
+      lang,
       timestamp: Date.now(),
       durationMs: Date.now() - startedAt,
       refs,
@@ -93,11 +94,13 @@ interface PageCaptureState {
   title: string;
   captured: CapturedElement[];
   readiness: PageReadiness;
+  lang?: string;
 }
 
 interface PageCaptureContent {
   captured: CapturedElement[];
   readiness: PageReadiness;
+  lang?: unknown;
 }
 
 async function capturePageState(page: Page): Promise<PageCaptureState> {
@@ -113,7 +116,12 @@ async function capturePageState(page: Page): Promise<PageCaptureState> {
   const readiness = Array.isArray(content)
     ? { readyState: 'unknown', bodyTextLength: 0, bodyChildCount: 0 }
     : content.readiness;
-  return { url, title, captured, readiness };
+  const lang = Array.isArray(content) ? undefined : normalizeLang(content.lang);
+  return { url, title, captured, readiness, lang };
+}
+
+function normalizeLang(raw: unknown): string | undefined {
+  return typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : undefined;
 }
 
 function shouldWaitForEmptyNavigation(state: PageCaptureState): boolean {
@@ -155,6 +163,7 @@ export function buildBrowserObservation(input: BuildObservationInput): BrowserOb
     generationId: input.generationId,
     url: input.url,
     title: input.title,
+    lang: input.lang,
     timestamp: input.timestamp,
     refs: input.refs,
     warnings: input.warnings,
@@ -579,9 +588,14 @@ const READ_PAGE_READINESS_SCRIPT = `
 }))()
 `;
 
+const READ_PAGE_LANG_SCRIPT = `
+(() => document.documentElement.getAttribute('lang') || '')()
+`;
+
 const CAPTURE_PAGE_CONTENT_SCRIPT = `
 (() => ({
   captured: ${COLLECT_INTERACTIVE_ELEMENTS_SCRIPT},
   readiness: ${READ_PAGE_READINESS_SCRIPT},
+  lang: ${READ_PAGE_LANG_SCRIPT},
 }))()
 `;

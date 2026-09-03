@@ -5,6 +5,10 @@ import { measureProjectionSize } from './ProjectionSizeDiagnostics';
 import { PlannerWorkingSetSelector } from './PlannerWorkingSetSelector';
 import { RecoveryStateBuilder } from '../runtime/RecoveryState';
 import { buildTaskProgress } from '../agent/TaskProgress';
+import { evaluateGoalProgress, parseGoalRequirements } from './GoalProgressTracker';
+import { detectDateHorizon, findTargetDateCells } from './HorizonDetector';
+import type { PlannerGoalProgress } from './GoalProgressTracker';
+import type { SurfaceHorizon } from './HorizonDetector';
 import type {
   PlannerContinuitySummary,
   PlannerDeadStateSummary,
@@ -20,6 +24,12 @@ import type {
 
 const DEFAULT_RESULT_PREVIEW_LIMIT = 240;
 const READ_RESULT_PREVIEW_LIMIT = 1_500;
+/**
+ * Requirement evidence (e.g. a destination typed several steps ago) is
+ * long-horizon state; the rendered lineage stays a short recent window but the
+ * checklist must not forget it just because the window slid past it.
+ */
+const GOAL_PROGRESS_LINEAGE_HORIZON_STEPS = 48;
 
 export class PlannerInputComposer {
   private readonly lineageCompressor = new LineageCompressor();
@@ -34,10 +44,26 @@ export class PlannerInputComposer {
     const evidenceRefIds = evidenceSnapshot
       ? [...new Set(evidenceSnapshot.cards.flatMap(card => card.refIds))].slice(0, 16)
       : undefined;
+    const lineage = input.trace
+      ? this.lineageCompressor.compress(input.trace, { maxSteps: input.maxLineageSteps })
+      : undefined;
+    const goalProgress = input.goalProgress ?? evaluateGoalProgress(input.goal, {
+      url: input.graphSnapshot?.url,
+      lineage: input.trace
+        ? this.lineageCompressor.compress(input.trace, { maxSteps: GOAL_PROGRESS_LINEAGE_HORIZON_STEPS })
+        : undefined,
+      lang: input.projection.lang,
+    });
+    const horizon = detectHorizonForFocus(input.projection, input.goal, goalProgress);
+    const targetValueRefs = horizon
+      ? undefined
+      : findTargetValueRefs(input.projection, input.goal, goalProgress);
     const workingSetSelection = workingSetSelector.select({
       goal: input.goal,
       projection: input.projection,
       evidenceRefIds,
+      horizonControlRefs: horizon?.navControls.map(control => control.refId),
+      targetValueRefs,
       graphSnapshot: input.graphSnapshot,
       transitionEvidence: input.transitionEvidence,
       lastResult: input.lastResult,
@@ -76,10 +102,15 @@ export class PlannerInputComposer {
       taskProgress: taskProgress.items.length > 0 ? taskProgress : undefined,
       evidenceSnapshot,
       uncertainty: buildUncertainty(input),
-      lineage: input.trace
-        ? this.lineageCompressor.compress(input.trace, { maxSteps: input.maxLineageSteps })
-        : undefined,
+      lineage,
     };
+
+    if (goalProgress !== undefined) {
+      plannerInput.goalProgress = goalProgress;
+    }
+    if (horizon !== undefined) {
+      plannerInput.horizon = horizon;
+    }
 
     plannerInput.sizeDiagnostics = measureProjectionSize({
       current: plannerInput.current,
@@ -105,6 +136,49 @@ function restrictEvidenceSnapshotToCurrentInteractions(
       refIds: card.refIds.filter(refId => currentInteractionRefs.has(refId)),
     })),
   };
+}
+
+/**
+ * Runs the horizon detector only while the focused requirement is a concrete,
+ * unsatisfied dates target. Detection is deterministic; failure degrades to no
+ * annotation, never to invented facts. When the target month IS visible, the
+ * detector's matched target-date cells are force-selected instead so the
+ * planner can act on the exact value it needs.
+ */
+function detectHorizonForFocus(
+  projection: PlannerInputComposerInput['projection'],
+  goal: string,
+  goalProgress: PlannerGoalProgress | undefined,
+): SurfaceHorizon | undefined {
+  if (!goalProgress || goalProgress.focus !== 'dates') return undefined;
+
+  const datesEntry = goalProgress.entries.find(entry => entry.key === 'dates');
+  if (!datesEntry || datesEntry.state !== 'NOT_SET') return undefined;
+
+  const requirements = parseGoalRequirements(goal);
+  if (!requirements) return undefined;
+
+  const horizon = detectDateHorizon(projection, requirements);
+  if (!horizon || horizon.covered || horizon.navControls.length === 0) return undefined;
+
+  return horizon;
+}
+
+function findTargetValueRefs(
+  projection: PlannerInputComposerInput['projection'],
+  goal: string,
+  goalProgress: PlannerGoalProgress | undefined,
+): string[] | undefined {
+  if (!goalProgress || goalProgress.focus !== 'dates') return undefined;
+
+  const datesEntry = goalProgress.entries.find(entry => entry.key === 'dates');
+  if (!datesEntry || datesEntry.state !== 'NOT_SET') return undefined;
+
+  const requirements = parseGoalRequirements(goal);
+  if (!requirements) return undefined;
+
+  const matched = findTargetDateCells(projection, requirements);
+  return matched.length > 0 ? matched.map(cell => cell.refId) : undefined;
 }
 
 function summarizeContinuity(snapshot: ContinuityGraphSnapshot): PlannerContinuitySummary {

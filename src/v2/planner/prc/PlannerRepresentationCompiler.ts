@@ -29,6 +29,8 @@ export class PlannerRepresentationCompiler {
         evidenceSnapshot: input.evidenceSnapshot,
         uncertainty: input.uncertainty,
         lineage: input.lineage,
+        goalProgress: input.goalProgress,
+        horizon: input.horizon,
       },
       surface,
       workingSet,

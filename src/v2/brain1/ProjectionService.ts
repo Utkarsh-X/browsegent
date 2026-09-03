@@ -31,6 +31,7 @@ export class ProjectionService {
       generationId: observation.generationId,
       url: observation.url,
       title: observation.title,
+      lang: observation.lang,
       interactions,
       readables,
       navigation,

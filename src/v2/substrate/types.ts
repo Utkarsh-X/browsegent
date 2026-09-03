@@ -23,6 +23,7 @@ export interface BuildObservationInput {
   generationId: number;
   url: string;
   title: string;
+  lang?: string;
   timestamp: number;
   durationMs: number;
   refs: V2Ref[];

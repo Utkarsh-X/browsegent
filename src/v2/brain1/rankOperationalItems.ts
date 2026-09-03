@@ -19,6 +19,7 @@ export function toProjectionItem(ref: V2Ref): ProjectionItem {
     placeholder: ref.placeholder,
     editableKind: ref.editableKind,
     capabilities,
+    box: ref.box,
     visibility: ref.visibility,
     actionability: ref.actionability,
     state: ref.state,

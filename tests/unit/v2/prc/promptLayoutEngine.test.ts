@@ -427,3 +427,101 @@ test('P3 compact data plane preserves control-plane evidence and action capabili
   });
   assert.ok(Buffer.byteLength(compact) < Buffer.byteLength(expanded), 'compact PRC should reduce the rendered user payload');
 });
+
+test('PromptLayoutEngine renders GOAL PROGRESS section in verbose mode and GP: line in compact mode', () => {
+  const compiler = new PlannerRepresentationCompiler();
+  const layout = new PromptLayoutEngine();
+
+  const inputWithProgress: PlannerInput = {
+    ...input,
+    goalProgress: {
+      entries: [
+        { key: 'destination', state: 'typed:"Paris"' },
+        { key: 'dates', state: 'NOT_SET' },
+        { key: 'guests', state: 'unverified' },
+      ],
+      focus: 'dates',
+    },
+  };
+
+  // 1. Verbose rendering
+  const irVerbose = compiler.compile(inputWithProgress);
+  const textVerbose = layout.render(irVerbose);
+  assert.match(
+    textVerbose,
+    /GOAL PROGRESS\n  destination: typed:"Paris"\n  dates: NOT_SET\n  guests: unverified\n  focus: dates/,
+  );
+
+  // 2. Compact rendering
+  const textCompact = layout.render(irVerbose, { compactDataPlane: true });
+  assert.match(
+    textCompact,
+    /GP: destination=typed:"Paris" dates=NOT_SET guests=unverified focus=dates/,
+  );
+
+  // 3. Absent when goalProgress is undefined
+  const irWithout = compiler.compile(input);
+  const textWithoutVerbose = layout.render(irWithout);
+  const textWithoutCompact = layout.render(irWithout, { compactDataPlane: true });
+  assert.doesNotMatch(textWithoutVerbose, /GOAL PROGRESS/);
+  assert.doesNotMatch(textWithoutCompact, /^GP:/m);
+});
+
+
+test('PromptLayoutEngine renders HORIZON in verbose and compact modes and omits it when absent', () => {
+  const compiler = new PlannerRepresentationCompiler();
+  const layout = new PromptLayoutEngine();
+
+  const inputWithHorizon: PlannerInput = {
+    ...input,
+    goalProgress: {
+      entries: [
+        { key: 'destination', state: 'typed:"Paris"' },
+        { key: 'dates', state: 'NOT_SET' },
+      ],
+      focus: 'dates',
+    },
+    horizon: {
+      kind: 'calendar',
+      visibleMonths: ['September 2026', 'October 2026'],
+      targetMonths: ['February 2027'],
+      covered: false,
+      navControls: [
+        { refId: 'ref_prev_month', name: 'Previous month', role: 'button', directionHint: 'prev', actionability: 'ready' },
+        { refId: 'ref_next_month', name: 'Next month', role: 'button', directionHint: 'next', actionability: 'disabled' },
+      ],
+    },
+  };
+
+  const verbose = layout.render(compiler.compile(inputWithHorizon));
+  assert.match(verbose, /HORIZON\n  visible months: September 2026, October 2026\n  goal needs: February 2027 \(outside the currently visible window\)/);
+  assert.match(verbose, /ref_next_month "Next month" \(hint: next, disabled\)/);
+
+  const compact = layout.render(compiler.compile(inputWithHorizon), { compactDataPlane: true });
+  assert.match(compact, /HORIZON: visible=\[September 2026,October 2026\] need=\[February 2027\] nav=ref_prev_month"Previous month":prev ref_next_month"Next month":next:disabled/);
+
+  const without = compiler.compile(input);
+  assert.doesNotMatch(layout.render(without), /HORIZON/);
+  assert.doesNotMatch(layout.render(without, { compactDataPlane: true }), /HORIZON:/);
+});
+
+test('PromptLayoutEngine renders stale goal progress state verbatim in both modes', () => {
+  const compiler = new PlannerRepresentationCompiler();
+  const layout = new PromptLayoutEngine();
+
+  const inputWithStale: PlannerInput = {
+    ...input,
+    goalProgress: {
+      entries: [
+        { key: 'destination', state: 'stale:"Paris"' },
+        { key: 'dates', state: 'NOT_SET' },
+      ],
+      focus: 'destination',
+    },
+  };
+
+  const verbose = layout.render(compiler.compile(inputWithStale));
+  assert.match(verbose, /destination: stale:"Paris"/);
+  const compact = layout.render(compiler.compile(inputWithStale), { compactDataPlane: true });
+  assert.match(compact, /GP: destination=stale:"Paris" dates=NOT_SET focus=destination/);
+});

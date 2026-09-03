@@ -39,6 +39,12 @@ export interface PlannerWorkingSetSelectorInput {
   projection: OperationalProjection;
   /** Current-observation refs that back relation-bound evidence facts. */
   evidenceRefIds?: readonly string[];
+  /** Widget-local navigation controls needed to bring a focused requirement's
+   *  target into view; force-selected so the planner can act on them. */
+  horizonControlRefs?: readonly string[];
+  /** Observed elements that concretely match the focused requirement's target
+   *  value (e.g. the goal's exact dates in an open calendar); force-selected. */
+  targetValueRefs?: readonly string[];
   graphSnapshot?: ContinuityGraphSnapshot;
   transitionEvidence?: TransitionEvidence;
   lastResult?: V2ToolResult;
@@ -66,6 +72,8 @@ export class PlannerWorkingSetSelector {
     const evidenceRefIds = new Set(input.evidenceRefIds ?? []);
     const suggestionOptionRefs = visibleSuggestionOptionRefs(input.projection.interactions);
     const prioritizeRecoveryControls = shouldPrioritizeRecoveryControls(input);
+    const horizonControlRefs = new Set(input.horizonControlRefs ?? []);
+    const targetValueRefs = new Set(input.targetValueRefs ?? []);
     const candidates = input.projection.interactions.map(item => {
       const candidate = scoreCandidate(
         item,
@@ -91,6 +99,22 @@ export class PlannerWorkingSetSelector {
         candidate.score += 180;
         candidate.dropReason = undefined;
       }
+      if (horizonControlRefs.has(item.refId)) {
+        // A paginated widget's navigation controls must stay visible while a
+        // focused requirement's target lies outside the rendered window. This
+        // is a ranking prior, never an auto-action.
+        candidate.reasons.add('horizon_control');
+        candidate.score += 160;
+        candidate.dropReason = undefined;
+      }
+      if (targetValueRefs.has(item.refId)) {
+        // Elements that concretely match the focused requirement's target
+        // value must reach the planner even when sibling floods squeeze them
+        // out; the planner still decides whether and in what order to act.
+        candidate.reasons.add('target_value');
+        candidate.score += 160;
+        candidate.dropReason = undefined;
+      }
       return candidate;
     });
     const scoreByRef = new Map(candidates.map(candidate => [candidate.item.refId, candidate.score]));
@@ -98,12 +122,19 @@ export class PlannerWorkingSetSelector {
       .filter(candidate => shouldKeepCandidate(candidate))
       .sort(compareCandidatesWithEvidence);
     const dropped = candidates.filter(candidate => !shouldKeepCandidate(candidate));
-    const selectedRefIds = selected
-      .slice(0, this.options.maxPrimaryRefs + this.options.maxSecondaryRefs)
+    const maxSelected = this.options.maxPrimaryRefs + this.options.maxSecondaryRefs;
+    const requiredRefs = [...horizonControlRefs, ...targetValueRefs];
+    const selectedWithHorizon = forceIncludeRefs(
+      selected.slice(0, maxSelected),
+      selected,
+      new Set(requiredRefs),
+      maxSelected,
+    );
+    const selectedRefIds = selectedWithHorizon
       .map(candidate => candidate.item.refId);
     const selectedSet = new Set(selectedRefIds);
-    const primary = selected.slice(0, this.options.maxPrimaryRefs);
-    const secondary = selected.slice(this.options.maxPrimaryRefs, this.options.maxPrimaryRefs + this.options.maxSecondaryRefs);
+    const primary = selectedWithHorizon.slice(0, this.options.maxPrimaryRefs);
+    const secondary = selectedWithHorizon.slice(this.options.maxPrimaryRefs, this.options.maxPrimaryRefs + this.options.maxSecondaryRefs);
     const readableEvidence = buildReadableEvidence(input.projection, selectedSet, this.options, scoreByRef);
     const quarantinedActions = buildQuarantinedActions(input);
     const actionSurface = buildActionSurface(input.projection, selectedSet, quarantinedActions);
@@ -252,15 +283,62 @@ function shouldKeepCandidate(candidate: Candidate): boolean {
   return candidate.dropReason === undefined && candidate.reasons.size > 0;
 }
 
+/**
+ * Ensures every required ref (horizon nav controls, target-value matches)
+ * ends up in the selected slice: planner refs are validated against the
+ * selected set, so an annotated-but-unselected control would be unactionable.
+ * Evicts from the sorted tail (lowest score) to make room.
+ */
+function forceIncludeRefs(
+  selectedSlice: Candidate[],
+  allCandidates: Candidate[],
+  requiredRefs: Set<string>,
+  maxSelected: number,
+): Candidate[] {
+  if (requiredRefs.size === 0) return selectedSlice;
+
+  const selectedRefIds = new Set(selectedSlice.map(candidate => candidate.item.refId));
+  const missing = allCandidates
+    .filter(candidate => requiredRefs.has(candidate.item.refId) && !selectedRefIds.has(candidate.item.refId))
+    .sort(compareCandidates);
+
+  if (missing.length === 0) return selectedSlice;
+
+  const merged = [...selectedSlice];
+  for (const candidate of missing) {
+    if (merged.length >= maxSelected) merged.pop();
+    merged.push(candidate);
+  }
+  return merged;
+}
+
 function compareCandidates(left: Candidate, right: Candidate): number {
   if (right.score !== left.score) return right.score - left.score;
   return left.item.refId.localeCompare(right.item.refId);
 }
 
 function shouldPrioritizeRecoveryControls(input: PlannerWorkingSetSelectorInput): boolean {
-  return input.lastResult?.success === false
+  if (
+    input.lastResult?.success === false
     && input.lastResult.error?.code === 'target_blocked'
-    && input.lastResult.error.retryable === false;
+    && input.lastResult.error.retryable === false
+  ) {
+    return true;
+  }
+  // A blocker recorded at the current URL stays present until an action
+  // removes it: successful reads, navigations back to the same surface, and
+  // re-opened overlays all leave the latest failure unresolved. Once the
+  // blocker is actually dismissed, its dismiss control usually disappears
+  // from the page, so a stale promotion degrades to a no-op.
+  const failures = input.failureEvidence ?? [];
+  const latest = failures[failures.length - 1];
+  return Boolean(
+    latest
+    && latest.kind === 'target_blocked'
+    && latest.retryable === false
+    && input.projection.url
+    && latest.url === input.projection.url,
+  );
 }
 
 function isGenericRecoveryControl(item: ProjectionItem): boolean {

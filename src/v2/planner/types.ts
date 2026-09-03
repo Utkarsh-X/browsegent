@@ -12,6 +12,8 @@ import type {
   PlannerWorkingSetOptions,
 } from './workingSetTypes';
 import type { ProjectionSizeDiagnostics } from './ProjectionSizeDiagnostics';
+import type { PlannerGoalProgress } from './GoalProgressTracker';
+import type { SurfaceHorizon } from './HorizonDetector';
 
 export type PlannerOutputTool =
   | 'click'
@@ -50,6 +52,7 @@ export interface PlannerInputComposerInput {
   evidenceCoverage?: PlannerEvidenceCoverage;
   evidenceSnapshot?: PlannerEvidenceSnapshot;
   workingSetOptions?: PlannerWorkingSetOptions;
+  goalProgress?: PlannerGoalProgress;
 }
 
 export interface PlannerInput {
@@ -71,6 +74,8 @@ export interface PlannerInput {
   evidenceSnapshot?: PlannerEvidenceSnapshot;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
+  goalProgress?: PlannerGoalProgress;
+  horizon?: SurfaceHorizon;
   sizeDiagnostics?: ProjectionSizeDiagnostics;
 }
 
@@ -230,6 +235,9 @@ export interface CompressedLineageStep {
   kind: string;
   status: string;
   targetRef?: string;
+  /** Bounded accessible name of the acted-on element; enables value-level lineage matching. */
+  targetName?: string;
+  value?: string;
   beforeObservationId?: string;
   afterObservationId?: string;
   errorCode?: string;
