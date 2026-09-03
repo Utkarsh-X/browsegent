@@ -416,6 +416,7 @@ export class V2AgentLoop {
             const uncertainty = this.uncertaintySignals.fromRuntimeState({
               projection: currentProjection,
               transitionEvidence,
+              lastResult,
               graphSnapshot,
               failures: failureEvidence,
               extraSignals: progressSignals,
@@ -430,6 +431,7 @@ export class V2AgentLoop {
             runtimeUncertainty = this.uncertaintySignals.fromRuntimeState({
               projection: currentProjection,
               transitionEvidence,
+              lastResult,
               graphSnapshot,
               failures: failureEvidence,
               deadStateEvidence,
@@ -457,6 +459,7 @@ export class V2AgentLoop {
             runtimeUncertainty = this.uncertaintySignals.fromRuntimeState({
               projection: currentProjection,
               transitionEvidence,
+              lastResult,
               graphSnapshot,
               failures: failureEvidence,
               deadStateEvidence,

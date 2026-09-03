@@ -7,6 +7,7 @@ import type { FailureEvidence } from './FailureClassifier';
 export interface RuntimeUncertaintyInput {
   projection?: OperationalProjection;
   transitionEvidence?: TransitionEvidence;
+  lastResult?: import('./types').V2ToolResult;
   graphSnapshot?: ContinuityGraphSnapshot;
   failures?: FailureEvidence[];
   deadStateEvidence?: DeadStateEvidence;
@@ -64,6 +65,16 @@ function collectSignals(input: RuntimeUncertaintyInput): string[] {
 
   if (input.transitionEvidence?.transitionClass === 'hard_reset') {
     signals.push('transition_class:hard_reset');
+  }
+
+  if (
+    input.lastResult?.success
+    && input.lastResult.kind === 'navigate'
+    && input.transitionEvidence?.urlChanged === false
+  ) {
+    // A navigation that did not change the URL is a self-inflicted reset:
+    // it clears in-progress form state without moving the task forward.
+    signals.push('no_op_navigation');
   }
 
   if (input.graphSnapshot && input.graphSnapshot.stats.presentRefCount === 0) {
