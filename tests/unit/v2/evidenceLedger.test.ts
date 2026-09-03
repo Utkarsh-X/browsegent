@@ -549,3 +549,113 @@ test('EvidenceLedger: Multi-observation durability preserves search cards across
   assert.ok(validationText.includes('Rank #1'));
   assert.ok(validationText.includes('resource-watch/resource-watch'));
 });
+
+// ---- 2026-09-03 answer-fidelity work: attribute-faithful card metrics ----
+
+test('card parser treats decimal star values as ratings, never as star counts', () => {
+  const refs: V2Ref[] = [
+    makeRef({
+      refId: 'ref_place_1',
+      role: 'link',
+      name: 'Salon Merite',
+      text: 'Salon Merite',
+      box: { x: 100, y: 100, width: 200, height: 30 },
+    }),
+    makeRef({
+      refId: 'ref_rating_1',
+      role: 'text',
+      name: '4.9 stars',
+      text: '4.9 stars',
+      box: { x: 100, y: 140, width: 60, height: 20 },
+    }),
+  ];
+
+  const obs = makeObservation('obs_rating', 'https://example.test/search?q=salons', refs);
+  const cards = extractResultCards(obs, undefined);
+
+  assert.equal(cards.length, 1);
+  assert.equal(cards[0].metrics.rating, 4.9);
+  assert.equal(cards[0].metrics.stars, undefined);
+});
+
+test('card parser keeps integer and k-suffixed star values as star counts', () => {
+  const refs: V2Ref[] = [
+    makeRef({
+      refId: 'ref_repo_1',
+      role: 'link',
+      name: 'owner/repo-one',
+      text: 'owner/repo-one',
+      box: { x: 100, y: 100, width: 200, height: 30 },
+    }),
+    makeRef({
+      refId: 'ref_stars_1',
+      role: 'text',
+      name: '98.4k stars',
+      text: '98.4k stars',
+      box: { x: 100, y: 140, width: 60, height: 20 },
+    }),
+  ];
+
+  const obs = makeObservation('obs_count', 'https://example.test/search?s=stars&o=desc', refs);
+  const cards = extractResultCards(obs, extractActiveSort(obs.url, obs.refs));
+
+  assert.equal(cards.length, 1);
+  assert.equal(cards[0].metrics.stars, 98400);
+  assert.equal(cards[0].metrics.rating, undefined);
+});
+
+test('card parser captures review counts separately from ratings', () => {
+  const refs: V2Ref[] = [
+    makeRef({
+      refId: 'ref_recipe_1',
+      role: 'heading',
+      name: 'Vegan Chocolate Chip Cookies',
+      text: 'Vegan Chocolate Chip Cookies',
+      box: { x: 100, y: 100, width: 260, height: 30 },
+    }),
+    makeRef({
+      refId: 'ref_reviews_1',
+      role: 'text',
+      name: '4.9 stars 67 reviews',
+      text: '4.9 stars 67 reviews',
+      box: { x: 100, y: 140, width: 140, height: 20 },
+    }),
+  ];
+
+  const obs = makeObservation('obs_reviews', 'https://example.test/search?q=recipes', refs);
+  const cards = extractResultCards(obs, undefined);
+
+  assert.equal(cards.length, 1);
+  assert.equal(cards[0].metrics.rating, 4.9);
+  assert.equal(cards[0].metrics.stars, undefined);
+  assert.equal(cards[0].metrics.reviewCount, 67);
+});
+
+test('validation evidence includes the bounded card raw text for semantic verification', () => {
+  const ledger = new EvidenceLedger();
+  const refs: V2Ref[] = [
+    makeRef({
+      refId: 'ref_paper_1',
+      role: 'link',
+      name: 'arXiv:2608.27457',
+      text: 'arXiv:2608.27457',
+      box: { x: 100, y: 100, width: 200, height: 30 },
+    }),
+    makeRef({
+      refId: 'ref_title_1',
+      role: 'heading',
+      name: 'Quantum Error Correction with Surface Codes',
+      text: 'Quantum Error Correction with Surface Codes',
+      box: { x: 100, y: 132, width: 320, height: 24 },
+    }),
+  ];
+
+  ledger.recordObservation(makeObservation('obs_rawtext', 'https://arxiv.test/search/?order=-announced_date_first', refs));
+
+  const validationText = ledger.buildValidationEvidenceText();
+  assert.ok(validationText.includes('arXiv:2608.27457'));
+  assert.ok(
+    validationText.includes('Quantum Error Correction with Surface Codes'),
+    `card raw text missing from validation evidence:\n${validationText}`,
+  );
+});

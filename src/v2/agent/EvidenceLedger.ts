@@ -186,6 +186,29 @@ export function isPrimaryEntityAnchor(ref: V2Ref, visibleRefs: V2Ref[] = []): bo
     }
   }
 
+  // 4. Listing entity link accompanied by metric neighbor (rating, stars, reviews, price)
+  const hasPlatformAnchors = visibleRefs.some(r => {
+    const t = getRefText(r).trim();
+    return /^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(t) || /\barXiv:\d+\.\d+/i.test(t);
+  });
+  if (!hasPlatformAnchors && (ref.role === 'link' || ref.tagName === 'a') && ref.box && visibleRefs.length > 1) {
+    if (text.length >= 3 && text.length <= 120 && !/^(?:sort|filter|view|see|click|read|learn|sign|log|search|menu|nav|star|sponsor|follow|watch|fork|subscribe|next|prev|previous|back|help|about|privacy|terms|contact|all|more)\b/i.test(text)) {
+      if (!/^(?:https?:\/\/|\/|\(?\d+[^)]*\)?$)/i.test(text) && !COMMON_FACET_KEYWORDS.has(lower)) {
+        const hasMetricNeighbor = visibleRefs.some(other => {
+          if (other === ref || !other.box) return false;
+          const otherText = getRefText(other).trim();
+          if (!/(?:stars?|ratings?|reviews?|[$€£¥₹])/i.test(otherText)) return false;
+          const dy = (other.box.y ?? 0) - (ref.box?.y ?? 0);
+          const dx = Math.abs((other.box.x ?? 0) - (ref.box?.x ?? 0));
+          return dy > 0 && dy <= 120 && dx <= 100;
+        });
+        if (hasMetricNeighbor) {
+          return true;
+        }
+      }
+    }
+  }
+
   return false;
 }
 
@@ -332,12 +355,28 @@ function buildCardFromRefs(
       }
     }
 
-    // Stars
-    const starMatch = text.match(/\b(\d+(?:[.,]\d+)?\s*[kKmM]?)\s+stars?\b/i)
-      || text.match(/\bstars?:\s*(\d+(?:[.,]\d+)?\s*[kKmM]?)\b/i)
-      || (metrics.stars === undefined && /^\d+(?:[.,]\d+)?\s*[kKmM]?$/.test(text) ? [null, text] : null);
-    if (starMatch?.[1]) {
-      metrics.stars = parseMetricNumber(starMatch[1]);
+    // Reviews
+    const reviewMatch = text.match(/\b(\d+(?:[.,]\d+)?\s*[kKmM]?)\s+reviews?\b/i)
+      || text.match(/\breviews?:\s*(\d+(?:[.,]\d+)?\s*[kKmM]?)\b/i);
+    if (reviewMatch?.[1]) {
+      metrics.reviewCount = parseMetricNumber(reviewMatch[1]);
+    }
+
+    // Decimal rating vs Star count
+    const decimalStarMatch = text.match(/\b([1-5]\.\d+)\s*stars?\b/i);
+    if (decimalStarMatch?.[1]) {
+      metrics.rating = parseFloat(decimalStarMatch[1]);
+    } else {
+      const starMatch = text.match(/\b(\d+(?:[.,]\d+)?\s*[kKmM])\s+stars?\b/i)
+        || text.match(/\b(\d+)\s+stars?\b/i)
+        || text.match(/\bstars?:\s*(\d+(?:[.,]\d+)?\s*[kKmM]?)\b/i)
+        || (metrics.stars === undefined && /^\d+(?:[.,]\d+)?\s*[kKmM]?$/.test(text) ? [null, text] : null);
+      if (starMatch?.[1]) {
+        const val = starMatch[1];
+        if (!/^[1-5]\.\d+$/.test(val.trim())) {
+          metrics.stars = parseMetricNumber(val);
+        }
+      }
     }
 
     // Price
@@ -347,10 +386,12 @@ function buildCardFromRefs(
       metrics.price = parseMetricNumber(priceMatch[1] ?? priceMatch[2]);
     }
 
-    // Rating
-    const ratingMatch = text.match(/\b([1-5](?:\.\d)?)\s*(?:stars?|rating|\/\s*5)\b/i);
-    if (ratingMatch?.[1]) {
-      metrics.rating = parseFloat(ratingMatch[1]);
+    // Rating (explicit rating or / 5)
+    if (metrics.rating === undefined) {
+      const ratingMatch = text.match(/\b([1-5](?:\.\d)?)\s*(?:stars?|rating|\/\s*5)\b/i);
+      if (ratingMatch?.[1]) {
+        metrics.rating = parseFloat(ratingMatch[1]);
+      }
     }
 
     // Citations
