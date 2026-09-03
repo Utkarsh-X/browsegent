@@ -166,3 +166,29 @@ paging calls. Keeps each stage falsifiable.
   invented facts.
 - No auto-clicking from the substrate: nav controls are promoted and annotated, the
   planner decides.
+
+## 5. Live verification results (final, 2026-09-03)
+
+Run `webvoyager_lite_1788461132769` (Booking--10, the 5-pagination task): the
+planner clicked the recommended Next-month control (EP9, clean HORIZON with
+`rec=[v2ref_10469]`), the implicit seek extended that click substrate-side
+(observation sequence jumped obs_2_10 → obs_2_17 during one step), and the
+next episode planned a click on **"Sunday, 14 February 2027"** — the exact
+target day five window-advances away. The run then failed only because the
+model re-clicked the committed Feb 14 instead of the missing Feb 21 endpoint
+(fixed same-day by the `partial:"..." (m/n selected)` state) and exhausted
+its budget.
+
+Detector hardening (same day): live EP5 replay showed hotel-card review dates
+("12 March", yearless) polluting the cell set — bounds blew up, every direction
+hint flipped to 'prev', recommendations died. Cell membership now requires a
+year token, and the cell set reduces to the densest cluster of modal-size
+boxes. The polluted observation now replays as exactly
+`[September 2026, October 2026] / need February 2027 / अगले महीने [REC]`.
+
+Residual bottleneck (evidence across 6 Booking probes): the destination-entry
+phase oscillates between clean (4 episodes: dismiss, type, suggestion) and
+pathological (9+ episodes: type → navigate-to-same-URL → overlay → re-type).
+The `no_op_navigation` signal + prompt guidance are live; deeper fixes belong
+to the input-fidelity workstream (InputService) — see the parallel work
+protocol doc.
