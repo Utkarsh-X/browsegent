@@ -284,3 +284,41 @@ test('detectDateHorizon recommends the control that moves the window toward the 
   assert.equal(next?.recommended, true);
   assert.equal(prev?.recommended, undefined);
 });
+
+test('detectDateHorizon ignores stray date-like page elements and grid-uniform cards', () => {
+  // Reproduces webvoyager_lite_1788460634215 EP5: hotel-card review dates
+  // ("12 March", yearless) and other page text polluted the visible window
+  // and broke direction hints on the real Booking surface.
+  const requirements = parseGoalRequirements("Find a hotel in Paris for February 14-21, 2027");
+  assert.ok(requirements);
+
+  const pollution: ProjectionItem[] = Array.from({ length: 14 }, (_, index) => makeItem({
+    refId: `ref_card_${index}`,
+    kind: 'generic',
+    role: 'link',
+    name: `Marari Beach Resort ${index} review 1${index % 10} March`,
+    text: `Marari Beach Resort ${index} review 1${index % 10} March`,
+    box: { x: 200 + (index % 4) * 220, y: 700 + Math.floor(index / 4) * 160, width: 210, height: 150 },
+  }));
+  const yearless = Array.from({ length: 6 }, (_, index) => makeItem({
+    refId: `ref_yearless_${index}`,
+    kind: 'generic',
+    name: `${index + 3} March`,
+    text: `${index + 3} March`,
+    box: { x: 300 + index * 30, y: 1100, width: 24, height: 24 },
+  }));
+
+  const horizon = detectDateHorizon(makeProjection([
+    ...englishCalendarCells(),
+    ...pollution,
+    ...yearless,
+    navButton('ref_prev', 'Previous month', 60),
+    navButton('ref_next', 'Next month', 1240),
+  ], 'en'), requirements);
+
+  assert.ok(horizon);
+  assert.deepEqual(horizon.visibleMonths, ['September 2026', 'October 2026']);
+  const next = horizon.navControls.find(control => control.refId === 'ref_next');
+  assert.equal(next?.recommended, true);
+  assert.equal(horizon.navControls.some(control => control.refId.startsWith('ref_card')), false);
+});

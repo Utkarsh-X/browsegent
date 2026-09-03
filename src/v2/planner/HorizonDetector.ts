@@ -63,7 +63,7 @@ export function detectDateHorizon(
   const targets = targetMonthKeys(requirements);
   if (targets.length === 0) return undefined;
 
-  const cells = collectCalendarCells(projection.interactions, monthNames);
+  const cells = selectCalendarCluster(collectCalendarCells(projection.interactions, monthNames));
   if (cells.length < MIN_CALENDAR_CELLS) return undefined;
 
   const visibleMonths = distinctMonthKeys(cells.map(cell => cell.monthKey));
@@ -140,7 +140,7 @@ export function findTargetDateCells(
   const targets = targetDates(requirements);
   if (targets.length === 0) return [];
 
-  const cells = collectCalendarCells(projection.interactions, monthNames);
+  const cells = selectCalendarCluster(collectCalendarCells(projection.interactions, monthNames));
   const matched: TargetDateCell[] = [];
   for (const cell of cells) {
     const hit = targets.find(target =>
@@ -176,9 +176,95 @@ function collectCalendarCells(
     const label = `${item.name ?? ''} ${item.text ?? ''}`.trim();
     if (!label) continue;
     const parsed = parseCalendarLabel(label, monthNames);
-    if (parsed) cells.push({ item, monthKey: parsed.monthKey, day: parsed.day });
+    // Calendar date buttons announce the full date including the year;
+    // requiring it excludes stray page elements whose text happens to
+    // contain a month word and a day number (news dates, offer badges).
+    if (parsed && parsed.monthKey.year !== undefined) {
+      cells.push({ item, monthKey: parsed.monthKey, day: parsed.day });
+    }
   }
   return cells;
+}
+
+/**
+ * Reduces parsed cells to the single densest spatial cluster: stray page
+ * elements whose labels happen to contain a month word and a day number
+ * (news dates, offer badges) do not form grid-like clusters, while a real
+ * calendar renders its cells on a tight regular grid. Falls back to all
+ * year-bearing cells when clustering is inconclusive.
+ */
+function selectCalendarCluster(cells: CalendarCell[]): CalendarCell[] {
+  const boxed = cells.filter(cell => cell.item.box !== undefined);
+  if (boxed.length < MIN_CALENDAR_CELLS) return [];
+
+  // Grid cells share one box size; content cards carrying date-like text do
+  // not. Keep only the cells whose dimensions match the modal size.
+  const sizeCounts = new Map<string, number>();
+  for (const cell of boxed) {
+    const box = cell.item.box!;
+    const key = `${Math.round(box.width / 8)}:${Math.round(box.height / 8)}`;
+    sizeCounts.set(key, (sizeCounts.get(key) ?? 0) + 1);
+  }
+  let modalKey = '';
+  let modalCount = 0;
+  for (const [key, count] of sizeCounts) {
+    if (count > modalCount) {
+      modalCount = count;
+      modalKey = key;
+    }
+  }
+  const uniform = boxed.filter(cell => {
+    const box = cell.item.box!;
+    return `${Math.round(box.width / 8)}:${Math.round(box.height / 8)}` === modalKey;
+  });
+  if (uniform.length < MIN_CALENDAR_CELLS) return [];
+
+  const parent = boxed.map((_, index) => index);
+  const find = (index: number): number => {
+    while (parent[index] !== index) {
+      parent[index] = parent[parent[index]];
+      index = parent[index];
+    }
+    return index;
+  };
+  const union = (left: number, right: number): void => {
+    const leftRoot = find(left);
+    const rightRoot = find(right);
+    if (leftRoot !== rightRoot) parent[rightRoot] = leftRoot;
+  };
+
+  const clusterGap = 80;
+  for (let i = 0; i < uniform.length; i += 1) {
+    for (let j = i + 1; j < uniform.length; j += 1) {
+      if (boxesNear(uniform[i].item.box!, uniform[j].item.box!, clusterGap)) union(i, j);
+    }
+  }
+
+  const clusterSizes = new Map<number, number>();
+  for (let i = 0; i < boxed.length; i += 1) {
+    const root = find(i);
+    clusterSizes.set(root, (clusterSizes.get(root) ?? 0) + 1);
+  }
+  let bestRoot = -1;
+  let bestSize = 0;
+  for (const [root, size] of clusterSizes) {
+    if (size > bestSize) {
+      bestSize = size;
+      bestRoot = root;
+    }
+  }
+  if (bestSize < MIN_CALENDAR_CELLS) return [];
+  return uniform.filter((_, index) => find(index) === bestRoot);
+}
+
+function boxesNear(
+  left: NonNullable<ProjectionItem['box']>,
+  right: NonNullable<ProjectionItem['box']>,
+  gap: number,
+): boolean {
+  const gapX = Math.max(0, Math.max(left.x, right.x) - Math.min(left.x + left.width, right.x + right.width));
+  const gapY = Math.max(0, Math.max(left.y, right.y) - Math.min(left.y + left.height, right.y + right.height));
+  return gapX <= gap && gapY <= gap;
 }
 
 function distinctMonthKeys(keys: MonthKeyLike[]): MonthKeyLike[] {
