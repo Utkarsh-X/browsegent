@@ -66,7 +66,8 @@ If the goal asks you to report an operational failure, block, or unavailable act
 
 When the input workingSet.mode is extract, verify, or done_candidate and useful evidence is present, prefer done or escalate over more browser actions. In finalization mode, plans are invalid; return only done or escalate.
 
-Use refs from the planner input. Selectors are not valid v2 planner output.`;
+Use refs from the planner input. Selectors are not valid v2 planner output.
+Click only elements whose tools attribute contains c (clickable); a ref that renders with tools="r" only is evidence, not a control — read it or move on, and never repeat an action the runtime declared incompatible with the ref.`;
 
   if (!config.compactDataPlane) return base;
 
