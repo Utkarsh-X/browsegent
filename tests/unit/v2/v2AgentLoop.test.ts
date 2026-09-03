@@ -3734,3 +3734,38 @@ test('V2AgentLoop extends a manual click on the recommended horizon control with
   assert.equal(seekDispatch.ref, 'ref_next_month');
   assert.equal(result.metrics.toolExecutions, 2);
 });
+
+test('V2AgentLoop refuses a same-URL navigation that follows a successful type', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'typed value' }], confidence: 'high' },
+    { plan: [{ tool: 'navigate', url: 'https://example.test/form/' }], confidence: 'high' },
+    { done: true, val: 'stayed on page' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'type',
+    targetRef: 'ref_submit',
+    value: { inputValue: 'typed value' },
+    evidence: makeEvidence('obs_initial', 'obs_after_action'),
+    traceStepId: 'fake_type',
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Fill the form without reloading',
+    maxSteps: 4,
+  });
+
+  const navDispatch = (dispatcher.steps ?? []).find(step => step.tool === 'navigate');
+  assert.equal(navDispatch, undefined, 'the destructive same-URL reset must be refused pre-dispatch');
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'stayed on page');
+});

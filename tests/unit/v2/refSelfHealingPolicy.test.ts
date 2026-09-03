@@ -49,12 +49,15 @@ test('shouldAttemptWeakenedRefSelfHeal denies hidden or blocked refs', () => {
   assert.equal(shouldAttemptWeakenedRefSelfHeal('click', makeRef({ actionability: 'blocked' })).allow, false);
 });
 
-test('shouldAttemptWeakenedRefSelfHeal denies snapshot-only read operations', () => {
-  assert.deepEqual(
-    shouldAttemptWeakenedRefSelfHeal('get', makeRef({
-      capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
-    })),
-    { allow: false, reason: 'read_path_not_browser_verified' },
-  );
+test('shouldAttemptWeakenedRefSelfHeal allows verified reads on readable refs', () => {
+  const decision = shouldAttemptWeakenedRefSelfHeal('get', makeRef({
+    capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
+  }));
+  assert.equal(decision.allow, true);
+});
+
+test('shouldAttemptWeakenedRefSelfHeal allows offscreen ready targets (runtime scrolls into view)', () => {
+  const decision = shouldAttemptWeakenedRefSelfHeal('click', makeRef({ visibility: 'offscreen' }));
+  assert.equal(decision.allow, true);
 });
 

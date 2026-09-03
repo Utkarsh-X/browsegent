@@ -59,6 +59,7 @@ export class V2AgentLoop {
     const maxSteps = Math.max(1, input.maxSteps);
     let stepBudget = maxSteps;
     let terminalContinuationUsed = false;
+    let lastCompletedMutationKind: string | undefined;
     const progressMemory = new ActionProgressMemory();
     const metrics = {
       plannerCalls: 0,
@@ -323,10 +324,50 @@ export class V2AgentLoop {
             }
           }
 
+          // Guard 3: a same-URL navigation immediately after a successful
+          // type is the destructive reset signature — it wipes the just-entered
+          // value and re-summons overlays (151 episodes wasted across 38
+          // Booking runs). Same-URL reloads in other contexts remain legal and
+          // stay with the no-progress memory machinery.
+          if (
+            !preExecutionRejected
+            && plannedStep.tool === 'navigate'
+            && plannedStep.url
+            && lastCompletedMutationKind === 'type'
+          ) {
+            const currentUrl = actionObservation.url;
+            const surfaceHasControls = actionObservation.refs.length > 0;
+            if (
+              currentUrl
+              && surfaceHasControls
+              && normalizeUrlForNavigationCompare(plannedStep.url) === normalizeUrlForNavigationCompare(currentUrl)
+            ) {
+              lastResult = {
+                success: false,
+                kind: 'navigate',
+                error: {
+                  code: 'same_url_navigation',
+                  message: 'Refused: this navigation targets the page you are already on. It would reset entered values and re-summon overlays. Continue with the visible on-page controls instead.',
+                  retryable: false,
+                },
+                traceStepId: `same_url_nav_${stepIndex}`,
+              };
+              preExecutionRejected = true;
+              outcomeRecorder.record({
+                stepIndex, tool: 'navigate', targetRef: undefined,
+                source: 'pre_execution_guard', success: false, errorCode: 'same_url_navigation',
+                stateChanged: false, readEvidenceProduced: false,
+              });
+            }
+          }
+
           // Dispatch (only if no pre-execution rejection)
           if (!preExecutionRejected) {
             lastResult = await dispatcher.dispatch(plannedStep, { goal: input.goal, seekStop });
             metrics.toolExecutions += 1;
+            if (lastResult.success) {
+              lastCompletedMutationKind = plannedStep.tool;
+            }
             lastResult = await this.extendManualHorizonClickWithSeek(
               plannedStep,
               lastResult,
@@ -1683,6 +1724,12 @@ function compactResultPreview(value: string): string {
 
 function compactRichEvidence(value: string): string {
   return value.replace(/\s+/g, ' ').trim().slice(0, 4_000);
+}
+
+export function normalizeUrlForNavigationCompare(url: string): string {
+  // Same-page navigations differ only by fragment or trailing slash; query
+  // strings are significant (a search URL is NOT the same page as the home).
+  return url.split('#')[0].replace(/\/+$/, '').toLowerCase();
 }
 
 export function validatePlannerStep(step: PlannerOutputStep): V2ToolError | undefined {
