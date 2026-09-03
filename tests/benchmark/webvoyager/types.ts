@@ -63,10 +63,18 @@ export interface WebVoyagerVerdict {
   needsManualReview: boolean;
   manualVerdict?: WebVoyagerManualVerdict;
   reasons: string[];
+  /** Official-methodology LLM judge outcome (additive; never replaces strictScore). */
+  judgeScore?: number;
+  judgeVerdict?: 'SUCCESS' | 'NOT_SUCCESS' | 'UNAVAILABLE';
+  judgeReason?: string;
 }
 
 export interface WebVoyagerEvaluationSummary {
   totalRuns: number;
+  /** Judge rates are computed only over tasks that were judged. */
+  judgedCount?: number;
+  judgeScoreRate?: number;
+  environmentAdjustedJudgeScore?: number;
   internalPassRate: number;
   rawAutoScore: number;
   strictScore: number;

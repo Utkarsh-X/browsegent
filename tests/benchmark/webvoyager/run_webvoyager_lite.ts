@@ -6,6 +6,8 @@ import { runBenchmark, type RunBenchmarkOptions } from '../v2/run_benchmark';
 import type { BenchmarkAdapter, BenchmarkReport, BenchmarkTraceScore } from '../v2/types';
 import { buildWebVoyagerTaskArtifactSummary } from './artifacts';
 import { evaluateWebVoyagerResult, summarizeWebVoyagerEvaluation } from './evaluator';
+import { collectFinalPageEvidence, judgeTaskResult } from './judge';
+import { readFileSync } from 'node:fs';
 import { loadWebVoyagerManualAudit } from './manual_audit';
 import { loadWebVoyagerSource } from './source_loader';
 import { resolveWebVoyagerTaskIds, selectWebVoyagerLiteTasks, toBenchmarkTasks, type WebVoyagerTaskSlice } from './task_selection';
@@ -28,6 +30,9 @@ export interface RunWebVoyagerLiteOptions {
   manualAuditPath?: string;
   plannerMode?: 'current' | 'compact_enforced';
   plannerSerialization?: RunBenchmarkOptions['plannerSerialization'];
+  /** Official-methodology LLM judge over internal-passed strict-0 tasks. */
+  judgeEnabled?: boolean;
+  judgeModel?: string;
   workingSetOptions?: RunBenchmarkOptions['workingSetOptions'];
 }
 
@@ -75,6 +80,32 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
     result,
     manualAudit.get(result.taskId),
   ));
+
+  // Official-methodology judge: additive measurement over internal-passed
+  // tasks whose strict score was zero — the cases where the string reference
+  // matcher cannot validate live-varying results.
+  const judgeEnabled = options.judgeEnabled === true;
+  if (judgeEnabled) {
+    const judgeModel = options.judgeModel;
+    for (const verdict of verdicts) {
+      if (verdict.internalPassed !== true || verdict.strictScore !== 0 || verdict.environmentStatus !== 'normal') continue;
+      const result = benchmark.results.find(candidate => candidate.taskId === verdict.taskId);
+      const tracePath = result?.tracePath;
+      if (!tracePath) continue;
+      const judgeOutcome = await judgeTaskResult({
+        goal: byTaskId.get(verdict.taskId)?.goal ?? '',
+        referenceHint: byTaskId.get(verdict.taskId)?.webVoyager.referenceAnswer?.answer as string | undefined,
+        agentAnswer: result.value ?? '',
+        finalUrl: readFinalPageUrl(tracePath),
+        pageEvidence: collectFinalPageEvidence(tracePath),
+        judgeModel,
+      });
+      verdict.judgeVerdict = judgeOutcome.verdict;
+      verdict.judgeReason = judgeOutcome.reason;
+      verdict.judgeScore = judgeOutcome.verdict === 'SUCCESS' ? 1 : judgeOutcome.verdict === 'NOT_SUCCESS' ? 0 : undefined;
+    }
+  }
+
   const evaluation = {
     summary: summarizeWebVoyagerEvaluation(verdicts),
     verdicts,
@@ -91,6 +122,21 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
   return { benchmark, evaluation };
 }
 
+function readFinalPageUrl(tracePath: string | undefined): string | undefined {
+  if (!tracePath) return undefined;
+  try {
+    const trace = JSON.parse(readFileSync(tracePath, 'utf8'));
+    const observations = Array.isArray(trace?.observations) ? trace.observations : [];
+    for (let index = observations.length - 1; index >= 0; index -= 1) {
+      const url = observations[index]?.observation?.url;
+      if (typeof url === 'string' && url.length > 0) return url;
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
 export function renderWebVoyagerEvaluationMarkdown(evaluation: WebVoyagerLiteRunResult['evaluation']): string {
   return [
     '# WebVoyager-lite Evaluation',
@@ -102,22 +148,29 @@ export function renderWebVoyagerEvaluationMarkdown(evaluation: WebVoyagerLiteRun
     `Partial-credit score: ${(evaluation.summary.partialCreditRate * 100).toFixed(1)}%`,
     `Environment-adjusted strict score: ${(evaluation.summary.environmentAdjustedStrictScore * 100).toFixed(1)}%`,
     `Environment-adjusted manual score: ${(evaluation.summary.environmentAdjustedManualScore * 100).toFixed(1)}%`,
+    evaluation.summary.judgedCount
+      ? `Judge score (official methodology, ${evaluation.summary.judgedCount} judged): ${((evaluation.summary.judgeScoreRate ?? 0) * 100).toFixed(1)}%`
+      : undefined,
+    evaluation.summary.judgedCount
+      ? `Environment-adjusted judge score: ${((evaluation.summary.environmentAdjustedJudgeScore ?? 0) * 100).toFixed(1)}%`
+      : undefined,
     `Manual review count: ${evaluation.summary.manualReviewCount}`,
     `Environment blocked count: ${evaluation.summary.environmentBlockedCount}`,
     `Impossible task count: ${evaluation.summary.impossibleTaskCount}`,
     '',
-    '| Task | Internal | Strict | Manual | Partial | Env | Ref Match | Review | Reasons |',
-    '| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |',
+    '| Task | Internal | Strict | Judge | Manual | Partial | Env | Ref Match | Review | Reasons |',
+    '| --- | ---: | ---: | ---: | ---: | ---: | --- | --- | --- | --- |',
     ...evaluation.verdicts.map(verdict => [
       verdict.taskId,
       verdict.internalPassed ? 1 : 0,
       verdict.strictScore,
+      verdict.judgeScore !== undefined ? verdict.judgeScore : '-',
       verdict.manualCorrectedScore,
       verdict.partialCredit,
       verdict.environmentStatus,
       verdict.referenceMatchType,
       verdict.needsManualReview ? 'yes' : 'no',
-      verdict.reasons.join(', ') || 'none',
+      [verdict.reasons.join(', '), verdict.judgeVerdict ? `judge:${verdict.judgeVerdict}` : ''].filter(Boolean).join('; ') || 'none',
     ].join(' | ').replace(/^/, '| ').replace(/$/, ' |')),
     '',
   ].join('\n');
@@ -162,9 +215,14 @@ export function readCliOptions(): RunWebVoyagerLiteOptions {
     throw new Error('--planner-serialization cannot be combined with --planner-mode compact_enforced; compact_enforced ignores planner serialization.');
   }
 
+  const judgeEnabled = hasFlag('--judge');
+  const judgeModel = readFlag('--judge-model');
+
   return {
     sourceRoot,
     adapter: createBenchmarkAdapter(adapterId, { env: process.env }),
+    judgeEnabled,
+    judgeModel,
     model,
     count: countArg ? Number(countArg) : undefined,
     geminiKeyIndex: keyIndexArg ? Number(keyIndexArg) : undefined,

@@ -8,10 +8,17 @@ import type {
   WebVoyagerVerdict,
 } from './types';
 
+export interface WebVoyagerJudgeInput {
+  score: 0 | 1;
+  verdict: 'SUCCESS' | 'NOT_SUCCESS' | 'UNAVAILABLE';
+  reason?: string;
+}
+
 export function evaluateWebVoyagerResult(
   task: WebVoyagerBenchmarkTask,
   result: ScoredBenchmarkResult,
   manualAudit?: WebVoyagerManualAuditEntry,
+  judge?: WebVoyagerJudgeInput,
 ): WebVoyagerVerdict {
   const reasons: string[] = [];
   const reference = task.webVoyager.referenceAnswer;
@@ -48,6 +55,9 @@ export function evaluateWebVoyagerResult(
     needsManualReview: !manualAudit && (!reference || referenceMatchType === 'mismatch' || referenceMatchType === 'partial' || environmentStatus !== 'normal'),
     manualVerdict: manualAudit?.verdict,
     reasons,
+    judgeScore: judge?.score,
+    judgeVerdict: judge?.verdict,
+    judgeReason: judge?.reason,
   };
 }
 
@@ -66,7 +76,16 @@ export function summarizeWebVoyagerEvaluation(verdicts: WebVoyagerVerdict[]): We
     manualReviewCount: verdicts.filter(verdict => verdict.needsManualReview).length,
     environmentBlockedCount: verdicts.filter(verdict => verdict.environmentStatus === 'environment_block').length,
     impossibleTaskCount: verdicts.filter(verdict => verdict.environmentStatus === 'impossible_task').length,
+    judgedCount: verdicts.filter(verdict => verdict.judgeScore !== undefined).length,
+    judgeScoreRate: judgeRatio(verdicts, undefined),
+    environmentAdjustedJudgeScore: judgeRatio(verdicts, 'eligible'),
   };
+}
+
+function judgeRatio(verdicts: WebVoyagerVerdict[], scope: 'eligible' | undefined): number {
+  const scoped = verdicts.filter(verdict => verdict.judgeScore !== undefined
+    && (scope === undefined || verdict.environmentAdjustedEligible));
+  return ratio(sum(scoped.map(verdict => verdict.judgeScore ?? 0)), scoped.length);
 }
 
 function classifyEnvironmentStatus(
