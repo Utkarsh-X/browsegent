@@ -40,13 +40,20 @@ async function main(): Promise<void> {
   const modelFlagIndex = flags.indexOf('--judge-model');
   const judgeModel = modelFlagIndex >= 0 ? flags[modelFlagIndex + 1] : undefined;
 
+  if (!process.env.GEMINI_API_KEY) {
+    const pool = Object.keys(process.env).filter(k => k.startsWith('GEMINI_API_KEY_')).map(k => process.env[k]).filter(Boolean);
+    if (pool.length > 0) {
+      process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY_4 || pool[0];
+    }
+  }
+
   const report = JSON.parse(readFileSync(join(runDir, 'report.json'), 'utf8')) as { results: ReportEntry[] };
   const evaluationPath = join(runDir, 'webvoyager_evaluation.json');
   const evaluation = JSON.parse(readFileSync(evaluationPath, 'utf8')) as EvaluationFile;
   copyFileSync(evaluationPath, join(runDir, 'webvoyager_evaluation.prejudge.json'));
 
   const resultByTask = new Map(report.results.map(entry => [entry.taskId, entry]));
-  const taskById = new Map(evaluation.tasks.map(task => [`webvoyager_${task.id}`, task]));
+  const taskById = new Map(evaluation.tasks.map(task => [`webvoyager_${task.id.replace(/--/g, '__')}`, task]));
 
   let judged = 0;
   for (const verdict of evaluation.verdicts) {
@@ -97,7 +104,7 @@ async function judgeWithRetry(input: {
     pageEvidence: collectFinalPageEvidence(input.tracePath),
   });
   try {
-    const result = await callProvider(JUDGE_SYSTEM_PROMPT, userPrompt, input.judgeModel);
+    const result = await callProvider(JUDGE_SYSTEM_PROMPT, userPrompt, input.judgeModel, { plainTextResponse: true });
     const verdict = parseJudgeVerdict(result.text);
     return { verdict, reason: result.text.slice(-500) };
   } catch (error) {

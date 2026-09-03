@@ -70,6 +70,7 @@ export async function judgeTaskResult(input: JudgeInput): Promise<JudgeOutcome> 
       JUDGE_SYSTEM_PROMPT,
       buildJudgeUserPrompt(input),
       input.judgeModel,
+      { plainTextResponse: true },
     );
     const verdict = parseJudgeVerdict(result.text);
     // Keep the raw tail on parse failures so the output format can be fixed

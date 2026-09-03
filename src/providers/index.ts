@@ -23,6 +23,9 @@ export interface ProviderResult {
 export interface ProviderCallOptions {
   responseSchema?: Record<string, unknown>;
   onPacingWait?: (durationMs: number) => void;
+  /** Omit the Gemini JSON response schema and mime type: for callers that
+   *  need free-form text output (e.g. the benchmark result judge). */
+  plainTextResponse?: boolean;
 }
 
 export function detectProvider(model: string): LlmProvider {
@@ -126,12 +129,17 @@ async function callGemini(system: string, user: string, model: string, options: 
     const body = JSON.stringify({
       system_instruction: { parts: [{ text: system }] },
       contents: [{ parts: [{ text: user }] }],
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 1024,
-        responseMimeType: 'application/json',
-        responseJsonSchema: responseSchema,
-      },
+      generationConfig: options.plainTextResponse === true
+        ? {
+            temperature: 0.1,
+            maxOutputTokens: 1024,
+          }
+        : {
+            temperature: 0.1,
+            maxOutputTokens: 1024,
+            responseMimeType: 'application/json',
+            responseJsonSchema: responseSchema,
+          },
     });
 
     const retries = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRIES', 6);
