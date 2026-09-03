@@ -59,7 +59,7 @@ export class V2AgentLoop {
     const maxSteps = Math.max(1, input.maxSteps);
     let stepBudget = maxSteps;
     let terminalContinuationUsed = false;
-    let lastCompletedMutationKind: string | undefined;
+    let lastCompletedSamePageMutation: string | undefined;
     const progressMemory = new ActionProgressMemory();
     const metrics = {
       plannerCalls: 0,
@@ -324,16 +324,16 @@ export class V2AgentLoop {
             }
           }
 
-          // Guard 3: a same-URL navigation immediately after a successful
-          // type is the destructive reset signature — it wipes the just-entered
-          // value and re-summons overlays (151 episodes wasted across 38
-          // Booking runs). Same-URL reloads in other contexts remain legal and
-          // stay with the no-progress memory machinery.
+          // Guard 3: a same-URL navigation after a successful same-page
+          // mutation is the destructive reset signature — it wipes entered
+          // values and re-summons overlays (151 episodes wasted across 38
+          // Booking runs). Same-URL reloads with no pending in-page work stay
+          // legal and remain with the no-progress memory machinery.
           if (
             !preExecutionRejected
             && plannedStep.tool === 'navigate'
             && plannedStep.url
-            && lastCompletedMutationKind === 'type'
+            && lastCompletedSamePageMutation !== undefined
           ) {
             const currentUrl = actionObservation.url;
             const surfaceHasControls = actionObservation.refs.length > 0;
@@ -366,7 +366,11 @@ export class V2AgentLoop {
             lastResult = await dispatcher.dispatch(plannedStep, { goal: input.goal, seekStop });
             metrics.toolExecutions += 1;
             if (lastResult.success) {
-              lastCompletedMutationKind = plannedStep.tool;
+              if (plannedStep.tool === 'navigate') {
+                lastCompletedSamePageMutation = undefined;
+              } else if (plannedStep.tool === 'type' || plannedStep.tool === 'click' || plannedStep.tool === 'select') {
+                lastCompletedSamePageMutation = plannedStep.tool;
+              }
             }
             lastResult = await this.extendManualHorizonClickWithSeek(
               plannedStep,
