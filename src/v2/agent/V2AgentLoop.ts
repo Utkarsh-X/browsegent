@@ -505,19 +505,20 @@ export class V2AgentLoop {
             // carry that old terminal signal into the next planner call.
             deadStateEvidence = undefined;
           }
-          runtimeUncertainty = undefined;
-          if (progressSignals.length > 0) {
-            const currentProjection = this.projectionService.project(observation, graphSnapshot);
-            runtimeUncertainty = this.uncertaintySignals.fromRuntimeState({
-              projection: currentProjection,
-              transitionEvidence,
-              lastResult,
-              graphSnapshot,
-              failures: failureEvidence,
-              deadStateEvidence,
-              extraSignals: progressSignals,
-            });
-          }
+          // Always recompute: runtime signals (e.g. no_op_navigation) must
+          // reach the planner even on ordinary successful actions. The block
+          // renders nothing when the level is 'none', so there is no prompt
+          // cost for a clean step.
+          const currentProjection = this.projectionService.project(observation, graphSnapshot);
+          runtimeUncertainty = this.uncertaintySignals.fromRuntimeState({
+            projection: currentProjection,
+            transitionEvidence,
+            lastResult,
+            graphSnapshot,
+            failures: failureEvidence,
+            deadStateEvidence,
+            extraSignals: progressSignals,
+          });
 
           const nextStep = plan[planIndex + 1];
           if (!shouldContinueMiniPlan({ lastResult: lastResult!, nextStep, freshObservation: observation })) {

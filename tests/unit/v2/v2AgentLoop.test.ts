@@ -3769,3 +3769,40 @@ test('V2AgentLoop refuses a same-URL navigation that follows a successful type',
   assert.equal(result.success, true);
   assert.equal(result.value, 'stayed on page');
 });
+
+test('V2AgentLoop delivers the no_op_navigation signal to the next planner input', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'navigate', url: 'https://other.example.test/landing' }], confidence: 'high' },
+    { done: true, val: 'acknowledged reload' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'navigate',
+    value: { url: 'https://example.test/form' },
+    evidence: {
+      ...makeEvidence('obs_initial', 'obs_after_action'),
+      urlChanged: false,
+      generationChanged: true,
+      notes: ['generation_changed'],
+    },
+    traceStepId: 'reload_same_url',
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Continue the task',
+    maxSteps: 3,
+  });
+
+  assert.ok(
+    planner.inputs[1].uncertainty.signals.includes('no_op_navigation'),
+    'the same-URL reload must surface no_op_navigation to the planner',
+  );
+});
