@@ -3626,3 +3626,112 @@ test('V2AgentLoop caps the terminal continuation at one per run', async () => {
   assert.deepEqual(planner.modes, ['normal', 'normal', 'finalization']);
   assert.equal(result.failureReason, 'v2_max_steps_exhausted');
 });
+
+// ---- implicit seek continuation ----
+
+const HI_MONTHS = ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'];
+
+function makeCalendarRefs(monthIndexes: Array<[number, number]>): V2Ref[] {
+  const refs: V2Ref[] = [];
+  let position = 0;
+  for (const [monthIndex, monthCount] of monthIndexes) {
+    for (let day = 1; day <= monthCount; day += 1) {
+      refs.push(makeRef({
+        refId: `ref_cell_${monthIndex}_${day}`,
+        targetId: `target_cell_${monthIndex}_${day}`,
+        kind: 'checkbox',
+        role: 'checkbox',
+        name: `गुरुवार, ${day} ${HI_MONTHS[monthIndex]} 2026`,
+        text: String(day),
+        box: {
+          x: 100 + (position % 30) * 40,
+          y: 500 + Math.floor(position / 30) * 40,
+          width: 40,
+          height: 40,
+        },
+      }));
+      position += 1;
+    }
+  }
+  return refs;
+}
+
+function makeCalendarObservation(id: string, monthIndexes: Array<[number, number]>): BrowserObservation {
+  const cellCount = monthIndexes.reduce((sum, [, count]) => sum + count, 0);
+  const maxX = 100 + 29 * 40 + 40;
+  return makeObservation(id, {
+    lang: 'hi',
+    url: 'https://www.example.test/index.html',
+    refs: [
+      ...makeCalendarRefs(monthIndexes),
+      makeRef({
+        refId: 'ref_prev_month',
+        targetId: 'target_prev_month',
+        name: 'पिछले महीने',
+        text: 'पिछले महीने',
+        box: { x: 40, y: 460, width: 30, height: 30 },
+      }),
+      makeRef({
+        refId: 'ref_next_month',
+        targetId: 'target_next_month',
+        name: 'अगले महीने',
+        text: 'अगले महीने',
+        box: { x: maxX + 20, y: 460, width: 30, height: 30 },
+      }),
+    ],
+  });
+}
+
+class SequentialObserveHarness extends FakeHarness {
+  private index = 0;
+  constructor(observations: BrowserObservation[]) {
+    super(observations);
+  }
+  override async observe(): Promise<BrowserObservation> {
+    this.observeCount += 1;
+    this.index = Math.min(this.index + 1, this.observations.length - 1);
+    return this.observations[this.index];
+  }
+  override getCurrentObservation(): BrowserObservation {
+    return this.observations[this.index];
+  }
+}
+
+test('V2AgentLoop extends a manual click on the recommended horizon control with the seek loop', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  // Window advances Sep/Oct -> Oct/Nov -> Nov/Dec where the goal dates live.
+  const observations = [
+    makeCalendarObservation('obs_cal_1', [[8, 30], [9, 31]]),
+    makeCalendarObservation('obs_cal_2', [[9, 31], [10, 30]]),
+    makeCalendarObservation('obs_cal_3', [[10, 30], [11, 31]]),
+  ];
+  const harness = new SequentialObserveHarness(observations);
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_next_month' }], confidence: 'high' },
+    { done: true, val: 'dates reachable' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_next_month',
+    evidence: makeEvidence('obs_cal_1', 'obs_cal_2'),
+    traceStepId: 'fake_click_nav',
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://www.example.test/index.html',
+    goal: 'Find hotel deals for December 25-26',
+    maxSteps: 3,
+  });
+
+  const seekDispatch = dispatcher.steps.find(step => step.tool === 'seek');
+  assert.ok(seekDispatch, 'implicit seek continuation must be dispatched');
+  assert.equal(seekDispatch.ref, 'ref_next_month');
+  assert.equal(result.metrics.toolExecutions, 2);
+});

@@ -29,6 +29,7 @@ import { FailureClassifier, type FailureEvidence } from '../runtime/FailureClass
 import type { BrowserObservation, TransitionEvidence, V2ToolResult, V2ToolError } from '../runtime/types';
 import { UncertaintySignals, type RuntimeUncertainty } from '../runtime/UncertaintySignals';
 import { V2ToolDispatcher } from '../tools/V2ToolDispatcher';
+import type { V2ToolDispatchContext, V2ToolDispatcherLike } from '../tools/types';
 import { LatencyLedger } from '../trace/LatencyLedger';
 import { ActionOutcomeRecorder } from '../trace/ActionOutcomeRecord';
 import type { TraceJsonValue, TraceStep } from '../trace/types';
@@ -326,6 +327,14 @@ export class V2AgentLoop {
           if (!preExecutionRejected) {
             lastResult = await dispatcher.dispatch(plannedStep, { goal: input.goal, seekStop });
             metrics.toolExecutions += 1;
+            lastResult = await this.extendManualHorizonClickWithSeek(
+              plannedStep,
+              lastResult,
+              plannerInput,
+              dispatcher,
+              { goal: input.goal, seekStop },
+              metrics,
+            );
             transitionEvidence = lastResult.evidence;
             const capturedAfterAction = transitionEvidence?.afterObservationId
               ? harness.getCurrentObservation?.()
@@ -538,6 +547,62 @@ export class V2AgentLoop {
       runtimeMode: 'agent',
       viewport: this.options.viewport,
     });
+  }
+
+  /**
+   * Implicit seek continuation: probes show weak models reliably click the
+   * horizon's recommended pagination control but cannot sustain the
+   * click-reobserve loop across episodes. When the planner manually clicks a
+   * control the horizon marked [recommended], the substrate completes the
+   * bounded pagination loop on that decision — same stop condition, stall
+   * detection, and iteration cap as the explicit seek tool. The planner still
+   * decides WHAT to advance; the substrate owns the iterations.
+   */
+  private async extendManualHorizonClickWithSeek(
+    plannedStep: PlannerOutputStep,
+    lastResult: V2ToolResult,
+    plannerInput: PlannerInput,
+    dispatcher: V2ToolDispatcherLike,
+    context: V2ToolDispatchContext,
+    metrics: { toolExecutions: number },
+  ): Promise<V2ToolResult> {
+    if (
+      lastResult.success !== true
+      || lastResult.kind !== 'click'
+      || plannedStep.ref === undefined
+      || !context.seekStop
+    ) {
+      return lastResult;
+    }
+    const horizon = plannerInput.horizon;
+    if (!horizon) return lastResult;
+    const recommended = horizon.navControls.find(
+      control => control.refId === plannedStep.ref && control.recommended && control.actionability === 'ready',
+    );
+    if (!recommended) return lastResult;
+
+    const seekResult = await dispatcher.dispatch(
+      { tool: 'seek', ref: plannedStep.ref },
+      context,
+    );
+    metrics.toolExecutions += 1;
+    if (!seekResult.success) {
+      // The manual click already advanced the window one step; a failed
+      // continuation must not retroactively fail the planner's action.
+      return lastResult;
+    }
+    const seekValue = seekResult.value as { iterationCount?: number; stopReason?: string } | undefined;
+    return {
+      ...lastResult,
+      evidence: seekResult.evidence ?? lastResult.evidence,
+      value: {
+        ...(lastResult.value as Record<string, unknown> | undefined),
+        implicitSeek: {
+          iterations: seekValue?.iterationCount ?? 0,
+          stopReason: seekValue?.stopReason ?? 'unknown',
+        },
+      },
+    };
   }
 
   private createPlannerClient(
