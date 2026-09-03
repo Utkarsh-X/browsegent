@@ -13,6 +13,7 @@ export function toProjectionItem(ref: V2Ref): ProjectionItem {
     text: ref.text,
     tagName: ref.tagName,
     inputType: ref.inputType,
+    inForm: ref.inForm,
     ariaAutocomplete: ref.ariaAutocomplete,
     ariaHasPopup: ref.ariaHasPopup,
     value: ref.value,

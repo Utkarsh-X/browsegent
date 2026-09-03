@@ -50,6 +50,7 @@ export class ObservationService {
       text: candidate.text,
       tagName: candidate.tagName,
       inputType: candidate.inputType,
+      inForm: candidate.inForm,
       value: candidate.value,
       placeholder: candidate.placeholder,
       editableKind: candidate.editableKind,
@@ -527,7 +528,15 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
       markedElements.push(element);
       window.__browsegentV2MarkedElements = markedElements;
       const tagName = element.tagName.toLowerCase();
-      const inputType = tagName === 'input' ? String(element.getAttribute('type') || 'text').toLowerCase() : undefined;
+      const inputType = tagName === 'input'
+        ? String(element.getAttribute('type') || 'text').toLowerCase()
+        : tagName === 'button'
+          ? String(element.getAttribute('type') || '').toLowerCase() || undefined
+          : undefined;
+      // Spec semantics: a <button> without an explicit type defaults to
+      // submit WHEN it belongs to a form — the commit-phase machinery needs
+      // that fact and it is language-free.
+      const inForm = tagName === 'button' ? Boolean(element.closest('form')) : false;
       const isContentEditable = element.getAttribute('contenteditable') === 'true' || element.isContentEditable === true;
       const ariaAutocomplete = element.getAttribute('aria-autocomplete') || undefined;
       const ariaHasPopup = element.getAttribute('aria-haspopup') || undefined;
@@ -561,6 +570,7 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
         selectorCandidates,
         tagName,
         inputType,
+        inForm,
         value,
         placeholder,
         editableKind,

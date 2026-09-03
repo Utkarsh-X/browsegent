@@ -45,6 +45,9 @@ export interface PlannerWorkingSetSelectorInput {
   /** Observed elements that concretely match the focused requirement's target
    *  value (e.g. the goal's exact dates in an open calendar); force-selected. */
   targetValueRefs?: readonly string[];
+  /** Form submit controls promoted during the commit phase (every parsed
+   *  requirement satisfied, no submission yet); force-selected. */
+  submitControlRefs?: readonly string[];
   graphSnapshot?: ContinuityGraphSnapshot;
   transitionEvidence?: TransitionEvidence;
   lastResult?: V2ToolResult;
@@ -74,6 +77,7 @@ export class PlannerWorkingSetSelector {
     const prioritizeRecoveryControls = shouldPrioritizeRecoveryControls(input);
     const horizonControlRefs = new Set(input.horizonControlRefs ?? []);
     const targetValueRefs = new Set(input.targetValueRefs ?? []);
+    const submitControlRefs = new Set(input.submitControlRefs ?? []);
     const candidates = input.projection.interactions.map(item => {
       const candidate = scoreCandidate(
         item,
@@ -115,6 +119,13 @@ export class PlannerWorkingSetSelector {
         candidate.score += 160;
         candidate.dropReason = undefined;
       }
+      if (submitControlRefs.has(item.refId)) {
+        // The commit phase needs the form's submit control visible; render
+        // floods after the last selection must not hide it.
+        candidate.reasons.add('submit_control');
+        candidate.score += 160;
+        candidate.dropReason = undefined;
+      }
       return candidate;
     });
     const scoreByRef = new Map(candidates.map(candidate => [candidate.item.refId, candidate.score]));
@@ -123,7 +134,7 @@ export class PlannerWorkingSetSelector {
       .sort(compareCandidatesWithEvidence);
     const dropped = candidates.filter(candidate => !shouldKeepCandidate(candidate));
     const maxSelected = this.options.maxPrimaryRefs + this.options.maxSecondaryRefs;
-    const requiredRefs = [...horizonControlRefs, ...targetValueRefs];
+    const requiredRefs = [...horizonControlRefs, ...targetValueRefs, ...submitControlRefs];
     const selectedWithHorizon = forceIncludeRefs(
       selected.slice(0, maxSelected),
       selected,

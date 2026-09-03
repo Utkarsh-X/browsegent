@@ -38,6 +38,7 @@ export interface V2Ref {
   text?: string;
   tagName?: string;
   inputType?: string;
+  inForm?: boolean;
   /** Bounded current value for non-password editable controls. */
   value?: string;
   placeholder?: string;

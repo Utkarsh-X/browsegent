@@ -21,6 +21,7 @@ export interface ProjectionItem {
   text?: string;
   tagName?: string;
   inputType?: string;
+  inForm?: boolean;
   value?: string;
   placeholder?: string;
   ariaAutocomplete?: string;

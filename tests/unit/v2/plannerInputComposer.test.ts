@@ -38,6 +38,7 @@ function makeObservation(overrides: {
   warnings?: BrowserObservation['warnings'];
   generationId?: number;
   url?: string;
+  lang?: string;
 }): BrowserObservation {
   const generationId = overrides.generationId ?? 1;
   return buildBrowserObservation({
@@ -46,6 +47,7 @@ function makeObservation(overrides: {
     generationId,
     url: overrides.url ?? 'https://example.test/app',
     title: 'Planner Fixture',
+    lang: overrides.lang,
     timestamp: generationId,
     durationMs: 2,
     refs: overrides.refs ?? [makeRef({ generationId })],
@@ -1030,4 +1032,60 @@ test('PlannerInputComposer keeps dismissal controls prioritized while a blocker 
   const dismiss = lanes.find(ref => ref.refId === 'ref_dismiss');
   assert.ok(dismiss);
   assert.ok(dismiss.reasons.includes('recovery_control'));
+});
+
+test('PlannerInputComposer promotes the form submit control during the commit phase', () => {
+  // Reproduces webvoyager_lite_1788469342994: both goal dates selected, the
+  // खोजें submit button existed in the observation but was cut from the
+  // working set — the model never saw the way to confirm the entry.
+  const observation = makeObservation({
+    observationId: 'obs_commit_phase',
+    lang: 'hi',
+    refs: [
+      makeRef({ refId: 'ref_dest', targetId: 'target_dest', role: 'textbox', name: 'Enter destination', text: 'Enter destination' }),
+      makeRef({
+        refId: 'ref_search_btn',
+        targetId: 'target_search_btn',
+        name: 'खोजें',
+        text: 'खोजें',
+        inputType: 'submit',
+        box: { x: 1096, y: 500, width: 93, height: 51 },
+      }),
+      makeRef({ refId: 'ref_plain_btn', targetId: 'target_plain_btn', name: 'Plain', text: 'Plain' }),
+    ],
+  });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_commit_phase',
+    goal: 'Find hotel deals for December 25-26',
+    projection,
+    trace: [
+      {
+        stepId: 's1', index: 0, kind: 'type', status: 'completed', startedAt: 1,
+        warnings: [], targetRef: 'ref_dest', input: { text: 'Mexico' }, result: { success: true },
+      },
+      {
+        stepId: 's2', index: 1, kind: 'click', status: 'completed', startedAt: 2,
+        warnings: [], targetRef: 'ref_cell',
+        result: { success: true, target: { refId: 'ref_cell', name: 'शुक्रवार, 25 दिसंबर 2026', text: '25', role: 'checkbox' } },
+      },
+      {
+        stepId: 's3', index: 2, kind: 'click', status: 'completed', startedAt: 3,
+        warnings: [], targetRef: 'ref_cell2',
+        result: { success: true, target: { refId: 'ref_cell2', name: 'शनिवार, 26 दिसंबर 2026', text: '26', role: 'checkbox' } },
+      },
+    ],
+  });
+
+  assert.ok(input.goalProgress);
+  assert.equal(input.goalProgress.focus, undefined, 'all parsed requirements are addressed');
+  const lanes = [...(input.workingSet?.primaryRefs ?? []), ...(input.workingSet?.secondaryRefs ?? [])];
+  const submit = lanes.find(ref => ref.refId === 'ref_search_btn');
+  assert.ok(submit, 'submit control must be force-selected');
+  assert.ok(submit.reasons.includes('submit_control'));
+  assert.equal(
+    lanes.find(ref => ref.refId === 'ref_plain_btn')?.reasons.includes('submit_control'),
+    false,
+    'non-submit buttons must not carry the submit_control reason',
+  );
 });

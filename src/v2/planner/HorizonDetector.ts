@@ -353,3 +353,26 @@ function boxOverlapsBand(box: NonNullable<ProjectionItem['box']>, bounds: Widget
   const withinTopBand = box.y + box.height >= bounds.minY - aboveWidgetMargin && box.y <= bandMaxY;
   return withinX && withinTopBand;
 }
+
+/**
+ * Commit-phase helper: finds the form submit controls on the surface
+ * (explicit type=submit, or a typeless <button> inside a <form> — the HTML
+ * spec default). Used once every parsed requirement is satisfied so the
+ * search/submit button cannot be squeezed out of the working set by render
+ * floods. Language-free structural semantics; cap keeps it bounded.
+ */
+export function findSubmitControls(projection: OperationalProjection): Array<{ refId: string; name?: string }> {
+  const found: Array<{ refId: string; name?: string }> = [];
+  for (const item of projection.interactions) {
+    if (found.length >= MAX_SUBMIT_CONTROLS) break;
+    if (item.visibility !== 'visible' && item.visibility !== 'offscreen') continue;
+    if (item.actionability !== 'ready') continue;
+    if (item.kind !== 'button' && item.role !== 'button') continue;
+    const isSubmit = item.inputType === 'submit' || (item.inForm === true && item.inputType === undefined);
+    if (!isSubmit) continue;
+    found.push({ refId: item.refId, name: item.name ?? item.text });
+  }
+  return found;
+}
+
+const MAX_SUBMIT_CONTROLS = 3;

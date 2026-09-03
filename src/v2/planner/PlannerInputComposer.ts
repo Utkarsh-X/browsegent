@@ -6,9 +6,10 @@ import { PlannerWorkingSetSelector } from './PlannerWorkingSetSelector';
 import { RecoveryStateBuilder } from '../runtime/RecoveryState';
 import { buildTaskProgress } from '../agent/TaskProgress';
 import { evaluateGoalProgress, parseGoalRequirements } from './GoalProgressTracker';
-import { detectDateHorizon, findTargetDateCells } from './HorizonDetector';
+import { detectDateHorizon, findSubmitControls, findTargetDateCells } from './HorizonDetector';
 import type { PlannerGoalProgress } from './GoalProgressTracker';
 import type { SurfaceHorizon } from './HorizonDetector';
+import type { CompressedLineage } from './types';
 import type {
   PlannerContinuitySummary,
   PlannerDeadStateSummary,
@@ -47,23 +48,26 @@ export class PlannerInputComposer {
     const lineage = input.trace
       ? this.lineageCompressor.compress(input.trace, { maxSteps: input.maxLineageSteps })
       : undefined;
+    const goalLineage = input.trace
+      ? this.lineageCompressor.compress(input.trace, { maxSteps: GOAL_PROGRESS_LINEAGE_HORIZON_STEPS })
+      : undefined;
     const goalProgress = input.goalProgress ?? evaluateGoalProgress(input.goal, {
       url: input.graphSnapshot?.url,
-      lineage: input.trace
-        ? this.lineageCompressor.compress(input.trace, { maxSteps: GOAL_PROGRESS_LINEAGE_HORIZON_STEPS })
-        : undefined,
+      lineage: goalLineage,
       lang: input.projection.lang,
     });
     const horizon = detectHorizonForFocus(input.projection, input.goal, goalProgress);
     const targetValueRefs = horizon
       ? undefined
       : findTargetValueRefs(input.projection, input.goal, goalProgress);
+    const submitControlRefs = findSubmitControlRefs(input.projection, goalProgress, goalLineage);
     const workingSetSelection = workingSetSelector.select({
       goal: input.goal,
       projection: input.projection,
       evidenceRefIds,
       horizonControlRefs: horizon?.navControls.map(control => control.refId),
       targetValueRefs,
+      submitControlRefs,
       graphSnapshot: input.graphSnapshot,
       transitionEvidence: input.transitionEvidence,
       lastResult: input.lastResult,
@@ -162,6 +166,24 @@ function detectHorizonForFocus(
   if (!horizon || horizon.covered || horizon.navControls.length === 0) return undefined;
 
   return horizon;
+}
+
+/**
+ * Commit phase: every parsed requirement is addressed (no focus remains) and
+ * no submission has been attempted in the goal lineage — the form's submit
+ * control must stay visible so the planner can confirm the entry.
+ */
+function findSubmitControlRefs(
+  projection: PlannerInputComposerInput['projection'],
+  goalProgress: PlannerGoalProgress | undefined,
+  goalLineage: CompressedLineage | undefined,
+): string[] | undefined {
+  if (!goalProgress || goalProgress.focus !== undefined) return undefined;
+  if (goalLineage?.steps.some(step => step.kind === 'press' && step.status === 'completed')) {
+    return undefined;
+  }
+  const submits = findSubmitControls(projection);
+  return submits.length > 0 ? submits.map(control => control.refId) : undefined;
 }
 
 function findTargetValueRefs(

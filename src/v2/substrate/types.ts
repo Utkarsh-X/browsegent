@@ -36,6 +36,8 @@ export interface CapturedElement {
   selectorCandidates: string[];
   tagName: string;
   inputType?: string;
+  /** True when a <button> belongs to a <form> (spec default type is submit). */
+  inForm?: boolean;
   value?: string;
   placeholder?: string;
   editableKind?: EditableKind;
