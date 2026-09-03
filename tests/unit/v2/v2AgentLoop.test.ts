@@ -3639,7 +3639,6 @@ function makeCalendarRefs(monthIndexes: Array<[number, number]>): V2Ref[] {
       refs.push(makeRef({
         refId: `ref_cell_${monthIndex}_${day}`,
         targetId: `target_cell_${monthIndex}_${day}`,
-        kind: 'checkbox',
         role: 'checkbox',
         name: `गुरुवार, ${day} ${HI_MONTHS[monthIndex]} 2026`,
         text: String(day),
@@ -3730,7 +3729,7 @@ test('V2AgentLoop extends a manual click on the recommended horizon control with
     maxSteps: 3,
   });
 
-  const seekDispatch = dispatcher.steps.find(step => step.tool === 'seek');
+  const seekDispatch = (dispatcher.steps ?? []).find(step => step.tool === 'seek');
   assert.ok(seekDispatch, 'implicit seek continuation must be dispatched');
   assert.equal(seekDispatch.ref, 'ref_next_month');
   assert.equal(result.metrics.toolExecutions, 2);
