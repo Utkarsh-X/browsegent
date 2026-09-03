@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parseJudgeVerdict, buildJudgeUserPrompt } from '../../../tests/benchmark/webvoyager/judge';
-import { evaluateWebVoyagerResult, summarizeWebVoyagerEvaluation } from '../../../tests/benchmark/webvoyager/evaluator';
-import type { WebVoyagerBenchmarkTask, WebVoyagerVerdict } from '../../../tests/benchmark/webvoyager/types';
-import type { ScoredBenchmarkResult } from '../../v2/types';
+import { parseJudgeVerdict, buildJudgeUserPrompt } from './judge';
+import { evaluateWebVoyagerResult, summarizeWebVoyagerEvaluation } from './evaluator';
+import type { WebVoyagerBenchmarkTask, WebVoyagerVerdict } from './types';
+import type { ScoredBenchmarkResult } from '../v2/types';
 
 test('parseJudgeVerdict reads the final verdict line and is robust to reasoning text', () => {
   assert.equal(parseJudgeVerdict('The task seems done.\nVERDICT: SUCCESS'), 'SUCCESS');

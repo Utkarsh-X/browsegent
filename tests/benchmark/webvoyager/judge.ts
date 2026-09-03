@@ -72,7 +72,9 @@ export async function judgeTaskResult(input: JudgeInput): Promise<JudgeOutcome> 
       input.judgeModel,
     );
     const verdict = parseJudgeVerdict(result.text);
-    return { verdict, reason: verdict === 'UNAVAILABLE' ? 'unparsable_judge_output' : result.text.slice(-400) };
+    // Keep the raw tail on parse failures so the output format can be fixed
+    // without burning another live run.
+    return { verdict, reason: result.text.slice(-500) };
   } catch (error) {
     return { verdict: 'UNAVAILABLE', reason: error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200) };
   }
