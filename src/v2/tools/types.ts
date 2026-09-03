@@ -1,9 +1,24 @@
-import type { PlannerOutputStep } from '../planner/types';
-import type { PlannerPressKey } from '../planner/types';
+import type { BrowserObservation } from '../runtime/types';
+import type { PlannerOutputStep, PlannerPressKey } from '../planner/types';
 import type { V2ToolResult } from '../runtime/types';
+
+/**
+ * Substrate-side verdict for a `seek` iteration. The dispatcher owns only the
+ * loop mechanics; the semantic stop condition and progress signature are
+ * computed by the caller (agent layer) from the planner's horizon machinery.
+ */
+export interface SeekIterationVerdict {
+  stop: boolean;
+  reason?: string;
+  /** Identity of the widget window state; identical keys on consecutive
+   *  iterations signal a stall and end the seek honestly. */
+  progressKey?: string;
+}
 
 export interface V2ToolDispatchContext {
   goal: string;
+  /** Stop-condition evaluator for `seek` iterations; absent = seek unsupported. */
+  seekStop?: (observation: BrowserObservation) => SeekIterationVerdict;
 }
 
 export interface V2ToolRuntime {
@@ -17,6 +32,8 @@ export interface V2ToolRuntime {
   waitForState(input: { pattern?: string; timeout?: number }): Promise<V2ToolResult<{ matched: boolean }>>;
   press(key: PlannerPressKey): Promise<V2ToolResult<{ key: PlannerPressKey }>>;
   select(refId: string, value: string): Promise<V2ToolResult<{ value: string }>>;
+  /** Fresh observation for `seek` iterations; absent = seek unsupported. */
+  observe?(): Promise<BrowserObservation>;
 }
 
 export interface V2ToolDispatcherLike {

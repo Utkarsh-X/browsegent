@@ -28,6 +28,7 @@ const VALID_TOOLS = new Set<PlannerOutputTool>([
   'close',
   'select',
   'search_page',
+  'seek',
   'find_elements',
   'count_elements',
   'inspect_region',
@@ -35,7 +36,7 @@ const VALID_TOOLS = new Set<PlannerOutputTool>([
 const VALID_CONFIDENCE = new Set<PlannerConfidence>(['high', 'medium', 'low']);
 const VALID_ESCALATION = new Set<PlannerEscalation>(['user_needed', 'captcha', 'dead_end']);
 const VALID_PRESS_KEYS = new Set(['Enter', 'Escape', 'Tab', 'ArrowDown', 'ArrowUp']);
-const REF_REQUIRED_TOOLS = new Set<PlannerOutputTool>(['click', 'type', 'get', 'close', 'select', 'inspect_region']);
+const REF_REQUIRED_TOOLS = new Set<PlannerOutputTool>(['click', 'type', 'get', 'close', 'select', 'inspect_region', 'seek']);
 const FORBIDDEN_FIELDS = new Set([
   'sel',
   'selector',

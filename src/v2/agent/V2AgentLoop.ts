@@ -24,6 +24,7 @@ import {
   measureCompactPlannerView,
 } from '../planner/CompactPlannerView';
 import { DeadStateDetector, type DeadStateEvidence } from '../runtime/DeadStateDetector';
+import { createDateSeekStop } from './SeekPolicy';
 import { FailureClassifier, type FailureEvidence } from '../runtime/FailureClassifier';
 import type { BrowserObservation, TransitionEvidence, V2ToolResult, V2ToolError } from '../runtime/types';
 import { UncertaintySignals, type RuntimeUncertainty } from '../runtime/UncertaintySignals';
@@ -52,6 +53,7 @@ export class V2AgentLoop {
     const harness = this.createHarness();
     const plannerClient = this.createPlannerClient(harness, input.plannerMode, input.plannerSerialization);
     const dispatcher = this.options.dispatcherFactory?.(harness) ?? new V2ToolDispatcher(harness);
+    const seekStop = createDateSeekStop(input.goal);
     const graph = new ContinuityGraph();
     const maxSteps = Math.max(1, input.maxSteps);
     let stepBudget = maxSteps;
@@ -322,7 +324,7 @@ export class V2AgentLoop {
 
           // Dispatch (only if no pre-execution rejection)
           if (!preExecutionRejected) {
-            lastResult = await dispatcher.dispatch(plannedStep, { goal: input.goal });
+            lastResult = await dispatcher.dispatch(plannedStep, { goal: input.goal, seekStop });
             metrics.toolExecutions += 1;
             transitionEvidence = lastResult.evidence;
             const capturedAfterAction = transitionEvidence?.afterObservationId

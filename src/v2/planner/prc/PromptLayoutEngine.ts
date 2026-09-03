@@ -129,7 +129,9 @@ function renderCompactHorizon(ir: PlannerRepresentationIR): string {
     const flag = control.recommended ? '*' : '';
     return `${control.refId}${name}:${control.directionHint}${flag}${control.actionability !== 'ready' ? `:${control.actionability}` : ''}`;
   }).join(' ');
-  return `HORIZON: visible=[${horizon.visibleMonths.join(',')}] need=[${horizon.targetMonths.join(',')}] nav=${nav}`;
+  const recommended = ordered.find(control => control.recommended && control.actionability === 'ready');
+  const suggested = recommended ? ` suggested={"tool":"seek","ref":"${recommended.refId}"}` : '';
+  return `HORIZON: visible=[${horizon.visibleMonths.join(',')}] need=[${horizon.targetMonths.join(',')}] nav=${nav}${suggested}`;
 }
 
 function renderCompactTaskProgress(ir: PlannerRepresentationIR): string {
@@ -344,6 +346,10 @@ function renderHorizon(ir: PlannerRepresentationIR): string {
     const recommended = control.recommended ? ' [recommended]' : '';
     return `${control.refId}${name} (hint: ${control.directionHint}${recommended}, ${control.actionability})`;
   }).join(' | ')}`);
+  const recommended = ordered.find(control => control.recommended && control.actionability === 'ready');
+  if (recommended) {
+    lines.push(`  suggested plan: {"tool":"seek","ref":"${recommended.refId}"}`);
+  }
   return lines.join('\n');
 }
 

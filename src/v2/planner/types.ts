@@ -26,6 +26,7 @@ export type PlannerOutputTool =
   | 'close'
   | 'select'
   | 'search_page'
+  | 'seek'
   | 'find_elements'
   | 'count_elements'
   | 'inspect_region';
