@@ -63,3 +63,16 @@ environment-attributable (BBC__News__0: 9 timeout/target_blocked steps, horizon
 machinery never engaged; Google__Flights__10: step-2 target_blocked). Sep 3 avg input
 tokens rose to 51.2K/task (+5% vs Run 5) partly from the GP/HORIZON blocks — acceptable
 if seek adoption lands (it collapses N planner calls into one); revisit if not.
+
+## Judge results (2026-09-04, offline rejudge of run webvoyager_lite_1788470846884)
+
+Official-methodology judge over the 7 internal-passed strict-0 tasks:
+4 SUCCESS (ArXiv__0, Coursera__0, GitHub__10, Huggingface__10 — stale-reference
+artifacts), 3 NOT_SUCCESS. Full-run judge score 14/30 (46.7%) vs string strict
+10/30 (33.3%). The judge honestly rejected Booking__0's answer: "the agent
+provided a set of instructions on how a user could perform the search
+themselves" — the done-delegation pattern. Agent A: validate the landed
+answer contract against that exact answer text (run webvoyager_lite_1788470846884,
+webvoyager_Booking__0 final value); it must be rejected as NOT SUCCESS-grade.
+Judge fields are additive; strict scores untouched. Re-run any existing run
+offline via: npx tsx scripts/webvoyager_rejudge.ts <runDir>.
