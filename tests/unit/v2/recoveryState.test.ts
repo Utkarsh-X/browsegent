@@ -372,3 +372,18 @@ test('RecoveryStateBuilder returns zero_result_read_loop for search_page repeats
   assert.equal(result.state, 'zero_result_read_loop');
   assert.ok(result.nextMechanisms.includes('try_different_evidence_action'));
 });
+
+test('same_url_navigation refusals steer the planner to on-page controls', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'navigate',
+      error: { code: 'same_url_navigation', message: 'Refused.', retryable: false },
+      traceStepId: 'step_nav',
+    },
+  });
+
+  assert.equal(recovery?.state, 'wrong_target_type');
+  assert.ok(recovery?.nextMechanisms.includes('avoid_navigation_churn'));
+  assert.ok(recovery?.nextMechanisms.includes('act_on_visible_controls'));
+});

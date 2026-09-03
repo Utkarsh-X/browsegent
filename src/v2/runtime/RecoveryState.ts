@@ -240,6 +240,7 @@ function buildWrongTargetRecovery(
     'ambiguous_ref_resolution',
     'low_confidence_ref',
     'unselected_ref',
+    'same_url_navigation',
   ]);
 
   if (!code || !WRONG_TARGET_CODES.has(code)) {
@@ -276,6 +277,9 @@ function mechanismsForErrorCode(code: string, lastResult?: V2ToolResult): string
   }
   if (code === 'ambiguous_ref_resolution') {
     return ['choose_less_ambiguous_ref', 'inspect_region_or_scope', 'use_current_focus_or_overlay', 'expand_or_reobserve'];
+  }
+  if (code === 'same_url_navigation') {
+    return ['avoid_navigation_churn', 'act_on_visible_controls', 'reobserve_current_surface'];
   }
   return ['choose_alternative_ref', 'expand_or_reobserve'];
 }
