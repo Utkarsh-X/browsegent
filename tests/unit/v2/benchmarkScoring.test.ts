@@ -96,12 +96,12 @@ test('scoreBenchmarkResult classifies provider budget guard failures separately 
   assert.equal(scored.failureType, 'budget_exceeded');
 });
 
-test('scoreBenchmarkResult passes expected environment-block failures when trace is complete', () => {
+test('scoreBenchmarkResult passes expected captcha-wall failures when trace is complete', () => {
   const expectedBlockTask: BenchmarkTask = {
     ...task,
     taskId: 'captcha_wall',
     difficulty: 'adversarial',
-    expectedFailureType: 'environment_block',
+    expectedFailureType: 'captcha_wall',
   };
   const scored = scoreBenchmarkResult(expectedBlockTask, {
     adapterId: 'browsegent',
@@ -114,7 +114,22 @@ test('scoreBenchmarkResult passes expected environment-block failures when trace
   }, { ok: true, errors: [] });
 
   assert.equal(scored.passed, true);
-  assert.equal(scored.failureType, 'environment_block');
+  assert.equal(scored.failureType, 'captcha_wall');
+});
+
+test('scoreBenchmarkResult classifies unplanned captcha walls as captcha_wall, not environment_block', () => {
+  const scored = scoreBenchmarkResult(task, {
+    adapterId: 'browsegent',
+    taskId: task.taskId,
+    attempt: 1,
+    success: false,
+    value: '',
+    failureReason: 'planner_escalated:captcha:The page is currently behind a Cloudflare challenge',
+    metrics: { plannerCalls: 2, toolExecutions: 1, durationMs: 40 },
+  }, { ok: true, errors: [] });
+
+  assert.equal(scored.passed, false);
+  assert.equal(scored.failureType, 'captcha_wall');
 });
 
 test('scoreBenchmarkResult enriches failure reason with trace error details when trace fails', () => {

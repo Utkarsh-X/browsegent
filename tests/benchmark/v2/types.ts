@@ -9,6 +9,7 @@ export type BenchmarkFailureType =
   | 'action_error'
   | 'planning_error'
   | 'environment_block'
+  | 'captcha_wall'
   | 'validation_error'
   | 'budget_exceeded'
   | 'rate_limited'

@@ -442,7 +442,11 @@ function renderCompactWorkingSet(ir: PlannerRepresentationIR): string {
     if (actionLanes.length > 0) parts.push(`actions=${actionLanes.join(' ')}`);
   }
   if (ws.readableEvidence.length) {
-    parts.push(`readable=${ws.readableEvidence.map(evidence => `${evidence.refId}:${escapeAttr(compactValue(evidence.text, 160))}:${evidence.reasons.join('|')}`).join(';')}`);
+    // The W: readable entry is an evidence pointer (ref + gist + reasons), not
+    // the full read value — EVIDENCE:/get results carry the full text. The
+    // previous 160-char excerpts made compact renders larger than the verbose
+    // baseline they were meant to shrink.
+    parts.push(`readable=${ws.readableEvidence.map(evidence => `${evidence.refId}:${escapeAttr(compactValue(evidence.text, 48))}:${evidence.reasons.join('|')}`).join(';')}`);
   }
   const changed = ws.changedRefs;
   parts.push(`changed=${changed.appearedCount}/${changed.weakenedCount}/${changed.preservedCount}/${changed.omittedCount}`);
@@ -451,7 +455,7 @@ function renderCompactWorkingSet(ir: PlannerRepresentationIR): string {
     parts.push(`quarantine=${ws.quarantinedActions.map(action => `${action.tool}:${action.refId}:${action.failureKind}:${action.retryable ? 'retryable' : 'persistent'}`).join(';')}`);
   }
   if (ws.regionSummaries.length) {
-    parts.push(`regions=${ws.regionSummaries.map(region => `${region.regionId}:"${escapeAttr(compactValue(region.label, 120))}":${region.representativeRefs.join(',')}:${region.omittedRefCount}`).join(';')}`);
+    parts.push(`regions=${ws.regionSummaries.map(region => `${region.regionId}:"${escapeAttr(compactValue(region.label, 32))}":${region.representativeRefs.join(',')}:${region.omittedRefCount}`).join(';')}`);
   }
   if (ws.omitted) parts.push(`omitted=${ws.omitted.observed}/${ws.omitted.selected}/${ws.omitted.dropped}`);
   return `W: ${parts.join(' ')}`;
