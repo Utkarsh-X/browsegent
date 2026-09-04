@@ -94,7 +94,7 @@ export type WebVoyagerTaskStatus =
   | 'environment_block_risk'
   | 'ambiguous';
 
-export type WebVoyagerBenchmarkSlice = 'mvr5' | 'mvr5-stable' | 'balanced30';
+export type WebVoyagerBenchmarkSlice = 'mvr5' | 'mvr5-stable' | 'balanced30' | 'fresh50' | 'fresh50-stable';
 
 export interface WebVoyagerTaskRegistryEntry {
   id: string;

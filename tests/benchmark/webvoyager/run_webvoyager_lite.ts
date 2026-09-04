@@ -273,10 +273,17 @@ function readFlag(name: string): string | undefined {
 
 function readTaskSliceArg(): WebVoyagerTaskSlice | undefined {
   const value = readFlag('--slice');
-  if (value === undefined || value === 'balanced30' || value === 'mvr5' || value === 'mvr5-stable') {
+  if (
+    value === undefined ||
+    value === 'balanced30' ||
+    value === 'mvr5' ||
+    value === 'mvr5-stable' ||
+    value === 'fresh50' ||
+    value === 'fresh50-stable'
+  ) {
     return value;
   }
-  throw new Error(`Unsupported WebVoyager slice "${value}". Use balanced30, mvr5, or mvr5-stable.`);
+  throw new Error(`Unsupported WebVoyager slice "${value}". Use balanced30, mvr5, mvr5-stable, fresh50, or fresh50-stable.`);
 }
 
 function readPlannerSerializationArg(): NonNullable<RunBenchmarkOptions['plannerSerialization']>['mode'] | undefined {
