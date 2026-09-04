@@ -1,6 +1,7 @@
 import { inferAnswerContract, validateAnswerAgainstContract } from './AnswerContract';
 import { detectAnswerEvidenceConflicts } from './AnswerGrounding';
 import { stripInternalRefTokens } from './AnswerHygiene';
+import { findUnaddressedDateRequirements } from './RequirementCompletionGate';
 import { ProjectionService } from '../brain1/ProjectionService';
 import {
   buildAnswerValidationEvidence,
@@ -201,7 +202,12 @@ export class V2AgentLoop {
               evidenceText: buildAnswerValidationEvidence(readEvidenceHistory, surfaceEvidence, evidenceLedger),
             });
           const coverageReasons = answerValidation.ok ? missingCoverageReasons(evidenceCoverage) : [];
-          const validationReasons = [...answerValidation.reasons, ...coverageReasons];
+          const requirementReasons = findUnaddressedDateRequirements({
+            goal: input.goal,
+            goalProgress: plannerInput.goalProgress,
+            answer: value,
+          });
+          const validationReasons = [...answerValidation.reasons, ...coverageReasons, ...requirementReasons];
           if (validationReasons.length > 0) {
             const rejectedAnswerKey = buildRejectedAnswerKey(
               value,
@@ -789,9 +795,15 @@ export class V2AgentLoop {
         const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(goal), {
           evidenceText: validationEvidence,
         });
+        const requirementReasons = findUnaddressedDateRequirements({
+          goal,
+          goalProgress: finalizationInput.goalProgress,
+          answer: value,
+        });
         const validationReasons = [
           ...answerValidation.reasons,
           ...(answerValidation.ok ? missingCoverageReasons(evidenceCoverage) : []),
+          ...requirementReasons,
         ];
         if (validationReasons.length > 0) {
           return await this.complete(harness, {

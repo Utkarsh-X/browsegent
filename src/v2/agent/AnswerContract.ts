@@ -257,6 +257,18 @@ function missingDetailCategoryReasons(answer: string, categories: AnswerDetailCa
   return missing;
 }
 
+/**
+ * True when the answer looks like it delivers concrete results (enumerated
+ * items, ratings, prices, times, dates, named entities). Used by the
+ * requirement-completion gate: a results-shaped answer from a flow whose
+ * parsed requirements never completed is suspect.
+ */
+export function hasResultClaimSignal(answer: string): boolean {
+  if (countEnumeratedItems(answer) >= 1) return true;
+  return Object.values(DETAIL_CATEGORY_ANSWER_PATTERNS)
+    .some(patterns => patterns.some(pattern => pattern.test(answer)));
+}
+
 function isComparativeRankingGoal(normalizedGoal: string): boolean {
   // Temporal recency is a lookup constraint, not proof that the task asks for
   // a comparison. Keep explicit comparative terms and top-N/result language.
