@@ -3,7 +3,7 @@ import type { PlannerElementIR, PlannerRepresentationIR } from './types';
 export class PromptLayoutEngine {
   render(
     ir: PlannerRepresentationIR,
-    options: { prcTierOmitted?: boolean; compactDataPlane?: boolean } = {},
+    options: { prcTierOmitted?: boolean; compactDataPlane?: boolean; leanPlane?: boolean } = {},
   ): string {
     if (options.compactDataPlane) {
       return renderCompactDataPlane(ir, options);
@@ -20,7 +20,7 @@ export class PromptLayoutEngine {
       renderEvidenceSnapshot(ir),
       renderProblems(ir),
       renderSurface(ir, options),
-      renderWorkingSet(ir),
+      renderWorkingSet(ir, options.leanPlane === true),
       renderDecisionSignals(ir),
     ].filter(Boolean).join('\n\n');
   }
@@ -365,18 +365,60 @@ function renderTaskProgress(ir: PlannerRepresentationIR): string {
   return lines.join('\n');
 }
 
-function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: boolean }): string {
+function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: boolean; leanPlane?: boolean }): string {
   // PLANNER SURFACE always emits — the page surface is always present in planner context
   const lines = ['PLANNER SURFACE'];
+  const lean = options.leanPlane === true;
+  let budget = lean ? LEAN_SURFACE_PAYLOAD_CAP : Number.POSITIVE_INFINITY;
+  let omittedElements = 0;
+  const pushElement = (element: PlannerElementIR): void => {
+    const line = `    ${lean ? renderLeanElement(element) : renderElement(element, options)}`;
+    if (line.length > budget) {
+      omittedElements += 1;
+      return;
+    }
+    budget -= line.length;
+    lines.push(line);
+  };
   for (const group of ir.surface.groups) {
     lines.push(`  ${group.label} (${group.regionId}${group.omittedCount ? `, omitted ${group.omittedCount} of ${group.totalCount}` : ''})`);
-    for (const element of group.elements) lines.push(`    ${renderElement(element, options)}`);
+    for (const element of group.elements) pushElement(element);
   }
   if (ir.surface.remainder.length > 0) {
     lines.push('  Page Elements');
-    for (const element of ir.surface.remainder) lines.push(`    ${renderElement(element, options)}`);
+    for (const element of ir.surface.remainder) pushElement(element);
+  }
+  if (omittedElements > 0) {
+    lines.push(`  ... ${omittedElements} elements omitted (payload cap)`);
   }
   return lines.join('\n');
+}
+
+/** Bounds worst-case lean payloads on very large DOMs (measured spikes to 20+ KB). */
+const LEAN_SURFACE_PAYLOAD_CAP = 12_000;
+
+/**
+ * Lean element rendering: name/value plus the attributes the planner guidance
+ * actually references (tools, autocomplete signals, anomalies, failures).
+ * Internal scoring metadata (lane/tier/score) and default states are omitted —
+ * measured at ~1,100 tokens/call of substrate plumbing.
+ */
+function renderLeanElement(element: PlannerElementIR): string {
+  const attrs = [
+    `name="${escapeAttr(compactValue(element.name, 120))}"`,
+    element.role && element.role !== element.kind ? `role="${escapeAttr(element.role)}"` : undefined,
+    element.ariaAutocomplete ? `aria-autocomplete="${escapeAttr(element.ariaAutocomplete)}"` : undefined,
+    element.ariaHasPopup ? `aria-haspopup="${escapeAttr(element.ariaHasPopup)}"` : undefined,
+    element.value !== undefined ? `value="${escapeAttr(compactValue(element.value, 120))}"` : undefined,
+    !element.name && element.placeholder ? `placeholder="${escapeAttr(compactValue(element.placeholder, 80))}"` : undefined,
+    element.selectOptions?.length
+      ? `options="${escapeAttr(compactValue(element.selectOptions.map(option => compactValue(option, MAX_OPTION_CHARS)).join(' | '), MAX_OPTIONS_TOTAL_CHARS))}"`
+      : undefined,
+    element.anomalies.length ? `state="${escapeAttr(element.anomalies.join(','))}"` : undefined,
+    element.failure ? `failed="${element.failure.kind}x${element.failure.count}"` : undefined,
+    element.tools?.length ? `tools="${element.tools.join(',')}"` : undefined,
+  ].filter(Boolean);
+  return `[${element.refId}] <${element.kind} ${attrs.join(' ')} />`;
 }
 
 // Planning-context caps for surface element attributes. Answer evidence flows
@@ -443,9 +485,14 @@ function renderReasons(reasons: readonly string[]): string {
   return reasons.map(reason => REASON_CODES[reason] ?? reason).join(',');
 }
 
-function renderWorkingSet(ir: PlannerRepresentationIR): string {
+function renderWorkingSet(ir: PlannerRepresentationIR, leanPlane = false): string {
   const ws = ir.workingSet;
   if (!ws) return '';
+  // Lean plane keeps only the mode line: the ref/reason narrative was measured
+  // at ~2.6 KB/call and duplicates information the surface already carries.
+  if (leanPlane) {
+    return ws.mode ? `WORKING SET\n  mode: ${ws.mode}` : '';
+  }
   const lines = ['WORKING SET'];
   if (ws.mode) lines.push(`  mode: ${ws.mode}${ws.modeReason ? ` ${escapeAttr(compactValue(ws.modeReason, 120))}` : ''}`);
   if (ws.primary.length) lines.push(`  primary: ${ws.primary.map(ref => `${ref.refId}(${renderReasons(ref.reasons)})`).join(', ')}`);

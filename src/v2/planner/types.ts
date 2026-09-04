@@ -284,4 +284,6 @@ export interface PlannerSerializationConfig {
   prcTierOmitted?: boolean;
   /** Render the compact PRC data-plane layout. */
   compactDataPlane?: boolean;
+  /** Lean plane: strip element metadata, omit the working-set narrative, cap the payload. */
+  prcLeanPlane?: boolean;
 }

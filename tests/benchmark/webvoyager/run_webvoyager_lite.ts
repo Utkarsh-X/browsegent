@@ -299,11 +299,13 @@ function readPlannerSerializationConfig(
 ): RunBenchmarkOptions['plannerSerialization'] {
   const prcTierOmitted = hasFlag('--prc-tier-omitted');
   const compactDataPlane = hasFlag('--compact-data-plane');
-  if (prcTierOmitted || compactDataPlane) {
+  const prcLeanPlane = hasFlag('--prc-lean-plane');
+  if (prcTierOmitted || compactDataPlane || prcLeanPlane) {
     if (mode !== 'prc') {
       const flags = [
         ...(prcTierOmitted ? ['--prc-tier-omitted'] : []),
         ...(compactDataPlane ? ['--compact-data-plane'] : []),
+        ...(prcLeanPlane ? ['--prc-lean-plane'] : []),
       ];
       throw new Error(`${flags.join(' and ')} require --planner-serialization prc.`);
     }
@@ -311,6 +313,7 @@ function readPlannerSerializationConfig(
       mode,
       ...(prcTierOmitted ? { prcTierOmitted: true } : {}),
       ...(compactDataPlane ? { compactDataPlane: true } : {}),
+      ...(prcLeanPlane ? { prcLeanPlane: true } : {}),
     };
   }
   return mode === undefined ? undefined : { mode };
