@@ -379,20 +379,29 @@ function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: 
   return lines.join('\n');
 }
 
+// Planning-context caps for surface element attributes. Answer evidence flows
+// through get()/EVIDENCE, not through these lines; options stay readable since
+// select actions depend on exact visible labels.
+const MAX_ELEMENT_ATTR_CHARS = 140;
+const MAX_OPTION_CHARS = 48;
+const MAX_OPTIONS_TOTAL_CHARS = 240;
+
 function renderElement(element: PlannerElementIR, options: { prcTierOmitted?: boolean } = {}): string {
   const attrs = [
-    `name="${escapeAttr(element.name)}"`,
+    `name="${escapeAttr(compactValue(element.name, MAX_ELEMENT_ATTR_CHARS))}"`,
     // Suppress role when it duplicates kind (e.g. role=button kind=button)
     element.role && element.role !== element.kind ? `role="${escapeAttr(element.role)}"` : undefined,
     element.ariaAutocomplete ? `aria-autocomplete="${escapeAttr(element.ariaAutocomplete)}"` : undefined,
     element.ariaHasPopup ? `aria-haspopup="${escapeAttr(element.ariaHasPopup)}"` : undefined,
-    element.value !== undefined ? `value="${escapeAttr(element.value)}"` : undefined,
-    element.placeholder ? `placeholder="${escapeAttr(element.placeholder)}"` : undefined,
+    element.value !== undefined ? `value="${escapeAttr(compactValue(element.value, MAX_ELEMENT_ATTR_CHARS))}"` : undefined,
+    element.placeholder ? `placeholder="${escapeAttr(compactValue(element.placeholder, MAX_ELEMENT_ATTR_CHARS))}"` : undefined,
     `lane="${element.lane}"`,
     options.prcTierOmitted ? undefined : `tier="${element.scoreTier}"`,
     element.regionId ? `region="${escapeAttr(element.regionId)}"` : undefined,
-    element.text ? `text="${escapeAttr(element.text)}"` : undefined,
-    element.selectOptions?.length ? `options="${escapeAttr(element.selectOptions.join(' | '))}"` : undefined,
+    element.text ? `text="${escapeAttr(compactValue(element.text, MAX_ELEMENT_ATTR_CHARS))}"` : undefined,
+    element.selectOptions?.length
+      ? `options="${escapeAttr(compactValue(element.selectOptions.map(option => compactValue(option, MAX_OPTION_CHARS)).join(' | '), MAX_OPTIONS_TOTAL_CHARS))}"`
+      : undefined,
     element.anomalies.length ? `state="${escapeAttr(element.anomalies.join(','))}"` : undefined,
     element.failure ? `failed="${element.failure.kind}x${element.failure.count}"` : undefined,
     element.tools?.length ? `tools="${element.tools.join(',')}"` : undefined,
@@ -401,15 +410,48 @@ function renderElement(element: PlannerElementIR, options: { prcTierOmitted?: bo
   return `[${element.refId}] <${element.kind} ${attrs.join(' ')} />`;
 }
 
+/**
+ * Short, still-readable codes for the fixed working-set reason vocabulary.
+ * The long snake_case tokens repeat per ref in every working-set list and were
+ * measured at ~35% of the whole rendered planner prompt; the codes are
+ * mnemonics, and the system prompt documents the non-obvious ones.
+ */
+const REASON_CODES: Record<string, string> = {
+  visible_ready: 'ready',
+  goal_keyword_match: 'kw',
+  goal_phrase_match: 'phrase',
+  role_relevant_to_goal: 'role',
+  near_focus: 'focus',
+  recently_appeared: 'new',
+  recently_changed: 'changed',
+  last_target: 'target',
+  last_success: 'ok',
+  last_failure: 'failed',
+  recovery_control: 'recovery',
+  horizon_control: 'horizon',
+  target_value: 'value',
+  submit_control: 'submit',
+  dead_state_evidence: 'dead',
+  answer_candidate: 'answer',
+  suggestion_option: 'suggestion',
+  navigation_candidate: 'nav',
+  form_candidate: 'form',
+  region_representative: 'rep',
+};
+
+function renderReasons(reasons: readonly string[]): string {
+  return reasons.map(reason => REASON_CODES[reason] ?? reason).join(',');
+}
+
 function renderWorkingSet(ir: PlannerRepresentationIR): string {
   const ws = ir.workingSet;
   if (!ws) return '';
   const lines = ['WORKING SET'];
-  if (ws.mode) lines.push(`  mode: ${ws.mode}${ws.modeReason ? ` ${ws.modeReason}` : ''}`);
-  if (ws.primary.length) lines.push(`  primary: ${ws.primary.map(ref => `${ref.refId}(${ref.reasons.join(',')})`).join(', ')}`);
-  if (ws.secondary.length) lines.push(`  secondary: ${ws.secondary.map(ref => `${ref.refId}(${ref.reasons.join(',')})`).join(', ')}`);
-  if (ws.navigation.length) lines.push(`  navigation: ${ws.navigation.map(ref => `${ref.refId}(${ref.reasons.join(',')})`).join(', ')}`);
-  if (ws.failed.length) lines.push(`  failed: ${ws.failed.map(ref => `${ref.refId}(${ref.reasons.join(',')})`).join(', ')}`);
+  if (ws.mode) lines.push(`  mode: ${ws.mode}${ws.modeReason ? ` ${escapeAttr(compactValue(ws.modeReason, 120))}` : ''}`);
+  if (ws.primary.length) lines.push(`  primary: ${ws.primary.map(ref => `${ref.refId}(${renderReasons(ref.reasons)})`).join(', ')}`);
+  if (ws.secondary.length) lines.push(`  secondary: ${ws.secondary.map(ref => `${ref.refId}(${renderReasons(ref.reasons)})`).join(', ')}`);
+  if (ws.navigation.length) lines.push(`  navigation: ${ws.navigation.map(ref => `${ref.refId}(${renderReasons(ref.reasons)})`).join(', ')}`);
+  if (ws.failed.length) lines.push(`  failed: ${ws.failed.map(ref => `${ref.refId}(${renderReasons(ref.reasons)})`).join(', ')}`);
   if (ws.omitted) lines.push(`  omitted: observed=${ws.omitted.observed} selected=${ws.omitted.selected} dropped=${ws.omitted.dropped}`);
   return lines.length > 1 ? lines.join('\n') : '';
 }
@@ -462,7 +504,7 @@ function renderCompactWorkingSet(ir: PlannerRepresentationIR): string {
 }
 
 function renderCompactRefs(refs: Array<{ refId: string; reasons: string[] }>): string {
-  return refs.map(ref => `${ref.refId}(${ref.reasons.join('|')})`).join(',');
+  return refs.map(ref => `${ref.refId}(${renderReasons(ref.reasons)})`).join(',');
 }
 
 function compactList(values: readonly string[], maxItemLength = 120): string {
