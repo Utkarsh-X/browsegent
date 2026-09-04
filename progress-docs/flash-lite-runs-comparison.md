@@ -271,3 +271,29 @@ Per planner call (mean over 228/191 calls): **verbose 16.6 KB user + 9.1 KB syst
 ### 5.4 Environment-block denominator symmetry (fixed)
 
 All `environment_block` tags across runs 8–10 were `planner_escalated:captcha` bot walls (Cloudflare/Google CAPTCHA) — no infrastructure failures. Excluding them from the denominator was asymmetric with browser-control, which reports the wall and stays in the denominator. As of `36cee29`, captcha escalations are tagged **`captcha_wall`** and **stay in the scored denominator** (official WebVoyager methodology). Env-adjusted scores from earlier runs were computed under the old exclusion policy and are not comparable to post-fix runs.
+
+---
+
+## 6. Fresh50-Stable Holdout Baseline (2026-09-05, `webvoyager_lite_1788550095257`)
+
+First run on the 50-task never-tuned holdout slice (`--slice fresh50-stable --judge`). Full detail: `d:\k\fresh50_runs_comparison.md`.
+
+| Metric | Value |
+| :--- | :---: |
+| Combined solved (strict + judge) | **16/50 (32.0%)** |
+| Accessible-task solved rate (excl. bot walls) | **44.4% (16/36)** |
+| Internal completion on accessible tasks | 66.7% (24/36) |
+| Strict score | 14.0% (7/50 — 6 partial + 1 exact... 2 exact) |
+| Judge score rate | 52.9% (9/17) |
+| Bot CAPTCHA walls (in-denominator) | **13/50 (26%)** — Allrecipes 3/3, Cambridge 4/4, Google Search 3/4, Booking 2x502, ESPN 1 |
+| Avg. input tokens / task | 54,499 |
+| Crashes | 0 (20 transient 503s auto-recovered) |
+
+**Generalization verdict: the stack holds on unseen tasks** — accessible-task rates match the balanced30 profile, no overfit signature.
+
+**Holdout failure taxonomy (36 accessible tasks, 20 non-passes):**
+1. **Max step budget exhausted — 10 tasks** (GitHub__14, ArXiv__6, Google Search__21, Apple__26, Booking__24, Coursera__15, Flights__4/14, Huggingface__13/14): the dominant failure mode on longer multi-hop flows. Next forensics target.
+2. **Judge-rejected answers — 8 tasks**: incomplete multi-part answers (ESPN__15 reported 1 of 5 games; Coursera__19 missed instructor + hours), ungrounded answers (GitHub__18 answered from a nav menu), delegation phrasing (Flights__19 "click on the date for details"), semantic mismatch (Apple__12), wrong locale (Amazon__24 INR vs USD), math error (Wolfram__15).
+3. **Planner/ref errors — 2** (GitHub__8, BBC__5 ref type mismatch); validation error 1 (BBC__25).
+
+**Response landed same day:** answer-contract item-count + multi-detail checks (`f1cb064`) and the requirement-completion gate (`next commit`) target classes 2a/2c/2d. Step-budget exhaustion (class 1) is the next investigation priority.
