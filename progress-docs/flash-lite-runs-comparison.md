@@ -231,3 +231,43 @@ All comparative tables and task-level telemetry have been exported into machine-
   "impossibleTaskCount": 0
 }
 ```
+
+---
+
+## 5. Integrity & Efficiency Audit (2026-09-04)
+
+Post-run audit of Runs 9 and 10 (and the Run 6 cross-adapter comparison) with the fixes that came out of it. Every number below is measured from stored run artifacts (`report.json`, `planner/*-output.json`, `webvoyager_evaluation.json`).
+
+### 5.1 Judge evidence bug (fixed) and corrected official scores
+
+The in-run judge collected final-page evidence by joining the trace **file** path with `observations/`, which always threw `ENOTDIR` and silently produced **empty page evidence** for every judged BrowseGent task. The judge was therefore scoring answers blind (it says so in stored reasons: "Final Page Evidence is empty/missing"). Fixed in `e621823`; both runs were then re-judged offline with real final-page evidence (`scripts/webvoyager_rejudge.ts`, originals backed up as `webvoyager_evaluation.prejudge.json`):
+
+| Run | Blind-judge result | Evidence-grounded rejudge | Official total (strict + judge SUCCESS) |
+| :--- | :---: | :---: | :---: |
+| Run 9 (complete stack) | 2/4 judged (50%) | **2/4 judged (50%)** — composition changed (BBC__News__0 flipped to NOT_SUCCESS) | **13/30 (43.3%)** |
+| Run 10 (compact plane) | 6/9 judged (66.7%) | **3/9 judged (33.3%)** — Booking__0, Coursera__0, Wolfram__Alpha__10 flipped to NOT_SUCCESS; BBC__News__0 to SUCCESS | **13/30 (43.3%)** |
+
+The blind judge rewarded answers that merely sounded right. With real evidence, unsupported claims are rejected — e.g. Run 10 Booking__0 named hotels with ratings while the final page still showed the search form (dates never completed), and Coursera__0 answered from search suggestions without ever reaching the course page. **The honest cross-run headline: both runs land at 13/30 (43.3%) under the official methodology.**
+
+Run 6 (browser-control) judge numbers are **not directly comparable**: its judge read `stderr.txt` step thoughts (lenient — it rewarded a hallucinated answer on Google Search--10 and a 404 report on Huggingface--10), while BrowseGent is judged against final-page accessibility evidence (strict).
+
+### 5.2 Strict false positives and the answer-hygiene fix
+
+The Run 9 audit found 2 inflated strict passes: `Amazon--0` echoed search-autocomplete strings containing internal ref tokens (`v2ref_1216`) and passed on token overlap; `Amazon--10` reported hardware price tiers as warranty costs. Fixes landed:
+
+- **`src/v2/agent/AnswerHygiene.ts`** (`d876adf`): internal ref identifiers are stripped from every accepted answer value (main-loop done, finalization done, grounding reconciliation, max-steps fallback). Byte-identical for leak-free values.
+- **Evaluator tightening** (`d876adf`): matching runs on ref-stripped text, so a leak can never create overlap credit; leaked values get `internal_ref_leak` reason + manual-review flag.
+- Known residual: the string matcher alone cannot detect an answer built from autocomplete content — the evidence-grounded judge is the arbiter for that class (it rejected both in Run 10's judging).
+
+### 5.3 Input-token autopsy (the 3.3x gap vs browser-control)
+
+Per planner call (mean over 228/191 calls): **verbose 16.6 KB user + 9.1 KB system ≈ 8.0K tokens; ~7.6 calls/task ≈ 60K/task**. Composition of the user message: PLANNER SURFACE ~12 KB, WORKING SET ~5 KB, other control-plane sections <1 KB combined. System prompt is ~35% of every request and is paid on all ~7 calls.
+
+- **Compact data plane was a regression as implemented**: across all 228 stored run-8 inputs, compact rendered **+19.6% larger** than verbose (the `W:` section inlined 160-char readable-evidence excerpts and 120-char region labels the verbose baseline omits, plus an extra system-prompt paragraph). Measured effect in the live A/B: run 10 median tokens/call 9,487 vs run 8's 7,876. Capped those excerpts (48/32 chars, `36cee29`) → now **+13.4%**; full SURFACE/W: dedup is future work. **Until then, verbose PRC is the recommended mode for all runs.**
+- Validation retries are not a factor (4–5% of calls have >1 attempt).
+- Biggest remaining levers (in order): (1) system-prompt diet (careful dedupe, quality-gated A/B), (2) SURFACE element truncation (name/text caps), (3) working-set ref+reason list compaction, (4) fewer planner calls (seek macros already cut this).
+- Tokenizer note: tokens/byte varies ~3–11x by page content (Devanagari/CJK pages tokenize densely) — run 9's single heaviest call was 49.3K tokens.
+
+### 5.4 Environment-block denominator symmetry (fixed)
+
+All `environment_block` tags across runs 8–10 were `planner_escalated:captcha` bot walls (Cloudflare/Google CAPTCHA) — no infrastructure failures. Excluding them from the denominator was asymmetric with browser-control, which reports the wall and stays in the denominator. As of `36cee29`, captcha escalations are tagged **`captcha_wall`** and **stay in the scored denominator** (official WebVoyager methodology). Env-adjusted scores from earlier runs were computed under the old exclusion policy and are not comparable to post-fix runs.
