@@ -1,5 +1,16 @@
 export type AnswerKind = 'number' | 'url' | 'entity' | 'ranked_entity' | 'description' | 'unknown';
 export type AnswerRequiredDetail = 'pronunciation' | 'definition' | 'concrete_basic_information';
+export type AnswerDetailCategory =
+  | 'rating'
+  | 'price'
+  | 'hours'
+  | 'duration'
+  | 'date'
+  | 'address'
+  | 'phone'
+  | 'capacity'
+  | 'year'
+  | 'identity';
 
 export interface AnswerContract {
   kind: AnswerKind;
@@ -7,6 +18,10 @@ export interface AnswerContract {
   requiresRankingEvidence: boolean;
   requiredDetails: AnswerRequiredDetail[];
   reason: string;
+  /** Explicit item-count asks parsed from the goal ('find 5 salons'); undefined when absent. */
+  requestedItemCount?: number;
+  /** Detail categories the goal asks for; count-completeness gates need >= 2. */
+  requestedDetailCategories?: AnswerDetailCategory[];
 }
 
 export interface AnswerValidation {
@@ -21,7 +36,15 @@ export interface AnswerValidationOptions {
 export function inferAnswerContract(goal: string): AnswerContract {
   const normalized = goal.toLowerCase();
   const requiredDetails = inferRequiredDetails(normalized);
+  const base = inferBaseContract(normalized, requiredDetails);
+  return {
+    ...base,
+    requestedItemCount: parseRequestedItemCount(normalized),
+    requestedDetailCategories: parseRequestedDetailCategories(normalized),
+  };
+}
 
+function inferBaseContract(normalized: string, requiredDetails: AnswerRequiredDetail[]): AnswerContract {
   if (/\b(url|link|website)\b/.test(normalized)) {
     return contract('url', false, false, 'goal_requests_url', requiredDetails);
   }
@@ -87,7 +110,151 @@ export function validateAnswerAgainstContract(
       }
     }
   }
+  if (contract.requestedItemCount !== undefined && contract.requestedItemCount >= 2) {
+    reasons.push(...checkRequestedItemCount(compact, contract.requestedItemCount));
+  }
+  if ((contract.requestedDetailCategories?.length ?? 0) >= 2) {
+    reasons.push(...missingDetailCategoryReasons(compact, contract.requestedDetailCategories!));
+  }
   return { ok: reasons.length === 0, reasons };
+}
+
+/**
+ * Generic enumerable nouns used by item-count asks. A vocabulary of common
+ * result-list nouns keeps the count parser high-precision: '2 miles' or
+ * 'between $100 to $200' must never read as item counts.
+ */
+const ENUMERABLE_NOUNS = new Set([
+  'salons', 'hotels', 'motels', 'games', 'matches', 'teams', 'movies', 'songs', 'restaurants',
+  'stores', 'options', 'results', 'flights', 'books', 'papers', 'articles', 'courses', 'models',
+  'tools', 'apps', 'links', 'places', 'items', 'recipes', 'chapters', 'characters', 'colors',
+  'gyms', 'chargers', 'stations', 'reviews', 'repos', 'repositories', 'products', 'titles',
+  'videos', 'channels', 'playlists', 'podcasts', 'tracks', 'albums', 'actors', 'players',
+  'events', 'attractions', 'museums', 'parks', 'airports', 'airlines', 'names', 'climbs',
+]);
+
+const SPELLED_NUMBERS: Record<string, number> = {
+  two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+  eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16,
+  seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20,
+};
+
+const REQUEST_ITEM_COUNT_PATTERNS: RegExp[] = [
+  /\b(?:find|list|show|give|name|get|identify|check|locate)\b[^.?!]{0,40}?\b(\d{1,2})\s+(?:[a-z]+\s+){0,2}?([a-z]{3,}s)\b/i,
+  /\b(?:find|list|show|give|name|get|identify|check|locate)\b[^.?!]{0,40}?\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\s+(?:[a-z]+\s+){0,2}?([a-z]{3,}s)\b/i,
+  /\btop\s+(\d{1,2})\s+(?:[a-z]+\s+){0,2}?([a-z]{3,}s)\b/i,
+  /\b(?:first|latest)\s+(\d{1,2})\s+(?:[a-z]+\s+){0,2}?([a-z]{3,}s)\b/i,
+];
+
+/** Parses an explicit item-count ask ('find 5 salons', 'top 10 songs') from the goal. */
+export function parseRequestedItemCount(goal: string): number | undefined {
+  for (const pattern of REQUEST_ITEM_COUNT_PATTERNS) {
+    const match = goal.match(pattern);
+    if (!match) continue;
+    const rawCount = match[1];
+    const noun = (match[2] ?? '').toLowerCase();
+    if (!ENUMERABLE_NOUNS.has(noun)) continue;
+    const count = /^\d+$/.test(rawCount) ? Number(rawCount) : SPELLED_NUMBERS[rawCount];
+    if (count !== undefined && count >= 2) return count;
+  }
+  return undefined;
+}
+
+function checkRequestedItemCount(answer: string, requested: number): string[] {
+  // Explicit fewer-than admissions are the most reliable incompleteness signal.
+  const admissions = [...answer.matchAll(/\b(?:only|just)\s+(\d{1,2})\b|\b(?:fewer|less)\s+than\s+(\d{1,2})\b/gi)];
+  for (const admission of admissions) {
+    const found = Number(admission[1] ?? admission[2]);
+    if (Number.isFinite(found) && found < requested) {
+      return [`requested_item_count_missing:requested_${requested}_answered_${found}`];
+    }
+  }
+  // Enumerated entries are counted only when the answer uses explicit list
+  // markers; prose answers are not counted (conservative: no false rejections).
+  const enumerated = countEnumeratedItems(answer);
+  if (enumerated >= 1 && enumerated < requested) {
+    return [`requested_item_count_missing:requested_${requested}_answered_${enumerated}`];
+  }
+  return [];
+}
+
+function countEnumeratedItems(answer: string): number {
+  const newlineMarkers = [...answer.matchAll(/(?:^|\n)[ \t]*(?:\d{1,2}[.)]|[a-z][.)]|[-•*])\s+/gi)].length;
+  const inlineNumbers = new Set(
+    [...answer.matchAll(/(?:^|[\s(])(\d{1,2})[.)]\s+/g)].map(match => match[1]),
+  ).size;
+  return Math.max(newlineMarkers, inlineNumbers);
+}
+
+/** Detail categories recognized in goals; each maps to concrete answer-value patterns. */
+const DETAIL_CATEGORY_GOAL_PATTERNS: ReadonlyArray<readonly [AnswerDetailCategory, RegExp]> = [
+  ['rating', /\bratings?\b|\bstars?\b/i],
+  ['price', /\bpric(?:e|es|ing)\b|\bcosts?\b|\bcheap(?:est)?\b|\bbudget\b|\bfees?\b/i],
+  ['hours', /\b(?:opening|operating)\s+hours?\b|\bhours\b/i],
+  ['duration', /\bhow\s+long\b|\bduration\b|\blength\b/i],
+  ['date', /\bdates?\b|\bwhen\b|\bdeadline\b/i],
+  ['address', /\baddress\b|\blocation\b|\blocated\b/i],
+  ['phone', /\bphone\b|\btelephone\b|\bcontact\b/i],
+  ['capacity', /\bstorage\b|\bmemory\b|\bdisk\b|\bram\b|\bcapacity\b|\bseats?\b|\bquarts?\b|\bsizes?\b/i],
+  ['year', /\byears?\b|\bannual\b|\byearly\b/i],
+  ['identity', /\binstructor\b|\binstitution\b|\buniversity\b|\bschool\b|\bauthors?\b|\bbrands?\b|\bairline\b|\bprovider\b|\bpublisher\b|\bmanufacturer\b|\bcompany\b/i],
+];
+
+export const BASIC_INFO_SIGNALS = [
+  // 0. Hours / Schedule: requires actual temporal schedule values
+  /\b(?:open\s+24\s*hours?|open\s+now|closed\s+now|open\s+daily|closed\s+on\s+[a-z]+|\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)\s*(?:-|–|to)\s*\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)|hours?\s*:\s*(?:[^\n,;]{2,30}\d|open|closed))\b/i,
+
+  // 1. Phone / Contact: requires actual phone digits
+  /(?:\+?\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}\b|\b(?:phone|tel(?:ephone)?)\s*:\s*\+?\d[\d\s().-]{5,}\d/i,
+
+  // 2. Address / Location: requires street address, City/State/Zip, or explicit address value
+  /\b\d{1,5}\s+[A-Z][a-z0-9\s.,'-]+(?:st|street|ave|avenue|rd|road|blvd|boulevard|dr|drive|lane|way|pkwy|parkway|hwy|highway)\b|\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?\b|\baddress\s*:\s*[A-Z0-9][^\n,;]{4,}|\bin\s+[A-Z][a-z]+,\s*[A-Z]{2}\b/i,
+
+  // 3. Rating / Reviews: requires concrete score or count
+  /\b[1-5](?:\.\d)?\s*(?:\/\s*5|\s*stars?|\s*out of 5)\b|\b(?:\d{1,3}(?:,\d{3})+|\d+)\s+(?:reviews?|ratings?)\b|[★☆]{3,5}|\brating\s*:\s*[1-5](?:\.\d)?/i,
+
+  // 4. Price / Fee: requires currency amount or explicit free entry statement
+  /[$€£¥₹]\s*\d+(?:\.\d{2})?(?:\s*(?:k|m|million|billion|per\s+[a-z]+|\/|\+))?|\b\d+(?:\.\d{2})?\s*(?:usd|eur|gbp|dollars?|cents?)\b|\b(?:free\s+admission|free\s+entry|no\s+(?:fee|admission|cost)|admission\s+is\s+free)\b|\b(?:entry|admission|ticket|fee|price|cost)\s*:\s*(?:[$€£¥₹]\s*\d+|free|none)/i,
+];
+
+export function hasConcreteBasicInformation(value: string): boolean {
+  return BASIC_INFO_SIGNALS.filter(signal => signal.test(value)).length >= 2;
+}
+
+const DETAIL_CATEGORY_ANSWER_PATTERNS: Record<AnswerDetailCategory, RegExp[]> = {
+  rating: [/\b[1-5](?:\.\d)?\s*(?:\/\s*5|\s*stars?|out of 5)\b/i, /\brating\s*:\s*[1-5](?:\.\d)?/i, /[★☆]/, /\b[1-9](?:\.\d)?\s*\/\s*10\b/],
+  price: [/[$€£¥₹]\s*\d/i, /\b\d+(?:\.\d{2})?\s*(?:usd|eur|gbp|inr|dollars?|rupees?|pounds?)\b/i, /\bfree\b/i],
+  hours: [/\b\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)\b/i, /\bhours?\s*:\s*\d/i, /\b\d+(?:\.\d+)?\s*hours?\b/i, /\b\d{1,2}:\d{2}\b/],
+  duration: [/\b\d+(?:\.\d+)?\s*(?:hours?|hrs?|minutes?|mins?|days?|weeks?|months?|years?)\b/i],
+  date: [/\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}\b/i, /\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/i, /\b\d{4}-\d{2}-\d{2}\b/i],
+  address: [BASIC_INFO_SIGNALS[2]],
+  phone: [BASIC_INFO_SIGNALS[1]],
+  capacity: [/\b\d+\s*(?:gb|tb|mb|kg|lb|oz|quarts?|qt|inches?|inch|cm|mm|miles?|mi|cups?)\b/i, /\b\d+\s*(?:seats?|people|persons?)\b/i],
+  year: [/\b(?:19|20)\d{2}\b/],
+  identity: [/\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})+\b/, /\b(?:by|from|at|instructor)\s+[A-Z][a-z]{2,}/i, /\b(?:instructor|institution|university|author|brand|airline|provider|publisher|manufacturer)\s*:\s*\S+/i],
+};
+
+/** Parses which detail categories the goal asks for; count-completeness gates at >= 2. */
+export function parseRequestedDetailCategories(goal: string): AnswerDetailCategory[] {
+  const categories: AnswerDetailCategory[] = [];
+  for (const [category, pattern] of DETAIL_CATEGORY_GOAL_PATTERNS) {
+    if (pattern.test(goal) && !categories.includes(category)) {
+      categories.push(category);
+    }
+  }
+  return categories;
+}
+
+
+function missingDetailCategoryReasons(answer: string, categories: AnswerDetailCategory[]): string[] {
+  const missing: string[] = [];
+  for (const category of categories) {
+    const patterns = DETAIL_CATEGORY_ANSWER_PATTERNS[category];
+    if (!patterns.some(pattern => pattern.test(answer))) {
+      missing.push(`missing_requested_detail_${category}`);
+    }
+  }
+  return missing;
 }
 
 function isComparativeRankingGoal(normalizedGoal: string): boolean {
@@ -236,26 +403,6 @@ export function hasRankingEvidence(value: string): boolean {
   return hasOrdinalRank || (hasOrderSignal && hasDimensionSignal && hasConcreteValue && !isPureControl);
 }
 
-export const BASIC_INFO_SIGNALS = [
-  // 0. Hours / Schedule: requires actual temporal schedule values
-  /\b(?:open\s+24\s*hours?|open\s+now|closed\s+now|open\s+daily|closed\s+on\s+[a-z]+|\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)\s*(?:-|–|to)\s*\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)|hours?\s*:\s*(?:[^\n,;]{2,30}\d|open|closed))\b/i,
-
-  // 1. Phone / Contact: requires actual phone digits
-  /(?:\+?\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}\b|\b(?:phone|tel(?:ephone)?)\s*:\s*\+?\d[\d\s().-]{5,}\d/i,
-
-  // 2. Address / Location: requires street address, City/State/Zip, or explicit address value
-  /\b\d{1,5}\s+[A-Z][a-z0-9\s.,'-]+(?:st|street|ave|avenue|rd|road|blvd|boulevard|dr|drive|lane|way|pkwy|parkway|hwy|highway)\b|\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?\b|\baddress\s*:\s*[A-Z0-9][^\n,;]{4,}|\bin\s+[A-Z][a-z]+,\s*[A-Z]{2}\b/i,
-
-  // 3. Rating / Reviews: requires concrete score or count
-  /\b[1-5](?:\.\d)?\s*(?:\/\s*5|\s*stars?|\s*out of 5)\b|\b(?:\d{1,3}(?:,\d{3})+|\d+)\s+(?:reviews?|ratings?)\b|[★☆]{3,5}|\brating\s*:\s*[1-5](?:\.\d)?/i,
-
-  // 4. Price / Fee: requires currency amount or explicit free entry statement
-  /[$€£¥₹]\s*\d+(?:\.\d{2})?(?:\s*(?:k|m|million|billion|per\s+[a-z]+|\/|\+))?|\b\d+(?:\.\d{2})?\s*(?:usd|eur|gbp|dollars?|cents?)\b|\b(?:free\s+admission|free\s+entry|no\s+(?:fee|admission|cost)|admission\s+is\s+free)\b|\b(?:entry|admission|ticket|fee|price|cost)\s*:\s*(?:[$€£¥₹]\s*\d+|free|none)/i,
-];
-
-export function hasConcreteBasicInformation(value: string): boolean {
-  return BASIC_INFO_SIGNALS.filter(signal => signal.test(value)).length >= 2;
-}
 
 function evidenceContainsSpecificLocation(evidenceText: string | undefined): boolean {
   return extractSpecificLocations(evidenceText ?? '').length > 0;

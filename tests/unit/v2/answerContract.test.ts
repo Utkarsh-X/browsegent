@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { inferAnswerContract, validateAnswerAgainstContract } from '../../../src/v2/agent/AnswerContract';
+import {
+  inferAnswerContract,
+  parseRequestedDetailCategories,
+  parseRequestedItemCount,
+  validateAnswerAgainstContract,
+} from '../../../src/v2/agent/AnswerContract';
 
 test('inferAnswerContract treats temporal latest lookup as a named entity goal', () => {
   const contract = inferAnswerContract('Find the latest paper about quantum computing on arXiv');
@@ -370,4 +375,80 @@ test('still rejects a ranked answer that only partially matches the top entity v
   );
   assert.equal(wrongBranch.ok, false);
   assert.ok(wrongBranch.reasons.includes('answer_does_not_match_top_ranked_evidence'));
+});
+
+test('item-count ask: fewer-than admission in the answer is rejected', () => {
+  const goal = 'Find 5 salons with rating greater than 4.8 close to zip code 90028';
+  const contract = inferAnswerContract(goal);
+  assert.equal(contract.requestedItemCount, 5);
+  const validation = validateAnswerAgainstContract(
+    'Only 4 salons meeting the criteria were clearly identified in the current view.',
+    contract,
+  );
+  assert.equal(validation.ok, false);
+  assert.equal(validation.reasons.some(reason => reason.startsWith('requested_item_count_missing')), true);
+});
+
+test('item-count ask: fully enumerated answer passes', () => {
+  const goal = 'Find 5 salons with rating greater than 4.8';
+  const contract = inferAnswerContract(goal);
+  const validation = validateAnswerAgainstContract(
+    'The salons are:\n1. Salon A (4.9)\n2. Salon B (4.9)\n3. Salon C (4.9)\n4. Salon D (4.9)\n5. Salon E (4.9)',
+    contract,
+  );
+  assert.equal(validation.reasons.some(reason => reason.startsWith('requested_item_count_missing')), false);
+});
+
+test('item-count ask: prose answer without list markers is not rejected (conservative)', () => {
+  const goal = 'Find 5 salons with rating greater than 4.8';
+  const contract = inferAnswerContract(goal);
+  const validation = validateAnswerAgainstContract(
+    'Salons near the zip code with ratings above 4.8 include Bee Beauty Lounge and Kinology.',
+    contract,
+  );
+  assert.equal(validation.reasons.some(reason => reason.startsWith('requested_item_count_missing')), false);
+});
+
+test('item-count parser ignores distances, prices, and guest counts', () => {
+  assert.equal(parseRequestedItemCount('Find a place to climb within 2 miles of zip code 90028'), undefined);
+  assert.equal(parseRequestedItemCount('Find a coffee maker with price between $100 to $200'), undefined);
+  assert.equal(parseRequestedItemCount('Find a hotel in Mexico for 2 adults for December 25-26'), undefined);
+  assert.equal(parseRequestedItemCount('Find a gaming desktop with 1TB disk size'), undefined);
+});
+
+test('multi-detail ask: partial detail coverage is rejected', () => {
+  const goal = 'Find the Introduction to Psychology course instructor, institution, hours';
+  const contract = inferAnswerContract(goal);
+  assert.deepEqual(contract.requestedDetailCategories?.sort(), ['hours', 'identity']);
+  const validation = validateAnswerAgainstContract(
+    'Yale University, introductory level, 1-3 months.',
+    contract,
+  );
+  assert.equal(validation.ok, false);
+  assert.equal(validation.reasons.includes('missing_requested_detail_hours'), true);
+});
+
+test('multi-detail ask: answer covering all requested categories passes', () => {
+  const goal = 'Find the Introduction to Psychology course instructor, institution, hours';
+  const contract = inferAnswerContract(goal);
+  const validation = validateAnswerAgainstContract(
+    'Instructor: Paul Bloom; Institution: Yale University; Duration: 14 hours.',
+    contract,
+  );
+  assert.equal(validation.reasons.filter(reason => reason.startsWith('missing_requested_detail')).length, 0);
+});
+
+test('multi-detail gate stays off for single-detail goals', () => {
+  const goal = 'Find GitHub Copilot Pro pricing';
+  const contract = inferAnswerContract(goal);
+  assert.deepEqual(contract.requestedDetailCategories, ['price']);
+  const validation = validateAnswerAgainstContract('Copilot Pro costs $10 per month.', contract);
+  assert.equal(validation.ok, true);
+});
+
+test('multi-detail gate ignores goals without detail categories', () => {
+  const goal = 'Calculate 3^71 and retain 5 significant figures in scientific notation';
+  const contract = inferAnswerContract(goal);
+  assert.deepEqual(contract.requestedDetailCategories, []);
+  assert.equal(parseRequestedItemCount(goal), undefined);
 });
