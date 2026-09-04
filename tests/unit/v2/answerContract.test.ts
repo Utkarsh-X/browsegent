@@ -4,6 +4,7 @@ import {
   inferAnswerContract,
   parseRequestedDetailCategories,
   parseRequestedItemCount,
+  partitionAnswerContractReasons,
   validateAnswerAgainstContract,
 } from '../../../src/v2/agent/AnswerContract';
 
@@ -451,4 +452,28 @@ test('multi-detail gate ignores goals without detail categories', () => {
   const contract = inferAnswerContract(goal);
   assert.deepEqual(contract.requestedDetailCategories, []);
   assert.equal(parseRequestedItemCount(goal), undefined);
+});
+
+test('year category requires an explicit year question, not adjectival mentions', () => {
+  const contract = inferAnswerContract('Find the price of a 2-year protection plan for a PlayStation 4');
+  assert.equal(contract.requestedDetailCategories?.includes('year'), false);
+  const yearly = inferAnswerContract('What year was the paper published?');
+  assert.equal(yearly.requestedDetailCategories?.includes('year'), true);
+});
+
+test('partitionAnswerContractReasons separates advisory completeness checks from hard failures', () => {
+  const { hardReasons, advisoryReasons } = partitionAnswerContractReasons([
+    'empty_answer',
+    'incomplete_answer',
+    'missing_ranking_evidence',
+    'requested_item_count_missing:requested_5_answered_4',
+    'missing_requested_detail_hours',
+    'requirements_unaddressed:search_not_executed',
+  ]);
+  assert.deepEqual(hardReasons, ['empty_answer', 'incomplete_answer', 'missing_ranking_evidence']);
+  assert.deepEqual(advisoryReasons, [
+    'requested_item_count_missing:requested_5_answered_4',
+    'missing_requested_detail_hours',
+    'requirements_unaddressed:search_not_executed',
+  ]);
 });

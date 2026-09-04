@@ -1,14 +1,17 @@
+import { parseGoalRequirements } from '../planner/GoalProgressTracker';
 import { hasResultClaimSignal } from './AnswerContract';
 import type { PlannerGoalProgress } from '../planner/GoalProgressTracker';
 
 /**
- * Requirement-completion gate for accepted answers: when the goal parsed
- * concrete date requirements, an answer that claims results while the dates
- * were never entered, were reset, or were committed without executing the
- * search is exactly the "answered from a surface that was never searched"
- * failure class (e.g. naming hotels while the search form is still showing).
- * Reasons feed the answerFeedback steering loop, so the planner gets a bounded
- * chance to complete the flow or escalate honestly instead of answering.
+ * Requirement-completion gate for accepted answers: when the goal parsed a
+ * transactional search flow (destination AND dates), an answer that claims
+ * results while the dates were never entered, were reset, or were committed
+ * without executing the search is exactly the "answered from a surface that
+ * was never searched" failure class (e.g. naming hotels while the search form
+ * is still showing). Informational date lookups ("field strength in Oslo on
+ * June 20, 2023") have no form to fill and never gate. Reasons feed the
+ * answerFeedback steering loop, so the planner gets a bounded chance to
+ * complete the flow or escalate honestly instead of answering.
  */
 export function findUnaddressedDateRequirements(input: {
   goal: string;
@@ -16,6 +19,9 @@ export function findUnaddressedDateRequirements(input: {
   answer: string;
 }): string[] {
   if (!input.goalProgress) return [];
+  const requirements = parseGoalRequirements(input.goal);
+  if (!requirements || (!requirements.destination && !requirements.destinationTo)) return [];
+  if (!requirements.dateFrom && !requirements.dateLabel) return [];
   const datesEntry = input.goalProgress.entries.find(entry => entry.key === 'dates');
   if (!datesEntry) return [];
   if (!hasResultClaimSignal(input.answer)) return [];

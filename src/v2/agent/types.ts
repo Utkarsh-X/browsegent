@@ -20,6 +20,8 @@ export interface V2AgentLoopResult {
   success: boolean;
   value: string;
   failureReason?: string;
+  /** Advisory contract reasons that fired but were overridden to preserve the answer. */
+  advisoryNotes?: string;
   steps: number;
   tracePath?: string;
   metrics: {

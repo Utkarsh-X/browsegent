@@ -41,6 +41,7 @@ export class BrowseGentBenchmarkAdapter implements BenchmarkAdapter {
         value: result.value,
         tracePath: result.tracePath,
         failureReason: result.failureReason,
+        advisoryNotes: result.advisoryNotes,
         metrics: {
           plannerCalls: result.metrics.plannerCalls,
           toolExecutions: result.metrics.toolExecutions,

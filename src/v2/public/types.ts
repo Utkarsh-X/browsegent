@@ -43,6 +43,8 @@ export interface BrowserAgentRunResult {
   value: string;
   data?: unknown;
   failureReason?: string;
+  /** Advisory contract reasons that fired but were overridden to preserve the answer. */
+  advisoryNotes?: string;
   tracePath?: string;
   warnings: string[];
   metrics: V2AgentLoopResult['metrics'];

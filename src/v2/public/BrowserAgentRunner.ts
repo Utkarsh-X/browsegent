@@ -138,6 +138,7 @@ function applyOutputMode(
     success: loopResult.success,
     value: loopResult.value,
     failureReason: loopResult.failureReason,
+    advisoryNotes: loopResult.advisoryNotes,
     tracePath: loopResult.tracePath,
     warnings,
     metrics: loopResult.metrics,

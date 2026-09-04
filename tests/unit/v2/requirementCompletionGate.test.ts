@@ -66,3 +66,21 @@ test('gate ignores non-results answers and goals without date requirements', () 
     answer: 'Paul Bloom teaches it at Yale University.',
   }), []);
 });
+
+test('gate never fires for informational date lookups without a destination', () => {
+  const reasons = findUnaddressedDateRequirements({
+    goal: 'What was the geomagnetic field strength in Oslo on June 20, 2023?',
+    goalProgress: progressWithDates('NOT_SET'),
+    answer: 'The total field strength was 51.5 microteslas.',
+  });
+  assert.deepEqual(reasons, []);
+});
+
+test('gate fires only for transactional destination+dates flows', () => {
+  const datesOnly = findUnaddressedDateRequirements({
+    goal: 'Find the cheapest flight on January 25, 2024',
+    goalProgress: progressWithDates('NOT_SET'),
+    answer: 'The cheapest fare was 3,450 (click a date for details).',
+  });
+  assert.deepEqual(datesOnly, []);
+});

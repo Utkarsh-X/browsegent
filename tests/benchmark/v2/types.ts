@@ -61,6 +61,8 @@ export interface BenchmarkAdapterResult {
   tracePath?: string;
   artifactPath?: string;
   failureReason?: string;
+  /** Advisory contract reasons that fired but were overridden to preserve the answer. */
+  advisoryNotes?: string;
   failureType?: BenchmarkFailureType;
   metrics: {
     plannerCalls: number;

@@ -196,7 +196,9 @@ const DETAIL_CATEGORY_GOAL_PATTERNS: ReadonlyArray<readonly [AnswerDetailCategor
   ['address', /\baddress\b|\blocation\b|\blocated\b/i],
   ['phone', /\bphone\b|\btelephone\b|\bcontact\b/i],
   ['capacity', /\bstorage\b|\bmemory\b|\bdisk\b|\bram\b|\bcapacity\b|\bseats?\b|\bquarts?\b|\bsizes?\b/i],
-  ['year', /\byears?\b|\bannual\b|\byearly\b/i],
+  // Only an explicit question about a year counts — adjectival mentions
+  // ("2-year protection plan", "yearly subscription") are not year asks.
+  ['year', /\b(?:what|which)\s+year\b|\b(?:release|launch|publication|copyright)\s+year\b/i],
   ['identity', /\binstructor\b|\binstitution\b|\buniversity\b|\bschool\b|\bauthors?\b|\bbrands?\b|\bairline\b|\bprovider\b|\bpublisher\b|\bmanufacturer\b|\bcompany\b/i],
 ];
 
@@ -267,6 +269,35 @@ export function hasResultClaimSignal(answer: string): boolean {
   if (countEnumeratedItems(answer) >= 1) return true;
   return Object.values(DETAIL_CATEGORY_ANSWER_PATTERNS)
     .some(patterns => patterns.some(pattern => pattern.test(answer)));
+}
+
+const ADVISORY_REASON_PREFIXES = [
+  'requested_item_count_missing:',
+  'missing_requested_detail_',
+  'requirements_unaddressed:',
+];
+
+/**
+ * Splits contract reasons into hard (long-standing answer-shape failures that
+ * must reject a done) and advisory (completeness/completion heuristics that
+ * steer once but must never destroy an otherwise-delivered answer — the model
+ * may simply be unable to satisfy them, and a recorded imperfect answer
+ * outperforms a catastrophic run failure).
+ */
+export function partitionAnswerContractReasons(reasons: string[]): {
+  hardReasons: string[];
+  advisoryReasons: string[];
+} {
+  const hardReasons: string[] = [];
+  const advisoryReasons: string[] = [];
+  for (const reason of reasons) {
+    if (ADVISORY_REASON_PREFIXES.some(prefix => reason.startsWith(prefix))) {
+      advisoryReasons.push(reason);
+    } else {
+      hardReasons.push(reason);
+    }
+  }
+  return { hardReasons, advisoryReasons };
 }
 
 function isComparativeRankingGoal(normalizedGoal: string): boolean {

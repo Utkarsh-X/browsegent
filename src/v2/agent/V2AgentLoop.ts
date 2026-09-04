@@ -1,4 +1,4 @@
-import { inferAnswerContract, validateAnswerAgainstContract } from './AnswerContract';
+import { inferAnswerContract, partitionAnswerContractReasons, validateAnswerAgainstContract } from './AnswerContract';
 import { detectAnswerEvidenceConflicts } from './AnswerGrounding';
 import { stripInternalRefTokens } from './AnswerHygiene';
 import { findUnaddressedDateRequirements } from './RequirementCompletionGate';
@@ -90,6 +90,7 @@ export class V2AgentLoop {
       let answerFeedback: PlannerAnswerFeedback | undefined;
       let lastRejectedAnswerKey: string | undefined;
       let repeatedRejectedAnswerCount = 0;
+      let advisorySteered = false;
       const evidenceLedger = new EvidenceLedger();
       const plannerTraceSteps: TraceStep[] = [];
       const recentObservationUrls: string[] = [];
@@ -214,7 +215,8 @@ export class V2AgentLoop {
             answer: value,
           });
           const validationReasons = [...answerValidation.reasons, ...coverageReasons, ...requirementReasons];
-          if (validationReasons.length > 0) {
+          const { hardReasons, advisoryReasons } = partitionAnswerContractReasons(validationReasons);
+          if (hardReasons.length > 0) {
             const rejectedAnswerKey = buildRejectedAnswerKey(
               value,
               validationReasons,
@@ -255,10 +257,24 @@ export class V2AgentLoop {
               metrics,
             }, ledger, outcomeRecorder);
           }
+          if (advisoryReasons.length > 0 && !advisorySteered && stepIndex < maxSteps - 1) {
+            // Advisory checks steer exactly once — if the model cannot satisfy
+            // them, the delivered answer is preserved with the caveat recorded
+            // instead of burning the run in a rejection loop.
+            advisorySteered = true;
+            answerFeedback = buildAnswerFeedback(value, advisoryReasons);
+            runtimeUncertainty = appendRuntimeUncertaintySignals(
+              runtimeUncertainty,
+              advisoryReasons.map(reason => `answer_contract:${reason}`),
+            );
+            ledger.endStep(stepIndex, Date.now() - stepStartMs);
+            continue;
+          }
           answerFeedback = undefined;
           return await this.complete(harness, {
             success: true,
             value,
+            advisoryNotes: advisoryReasons.length > 0 ? advisoryReasons.join('|') : undefined,
             steps: metrics.plannerCalls,
             metrics,
           }, ledger, outcomeRecorder);
@@ -811,11 +827,23 @@ export class V2AgentLoop {
           ...(answerValidation.ok ? missingCoverageReasons(evidenceCoverage) : []),
           ...requirementReasons,
         ];
-        if (validationReasons.length > 0) {
+        const finalizationPartition = partitionAnswerContractReasons(validationReasons);
+        if (finalizationPartition.hardReasons.length > 0) {
           return await this.complete(harness, {
             success: false,
             value,
             failureReason: `answer_contract_failed:${validationReasons.join('|')}`,
+            steps: metrics.plannerCalls,
+            metrics,
+          }, ledger, outcomeRecorder);
+        }
+        if (finalizationPartition.advisoryReasons.length > 0) {
+          // Finalization is the last chance to answer: advisory reasons are
+          // recorded, never allowed to destroy the delivered answer.
+          return await this.complete(harness, {
+            success: true,
+            value,
+            advisoryNotes: finalizationPartition.advisoryReasons.join('|'),
             steps: metrics.plannerCalls,
             metrics,
           }, ledger, outcomeRecorder);
