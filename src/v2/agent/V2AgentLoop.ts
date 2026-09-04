@@ -29,7 +29,7 @@ import { DeadStateDetector, type DeadStateEvidence } from '../runtime/DeadStateD
 import { createDateSeekStop } from './SeekPolicy';
 import { FailureClassifier, type FailureEvidence } from '../runtime/FailureClassifier';
 import type { BrowserObservation, TransitionEvidence, V2ToolResult, V2ToolError } from '../runtime/types';
-import { UncertaintySignals, type RuntimeUncertainty } from '../runtime/UncertaintySignals';
+import { UncertaintySignals, detectNavigationOscillation, type RuntimeUncertainty } from '../runtime/UncertaintySignals';
 import { V2ToolDispatcher } from '../tools/V2ToolDispatcher';
 import type { V2ToolDispatchContext, V2ToolDispatcherLike } from '../tools/types';
 import { LatencyLedger } from '../trace/LatencyLedger';
@@ -92,12 +92,18 @@ export class V2AgentLoop {
       let repeatedRejectedAnswerCount = 0;
       const evidenceLedger = new EvidenceLedger();
       const plannerTraceSteps: TraceStep[] = [];
+      const recentObservationUrls: string[] = [];
 
       for (let stepIndex = 0; stepIndex < stepBudget; stepIndex += 1) {
         ledger.beginStep(stepIndex);
         const stepStartMs = Date.now();
         const composeStart = Date.now();
         const projection = this.projectionService.project(observation, graphSnapshot);
+        recentObservationUrls.push(observation.url);
+        if (recentObservationUrls.length > 8) recentObservationUrls.splice(0, recentObservationUrls.length - 8);
+        if (detectNavigationOscillation(recentObservationUrls)) {
+          runtimeUncertainty = appendRuntimeUncertaintySignals(runtimeUncertainty, ['navigation_oscillation']);
+        }
         evidenceLedger.recordObservation(observation, projection);
         const surfaceEvidence = evidenceLedger.getAllEvidenceReads();
         const evidenceCoverage = buildTaskEvidenceCoverage(input.goal, readEvidenceHistory, surfaceEvidence);

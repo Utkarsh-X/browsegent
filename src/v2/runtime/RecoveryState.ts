@@ -5,8 +5,13 @@ import type { V2ToolResult } from './types';
 export type PlannerRecoveryStateKind =
   | 'wrong_target_type'
   | 'persistent_target_blocker'
+  | 'surface_wide_blocker'
+  | 'unresponsive_surface'
+  | 'navigation_oscillation'
   | 'same_action_loop'
   | 'repeated_read_same_value'
+  | 'repeated_type_same_value'
+  | 'repeated_timeout_target'
   | 'zero_result_read_loop'
   | 'empty_navigation_surface'
   | 'unselected_ref'
@@ -37,11 +42,20 @@ export class RecoveryStateBuilder {
     const persistentBlocker = buildPersistentBlockerRecovery(input, signals);
     if (persistentBlocker) return persistentBlocker;
 
+    const unresponsiveSurface = buildUnresponsiveSurfaceRecovery(input, signals);
+    if (unresponsiveSurface) return unresponsiveSurface;
+
+    const repeatedTimeoutTarget = buildRepeatedTimeoutTargetRecovery(input, signals);
+    if (repeatedTimeoutTarget) return repeatedTimeoutTarget;
+
     const wrongTarget = buildWrongTargetRecovery(input.lastResult, signals);
     if (wrongTarget) return wrongTarget;
 
     const emptyNavigation = buildEmptyNavigationRecovery(input, signals);
     if (emptyNavigation) return emptyNavigation;
+
+    const oscillation = buildNavigationOscillationRecovery(input, signals);
+    if (oscillation) return oscillation;
 
     if (signals.some(signal => signal.startsWith('repeated_no_progress_transition:'))) {
       return {
@@ -80,6 +94,25 @@ export class RecoveryStateBuilder {
           signal.startsWith('repeated_value_preview:get:') || signal.startsWith('repeated_value_preview:inspect_region:')
         )),
         nextMechanisms: ['finalize_with_collected_evidence', 'try_different_ref', 'stop_if_dead_end_evidence_is_sufficient'],
+        signals,
+      };
+    }
+
+    if (signals.some(signal => signal.startsWith('repeated_value_preview:type:'))) {
+      // The same text has been typed into the same control repeatedly: in a
+      // suggestion-backed combobox the typed value is not committed until a
+      // matching option is clicked (or Enter commits it). Steer to the commit
+      // step instead of another identical retype.
+      return {
+        state: 'repeated_type_same_value',
+        severity: 'warning',
+        blockedAction: blockedActionFromSignal(signals.find(signal => signal.startsWith('repeated_value_preview:type:'))),
+        nextMechanisms: [
+          'confirm_combobox_selection',
+          'click_matching_suggestion_option',
+          'avoid_retyping_committed_values',
+          'choose_alternative_ref',
+        ],
         signals,
       };
     }
@@ -180,14 +213,65 @@ function buildPersistentBlockerRecovery(
   }
 
   const matchingGroup = [...groups.values()].find(refs => refs.size >= 2);
-  if (!matchingGroup) return undefined;
+  if (!matchingGroup) {
+    // Single-ref blindspot: retrying the SAME blocked element never reaches
+    // two distinct refs, but it is still a persistent blocker. Fire on the
+    // same-ref repeat count so the planner stops re-targeting it.
+    const sameRefCount = sameEpoch.filter(failure => failure.targetRef === currentFailure.targetRef).length;
+    if (sameRefCount < 2) return undefined;
+    return {
+      state: 'persistent_target_blocker',
+      severity: 'warning',
+      blockedAction: {
+        tool: input.lastResult?.kind,
+        ref: input.lastResult?.targetRef,
+      },
+      nextMechanisms: [
+        'avoid_repeating_blocked_action',
+        'find_dismiss_or_close_control',
+        'reobserve_current_surface',
+        'choose_unblocked_alternative',
+      ],
+      signals: [
+        ...signals,
+        `persistent_blocker:same_ref:${sameRefCount}`,
+      ],
+    };
+  }
+
+  // When the same blocker covers many distinct refs, no "unblocked alternative"
+  // exists on the surface: the actionable move is dismissing the blocker (its
+  // own controls are the reachable surface) or reporting honestly. Escalate
+  // severity and re-lead the mechanisms once coverage is wide.
+  if (matchingGroup.size >= 3) {
+    return {
+      state: 'surface_wide_blocker',
+      severity: 'critical',
+      blockedAction: {
+        tool: input.lastResult?.kind ?? 'unknown',
+        ref: input.lastResult?.targetRef,
+      },
+      nextMechanisms: [
+        'avoid_repeating_blocked_action',
+        'find_dismiss_or_close_control',
+        'act_on_overlay_controls',
+        'reobserve_current_surface',
+        'escalate_if_surface_remains_blocked',
+      ],
+      signals: [
+        ...signals,
+        `persistent_blocker:${matchingGroup.size}`,
+        `surface_wide_blocker:${matchingGroup.size}`,
+      ],
+    };
+  }
 
   return {
     state: 'persistent_target_blocker',
     severity: 'warning',
     blockedAction: {
-      tool: input.lastResult.kind,
-      ref: input.lastResult.targetRef,
+      tool: input.lastResult?.kind,
+      ref: input.lastResult?.targetRef,
     },
     nextMechanisms: [
       'avoid_repeating_blocked_action',
@@ -200,6 +284,92 @@ function buildPersistentBlockerRecovery(
       ...signals,
       `persistent_blocker:${matchingGroup.size}`,
     ],
+  };
+}
+
+const UNRESPONSIVE_TIMEOUT_RUN = 3;
+
+function buildUnresponsiveSurfaceRecovery(
+  input: RecoveryStateBuilderInput,
+  signals: string[],
+): PlannerRecoveryState | undefined {
+  if (input.lastResult?.error?.code !== 'timeout') return undefined;
+  const timeoutRun = countTrailingTimeouts(input.failures ?? []);
+  if (timeoutRun < UNRESPONSIVE_TIMEOUT_RUN) return undefined;
+
+  return {
+    state: 'unresponsive_surface',
+    severity: 'warning',
+    blockedAction: {
+      tool: input.lastResult.kind,
+      ref: input.lastResult.targetRef,
+    },
+    nextMechanisms: [
+      'wait_for_hydration',
+      'reobserve_current_surface',
+      'avoid_repeated_actions_on_unresponsive_surface',
+      'report_unresponsive_honestly',
+    ],
+    signals: [...signals, `unresponsive_surface:${timeoutRun}`],
+  };
+}
+
+function countTrailingTimeouts(failures: FailureEvidence[]): number {
+  let count = 0;
+  for (let index = failures.length - 1; index >= 0; index -= 1) {
+    if (failures[index].kind !== 'timeout') break;
+    count += 1;
+  }
+  return count;
+}
+
+const REPEATED_TIMEOUT_SAME_TARGET = 2;
+
+function buildRepeatedTimeoutTargetRecovery(
+  input: RecoveryStateBuilderInput,
+  signals: string[],
+): PlannerRecoveryState | undefined {
+  if (input.lastResult?.error?.code !== 'timeout') return undefined;
+  const targetRef = input.lastResult.targetRef;
+  if (!targetRef) return undefined;
+  const sameTargetTimeouts = (input.failures ?? []).filter(failure =>
+    failure.kind === 'timeout' && failure.targetRef === targetRef,
+  ).length;
+  if (sameTargetTimeouts < REPEATED_TIMEOUT_SAME_TARGET) return undefined;
+
+  return {
+    state: 'repeated_timeout_target',
+    severity: 'warning',
+    blockedAction: {
+      tool: input.lastResult.kind,
+      ref: targetRef,
+    },
+    nextMechanisms: [
+      'avoid_repeating_blocked_action',
+      'choose_alternative_ref',
+      'expand_or_reobserve',
+      'wait_for_hydration',
+    ],
+    signals: [...signals, `repeated_timeout:${targetRef}:${sameTargetTimeouts}`],
+  };
+}
+
+function buildNavigationOscillationRecovery(
+  input: RecoveryStateBuilderInput,
+  signals: string[],
+): PlannerRecoveryState | undefined {
+  if (!signals.includes('navigation_oscillation')) return undefined;
+
+  return {
+    state: 'navigation_oscillation',
+    severity: 'warning',
+    nextMechanisms: [
+      'avoid_navigation_churn',
+      'commit_to_current_surface_until_progress',
+      'act_on_visible_controls',
+      'reobserve_current_surface',
+    ],
+    signals,
   };
 }
 

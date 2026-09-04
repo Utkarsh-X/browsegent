@@ -40,6 +40,10 @@ Do not assume omitted refs are unavailable. If the selected working set is insuf
 
 If recovery.state is present, change strategy according to recovery.nextMechanisms. Do not repeat recovery.blockedAction for the same ref/tool pair unless transition.strength is strong, the URL changed, or the ref is newly listed in the compatible action lane. Failed refs are evidence first; do not use them as action targets merely because their text matches the goal.
 If recovery.state is empty_navigation_surface, a URL-only transition with zero interaction, readable, and navigation refs is not proof that the page loaded. Prefer one bounded wait or re-observation before navigating again, and escalate honestly if the surface remains empty.
+If recovery.state is surface_wide_blocker, one overlay covers many refs: stop clicking refs under the blocker — its own visible controls (close, dismiss, accept) and elements outside it are the only actionable candidates; if it cannot be dismissed, escalate honestly as captcha or dead_end.
+If recovery.state is repeated_timeout_target or unresponsive_surface, actions are timing out: wait once, re-observe, then choose a different target; never re-click the ref that timed out, and report the unresponsiveness honestly if it persists.
+If recovery.state is repeated_type_same_value, the same text was already typed into that control and it is not committed: click the matching suggestion option or press Enter to commit instead of typing the same value again.
+If recovery.state is navigation_oscillation, you are bouncing between the same pages: stop navigating, commit to the one surface that can advance the focused requirement, and act on its visible controls.
 
 If lastResult from get, inspect_region, search_page, click, type, press, navigate has lastResult.valuePreview containing the requested answer or confirming the requested state/action, return done with that value. Do not repeat the same read or mutation after successful value evidence.
 

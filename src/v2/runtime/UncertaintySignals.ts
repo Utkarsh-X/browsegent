@@ -103,6 +103,7 @@ function chooseLevel(signals: string[]): RuntimeUncertainty['level'] {
     || signals.includes('graph_present_refs:0')
     || signals.includes('failure:environment_block')
     || signals.includes('failure:target_blocked')
+    || signals.includes('navigation_oscillation')
   ) {
     return 'high';
   }
@@ -127,4 +128,25 @@ function chooseLevel(signals: string[]): RuntimeUncertainty['level'] {
   }
 
   return 'none';
+}
+
+/**
+ * True when the recent observation-URL history alternates between two pages
+ * (A,B,A,B in the last four entries) or repeats one URL three times within the
+ * last five entries — the navigation-churn pattern where the planner bounces
+ * between surfaces instead of acting on the one that can advance the goal.
+ */
+export function detectNavigationOscillation(recentUrls: string[]): boolean {
+  const urls = recentUrls.filter(url => typeof url === 'string' && url.length > 0);
+  if (urls.length >= 4) {
+    const [a, b, c, d] = urls.slice(-4);
+    if (a === c && b === d && a !== b) return true;
+  }
+  if (urls.length >= 5) {
+    const window = urls.slice(-5);
+    const last = window[window.length - 1];
+    const repeats = window.filter(url => url === last).length;
+    if (repeats >= 3) return true;
+  }
+  return false;
 }

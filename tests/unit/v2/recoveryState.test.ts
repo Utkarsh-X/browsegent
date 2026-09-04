@@ -387,3 +387,177 @@ test('same_url_navigation refusals steer the planner to on-page controls', () =>
   assert.ok(recovery?.nextMechanisms.includes('avoid_navigation_churn'));
   assert.ok(recovery?.nextMechanisms.includes('act_on_visible_controls'));
 });
+
+function blockedFailure(id: string, ref: string, generationId = 1): FailureEvidence {
+  return {
+    failureId: `failure_target_blocked_${id}`,
+    kind: 'target_blocked',
+    category: 'target',
+    severity: 'warning',
+    persistence: 'persistent',
+    retryable: false,
+    message: 'blocked',
+    source: 'test',
+    observationId: 'obs_1_2',
+    targetRef: ref,
+    signals: ['error:target_blocked'],
+    diagnostics: {
+      blockerDescription: 'div#consent-overlay',
+      blockerTagName: 'div',
+      hitTestOutcome: 'hard_blocker',
+      blockerIsFixedOrSticky: true,
+    },
+    generationId,
+    url: 'https://example.test/form',
+  };
+}
+
+test('RecoveryStateBuilder escalates to surface_wide_blocker when one blocker covers 3+ refs', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_c',
+      error: { code: 'target_blocked', message: 'blocked', retryable: false, diagnostics: { blockerDescription: 'div#consent-overlay' } },
+      traceStepId: 'step_c',
+    },
+    failures: [blockedFailure('a', 'ref_a'), blockedFailure('b', 'ref_b'), blockedFailure('c', 'ref_c')],
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'surface_wide_blocker');
+  assert.equal(recovery.severity, 'critical');
+  assert.ok(recovery.nextMechanisms.includes('find_dismiss_or_close_control'));
+  assert.ok(recovery.nextMechanisms.includes('act_on_overlay_controls'));
+  assert.ok(recovery.signals.some(signal => signal.startsWith('surface_wide_blocker:')));
+});
+
+test('RecoveryStateBuilder fires persistent_target_blocker for same-ref retries (single-ref blindspot)', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_a',
+      error: { code: 'target_blocked', message: 'blocked', retryable: false, diagnostics: { blockerDescription: 'div#onetrust-banner' } },
+      traceStepId: 'step_a',
+    },
+    failures: [blockedFailure('a1', 'ref_a'), blockedFailure('a2', 'ref_a')],
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'persistent_target_blocker');
+  assert.ok(recovery.signals.some(signal => signal.startsWith('persistent_blocker:same_ref:')));
+});
+
+test('RecoveryStateBuilder reports unresponsive_surface after consecutive timeouts', () => {
+  const timeoutFailure = (id: string, ref: string): FailureEvidence => ({
+    failureId: `failure_timeout_${id}`,
+    kind: 'timeout',
+    category: 'timing',
+    severity: 'warning',
+    persistence: 'transient',
+    retryable: true,
+    message: 'timed out',
+    source: 'test',
+    targetRef: ref,
+    signals: ['error:timeout'],
+    generationId: 1,
+    url: 'https://example.test/page',
+  });
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_x',
+      error: { code: 'timeout', message: 'timeout', retryable: true },
+      traceStepId: 'step_x',
+    },
+    failures: [timeoutFailure('1', 'ref_x'), timeoutFailure('2', 'ref_y'), timeoutFailure('3', 'ref_z')],
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'unresponsive_surface');
+  assert.ok(recovery.nextMechanisms.includes('report_unresponsive_honestly'));
+});
+
+test('RecoveryStateBuilder quarantines a ref that repeatedly times out', () => {
+  const timeoutFailure = (id: string): FailureEvidence => ({
+    failureId: `failure_timeout_${id}`,
+    kind: 'timeout',
+    category: 'timing',
+    severity: 'warning',
+    persistence: 'transient',
+    retryable: true,
+    message: 'timed out',
+    source: 'test',
+    targetRef: 'ref_stuck',
+    signals: ['error:timeout'],
+    generationId: 1,
+    url: 'https://example.test/page',
+  });
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_stuck',
+      error: { code: 'timeout', message: 'timeout', retryable: true },
+      traceStepId: 'step_stuck',
+    },
+    failures: [
+      timeoutFailure('1'),
+      {
+        failureId: 'failure_target_blocked_other',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'blocked',
+        source: 'test',
+        targetRef: 'ref_other',
+        signals: ['error:target_blocked'],
+        generationId: 1,
+        url: 'https://example.test/page',
+      },
+      timeoutFailure('3'),
+    ],
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'repeated_timeout_target');
+  assert.equal(recovery.blockedAction?.ref, 'ref_stuck');
+  assert.ok(recovery.nextMechanisms.includes('choose_alternative_ref'));
+});
+
+test('RecoveryStateBuilder steers repeated identical typing toward committing the selection', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    uncertaintySignals: ['repeated_value_preview:type:v2ref_216:3'],
+    lastResult: {
+      success: true,
+      kind: 'type',
+      targetRef: 'v2ref_216',
+      traceStepId: 'step_t',
+    },
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'repeated_type_same_value');
+  assert.equal(recovery.blockedAction?.tool, 'type');
+  assert.equal(recovery.blockedAction?.ref, 'v2ref_216');
+  assert.ok(recovery.nextMechanisms.includes('click_matching_suggestion_option'));
+});
+
+test('RecoveryStateBuilder stops navigation churn on the oscillation signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    uncertaintySignals: ['navigation_oscillation'],
+    lastResult: {
+      success: true,
+      kind: 'navigate',
+      traceStepId: 'step_nav',
+    },
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'navigation_oscillation');
+  assert.ok(recovery.nextMechanisms.includes('commit_to_current_surface_until_progress'));
+});

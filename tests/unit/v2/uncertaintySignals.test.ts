@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { UncertaintySignals } from '../../../src/v2/runtime/UncertaintySignals';
+import { detectNavigationOscillation, UncertaintySignals } from '../../../src/v2/runtime/UncertaintySignals';
 import type { TransitionEvidence, V2ToolResult } from '../../../src/v2/runtime/types';
 
 function makeTransition(urlChanged: boolean): TransitionEvidence {
@@ -39,4 +39,14 @@ test('no_op_navigation does not fire for real navigations or other tools', () =>
     lastResult: { success: true, kind: 'click', traceStepId: 's1' },
   });
   assert.equal(click.signals.includes('no_op_navigation'), false);
+});
+
+test('detectNavigationOscillation flags two-page alternation and same-URL reload loops', () => {
+  assert.equal(detectNavigationOscillation(['a', 'b', 'a', 'b']), true);
+  assert.equal(detectNavigationOscillation(['x', 'a', 'b', 'a', 'b']), true);
+  assert.equal(detectNavigationOscillation(['p', 'q', 'p', 'q', 'p']), true);
+  assert.equal(detectNavigationOscillation(['a', 'b', 'a', 'c']), false);
+  assert.equal(detectNavigationOscillation(['a', 'a', 'b', 'a']), false);
+  assert.equal(detectNavigationOscillation(['a', 'b', 'c']), false);
+  assert.equal(detectNavigationOscillation([]), false);
 });
