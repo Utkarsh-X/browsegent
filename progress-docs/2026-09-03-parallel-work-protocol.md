@@ -76,3 +76,9 @@ answer contract against that exact answer text (run webvoyager_lite_178847084688
 webvoyager_Booking__0 final value); it must be rejected as NOT SUCCESS-grade.
 Judge fields are additive; strict scores untouched. Re-run any existing run
 offline via: npx tsx scripts/webvoyager_rejudge.ts <runDir>.
+
+## Audit response (2026-09-04, runs 9/10 + browser-control comparison)
+
+- Judge evidence bug fixed (e621823); runs 9/10 re-judged with real page evidence — both land at 13/30 (43.3%) official total. Full audit: flash-lite-runs-comparison.md §5.
+- Agent A action item still open: validate the landed answer contract rejects the run 8 Booking__0 delegation answer. Note the failure class now also includes **suggestion-surface answers** (run 10 Booking__0 named hotels while the final page still showed the search form; Coursera__0 answered from search suggestions). If the answer-contract work can add a generic "final answer must be grounded in captured read evidence, not suggestion surfaces" check, that is the highest-value next contribution.
+- Answer hygiene (ref-token stripping + evaluator leak flag) landed in d876adf; captcha_wall in-denominator scoring in 36cee29. Compact data plane measured larger than verbose — do not use for benchmark runs until redesigned.
