@@ -1,4 +1,5 @@
 import type { ScoredBenchmarkResult } from '../v2/types';
+import { hasInternalRefTokens, stripInternalRefTokens } from '../../../src/v2/agent/AnswerHygiene';
 import type {
   WebVoyagerBenchmarkTask,
   WebVoyagerEvaluationSummary,
@@ -24,13 +25,19 @@ export function evaluateWebVoyagerResult(
   const reference = task.webVoyager.referenceAnswer;
   const internalPassed = result.passed === true;
   const environmentStatus = classifyEnvironmentStatus(result, manualAudit);
+  // Internal ref identifiers are plumbing, not answer content: match on the
+  // cleaned text so a leak can never create token-overlap credit, and flag
+  // the leak for review.
+  const internalRefLeak = hasInternalRefTokens(result.value ?? '');
+  const referenceMatchValue = internalRefLeak ? stripInternalRefTokens(result.value) : result.value;
   const referenceMatchType = environmentStatus === 'normal'
-    ? (reference ? classifyReferenceMatch(result.value, reference.answer, reference.type) : 'missing_reference')
+    ? (reference ? classifyReferenceMatch(referenceMatchValue, reference.answer, reference.type) : 'missing_reference')
     : 'not_applicable';
 
   if (!internalPassed) reasons.push('benchmark_result_failed');
   if (environmentStatus === 'normal' && !reference) reasons.push('missing_reference');
   if (environmentStatus === 'normal' && reference && referenceMatchType === 'mismatch') reasons.push('reference_mismatch');
+  if (internalRefLeak) reasons.push('internal_ref_leak');
   if (environmentStatus !== 'normal') reasons.push(environmentStatus);
   if (manualAudit) reasons.push(`manual_${manualAudit.verdict}`);
 
@@ -52,7 +59,7 @@ export function evaluateWebVoyagerResult(
     environmentAdjustedEligible: environmentStatus === 'normal',
     environmentStatus,
     referenceMatchType,
-    needsManualReview: !manualAudit && (!reference || referenceMatchType === 'mismatch' || referenceMatchType === 'partial' || environmentStatus !== 'normal'),
+    needsManualReview: !manualAudit && (internalRefLeak || !reference || referenceMatchType === 'mismatch' || referenceMatchType === 'partial' || environmentStatus !== 'normal'),
     manualVerdict: manualAudit?.verdict,
     reasons,
     judgeScore: judge?.score,

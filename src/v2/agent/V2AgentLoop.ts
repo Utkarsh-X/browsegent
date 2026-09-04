@@ -1,5 +1,6 @@
 import { inferAnswerContract, validateAnswerAgainstContract } from './AnswerContract';
 import { detectAnswerEvidenceConflicts } from './AnswerGrounding';
+import { stripInternalRefTokens } from './AnswerHygiene';
 import { ProjectionService } from '../brain1/ProjectionService';
 import {
   buildAnswerValidationEvidence,
@@ -564,7 +565,7 @@ export class V2AgentLoop {
 
         return await this.complete(harness, {
           success: false,
-          value: lastSuccessfulEvidenceValue,
+          value: stripInternalRefTokens(lastSuccessfulEvidenceValue),
           failureReason: 'v2_max_steps_exhausted',
           steps: metrics.plannerCalls,
           metrics,
@@ -784,7 +785,7 @@ export class V2AgentLoop {
       metrics.plannerDurationMs += result.durationMs;
 
       if (result.output.done === true) {
-        const value = result.output.val ?? evidenceValue;
+        const value = stripInternalRefTokens(result.output.val ?? evidenceValue);
         const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(goal), {
           evidenceText: validationEvidence,
         });
@@ -918,7 +919,9 @@ export class V2AgentLoop {
       input.metrics.inputTokens += result.inputTokens;
       input.metrics.outputTokens += result.outputTokens;
       input.metrics.plannerDurationMs += result.durationMs;
-      const corrected = result.output.done === true ? result.output.val?.trim() : undefined;
+      const corrected = result.output.done === true
+        ? stripInternalRefTokens(result.output.val?.trim() ?? '')
+        : undefined;
       if (corrected) {
         // Shape and coverage are re-validated; grounding is not re-run so this is bounded.
         const validation = validateAnswerAgainstContract(corrected, inferAnswerContract(input.goal), {
@@ -1760,18 +1763,20 @@ export function validatePlannerStep(step: PlannerOutputStep): V2ToolError | unde
 }
 
 export function normalizeAnswerValue(value: string, goal: string): string {
+  // Internal ref identifiers are plumbing, never answer content.
+  const sanitized = stripInternalRefTokens(value);
   // Only apply pronunciation normalization if the goal asks for pronunciation
-  if (!/pronunc/i.test(goal)) return value;
+  if (!/pronunc/i.test(goal)) return sanitized;
 
   // If already labeled (contains UK/US or similar), return as-is
-  if (/\b(UK|US|British|American)\b/i.test(value)) return value;
+  if (/\b(UK|US|British|American)\b/i.test(sanitized)) return sanitized;
 
   // Match IPA patterns like /.../ separated by comma, semicolon, or newline
   const ipaPattern = /^(\/[^/]+\/)\s*[,;\n]\s*(\/[^/]+\/)$/;
-  const match = value.trim().match(ipaPattern);
+  const match = sanitized.trim().match(ipaPattern);
   if (match) {
     return `UK: ${match[1]} US: ${match[2]}`;
   }
 
-  return value;
+  return sanitized;
 }

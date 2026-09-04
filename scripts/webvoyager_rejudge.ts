@@ -53,7 +53,10 @@ async function main(): Promise<void> {
   copyFileSync(evaluationPath, join(runDir, 'webvoyager_evaluation.prejudge.json'));
 
   const resultByTask = new Map(report.results.map(entry => [entry.taskId, entry]));
-  const taskById = new Map(evaluation.tasks.map(task => [`webvoyager_${task.id.replace(/--/g, '__')}`, task]));
+  // Mirror the canonical taskId normalization (any non-alphanumeric run -> '__')
+  // so dataset ids containing spaces ('BBC News--0') resolve to the same
+  // 'webvoyager_BBC__News__0' form used by verdicts.
+  const taskById = new Map(evaluation.tasks.map(task => [`webvoyager_${task.id.replace(/[^a-z0-9]+/gi, '__')}`, task]));
 
   let judged = 0;
   for (const verdict of evaluation.verdicts) {
