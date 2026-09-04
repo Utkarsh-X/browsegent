@@ -1,4 +1,4 @@
-﻿import { spawn } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
@@ -147,6 +147,7 @@ export class BrowserControlAdapter implements BenchmarkAdapter {
         success: false,
         value: runnerResult?.value ?? '',
         artifactPath,
+        tracePath: artifactPath,
         failureReason: `browser-control runner exited with code ${processResult.exitCode}: ${sanitizedFailureReason}`.trim(),
         failureType: runnerResult?.failureType ?? 'runtime_crash',
         metrics: metrics(startedAt, runnerResult),
@@ -160,6 +161,7 @@ export class BrowserControlAdapter implements BenchmarkAdapter {
       success: runnerResult?.success === true,
       value: runnerResult?.value ?? '',
       artifactPath,
+      tracePath: artifactPath,
       failureReason: runnerResult?.failureReason ? redactSecrets(runnerResult.failureReason, secrets) : undefined,
       failureType: runnerResult?.failureType,
       metrics: metrics(startedAt, runnerResult),

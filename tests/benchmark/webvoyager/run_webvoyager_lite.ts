@@ -7,7 +7,7 @@ import type { BenchmarkAdapter, BenchmarkReport, BenchmarkTraceScore } from '../
 import { buildWebVoyagerTaskArtifactSummary } from './artifacts';
 import { evaluateWebVoyagerResult, summarizeWebVoyagerEvaluation } from './evaluator';
 import { collectFinalPageEvidence, judgeTaskResult } from './judge';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { loadWebVoyagerManualAudit } from './manual_audit';
 import { loadWebVoyagerSource } from './source_loader';
 import { resolveWebVoyagerTaskIds, selectWebVoyagerLiteTasks, toBenchmarkTasks, type WebVoyagerTaskSlice } from './task_selection';
@@ -132,7 +132,23 @@ function readFinalPageUrl(tracePath: string | undefined): string | undefined {
       if (typeof url === 'string' && url.length > 0) return url;
     }
   } catch {
-    return undefined;
+    try {
+      const stderrFile = join(tracePath, 'stderr.txt');
+      if (existsSync(stderrFile)) {
+        const stderr = readFileSync(stderrFile, 'utf8');
+        const urlMatches = [...stderr.matchAll(/'url':\s*'([^']+)'/g)];
+        if (urlMatches.length > 0) {
+          return urlMatches[urlMatches.length - 1][1];
+        }
+      }
+      const inputFile = join(tracePath, 'input.json');
+      if (existsSync(inputFile)) {
+        const input = JSON.parse(readFileSync(inputFile, 'utf8'));
+        if (input.url) return input.url;
+      }
+    } catch {
+      return undefined;
+    }
   }
   return undefined;
 }

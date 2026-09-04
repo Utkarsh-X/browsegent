@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { callProvider } from '../../../src/providers/index';
@@ -88,6 +88,19 @@ export function collectFinalPageEvidence(traceDir: string, maxLines = 40, maxCha
   try {
     files = readdirSync(observationsDir).filter(name => /^obs_\d+_\d+\.json$/.test(name)).sort(sortByObservationIndex);
   } catch {
+    // Fallback for external adapters (e.g. browser-control)
+    try {
+      const stderrFile = join(traceDir, 'stderr.txt');
+      if (existsSync(stderrFile)) {
+        const stderr = readFileSync(stderrFile, 'utf8');
+        const stepLines = stderr.split('\n').filter(line => line.includes('[browser-control] Step '));
+        if (stepLines.length > 0) {
+          return stepLines.slice(-maxLines).map(l => l.slice(0, maxCharsPerLine)).join('\n');
+        }
+      }
+    } catch {
+      return '';
+    }
     return '';
   }
   const last = files[files.length - 1];
