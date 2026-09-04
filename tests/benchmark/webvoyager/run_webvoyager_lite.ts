@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 
 import { createBenchmarkAdapter, readBenchmarkAdapterId } from '../v2/adapter_factory';
 import { runBenchmark, type RunBenchmarkOptions } from '../v2/run_benchmark';
@@ -7,7 +8,6 @@ import type { BenchmarkAdapter, BenchmarkReport, BenchmarkTraceScore } from '../
 import { buildWebVoyagerTaskArtifactSummary } from './artifacts';
 import { evaluateWebVoyagerResult, summarizeWebVoyagerEvaluation } from './evaluator';
 import { collectFinalPageEvidence, judgeTaskResult } from './judge';
-import { existsSync, readFileSync } from 'node:fs';
 import { loadWebVoyagerManualAudit } from './manual_audit';
 import { loadWebVoyagerSource } from './source_loader';
 import { resolveWebVoyagerTaskIds, selectWebVoyagerLiteTasks, toBenchmarkTasks, type WebVoyagerTaskSlice } from './task_selection';
@@ -125,30 +125,37 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
 function readFinalPageUrl(tracePath: string | undefined): string | undefined {
   if (!tracePath) return undefined;
   try {
-    const trace = JSON.parse(readFileSync(tracePath, 'utf8'));
-    const observations = Array.isArray(trace?.observations) ? trace.observations : [];
-    for (let index = observations.length - 1; index >= 0; index -= 1) {
-      const url = observations[index]?.observation?.url;
-      if (typeof url === 'string' && url.length > 0) return url;
+    const isDir = existsSync(tracePath) && statSync(tracePath).isDirectory();
+    const traceFile = isDir ? join(tracePath, 'trace.json') : tracePath;
+    if (existsSync(traceFile)) {
+      const trace = JSON.parse(readFileSync(traceFile, 'utf8'));
+      const observations = Array.isArray(trace?.observations) ? trace.observations : [];
+      for (let index = observations.length - 1; index >= 0; index -= 1) {
+        const url = observations[index]?.observation?.url;
+        if (typeof url === 'string' && url.length > 0) return url;
+      }
     }
   } catch {
-    try {
-      const stderrFile = join(tracePath, 'stderr.txt');
-      if (existsSync(stderrFile)) {
-        const stderr = readFileSync(stderrFile, 'utf8');
-        const urlMatches = [...stderr.matchAll(/'url':\s*'([^']+)'/g)];
-        if (urlMatches.length > 0) {
-          return urlMatches[urlMatches.length - 1][1];
-        }
+    // continue to fallback
+  }
+
+  try {
+    const dir = existsSync(tracePath) && statSync(tracePath).isDirectory() ? tracePath : dirname(tracePath);
+    const stderrFile = join(dir, 'stderr.txt');
+    if (existsSync(stderrFile)) {
+      const stderr = readFileSync(stderrFile, 'utf8');
+      const urlMatches = [...stderr.matchAll(/'url':\s*'([^']+)'/g)];
+      if (urlMatches.length > 0) {
+        return urlMatches[urlMatches.length - 1][1];
       }
-      const inputFile = join(tracePath, 'input.json');
-      if (existsSync(inputFile)) {
-        const input = JSON.parse(readFileSync(inputFile, 'utf8'));
-        if (input.url) return input.url;
-      }
-    } catch {
-      return undefined;
     }
+    const inputFile = join(dir, 'input.json');
+    if (existsSync(inputFile)) {
+      const input = JSON.parse(readFileSync(inputFile, 'utf8'));
+      if (input.url) return input.url;
+    }
+  } catch {
+    return undefined;
   }
   return undefined;
 }

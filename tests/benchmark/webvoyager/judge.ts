@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 import { callProvider } from '../../../src/providers/index';
 
@@ -73,8 +73,6 @@ export async function judgeTaskResult(input: JudgeInput): Promise<JudgeOutcome> 
       { plainTextResponse: true },
     );
     const verdict = parseJudgeVerdict(result.text);
-    // Keep the raw tail on parse failures so the output format can be fixed
-    // without burning another live run.
     return { verdict, reason: result.text.slice(-500) };
   } catch (error) {
     return { verdict: 'UNAVAILABLE', reason: error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200) };
@@ -82,7 +80,17 @@ export async function judgeTaskResult(input: JudgeInput): Promise<JudgeOutcome> 
 }
 
 /** Extracts a bounded readable-evidence excerpt from the LAST observation of a trace. */
-export function collectFinalPageEvidence(traceDir: string, maxLines = 40, maxCharsPerLine = 90): string {
+export function collectFinalPageEvidence(tracePathOrDir: string, maxLines = 40, maxCharsPerLine = 90): string {
+  let traceDir = tracePathOrDir;
+  try {
+    if (statSync(tracePathOrDir).isFile()) {
+      traceDir = dirname(tracePathOrDir);
+    }
+  } catch {
+    if (tracePathOrDir.endsWith('.json')) {
+      traceDir = dirname(tracePathOrDir);
+    }
+  }
   const observationsDir = join(traceDir, 'observations');
   let files: string[] = [];
   try {
