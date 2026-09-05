@@ -96,6 +96,7 @@ export class V2AgentLoop {
       const recentObservationUrls: string[] = [];
       let oscillationEpisodeCount = 0;
       let noNavClickStreak = 0;
+      let sameUrlNavigationRejections = 0;
 
       for (let stepIndex = 0; stepIndex < stepBudget; stepIndex += 1) {
         ledger.beginStep(stepIndex);
@@ -407,6 +408,14 @@ export class V2AgentLoop {
               && surfaceHasControls
               && normalizeUrlForNavigationCompare(plannedStep.url) === normalizeUrlForNavigationCompare(currentUrl)
             ) {
+              sameUrlNavigationRejections += 1;
+              if (sameUrlNavigationRejections >= 2) {
+                // The substrate refused a same-page navigate twice: raise the
+                // navigate_loop state so the refusal comes with alternative
+                // mechanisms instead of a bare guard error (run-15 Flights__0
+                // burned nine steps on refused navigates).
+                runtimeUncertainty = appendRuntimeUncertaintySignals(runtimeUncertainty, ['navigate_loop']);
+              }
               lastResult = {
                 success: false,
                 kind: 'navigate',

@@ -172,16 +172,14 @@ export class PlannerWorkingSetSelector {
     const regionSummaries = buildRegionSummaries(input.projection.regions, selectedSet, this.options.maxRegionSummaries);
     const diagnostics = buildDiagnostics(input.projection, selectedRefIds, selected, dropped, this.options, raceLosers);
     const current = serializeSelectedProjection(input.projection, selectedSet, this.options);
+    const changedSummary = buildChangedRefsSummary(selected, evidence, this.options.maxChangedRefs);
 
     return {
       current,
       selectedRefIds,
       diagnostics,
       workingSet: {
-        deltaRefs: {
-          appeared: [...evidence.appearedRefs].filter(refId => selectedSet.has(refId)),
-          changed: [...evidence.changedRefs].filter(refId => selectedSet.has(refId)),
-        },
+        deltaRefs: buildDeltaRefs(changedSummary),
         mode: inferMode(input),
         modeReason: inferModeReason(input),
         primaryRefs: primary.map(candidate => toWorkingSetRef(candidate.item, candidate.reasons, candidate.score)),
@@ -189,7 +187,7 @@ export class PlannerWorkingSetSelector {
         readableEvidence,
         navigationRefs,
         actionSurface,
-        changedRefs: buildChangedRefsSummary(selected, evidence, this.options.maxChangedRefs),
+        changedRefs: changedSummary,
         failedRefs: selected
           .filter(candidate => candidate.reasons.has('last_failure'))
           .map(candidate => toWorkingSetRef(candidate.item, candidate.reasons, candidate.score)),
@@ -779,6 +777,32 @@ function serializeSelectedProjection(
       regionCount: projection.regions.filter(region => region.refIds.some(refId => selectedSet.has(refId))).length,
     },
   };
+}
+
+
+/**
+ * Diff-first marker source (BP3): derived from the priority-ranked
+ * changedRefs.topRefs, never from the raw appeared sets — targetId hashes the
+ * element index, so same-page re-renders "appear" hundreds of successors
+ * (median 654/episode in run 15) and raw-set markers would flood the surface.
+ * Cap 8 keeps the measured cost at ~9 B/call.
+ */
+const MAX_DELTA_MARKERS = 8;
+
+function buildDeltaRefs(summary: {
+  topRefs: Array<{ refId: string; reasons: WorkingSetIncludeReason[] }>;
+}): { appeared: string[]; changed: string[] } {
+  const appeared: string[] = [];
+  const changed: string[] = [];
+  for (const ref of summary.topRefs) {
+    if (appeared.length + changed.length >= MAX_DELTA_MARKERS) break;
+    if (ref.reasons.includes('recently_appeared')) {
+      if (!appeared.includes(ref.refId)) appeared.push(ref.refId);
+    } else if (!changed.includes(ref.refId)) {
+      changed.push(ref.refId);
+    }
+  }
+  return { appeared, changed };
 }
 
 function compareChangedRefPriority(

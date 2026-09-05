@@ -86,6 +86,7 @@ export class PlannerInputComposer {
       lastResult: input.lastResult,
       failures: input.failureEvidence,
       uncertaintySignals: input.runtimeUncertainty?.signals,
+      evidenceCoverageStatus: input.evidenceCoverage?.status,
     });
 
     const plannerInput: PlannerInput = {

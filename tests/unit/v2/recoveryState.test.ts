@@ -590,3 +590,52 @@ test('RecoveryStateBuilder does not emit click-no-navigation without the signal'
 
   assert.equal(recovery, undefined);
 });
+
+test('RecoveryStateBuilder detects navigate_loop from the runtime signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: { success: false, kind: 'navigate', traceStepId: 'step_3' },
+    failures: [],
+    uncertaintySignals: ['navigate_loop'],
+  });
+
+  assert.equal(recovery?.state, 'navigate_loop');
+  assert.equal(recovery?.blockedAction?.tool, 'navigate');
+  assert.ok(recovery?.nextMechanisms.includes('press_enter_on_last_typed_field'));
+  assert.ok(recovery?.nextMechanisms.includes('click_visible_submit_control'));
+});
+
+test('RecoveryStateBuilder emits max_step_risk only under budget pressure with unfinished coverage and a rejected episode', () => {
+  const base = { failures: [] as never[], uncertaintySignals: ['budget_low:2'] };
+  const fires = new RecoveryStateBuilder().build({
+    ...base,
+    lastResult: { success: false, kind: 'click', targetRef: 'ref_x', traceStepId: 's' },
+    evidenceCoverageStatus: 'incomplete',
+  });
+  assert.equal(fires?.state, 'max_step_risk');
+  assert.ok(fires?.nextMechanisms.includes('finalize_with_collected_evidence'));
+
+  // Clean-progress run: last action succeeded — no risk state.
+  const cleanProgress = new RecoveryStateBuilder().build({
+    ...base,
+    lastResult: { success: true, kind: 'click', targetRef: 'ref_x', traceStepId: 's' },
+    evidenceCoverageStatus: 'incomplete',
+  });
+  assert.notEqual(cleanProgress?.state, 'max_step_risk');
+
+  // Coverage ready — no risk state.
+  const coverageReady = new RecoveryStateBuilder().build({
+    ...base,
+    lastResult: { success: false, kind: 'click', targetRef: 'ref_x', traceStepId: 's' },
+    evidenceCoverageStatus: 'ready',
+  });
+  assert.notEqual(coverageReady?.state, 'max_step_risk');
+
+  // No budget signal — no risk state.
+  const noBudget = new RecoveryStateBuilder().build({
+    failures: [],
+    uncertaintySignals: [],
+    lastResult: { success: false, kind: 'click', targetRef: 'ref_x', traceStepId: 's' },
+    evidenceCoverageStatus: 'incomplete',
+  });
+  assert.notEqual(noBudget?.state, 'max_step_risk');
+});

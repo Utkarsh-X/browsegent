@@ -9,6 +9,7 @@ export type PlannerRecoveryStateKind =
   | 'unresponsive_surface'
   | 'navigation_oscillation'
   | 'click_no_navigation'
+  | 'navigate_loop'
   | 'same_action_loop'
   | 'repeated_read_same_value'
   | 'repeated_type_same_value'
@@ -17,7 +18,8 @@ export type PlannerRecoveryStateKind =
   | 'empty_navigation_surface'
   | 'unselected_ref'
   | 'invalid_output_repeat'
-  | 'max_step_risk';
+  | 'max_step_risk'
+  | 'navigate_loop';
 
 export interface PlannerRecoveryState {
   state: PlannerRecoveryStateKind;
@@ -35,6 +37,8 @@ export interface RecoveryStateBuilderInput {
   lastResult?: V2ToolResult;
   failures?: FailureEvidence[];
   uncertaintySignals?: string[];
+  /** Coverage status for the budget-risk state; only its readiness matters. */
+  evidenceCoverageStatus?: string;
 }
 
 export class RecoveryStateBuilder {
@@ -60,6 +64,9 @@ export class RecoveryStateBuilder {
 
     const clickNoNavigation = buildClickNoNavigationRecovery(input, signals);
     if (clickNoNavigation) return clickNoNavigation;
+
+    const navigateLoop = buildNavigateLoopRecovery(input, signals);
+    if (navigateLoop) return navigateLoop;
 
     if (signals.some(signal => signal.startsWith('repeated_no_progress_transition:'))) {
       return {
@@ -145,6 +152,27 @@ export class RecoveryStateBuilder {
         state: 'invalid_output_repeat',
         severity: 'critical',
         nextMechanisms: ['stop_dead_end_with_validation_evidence'],
+        signals,
+      };
+    }
+
+    // Last in the chain: never masks a blocker state. Only fires when the run
+    // is near budget exhaustion AND coverage is unfinished AND the last
+    // episode ended in a rejection or block — clean-progress runs never see it.
+    if (
+      signals.some(signal => signal.startsWith('budget_low:'))
+      && input.evidenceCoverageStatus !== undefined
+      && input.evidenceCoverageStatus !== 'ready'
+      && input.lastResult?.success === false
+    ) {
+      return {
+        state: 'max_step_risk',
+        severity: 'warning',
+        nextMechanisms: [
+          'finalize_with_collected_evidence',
+          'stop_if_dead_end_evidence_is_sufficient',
+          'avoid_opening_new_surfaces',
+        ],
         signals,
       };
     }
@@ -372,6 +400,26 @@ function buildNavigationOscillationRecovery(
       'commit_to_current_surface_until_progress',
       'act_on_visible_controls',
       'reobserve_current_surface',
+    ],
+    signals,
+  };
+}
+
+function buildNavigateLoopRecovery(
+  input: RecoveryStateBuilderInput,
+  signals: string[],
+): PlannerRecoveryState | undefined {
+  if (!signals.includes('navigate_loop')) return undefined;
+
+  return {
+    state: 'navigate_loop',
+    severity: 'warning',
+    blockedAction: { tool: 'navigate' },
+    nextMechanisms: [
+      'press_enter_on_last_typed_field',
+      'click_visible_submit_control',
+      'act_on_visible_controls',
+      'stop_if_dead_end_evidence_is_sufficient',
     ],
     signals,
   };

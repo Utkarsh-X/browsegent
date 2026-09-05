@@ -42,6 +42,8 @@ test('conditional prompt keeps every subject-present block and removes only inac
     'If recovery.state is repeated_type_same_value',
     'If recovery.state is navigation_oscillation',
     'If recovery.state is click_no_navigation',
+    'If recovery.state is navigate_loop',
+    'If recovery.state is max_step_risk',
   ];
   let expected = legacy;
   for (const sentence of inactiveStates) {
