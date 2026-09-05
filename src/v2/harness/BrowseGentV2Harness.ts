@@ -489,6 +489,13 @@ export class BrowseGentV2Harness {
     const after = await this.captureAfterMutationObservation(before);
     this.ledger?.recordPhase('observation_capture', Date.now() - obsStart);
     const evidence = this.transitionService.compare(before, after);
+    if (after.refs.length === 0) {
+      // The post-mutation capture came back empty even after the bounded
+      // recapture: say so instead of silence, carrying the pre-action URL so
+      // the planner knows where the action was dispatched from (run-15/16
+      // Booking tails burned their final episodes on empty surfaces).
+      evidence.notes.push(`post_action_capture_empty: dispatched from ${before.url}`);
+    }
     return {
       success: true,
       kind,
@@ -502,9 +509,12 @@ export class BrowseGentV2Harness {
 
   private async captureAfterMutationObservation(before: BrowserObservation): Promise<BrowserObservation> {
     const after = await this.captureCurrentObservation();
-    const pageIdentityChanged = after.url !== before.url || after.title !== before.title;
-    if (after.refs.length === 0 && pageIdentityChanged) {
-      return this.captureCurrentObservation(true);
+    if (after.refs.length === 0) {
+      // Empty captures are not limited to navigation-identity changes: SPA
+      // transitions and hydration races can return an empty shell on the same
+      // URL+title. One bounded wait-retry before giving up (W-A).
+      const recaptured = await this.captureCurrentObservation(true);
+      if (recaptured.refs.length > 0) return recaptured;
     }
     return after;
   }
