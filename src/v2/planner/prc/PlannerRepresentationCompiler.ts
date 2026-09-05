@@ -113,6 +113,11 @@ function buildSurface(
   return {
     groups,
     remainder,
+    prose: current.prose?.map(entry => ({
+      proseId: entry.proseId,
+      anchorRefIds: [...entry.anchorRefIds],
+      text: entry.text,
+    })),
     inputRefCount: Object.keys(current.refs).length,
     surfaceRefCount: groups.reduce((sum, group) => sum + group.elements.length, 0) + remainder.length,
   };

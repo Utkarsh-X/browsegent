@@ -1,3 +1,4 @@
+import type { ProseRef } from '../runtime/types';
 import type { Page } from 'playwright';
 
 import type { ActionabilityState, EditableKind, Rect, RuntimeWarning, V2Ref, VisibilityState } from '../runtime/types';
@@ -27,6 +28,9 @@ export interface BuildObservationInput {
   timestamp: number;
   durationMs: number;
   refs: V2Ref[];
+  prose?: ProseRef[];
+  /** Page body text length from the readiness probe (F11 ratio form). */
+  bodyTextLength?: number;
   warnings: RuntimeWarning[];
 }
 

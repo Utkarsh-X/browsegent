@@ -1,4 +1,4 @@
-import type { V2Ref } from '../runtime/types';
+import type { ProseRef, V2Ref } from '../runtime/types';
 
 export interface ReadEvidenceOptions {
   maxNearbyRefs?: number;
@@ -20,11 +20,18 @@ export function buildBoundedReadEvidenceText(
   target: V2Ref,
   refs: readonly V2Ref[],
   options: ReadEvidenceOptions = {},
+  prose?: readonly ProseRef[],
 ): string {
   const limits = { ...DEFAULT_OPTIONS, ...options };
   const ownText = readText(target);
+  // D1: prose captured beside this ref's section is part of what a read of
+  // the ref returns — the pod value lives in non-interactive text nodes.
+  const anchored = (prose ?? [])
+    .filter(entry => entry.anchorRefIds.includes(target.refId))
+    .slice(0, 2)
+    .map(entry => entry.text);
   if (!shouldEnrichTarget(target, ownText)) {
-    return compactText(ownText, limits.maxCharacters);
+    return compactText(joinUniqueText([ownText, ...anchored]), limits.maxCharacters);
   }
 
   const targetBox = target.box;
@@ -51,7 +58,7 @@ export function buildBoundedReadEvidenceText(
     .slice(0, limits.maxNearbyRefs)
     .map(candidate => readText(candidate));
 
-  return compactText(joinUniqueText([ownText, ...nearby]), limits.maxCharacters);
+  return compactText(joinUniqueText([ownText, ...anchored, ...nearby]), limits.maxCharacters);
 }
 
 function shouldEnrichTarget(target: V2Ref, ownText: string): boolean {

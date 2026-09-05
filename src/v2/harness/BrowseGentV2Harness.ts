@@ -258,7 +258,7 @@ export class BrowseGentV2Harness {
 
   async get(refId: string): Promise<V2ToolResult<{ text: string; value?: string }>> {
     return this.executeRefRead('get', refId, (ref, observation) => ({
-      text: compactText(buildBoundedReadEvidenceText(ref, observation.refs), READ_EVIDENCE_TEXT_LIMIT),
+      text: compactText(buildBoundedReadEvidenceText(ref, observation.refs, undefined, observation.prose), READ_EVIDENCE_TEXT_LIMIT),
       value: ref.role === 'textbox' && ref.name ? compactText(ref.name, READ_EVIDENCE_TEXT_LIMIT) : undefined,
     }));
   }
@@ -266,7 +266,7 @@ export class BrowseGentV2Harness {
   async inspectRegion(refId: string): Promise<V2ToolResult<{ refId: string; text: string; nearbyRefs: string[] }>> {
     return this.executeRefRead('inspect_region', refId, (ref, observation) => ({
       refId: ref.refId,
-      text: compactText(buildBoundedReadEvidenceText(ref, observation.refs), READ_EVIDENCE_TEXT_LIMIT),
+      text: compactText(buildBoundedReadEvidenceText(ref, observation.refs, undefined, observation.prose), READ_EVIDENCE_TEXT_LIMIT),
       nearbyRefs: observation.refs
         .filter(candidate => candidate.refId !== ref.refId && candidate.visibility !== 'hidden')
         .slice(0, 5)

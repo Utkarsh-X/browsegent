@@ -171,7 +171,8 @@ export class PlannerWorkingSetSelector {
       ));
     const regionSummaries = buildRegionSummaries(input.projection.regions, selectedSet, this.options.maxRegionSummaries);
     const diagnostics = buildDiagnostics(input.projection, selectedRefIds, selected, dropped, this.options, raceLosers);
-    const current = serializeSelectedProjection(input.projection, selectedSet, this.options);
+    const mode = inferMode(input);
+    const current = serializeSelectedProjection(input.projection, selectedSet, this.options, mode);
     const changedSummary = buildChangedRefsSummary(selected, evidence, this.options.maxChangedRefs);
 
     return {
@@ -180,7 +181,7 @@ export class PlannerWorkingSetSelector {
       diagnostics,
       workingSet: {
         deltaRefs: buildDeltaRefs(changedSummary),
-        mode: inferMode(input),
+        mode,
         modeReason: inferModeReason(input),
         primaryRefs: primary.map(candidate => toWorkingSetRef(candidate.item, candidate.reasons, candidate.score)),
         secondaryRefs: secondary.map(candidate => toWorkingSetRef(candidate.item, candidate.reasons, candidate.score)),
@@ -724,6 +725,7 @@ function serializeSelectedProjection(
   projection: OperationalProjection,
   selectedSet: Set<string>,
   options: ResolvedPlannerWorkingSetOptions,
+  mode?: WorkingSetMode,
 ): SerializedProjection {
   const selectedItems = projection.interactions.filter(item => selectedSet.has(item.refId));
   const selectedRefs: SerializedProjection['refs'] = {};
@@ -770,6 +772,7 @@ function serializeSelectedProjection(
       .filter(region => region.refIds.length > 0)
       .slice(0, options.maxRegionSummaries),
     warnings: projection.warnings,
+    prose: gatedProse(projection, mode),
     stats: {
       interactionCount: selectedItems.length,
       readableCount: projection.readables.filter(item => selectedSet.has(item.refId)).length,
@@ -803,6 +806,29 @@ function buildDeltaRefs(summary: {
     }
   }
   return { appeared, changed };
+}
+
+/**
+ * D1 prose gate: bounded page text reaches the planner only for
+ * information-seeking modes (extract/verify) on prose-poor pages — measured
+ * gap sits below ~4,000 ref-text chars (Wolfram/Map class 2.1-3.6K vs content
+ * pages >=20K). Transactional pages therefore pay zero prose bytes.
+ */
+const PROSE_REFRICH_PAGE_CHARS = 4_000;
+
+function gatedProse(projection: OperationalProjection, mode: WorkingSetMode | undefined): SerializedProjection['prose'] {
+  if (!projection.prose?.length) return undefined;
+  if (mode !== 'extract' && mode !== 'verify') return undefined;
+  let refTextChars = 0;
+  for (const item of projection.interactions) {
+    refTextChars += (item.name?.length ?? 0) + (item.text?.length ?? 0);
+  }
+  if (refTextChars >= PROSE_REFRICH_PAGE_CHARS) return undefined;
+  return projection.prose.slice(0, 8).map(entry => ({
+    proseId: entry.proseId,
+    anchorRefIds: [...entry.anchorRefIds],
+    text: entry.text,
+  }));
 }
 
 function compareChangedRefPriority(

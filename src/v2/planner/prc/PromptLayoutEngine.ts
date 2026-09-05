@@ -391,6 +391,19 @@ function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: 
     lines.push('  Page Elements');
     for (const element of ir.surface.remainder) pushElement(element);
   }
+  if (ir.surface.prose?.length) {
+    lines.push('  Page Text (bounded)');
+    for (const entry of ir.surface.prose) {
+      const anchor = entry.anchorRefIds.length ? ` ("anchor: ${entry.anchorRefIds.join(',')}")` : '';
+      const line = `    [${entry.proseId}]${anchor} ${escapeAttr(compactValue(entry.text, 300))}`;
+      if (line.length > budget) {
+        omittedElements += 1;
+        continue;
+      }
+      budget -= line.length;
+      lines.push(line);
+    }
+  }
   if (omittedElements > 0) {
     lines.push(`  ... ${omittedElements} elements omitted (payload cap)`);
   }

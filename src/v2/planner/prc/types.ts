@@ -63,6 +63,8 @@ export interface PlannerRegionIR {
 export interface PlannerSurfaceIR {
   groups: PlannerRegionIR[];
   remainder: PlannerElementIR[];
+  /** Bounded non-interactive page text (D1); rendered as its own group. */
+  prose?: Array<{ proseId: string; anchorRefIds: string[]; text: string }>;
   inputRefCount: number;
   surfaceRefCount: number;
 }

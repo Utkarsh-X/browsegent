@@ -57,6 +57,12 @@ export interface ProjectionFocus {
   reason: 'highest_operational_score';
 }
 
+export interface ProjectionProse {
+  proseId: string;
+  anchorRefIds: string[];
+  text: string;
+}
+
 export interface OperationalProjection {
   projectionId: string;
   observationId: string;
@@ -69,6 +75,9 @@ export interface OperationalProjection {
   readables: ProjectionItem[];
   navigation: ProjectionItem[];
   regions: ProjectionRegion[];
+  /** Bounded non-interactive page text (D1); empty/absent on transactional
+   *  and prose-rich pages. */
+  prose?: ProjectionProse[];
   focus?: ProjectionFocus;
   warnings: RuntimeWarning[];
   stats: {
@@ -93,6 +102,8 @@ export interface SerializedProjection {
   readables: SerializedProjectionItem[];
   navigation: SerializedProjectionItem[];
   regions: ProjectionRegion[];
+  /** Gated prose (D1): included only for extract/verify modes on prose-poor pages. */
+  prose?: ProjectionProse[];
   warnings: RuntimeWarning[];
   stats: OperationalProjection['stats'];
 }

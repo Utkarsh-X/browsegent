@@ -4,6 +4,7 @@ import type { BrowserObservation, V2Ref } from '../runtime/types';
 import { deriveRefCapabilities } from '../runtime/refCapabilities';
 import { CdpBridge } from './CdpBridge';
 import type { BuildObservationInput, CapturedElement, ObservationCaptureInput } from './types';
+import type { ProseRef } from '../runtime/types';
 
 const MAX_CDP_IDENTITY_ELEMENTS = 150;
 const EMPTY_NAVIGATION_RETRY_WAIT_MS = 100;
@@ -35,7 +36,7 @@ export class ObservationService {
       state = await waitForInteractiveNavigationState(input.page, state);
     }
 
-    const { url, title, captured, lang } = state;
+    const { url, title, captured, prose, lang } = state;
 
     const identities = await resolveBackendNodeIds(input.page, captured.length);
     const refs = captured.map((candidate, index): V2Ref => ({
@@ -66,6 +67,7 @@ export class ObservationService {
       continuityConfidence: 1,
       state: 'live',
     }));
+    const proseRefs = mapProseEntries(prose, refs);
 
     this.observationCounter += 1;
 
@@ -79,6 +81,7 @@ export class ObservationService {
       timestamp: Date.now(),
       durationMs: Date.now() - startedAt,
       refs,
+      prose: proseRefs.length > 0 ? proseRefs : undefined,
       warnings: [],
     });
   }
@@ -93,13 +96,20 @@ interface PageReadiness {
 interface PageCaptureState {
   url: string;
   title: string;
+  prose: CapturedProse[];
   captured: CapturedElement[];
   readiness: PageReadiness;
   lang?: string;
 }
 
+interface CapturedProse {
+  anchorIndexes: number[];
+  text: string;
+}
+
 interface PageCaptureContent {
   captured: CapturedElement[];
+  prose?: CapturedProse[];
   readiness: PageReadiness;
   lang?: unknown;
 }
@@ -118,7 +128,37 @@ async function capturePageState(page: Page): Promise<PageCaptureState> {
     ? { readyState: 'unknown', bodyTextLength: 0, bodyChildCount: 0 }
     : content.readiness;
   const lang = Array.isArray(content) ? undefined : normalizeLang(content.lang);
-  return { url, title, captured, readiness, lang };
+  const prose = Array.isArray(content) ? [] : content.prose ?? [];
+  return { url, title, captured, prose, readiness, lang };
+}
+
+/**
+ * Node-side prose mapping (D1): assigns proseIds, maps anchor indexes to the
+ * capture-ordered refIds, dedupes, and enforces the total character budget.
+ * Pure so the unit suite can exercise it without a browser.
+ */
+export function mapProseEntries(
+  entries: CapturedProse[],
+  refs: V2Ref[],
+): ProseRef[] {
+  const prose: ProseRef[] = [];
+  let budget = 2_500;
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    if (prose.length >= 8 || budget <= 60) break;
+    const text = String(entry.text ?? '').trim();
+    if (!text) continue;
+    const key = text.slice(0, 64);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const bounded = text.slice(0, Math.min(300, budget));
+    budget -= bounded.length;
+    const anchorRefIds = (entry.anchorIndexes ?? [])
+      .map(index => refs[index]?.refId)
+      .filter((refId): refId is string => Boolean(refId));
+    prose.push({ proseId: 'prose_' + (prose.length + 1), anchorRefIds, text: bounded, chars: bounded.length });
+  }
+  return prose;
 }
 
 function normalizeLang(raw: unknown): string | undefined {
@@ -167,11 +207,13 @@ export function buildBrowserObservation(input: BuildObservationInput): BrowserOb
     lang: input.lang,
     timestamp: input.timestamp,
     refs: input.refs,
+    prose: input.prose,
     warnings: input.warnings,
     stats: {
       refCount: input.refs.length,
       visibleRefCount: input.refs.filter(ref => ref.visibility === 'visible').length,
       durationMs: input.durationMs,
+      bodyTextLength: input.bodyTextLength,
     },
   };
 }
@@ -590,6 +632,104 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
 })()
 `;
 
+const COLLECT_PROSE_SCRIPT = `
+(() => {
+  const NODE_CAP = 300;
+  const SECTION_CAP = 800;
+  const TOTAL_CAP = 2500;
+  const REF_CAP = 8;
+
+  const marked = Array.from(document.querySelectorAll('[data-browsegent-v2-marker]'));
+  const interactive = new Set(marked);
+
+  function normalized(t) {
+    return String(t || '').replace(/\s+/g, ' ').trim();
+  }
+  function visible(el) {
+    const s = getComputedStyle(el);
+    if (s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0') return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  }
+  function inInteractive(el) {
+    let c = el;
+    while (c) {
+      if (interactive.has(c)) return true;
+      c = c.parentElement;
+    }
+    return false;
+  }
+  function inChrome(el) {
+    for (let c = el; c && c.tagName; c = c.parentElement) {
+      const t = c.tagName.toLowerCase();
+      const role = (c.getAttribute && c.getAttribute('role') || '').toLowerCase();
+      if (t === 'nav' || t === 'footer' || t === 'header' || t === 'script' || t === 'style' || t === 'noscript' || t === 'svg' || role === 'navigation') return true;
+    }
+    return false;
+  }
+  function markerIndex(el) {
+    const parts = (el.getAttribute('data-browsegent-v2-marker') || '').split('-');
+    const n = Number(parts[parts.length - 1]);
+    return Number.isFinite(n) ? n : undefined;
+  }
+  function containerFor(anchor) {
+    return anchor.closest('section, article, [role=region], li, td, dd, blockquote, form')
+      || anchor.parentElement
+      || anchor;
+  }
+
+  const used = new Set();
+  const out = [];
+  let budget = TOTAL_CAP;
+  function push(entry) {
+    if (out.length >= REF_CAP || budget <= 60) return;
+    const text = normalized(entry.text).slice(0, Math.min(NODE_CAP, budget));
+    if (text.length < 24) return;
+    const key = text.slice(0, 64);
+    if (used.has(key)) return;
+    used.add(key);
+    budget -= text.length;
+    out.push({ anchorIndexes: entry.anchorIndexes, text: text });
+  }
+
+  for (const el of marked) {
+    if (out.length >= REF_CAP || budget <= 60) break;
+    const tag = el.tagName.toLowerCase();
+    const role = (el.getAttribute('role') || '').toLowerCase();
+    if (!['a', 'button', 'summary'].includes(tag) && !['link', 'button', 'heading', 'tab', 'menuitem'].includes(role)) continue;
+    const name = normalized(el.getAttribute('aria-label') || el.textContent || '');
+    if (name.length < 4) continue;
+    const container = containerFor(el);
+    if (!container || container === document.body) continue;
+    if (container.querySelectorAll('[data-browsegent-v2-marker]').length > 12) continue;
+    if (!visible(container) || inChrome(container)) continue;
+    const text = normalized(container.textContent || '');
+    if (text.length < 40 || text.length > SECTION_CAP * 3) continue;
+    const idx = markerIndex(el);
+    push({ anchorIndexes: idx === undefined ? [] : [idx], text: text.slice(0, SECTION_CAP) });
+  }
+
+  for (const el of Array.from(document.querySelectorAll('h1, h2, h3, h4, li, p'))) {
+    if (out.length >= REF_CAP || budget <= 60) break;
+    if (interactive.has(el) || inInteractive(el) || !visible(el) || inChrome(el)) continue;
+    if (el.querySelectorAll('[data-browsegent-v2-marker]').length > 0) continue;
+    const tag = el.tagName.toLowerCase();
+    const text = normalized(el.textContent || '');
+    if (!text) continue;
+    const isHeading = /^h[1-4]$/.test(tag);
+    const isLi = tag === 'li';
+    const isParagraph = tag === 'p';
+    if (isHeading) { if (text.length < 8) continue; }
+    else if (isLi) { if (text.length < 24) continue; }
+    else if (isParagraph) { if (text.length < 60) continue; }
+    else continue;
+    push({ anchorIndexes: [], text: text.slice(0, NODE_CAP) });
+  }
+
+  return out.slice(0, REF_CAP);
+})()
+`;
+
 const READ_PAGE_READINESS_SCRIPT = `
 (() => ({
   readyState: document.readyState,
@@ -605,6 +745,7 @@ const READ_PAGE_LANG_SCRIPT = `
 const CAPTURE_PAGE_CONTENT_SCRIPT = `
 (() => ({
   captured: ${COLLECT_INTERACTIVE_ELEMENTS_SCRIPT},
+  prose: ${COLLECT_PROSE_SCRIPT},
   readiness: ${READ_PAGE_READINESS_SCRIPT},
   lang: ${READ_PAGE_LANG_SCRIPT},
 }))()
