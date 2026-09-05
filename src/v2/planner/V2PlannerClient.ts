@@ -101,7 +101,9 @@ export class V2PlannerClient {
       providerPayloadAttempts.push(summarizeProviderPayloadAttempt(attempt, systemPrompt, userMessage));
       try {
         providerResult = await this.provider(systemPrompt, userMessage, input.model, {
-          responseSchema: buildV2PlannerResponseSchema(),
+          ...(this.plannerSerialization.omitResponseJsonSchema
+            ? {}
+            : { responseSchema: buildV2PlannerResponseSchema() }),
           onPacingWait: input.onPacingWait,
         });
       } catch (error) {

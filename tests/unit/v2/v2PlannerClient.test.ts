@@ -135,6 +135,26 @@ test('V2PlannerClient passes the V2 planner response schema to provider', async 
   assert.doesNotMatch(JSON.stringify(providerCalls[0].options?.responseSchema), /"sel"|"selector"/);
 });
 
+test('V2PlannerClient omits the response schema when omitResponseJsonSchema is set', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const providerCalls: Array<{ options?: { responseSchema?: unknown } }> = [];
+  const client = new V2PlannerClient({
+    provider: async (_system, _user, _model, options) => {
+      providerCalls.push({ options });
+      return {
+        text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+    plannerSerialization: { mode: 'json', omitResponseJsonSchema: true },
+  });
+
+  await client.call({ plannerInput: makePlannerInput('episode_v2_no_schema') });
+
+  assert.equal(providerCalls[0].options?.responseSchema, undefined);
+});
+
 test('V2PlannerClient accepts refs from canonical current refs when views contain no full item facts', async () => {
   const { V2PlannerClient } = await loadPlannerClientModule();
   const plannerInput = makePlannerInput('episode_canonical_refs');

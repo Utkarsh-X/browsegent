@@ -301,6 +301,7 @@ function readPlannerSerializationConfig(
   const compactDataPlane = hasFlag('--compact-data-plane');
   const prcLeanPlane = hasFlag('--prc-lean-plane');
   const conditionalPrompt = hasFlag('--planner-conditional-prompt');
+  const noJsonSchema = hasFlag('--planner-no-json-schema');
   if (prcTierOmitted || compactDataPlane || prcLeanPlane || conditionalPrompt) {
     if (mode !== 'prc') {
       const flags = [
@@ -318,6 +319,12 @@ function readPlannerSerializationConfig(
       ...(prcLeanPlane ? { prcLeanPlane: true } : {}),
       ...(conditionalPrompt ? { conditionalSystemPrompt: true } : {}),
     };
+  }
+  if (noJsonSchema) {
+    if (mode === undefined) {
+      throw new Error('--planner-no-json-schema requires --planner-serialization (json or prc).');
+    }
+    return { mode, ...(noJsonSchema ? { omitResponseJsonSchema: true } : {}) };
   }
   return mode === undefined ? undefined : { mode };
 }

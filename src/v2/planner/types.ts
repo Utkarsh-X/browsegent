@@ -291,4 +291,8 @@ export interface PlannerSerializationConfig {
   prcLeanPlane?: boolean;
   /** Inject guidance blocks only when their subject is present in the episode input. */
   conditionalSystemPrompt?: boolean;
+  /** Drop responseJsonSchema from the provider call (887 B/call). Measured
+   *  0 parse failures across 422 calls without it; robustJsonParse covers
+   *  malformed output. Default off until validated on a full run. */
+  omitResponseJsonSchema?: boolean;
 }
