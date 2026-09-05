@@ -31,7 +31,7 @@ Run `webvoyager_lite_1788612821955`, balanced30, `gemini/gemini-3.1-flash-lite`,
 
 - `GitHub__0`: P1 worked as designed (grounded answer naming one project from pinned metric rows; `missing_ranking_evidence` advisory fired and was recorded) but the model still did not click the sort control; judge rejected the unsorted claim. Next lever: stronger sort-compliance or compare-from-cards emphasis (P2 follow-up).
 - `Wolfram__Alpha__10`: unchanged (P7 deprioritized).
-- `Google__Search__10` + `Allrecipes__3`: failed again; this run recorded 0 captcha escalations overall vs 5 in run 15 — wall encounters vary per run; in-denominator scoring stays symmetric.
+- Escalation accounting (corrected after the SOTA audit caught my misread): run 16 carries **6 `planner_escalated:captcha` escalations** (Allrecipes__3/10, Cambridge__Dictionary__0/10, Google__Search__0/10) vs run 15's 5 — my earlier '0 escalations' claim read `environmentBlockedCount`, which tracks a different classification. Wall encounters vary per run; in-denominator scoring stays symmetric.
 
 ## Promotion decisions
 
