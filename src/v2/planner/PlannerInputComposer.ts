@@ -250,6 +250,7 @@ function summarizeLastResult(result: V2ToolResult): PlannerLastResultSummary {
     traceStepId: result.traceStepId,
     targetRef: result.targetRef,
     valuePreview: previewResultEvidence(result),
+    effect: result.success ? summarizeActionEffect(result.evidence) : undefined,
     error: result.error
       ? {
           code: result.error.code,
@@ -264,6 +265,18 @@ function summarizeLastResult(result: V2ToolResult): PlannerLastResultSummary {
         }
       : undefined,
   };
+}
+
+/**
+ * Deterministic post-action verdict: did the action change the page at all?
+ * 'page' = URL moved, 'local' = same-page structural change, 'none' = the
+ * runtime measured no observable change (the planner must not repeat it).
+ */
+function summarizeActionEffect(evidence: TransitionEvidence | undefined): 'page' | 'local' | 'none' {
+  if (!evidence) return 'none';
+  if (evidence.urlChanged) return 'page';
+  if (evidence.generationChanged || evidence.refChanges.appeared.length > 0) return 'local';
+  return 'none';
 }
 
 function summarizeFailure(failure: NonNullable<PlannerInputComposerInput['failureEvidence']>[number]): PlannerFailureSummary {

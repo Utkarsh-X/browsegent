@@ -64,6 +64,7 @@ function renderCompactLast(ir: PlannerRepresentationIR): string {
   if (last) {
     parts.push(`result=${last.kind}:${last.success ? 'ok' : `failed:${last.error?.code ?? 'unknown'}`}`);
     if (last.targetRef) parts.push(`target=${last.targetRef}`);
+    if (last.success && last.effect === 'none') parts.push('effect=none');
     if (last.valuePreview) parts.push(`value="${escapeAttr(compactValue(last.valuePreview))}"`);
   }
   const transition = ir.execution.transition;
@@ -269,7 +270,9 @@ function renderRecentEvents(ir: PlannerRepresentationIR): string {
   const lines = ['RECENT EVENTS'];
   const last = ir.execution.lastResult;
   if (last) {
-    const result = last.success ? 'ok' : `failed ${last.error?.code ?? 'unknown'}`;
+    const result = last.success
+      ? (last.effect === 'none' ? 'ok (no observable effect)' : 'ok')
+      : `failed ${last.error?.code ?? 'unknown'}`;
     lines.push(`  last: ${last.kind}${last.targetRef ? ` ${last.targetRef}` : ''} -> ${result}`);
   }
   const transition = ir.execution.transition;

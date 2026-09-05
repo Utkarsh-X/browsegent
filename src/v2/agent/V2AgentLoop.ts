@@ -1306,35 +1306,6 @@ function missingCoverageReasons(coverage: ReturnType<typeof buildTaskEvidenceCov
     .map(requirement => `missing_evidence_${requirement.key}`);
 }
 
-function extractSurfaceEvidence(projection: OperationalProjection, observationId: string): TaskEvidenceRead[] {
-  const seenRefs = new Set<string>();
-  const surfaceReads: TaskEvidenceRead[] = [];
-
-  for (const item of [
-    ...(projection.readables ?? []),
-    ...(projection.interactions ?? []),
-    ...(projection.navigation ?? []),
-  ]) {
-    if (seenRefs.has(item.refId)) continue;
-    seenRefs.add(item.refId);
-
-    if (item.visibility !== 'visible') continue;
-    const text = [item.name, item.text].filter(Boolean).join(' ').trim();
-    if (!text) continue;
-
-    surfaceReads.push({
-      kind: 'surface_observation',
-      sourceKind: 'surface_observation',
-      observationId,
-      targetRef: item.refId,
-      refIds: [item.refId],
-      text,
-    });
-  }
-
-  return surfaceReads;
-}
-
 /**
  * Keep URL/generation changes separate from any observable page transition.
  * Local structural changes and weak geometry changes are still useful outcome

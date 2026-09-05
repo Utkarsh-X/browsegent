@@ -38,7 +38,8 @@ export type WorkingSetDropReason =
   | 'readable_overflow'
   | 'stale_unrelated'
   | 'low_confidence_unrelated'
-  | 'token_budget_exceeded';
+  | 'token_budget_exceeded'
+  | 'rank_loss';
 
 export interface PlannerWorkingSetOptions {
   maxPrimaryRefs?: number;

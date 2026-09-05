@@ -1,7 +1,7 @@
 import type { PlannerOutput } from './types';
 import type { V2PlannerProvider } from './V2PlannerClient';
 import type { CompactShadowPlannerInput } from './CompactShadowInput';
-import { robustJsonParse } from '../../agent/parser';
+import { robustJsonParse } from './robustJsonParse';
 import { buildV2PlannerResponseSchema } from './V2PlannerResponseSchema';
 import { PlannerOutputSchema } from './PlannerOutputSchema';
 import { buildCompactShadowSystemPrompt, buildCompactShadowUserMessage } from './CompactShadowPrompt';

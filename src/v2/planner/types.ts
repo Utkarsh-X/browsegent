@@ -186,6 +186,9 @@ export interface PlannerLastResultSummary {
   traceStepId: string;
   targetRef?: string;
   valuePreview?: string;
+  /** Deterministic post-action verdict from the transition evidence; rendered
+   *  only when 'none' (the surprising value the planner must react to). */
+  effect?: 'page' | 'local' | 'none';
   error?: {
     code: string;
     retryable: boolean;

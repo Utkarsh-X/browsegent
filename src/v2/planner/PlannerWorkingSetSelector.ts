@@ -155,6 +155,8 @@ export class PlannerWorkingSetSelector {
     const selectedRefIds = selectedWithHorizon
       .map(candidate => candidate.item.refId);
     const selectedSet = new Set(selectedRefIds);
+    const raceLosers = selected
+      .filter(candidate => !selectedSet.has(candidate.item.refId)).length;
     const primary = selectedWithHorizon.slice(0, this.options.maxPrimaryRefs);
     const secondary = selectedWithHorizon.slice(this.options.maxPrimaryRefs, this.options.maxPrimaryRefs + this.options.maxSecondaryRefs);
     const readableEvidence = buildReadableEvidence(input.projection, selectedSet, this.options, scoreByRef);
@@ -168,7 +170,7 @@ export class PlannerWorkingSetSelector {
         selected.find(candidate => candidate.item.refId === item.refId)?.reasons ?? new Set(['navigation_candidate']),
       ));
     const regionSummaries = buildRegionSummaries(input.projection.regions, selectedSet, this.options.maxRegionSummaries);
-    const diagnostics = buildDiagnostics(input.projection, selectedRefIds, selected, dropped, this.options);
+    const diagnostics = buildDiagnostics(input.projection, selectedRefIds, selected, dropped, this.options, raceLosers);
     const current = serializeSelectedProjection(input.projection, selectedSet, this.options);
 
     return {
@@ -741,6 +743,7 @@ function serializeSelectedProjection(
       confidence: item.continuityConfidence,
       score: item.score,
       regionId: item.regionId,
+      selectOptions: item.selectOptions,
     };
   }
 
@@ -891,13 +894,18 @@ function buildDiagnostics(
   selected: Candidate[],
   dropped: Candidate[],
   options: ResolvedPlannerWorkingSetOptions,
+  raceLosers = 0,
 ): PlannerWorkingSetDiagnostics {
+  const counts = countDropReasons(dropped);
+  // Candidates that passed every filter but lost the top-K score race carry no
+  // drop reason; without this bucket the diagnostics under-report drops.
+  if (raceLosers > 0) counts.rank_loss = (counts.rank_loss ?? 0) + raceLosers;
   return {
     observedRefCount: projection.stats.interactionCount,
     selectedRefCount: selectedRefIds.length,
     droppedRefCount: Math.max(0, projection.stats.interactionCount - selectedRefIds.length),
     selectedByReason: countIncludeReasons(selected),
-    droppedByReason: countDropReasons(dropped),
+    droppedByReason: counts,
     maxPrimaryRefs: options.maxPrimaryRefs,
     maxSecondaryRefs: options.maxSecondaryRefs,
     maxReadableEvidence: options.maxReadableEvidence,
