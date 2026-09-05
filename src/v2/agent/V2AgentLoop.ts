@@ -1,4 +1,5 @@
 import { inferAnswerContract, partitionAnswerContractReasons, validateAnswerAgainstContract, findListPageOnlyAnswerSignal } from './AnswerContract';
+import { commitPhaseReady } from '../planner/CommitPhase';
 import { detectAnswerEvidenceConflicts } from './AnswerGrounding';
 import { stripInternalRefTokens } from './AnswerHygiene';
 import { findUnaddressedDateRequirements } from './RequirementCompletionGate';
@@ -437,7 +438,11 @@ export class V2AgentLoop {
 
           // Dispatch (only if no pre-execution rejection)
           if (!preExecutionRejected) {
-            lastResult = await dispatcher.dispatch(plannedStep, { goal: input.goal, seekStop });
+            lastResult = await dispatcher.dispatch(plannedStep, {
+              goal: input.goal,
+              seekStop,
+              commitPhaseReady: commitPhaseReady(plannerInput.goalProgress, plannerInput.lineage),
+            });
             metrics.toolExecutions += 1;
             if (lastResult.success) {
               if (plannedStep.tool === 'navigate') {

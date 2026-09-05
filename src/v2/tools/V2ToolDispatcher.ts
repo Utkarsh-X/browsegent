@@ -58,6 +58,38 @@ export class V2ToolDispatcher {
           return failure(step.tool, 'missing_value', 'Value is required for this v2 tool.', step.ref);
         }
         return this.runtime.select(step.ref, step.value);
+      case 'pick_option': {
+        if (!isNonEmptyString(step.ref)) {
+          return failure(step.tool, 'missing_ref', 'Ref is required for this v2 tool.', step.ref);
+        }
+        if (!isNonEmptyString(step.text)) {
+          return failure(step.tool, 'missing_text', 'Text is required for this v2 tool.', step.ref);
+        }
+        if (typeof this.runtime.pickOption !== 'function') {
+          return failure(step.tool, 'pick_option_unsupported', 'This runtime does not implement pick_option.', step.ref);
+        }
+        return this.runtime.pickOption(step.ref, step.text);
+      }
+      case 'submit_form': {
+        if (!isNonEmptyString(step.ref)) {
+          return failure(step.tool, 'missing_ref', 'Ref is required for this v2 tool.', step.ref);
+        }
+        // Refusal guard #1 (shared predicate): a focused, unsatisfied
+        // requirement means the submit would be premature — steering, not a
+        // failure to retry. The loop passes the predicate per episode.
+        if (context.commitPhaseReady === false) {
+          return failure(
+            step.tool,
+            'requirements_unmet',
+            'Submit refused: GOAL PROGRESS still shows a focused unsatisfied requirement. Complete that requirement first (select dates/values), then submit.',
+            step.ref,
+          );
+        }
+        if (typeof this.runtime.submitForm !== 'function') {
+          return failure(step.tool, 'submit_form_unsupported', 'This runtime does not implement submit_form.', step.ref);
+        }
+        return this.runtime.submitForm(step.ref);
+      }
       default:
         return failure(String((step as { tool?: unknown }).tool ?? 'unknown'), 'unsupported_tool', 'Unsupported v2 runtime tool.');
     }

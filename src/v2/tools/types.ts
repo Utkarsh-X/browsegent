@@ -19,6 +19,9 @@ export interface V2ToolDispatchContext {
   goal: string;
   /** Stop-condition evaluator for `seek` iterations; absent = seek unsupported. */
   seekStop?: (observation: BrowserObservation) => SeekIterationVerdict;
+  /** Shared commit-phase predicate (all parsed requirements addressed, no
+   *  press completed); absent = submit_form refusal guard unsupported. */
+  commitPhaseReady?: boolean;
 }
 
 export interface V2ToolRuntime {
@@ -32,6 +35,12 @@ export interface V2ToolRuntime {
   waitForState(input: { pattern?: string; timeout?: number }): Promise<V2ToolResult<{ matched: boolean }>>;
   press(key: PlannerPressKey): Promise<V2ToolResult<{ key: PlannerPressKey }>>;
   select(refId: string, value: string): Promise<V2ToolResult<{ value: string }>>;
+  /** Suggestion-commit primitive: open, type, click the matching option,
+   *  verify retention. Absent = pick_option unsupported. */
+  pickOption?(refId: string, text: string): Promise<V2ToolResult<{ committed: string }>>;
+  /** Submit primitive: click the submit control and grade the results triad
+   *  (URL/generation change + non-empty surface). Absent = unsupported. */
+  submitForm?(refId: string): Promise<V2ToolResult<{ resultsSurface: 'loaded' | 'unchanged' | 'empty'; url?: string }>>;
   /** Fresh observation for `seek` iterations; absent = seek unsupported. */
   observe?(): Promise<BrowserObservation>;
 }

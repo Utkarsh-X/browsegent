@@ -17,6 +17,7 @@ interface SuggestionControlState {
   useKeyboardInput: boolean;
   suggestionBacked: boolean;
   visibleOptionCount: number;
+  hasExpectedOption?: boolean;
 }
 
 export interface InputExecutionResult<TValue = unknown> {
@@ -266,8 +267,130 @@ export class InputService {
     };
   }
 
-  async select(ref: V2Ref, value: string, page: Page): Promise<InputExecutionResult<{ value: string; selectedText: string }>> {
+  /**
+   * Suggestion-commit primitive (`pick_option`): open the suggestion surface
+   * if collapsed, fill the requested value, wait for options, click the single
+   * matching option, and verify the control retained a value. The planner
+   * decides WHAT to commit; the substrate owns the mechanical iterations.
+   * Honest refusals: `suggestion_surface_did_not_open`, `no_matching_option`
+   * (observed labels returned in diagnostics), `ambiguous_match`, and the
+   * existing retention check. Never presses Enter — that is a different
+   * commitment semantics the planner must choose explicitly.
+   */
+  async pickOption(ref: V2Ref, text: string, page: Page): Promise<InputExecutionResult<{ committed: string }>> {
     this.assertExecutable(ref);
+    this.assertActionCompatible(ref, 'type');
+    let { locator } = await this.resolver.resolve(ref, page);
+    await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });
+
+    const openState = await inspectSuggestionControl(locator, ref);
+    if (!openState.suggestionBacked) {
+      throw new V2OperationalError(
+        'suggestion_surface_did_not_open',
+        'Target is not a suggestion-backed control (no aria-autocomplete/aria-haspopup=listbox protocol).',
+        { retryable: false, diagnostics: { targetRole: ref.role, targetName: ref.name } },
+      );
+    }
+    if (openState.requiresOpen) {
+      const opened = await tryOpenSuggestionWithKeyboard(locator, ref, text);
+      if (!opened) {
+        await this.click(ref, page);
+        ({ locator } = await this.resolver.resolve(ref, page));
+        await locator.scrollIntoViewIfNeeded({ timeout: 1_500 }).catch(() => undefined);
+      }
+    }
+
+    try {
+      await locator.fill(text, { timeout: 1_500 });
+    } catch (error) {
+      throw mapPlaywrightError(error, 'type');
+    }
+
+    const state = await waitForSuggestionState(locator, ref, text);
+    if (!state.suggestionBacked || (state.visibleOptionCount === 0 && !state.hasExpectedOption)) {
+      throw new V2OperationalError(
+        'suggestion_surface_did_not_open',
+        'The suggestion surface did not expose options for the requested value.',
+        { retryable: true, diagnostics: { requestedValue: isSensitiveInput(ref) ? undefined : compactDiagnosticValue(text) } },
+      );
+    }
+
+    const survey = await locator.evaluate((element, requested) => {
+      const normalize = (value: string | null | undefined): string => String(value ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+      const isVisible = (candidate: Element): boolean => {
+        const html = candidate as HTMLElement;
+        if (candidate.hasAttribute('hidden')) return false;
+        const style = window.getComputedStyle(html);
+        const rect = html.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+      };
+      const controlledId = element.getAttribute('aria-controls');
+      const optionRoot: ParentNode = controlledId ? document.getElementById(controlledId) ?? document : document;
+      const options = Array.from(optionRoot.querySelectorAll('[role="option"]')).filter(isVisible);
+      const labels = options.map(option => (option.textContent ?? '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+      const requestedNorm = normalize(requested);
+      const exact = labels.filter(label => normalize(label) === requestedNorm);
+      const partial = labels.filter(label => normalize(label).includes(requestedNorm) && requestedNorm.length > 1);
+      if (exact.length === 1) return { status: 'match' as const, matchedLabel: exact[0], labels };
+      if (exact.length > 1) return { status: 'ambiguous' as const, labels };
+      if (partial.length === 1) return { status: 'match' as const, matchedLabel: partial[0], labels };
+      if (partial.length > 1) return { status: 'ambiguous' as const, labels };
+      return { status: 'no_match' as const, labels };
+    }, text);
+
+    if (survey.status !== 'match') {
+      throw new V2OperationalError(
+        survey.status === 'ambiguous' ? 'ambiguous_match' : 'no_matching_option',
+        survey.status === 'ambiguous'
+          ? 'Multiple suggestion options match the requested value; refusing to guess.'
+          : 'No suggestion option matches the requested value.',
+        {
+          retryable: true,
+          diagnostics: {
+            requestedValue: isSensitiveInput(ref) ? undefined : compactDiagnosticValue(text),
+            observedOptions: survey.labels.slice(0, 8),
+          },
+        },
+      );
+    }
+
+    const candidate = page.getByRole('option', { name: survey.matchedLabel, exact: true });
+    const candidateCount = await candidate.count();
+    if (candidateCount !== 1) {
+      throw new V2OperationalError(
+        'ambiguous_match',
+        `The matching option resolved to ${candidateCount} clickable candidates; refusing to guess.`,
+        { retryable: true, diagnostics: { observedOptions: survey.labels.slice(0, 8) } },
+      );
+    }
+
+    try {
+      await candidate.click({ timeout: 1_500, noWaitAfter: true });
+    } catch (error) {
+      throw mapPlaywrightError(error, 'click');
+    }
+
+    const inputValue = await locator.evaluate((element) => {
+      if ('value' in element) {
+        return String((element as HTMLInputElement | HTMLTextAreaElement).value);
+      }
+      return String(element.textContent ?? '');
+    });
+    if (!inputValue.trim()) {
+      throw new V2OperationalError(
+        'input_not_applied',
+        'The option was clicked but the control did not retain a value.',
+        { retryable: false, diagnostics: { requestedValue: isSensitiveInput(ref) ? undefined : compactDiagnosticValue(text) } },
+      );
+    }
+
+    return {
+      kind: 'click',
+      value: { committed: survey.matchedLabel },
+    };
+  }
+
+  async select(ref: V2Ref, value: string, page: Page): Promise<InputExecutionResult<{ value: string; selectedText: string }>> {    this.assertExecutable(ref);
     this.assertActionCompatible(ref, 'select');
     const { locator } = await this.resolver.resolve(ref, page);
     await locator.scrollIntoViewIfNeeded({ timeout: 1_500 });

@@ -29,7 +29,9 @@ export type PlannerOutputTool =
   | 'seek'
   | 'find_elements'
   | 'count_elements'
-  | 'inspect_region';
+  | 'inspect_region'
+  | 'pick_option'
+  | 'submit_form';
 
 export type PlannerConfidence = 'high' | 'medium' | 'low';
 export type PlannerEscalation = 'user_needed' | 'captcha' | 'dead_end';

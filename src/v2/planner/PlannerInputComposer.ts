@@ -6,6 +6,7 @@ import { PlannerWorkingSetSelector } from './PlannerWorkingSetSelector';
 import { RecoveryStateBuilder } from '../runtime/RecoveryState';
 import { buildTaskProgress } from '../agent/TaskProgress';
 import { evaluateGoalProgress, parseGoalRequirements } from './GoalProgressTracker';
+import { commitPhaseReady } from './CommitPhase';
 import { detectDateHorizon, findSubmitControls, findTargetDateCells } from './HorizonDetector';
 import type { PlannerGoalProgress } from './GoalProgressTracker';
 import type { SurfaceHorizon } from './HorizonDetector';
@@ -179,10 +180,9 @@ function findSubmitControlRefs(
   goalProgress: PlannerGoalProgress | undefined,
   goalLineage: CompressedLineage | undefined,
 ): string[] | undefined {
-  if (!goalProgress || goalProgress.focus !== undefined) return undefined;
-  if (goalLineage?.steps.some(step => step.kind === 'press' && step.status === 'completed')) {
-    return undefined;
-  }
+  // Same predicate the submit_form refusal guard uses: promotion and refusal
+  // can never disagree about when the commit phase is open.
+  if (!commitPhaseReady(goalProgress, goalLineage)) return undefined;
   const submits = findSubmitControls(projection);
   return submits.length > 0 ? submits.map(control => control.refId) : undefined;
 }

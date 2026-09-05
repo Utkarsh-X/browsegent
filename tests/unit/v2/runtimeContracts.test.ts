@@ -68,6 +68,9 @@ test('v2 public error code set is operational and non-strategic', () => {
       'trace_write_failed',
       'invalid_action_payload',
       'action_blocked_by_loop_detector',
+      'suggestion_surface_did_not_open',
+      'no_matching_option',
+      'ambiguous_match',
     ],
   );
 });

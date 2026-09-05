@@ -20,6 +20,9 @@ export const V2_OPERATIONAL_ERROR_CODES = [
   'trace_write_failed',
   'invalid_action_payload',
   'action_blocked_by_loop_detector',
+  'suggestion_surface_did_not_open',
+  'no_matching_option',
+  'ambiguous_match',
 ] as const;
 
 export type V2OperationalErrorCode = (typeof V2_OPERATIONAL_ERROR_CODES)[number];

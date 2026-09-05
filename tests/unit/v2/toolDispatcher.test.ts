@@ -291,3 +291,59 @@ test('seek rejects missing ref and unsupported runtimes without acting', async (
   assert.equal(unsupported.error?.code, 'seek_unsupported');
   assert.equal(runtime.clickCount, 0);
 });
+
+test('dispatcher routes pick_option with ref and text to the runtime primitive', async () => {
+  const { V2ToolDispatcher } = await loadDispatcherModule();
+  const runtime = new FakeToolRuntime();
+  (runtime as unknown as { pickOption: unknown }).pickOption = async (refId: string, text: string) => {
+    runtime.calls.push({ method: 'pickOption', args: [refId, text] });
+    return { success: true, kind: 'click', targetRef: refId, value: { committed: 'Manchester' }, traceStepId: 'trace_pick' } as V2ToolResult;
+  };
+  const dispatcher = new V2ToolDispatcher(runtime as never);
+
+  const result = await dispatcher.dispatch(
+    { tool: 'pick_option', ref: 'ref_airport', text: 'Manchester' } as PlannerOutputStep,
+    { goal: 'g' },
+  );
+
+  assert.equal(result.success, true);
+  assert.deepEqual(runtime.calls[runtime.calls.length - 1], { method: 'pickOption', args: ['ref_airport', 'Manchester'] });
+});
+
+test('dispatcher refuses pick_option without text and on unsupported runtimes', async () => {
+  const { V2ToolDispatcher } = await loadDispatcherModule();
+  const dispatcher = new V2ToolDispatcher(new FakeToolRuntime() as never);
+
+  const missingText = await dispatcher.dispatch({ tool: 'pick_option', ref: 'ref_x' } as PlannerOutputStep, { goal: 'g' });
+  assert.equal(missingText.success, false);
+  assert.equal(missingText.error?.code, 'missing_text');
+
+  const unsupported = await dispatcher.dispatch({ tool: 'pick_option', ref: 'ref_x', text: 'y' } as PlannerOutputStep, { goal: 'g' });
+  assert.equal(unsupported.success, false);
+  assert.equal(unsupported.error?.code, 'pick_option_unsupported');
+});
+
+test('dispatcher refuses submit_form via the shared commit-phase predicate', async () => {
+  const { V2ToolDispatcher } = await loadDispatcherModule();
+  const runtime = new FakeToolRuntime();
+  const dispatcher = new V2ToolDispatcher(runtime as never);
+
+  const refused = await dispatcher.dispatch(
+    { tool: 'submit_form', ref: 'ref_submit' } as PlannerOutputStep,
+    { goal: 'g', commitPhaseReady: false },
+  );
+  assert.equal(refused.success, false);
+  assert.equal(refused.error?.code, 'requirements_unmet');
+  assert.deepEqual(runtime.calls.filter(call => call.method === 'click'), [], 'refusal must not dispatch');
+
+  (runtime as unknown as { submitForm: unknown }).submitForm = async (refId: string) => {
+    runtime.calls.push({ method: 'submitForm', args: [refId] });
+    return { success: true, kind: 'submit_form', targetRef: refId, value: { resultsSurface: 'loaded' }, traceStepId: 'trace_submit' } as V2ToolResult;
+  };
+  const allowed = await dispatcher.dispatch(
+    { tool: 'submit_form', ref: 'ref_submit' } as PlannerOutputStep,
+    { goal: 'g', commitPhaseReady: true },
+  );
+  assert.equal(allowed.success, true, 'allowed submit dispatches to runtime.submitForm');
+  assert.deepEqual(runtime.calls[runtime.calls.length - 1], { method: 'submitForm', args: ['ref_submit'] });
+});

@@ -87,6 +87,75 @@ export class BrowseGentV2Harness {
     return this.executeMutation('type', refId, async (ref) => this.inputService.type(ref, text, this.session.currentPage()));
   }
 
+  async pickOption(refId: string, text: string): Promise<V2ToolResult<{ committed: string }>> {
+    return this.executeMutation('click', refId, async (ref) => this.inputService.pickOption(ref, text, this.session.currentPage()));
+  }
+
+  /**
+   * Submit primitive (`submit_form`): click the submit control, then grade the
+   * results triad — URL or generation changed AND a non-empty surface. An
+   * unchanged/empty outcome returns success=false with an honest code so a
+   * wasted submit costs one episode and the planner re-plans (run-15 Booking
+   * submits landed parameterless city pages and burned the run in silence).
+   */
+  async submitForm(refId: string): Promise<V2ToolResult<{ resultsSurface: 'loaded' | 'unchanged' | 'empty'; url?: string }>> {
+    const before = this.assertOpened();
+    const resolution = this.refService.resolve(refId, before);
+    const target = resolution.ref;
+    const isSubmitClass = target?.role === 'button'
+      || target?.tagName?.toLowerCase() === 'button'
+      || target?.inputType === 'submit';
+    if (!target || !isSubmitClass) {
+      return {
+        success: false,
+        kind: 'submit_form',
+        targetRef: refId,
+        error: {
+          code: 'not_a_submit_control',
+          message: 'submit_form targets a submit-class control (button); use click for other elements.',
+          retryable: false,
+        },
+        traceStepId: `submit_form_${refId}`,
+      };
+    }
+
+    const result = await this.executeMutation('click', refId, async (ref) => this.inputService.click(ref, this.session.currentPage()));
+    const changed = result.evidence?.urlChanged === true || result.evidence?.generationChanged === true;
+    const after = await this.captureCurrentObservation();
+    const resultsSurface: 'loaded' | 'unchanged' | 'empty' = !changed
+      ? 'unchanged'
+      : after.refs.length > 0
+        ? 'loaded'
+        : 'empty';
+
+    if (resultsSurface !== 'loaded') {
+      return {
+        success: false,
+        kind: 'submit_form',
+        targetRef: refId,
+        value: { resultsSurface, url: after.url },
+        error: {
+          code: resultsSurface === 'empty' ? 'results_surface_empty' : 'results_surface_unchanged',
+          message: resultsSurface === 'empty'
+            ? 'The submit changed the page but the results surface captured empty; wait once or re-observe before re-submitting.'
+            : 'The submit produced no page change; the form was likely not committed. Complete pending requirements or use a different submit control.',
+          retryable: true,
+        },
+        evidence: result.evidence,
+        traceStepId: result.traceStepId,
+      };
+    }
+
+    return {
+      success: true,
+      kind: 'submit_form',
+      targetRef: refId,
+      value: { resultsSurface, url: after.url },
+      evidence: result.evidence,
+      traceStepId: result.traceStepId,
+    };
+  }
+
   async select(refId: string, value: string): Promise<V2ToolResult<{ value: string; selectedText: string }>> {
     return this.executeMutation('select', refId, async (ref) => this.inputService.select(ref, value, this.session.currentPage()));
   }

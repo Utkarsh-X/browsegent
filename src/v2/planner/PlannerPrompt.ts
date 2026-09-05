@@ -25,6 +25,9 @@ const SITE_SEARCH_GUIDANCE = "If PROBLEMS shows a zero_result_read_loop recovery
 
 const BUDGET_GUIDANCE = 'If PROBLEMS shows a budget_low signal, only 1-2 planner steps remain: prefer returning done from the strongest already-read evidence — or an honest report of what was found — over opening new pages; a grounded partial answer is worth more than exhausting the budget.';
 
+const PICK_OPTION_GUIDANCE = `PICK_OPTION: for a suggestion-backed control (aria-autocomplete or aria-haspopup=listbox), one {"tool":"pick_option","ref":"...","text":"<requested value>"} call opens the control, types, clicks the matching option, and verifies the commit — prefer it over type-then-click sequences when the value must be committed from the list. If it returns no_matching_option or ambiguous_match, use the observed option labels in the error diagnostics to re-decide; never retype the same value.
+ SUBMIT_FORM: submit with {"tool":"submit_form","ref":"..."} when the form's requirements are satisfied; it refuses with requirements_unmet when GOAL PROGRESS still shows a focused unsatisfied requirement — then complete that requirement first. A refused submit is steering, not a failure to retry. A submit that reports results_surface_unchanged or results_surface_empty did not reach a results page; do not repeat it blindly.`;
+
 const TASK_PROGRESS_GUIDANCE = 'If taskProgress is present, treat it as an advisory summary of explicit operational constraints from the goal. The applied status means the current control or bounded successful action history matched the requested value; observed means the constraint was seen but not proven applied; pending means no matching operational evidence; conflicting means a current control value disagrees. Do not treat taskProgress as answer evidence or as proof that the task is complete. Preserve pending or conflicting constraints while choosing the next action, and re-observe after transitions.';
 
 const HORIZON_GUIDANCE = `HORIZON appears when a focused requirement's target (for example a month in a date picker) lies outside the widget's currently visible window. While HORIZON is present your mutation plan MUST be exactly the suggested plan line it contains: {"tool":"seek","ref":"<recommended control>"} — the runtime clicks it, re-observes, and repeats automatically until the target enters the window, so one seek replaces many clicks. Only deviate if the previous seek returned an error; then click the recommended control yourself once and re-plan. Never move the window away from the target. Do not re-open, re-click, or abandon the widget while the target is still outside the window.`;
@@ -75,6 +78,8 @@ Valid tools:
 - navigate: requires url
 - press: requires key Enter, Escape, Tab, ArrowDown, or ArrowUp
 - select: requires ref and exact visible option value
+- pick_option: requires ref and text (commits a suggestion-backed control: opens it, types, clicks the matching option, verifies the commit)
+- submit_form: requires ref (submits a form and verifies the results surface)
 - get: requires ref
 - inspect_region: requires ref
 - search_page: requires pattern
@@ -102,6 +107,8 @@ If recovery.state is navigate_loop, your navigate attempts are being refused bec
 If recovery.state is max_step_risk, only 1-2 planner steps remain and coverage is unfinished after a rejected episode: finalize with the strongest collected evidence or escalate honestly; do not open new pages or repeat failed actions.
 If PROBLEMS shows a zero_result_read_loop recovery state or repeated zero-match search_page reads, the current section does not contain the goal terms: switch to the site's own search — type the goal keywords into a visible search control and submit it, or navigate to the site's search results URL (origin + /search?q=<url-encoded goal keywords>) — instead of further zero-match reads or deeper section navigation.
 If PROBLEMS shows a budget_low signal, only 1-2 planner steps remain: prefer returning done from the strongest already-read evidence — or an honest report of what was found — over opening new pages; a grounded partial answer is worth more than exhausting the budget.
+PICK_OPTION: for a suggestion-backed control (aria-autocomplete or aria-haspopup=listbox), one {"tool":"pick_option","ref":"...","text":"<requested value>"} call opens the control, types, clicks the matching option, and verifies the commit — prefer it over type-then-click sequences when the value must be committed from the list. If it returns no_matching_option or ambiguous_match, use the observed option labels in the error diagnostics to re-decide; never retype the same value.
+ SUBMIT_FORM: submit with {"tool":"submit_form","ref":"..."} when the form's requirements are satisfied; it refuses with requirements_unmet when GOAL PROGRESS still shows a focused unsatisfied requirement — then complete that requirement first. A refused submit is steering, not a failure to retry. A submit that reports results_surface_unchanged or results_surface_empty did not reach a results page; do not repeat it blindly.
 
 If lastResult from get, inspect_region, search_page, click, type, press, navigate has lastResult.valuePreview containing the requested answer or confirming the requested state/action, return done with that value. Do not repeat the same read or mutation after successful value evidence. If the last result shows effect=none (or "no observable effect"), the runtime measured no page change from that successful action: never repeat the same tool on the same ref; choose a different mechanism (a different affordance, one bounded wait, or a read) and re-plan.
 
@@ -150,6 +157,16 @@ Click only elements whose tools attribute contains c (a tools="r"-only ref is ev
     if (!uncertaintySignals.some(signal => signal.startsWith('budget_low'))) {
       absentFragments.push(BUDGET_GUIDANCE);
     }
+    const hasSuggestionControl = Object.values(plannerInput.current?.refs ?? {}).some(ref =>
+      Boolean(ref.ariaAutocomplete || ref.ariaHasPopup)
+      || ref.role === 'combobox'
+      || ref.role === 'searchbox',
+    );
+    const hasSubmitControl = [
+      ...(plannerInput.workingSet?.primaryRefs ?? []),
+      ...(plannerInput.workingSet?.secondaryRefs ?? []),
+    ].some(ref => ref.reasons.includes('submit_control'));
+    if (!hasSuggestionControl && !hasSubmitControl) absentFragments.push(PICK_OPTION_GUIDANCE);
     if (!plannerInput.taskProgress) absentFragments.push(TASK_PROGRESS_GUIDANCE);
     if (!plannerInput.horizon) absentFragments.push(HORIZON_GUIDANCE);
     const hasComboboxSurface = Object.values(plannerInput.current?.refs ?? {}).some(ref =>
