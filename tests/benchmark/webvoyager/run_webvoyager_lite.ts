@@ -300,12 +300,14 @@ function readPlannerSerializationConfig(
   const prcTierOmitted = hasFlag('--prc-tier-omitted');
   const compactDataPlane = hasFlag('--compact-data-plane');
   const prcLeanPlane = hasFlag('--prc-lean-plane');
-  if (prcTierOmitted || compactDataPlane || prcLeanPlane) {
+  const conditionalPrompt = hasFlag('--planner-conditional-prompt');
+  if (prcTierOmitted || compactDataPlane || prcLeanPlane || conditionalPrompt) {
     if (mode !== 'prc') {
       const flags = [
         ...(prcTierOmitted ? ['--prc-tier-omitted'] : []),
         ...(compactDataPlane ? ['--compact-data-plane'] : []),
         ...(prcLeanPlane ? ['--prc-lean-plane'] : []),
+        ...(conditionalPrompt ? ['--planner-conditional-prompt'] : []),
       ];
       throw new Error(`${flags.join(' and ')} require --planner-serialization prc.`);
     }
@@ -314,6 +316,7 @@ function readPlannerSerializationConfig(
       ...(prcTierOmitted ? { prcTierOmitted: true } : {}),
       ...(compactDataPlane ? { compactDataPlane: true } : {}),
       ...(prcLeanPlane ? { prcLeanPlane: true } : {}),
+      ...(conditionalPrompt ? { conditionalSystemPrompt: true } : {}),
     };
   }
   return mode === undefined ? undefined : { mode };

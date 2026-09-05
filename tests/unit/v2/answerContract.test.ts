@@ -291,14 +291,13 @@ test('rejects a done answer that admits the task action was never completed', ()
   assert.ok(validation.reasons.includes('incomplete_answer'));
 });
 
-test('rejects a done answer reporting a missing page or captcha wall', () => {
+test('accepts gone-page reports as honest terminal answers; still rejects captcha walls', () => {
   const contract = inferAnswerContract('Find the model that performed sentiment analysis');
   const notFound = validateAnswerAgainstContract(
     'The requested space resulted in a 404 error on the site, meaning the page does not exist or is unavailable.',
     contract,
   );
-  assert.equal(notFound.ok, false);
-  assert.ok(notFound.reasons.includes('incomplete_answer'));
+  assert.equal(notFound.reasons.includes('incomplete_answer'), false);
 
   const captcha = validateAnswerAgainstContract(
     'The requested information could not be retrieved because the website is currently displaying a security verification page.',
@@ -476,4 +475,19 @@ test('partitionAnswerContractReasons separates advisory completeness checks from
     'missing_requested_detail_hours',
     'requirements_unaddressed:search_not_executed',
   ]);
+});
+
+test('honest unavailability reports are not treated as incomplete answers', () => {
+  const contract = inferAnswerContract('Open space argilla/notux-chat-ui and ask which team trained you');
+  const validation = validateAnswerAgainstContract(
+    "The requested space 'argilla/notux-chat-ui' resulted in a 404 error on Hugging Face, indicating the space is unavailable or does not exist.",
+    contract,
+  );
+  assert.equal(validation.reasons.includes('incomplete_answer'), false);
+});
+
+test('rating category accepts hyphenated star forms', () => {
+  const contract = inferAnswerContract('Find a stainless steel 12-cup coffee maker with a 4.6-star rating under $100');
+  const validation = validateAnswerAgainstContract('The Cuisinart DCC-1200P1 has a 4.6-star rating and costs $109.', contract);
+  assert.equal(validation.reasons.includes('missing_requested_detail_rating'), false);
 });

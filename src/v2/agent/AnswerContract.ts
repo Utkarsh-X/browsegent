@@ -224,7 +224,7 @@ export function hasConcreteBasicInformation(value: string): boolean {
 }
 
 const DETAIL_CATEGORY_ANSWER_PATTERNS: Record<AnswerDetailCategory, RegExp[]> = {
-  rating: [/\b[1-5](?:\.\d)?\s*(?:\/\s*5|\s*stars?|out of 5)\b/i, /\brating\s*:\s*[1-5](?:\.\d)?/i, /[★☆]/, /\b[1-9](?:\.\d)?\s*\/\s*10\b/],
+  rating: [/\b[1-5](?:\.\d)?[-\s]*(?:\/\s*5|[-\s]*stars?|out of 5)\b/i, /\brating\s*:\s*[1-5](?:\.\d)?/i, /[★☆]/, /\b[1-9](?:\.\d)?\s*\/\s*10\b/],
   price: [/[$€£¥₹]\s*\d/i, /\b\d+(?:\.\d{2})?\s*(?:usd|eur|gbp|inr|dollars?|rupees?|pounds?)\b/i, /\bfree\b/i],
   hours: [/\b\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)\b/i, /\bhours?\s*:\s*\d/i, /\b\d+(?:\.\d+)?\s*hours?\b/i, /\b\d{1,2}:\d{2}\b/],
   duration: [/\b\d+(?:\.\d+)?\s*(?:hours?|hrs?|minutes?|mins?|days?|weeks?|months?|years?)\b/i],
@@ -370,8 +370,9 @@ function hasExplicitIncompleteResult(value: string): boolean {
     /\b(?:you can|please)\s+(?:now\s+)?proceed with (?:your\s+)?(?:search|booking|request|selection)\b/i,
     /\bif you would like me to\b/i,
     /\b(?:i can|allow me to)\s+(?:escalate|attempt|proceed)\b/i,
-    /\b404\s+error\b/i,
-    /\b(?:page does not exist|page is unavailable)\b/i,
+    // Honest unavailability reports (404s, gone pages) are valid terminal
+    // answers when the target itself does not exist; the strict matcher and
+    // judge still assess the content.
     /\bsecurity verification page\b/i,
     /\b(?:captcha|cloudflare)\b/i,
   ].some(pattern => pattern.test(value));

@@ -82,7 +82,7 @@ export class V2PlannerClient {
 
   async call(input: V2PlannerCallInput): Promise<V2PlannerCallResult> {
     const startedAt = Date.now();
-    const systemPrompt = buildV2PlannerSystemPrompt(this.plannerSerialization);
+    const systemPrompt = buildV2PlannerSystemPrompt(this.plannerSerialization, input.plannerInput);
     const baseUserMessage = buildV2PlannerUserMessage(
       input.plannerInput,
       this.plannerSerialization,

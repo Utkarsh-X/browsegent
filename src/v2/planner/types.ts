@@ -286,4 +286,6 @@ export interface PlannerSerializationConfig {
   compactDataPlane?: boolean;
   /** Lean plane: strip element metadata, omit the working-set narrative, cap the payload. */
   prcLeanPlane?: boolean;
+  /** Inject guidance blocks only when their subject is present in the episode input. */
+  conditionalSystemPrompt?: boolean;
 }
