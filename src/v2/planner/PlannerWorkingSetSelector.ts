@@ -8,6 +8,7 @@ import type { ContinuityGraphSnapshot } from '../graph/types';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { TransitionEvidence, V2ToolResult } from '../runtime/types';
 import { scoreGoalRelevance } from './GoalRelevance';
+import { isComparativeRankingGoal } from '../agent/AnswerContract';
 import type {
   PlannerQuarantinedAction,
   PlannerWorkingSetDiagnostics,
@@ -78,6 +79,7 @@ export class PlannerWorkingSetSelector {
     const horizonControlRefs = new Set(input.horizonControlRefs ?? []);
     const targetValueRefs = new Set(input.targetValueRefs ?? []);
     const submitControlRefs = new Set(input.submitControlRefs ?? []);
+    const rankingGoalActive = isComparativeRankingGoal(input.goal.toLowerCase());
     const candidates = input.projection.interactions.map(item => {
       const candidate = scoreCandidate(
         item,
@@ -124,6 +126,15 @@ export class PlannerWorkingSetSelector {
         // floods after the last selection must not hide it.
         candidate.reasons.add('submit_control');
         candidate.score += 160;
+        candidate.dropReason = undefined;
+      }
+      if (rankingGoalActive && hasRankingMetricSignal(item)) {
+        // Result rows carrying ranking metrics (stars, ratings, prices, review
+        // counts) are data, not chrome: a visible-only flood on result pages
+        // must not hide below-fold rows from a superlative/ranking goal. This
+        // is a ranking prior, never an auto-action.
+        candidate.reasons.add('result_row');
+        candidate.score += 140;
         candidate.dropReason = undefined;
       }
       return candidate;
@@ -406,9 +417,19 @@ function classifyLowValue(item: ProjectionItem, allowSemanticOffscreen = false):
     && hasText;
   if (semanticRoleExempt) return undefined;
   if (item.visibility === 'hidden' && !hasText) return 'hidden_low_value';
-  if (item.visibility === 'offscreen' && item.kind === 'generic') return 'offscreen_low_value';
+  if (item.visibility === 'offscreen' && item.kind === 'generic') {
+    // Metric-bearing rows are result data, not page chrome; dropping them as
+    // low-value hides exactly the numbers ranking goals must compare.
+    return hasRankingMetricSignal(item) ? undefined : 'offscreen_low_value';
+  }
   if (item.kind === 'generic' && !hasText) return 'generic_low_value';
   return undefined;
+}
+
+const RANKING_METRIC_PATTERN = /\b\d[\d,.]*\s*[km]?\s+stars?\b|\b[1-5](?:\.\d)?\s*(?:[-\s]stars?|\/\s*5|out of 5)|[$€£¥₹]\s*\d|\b\d[\d,.]*\s*[km]?\s+reviews?\b/i;
+
+function hasRankingMetricSignal(item: ProjectionItem): boolean {
+  return RANKING_METRIC_PATTERN.test(`${item.name ?? ''} ${item.text ?? ''}`);
 }
 
 function isUnlabeledActionControl(item: ProjectionItem): boolean {

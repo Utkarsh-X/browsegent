@@ -23,6 +23,7 @@ export type WorkingSetIncludeReason =
   | 'dead_state_evidence'
   | 'answer_candidate'
   | 'suggestion_option'
+  | 'result_row'
   | 'navigation_candidate'
   | 'form_candidate'
   | 'region_representative';

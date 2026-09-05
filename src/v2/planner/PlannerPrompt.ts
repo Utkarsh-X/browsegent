@@ -1,6 +1,7 @@
 import type { PlannerInput, PlannerSerializationConfig } from './types';
 import { PlannerRepresentationCompiler } from './prc/PlannerRepresentationCompiler';
 import { PromptLayoutEngine } from './prc/PromptLayoutEngine';
+import { isComparativeRankingGoal } from '../agent/AnswerContract';
 
 const EVIDENCE_SNAPSHOT_GUIDANCE = `  If evidenceSnapshot is present, it is a bounded relation-preserving summary of observed result cards. Treat a proven Rank #N card as stronger than an unranked position; an unranked entity is not proof of ordering. Use a snapshot refId for targeted verification only when it is also present in current.refs; a card without a current refId is read-only historical evidence. Do not claim an ordering that was not observed.`;
 
@@ -14,6 +15,8 @@ const RECOVERY_STATE_GUIDANCE: ReadonlyArray<readonly [state: string, text: stri
 ];
 
 const ANSWER_FEEDBACK_GUIDANCE = 'If answerFeedback is present, the previous done answer was rejected because it missed required details. Do not repeat that answer unless missingDetails are answered with concrete evidence.';
+
+const SUPERLATIVE_SORT_GUIDANCE = 'If the goal asks for a superlative (most stars, cheapest, highest rated, largest) and evidenceSnapshot shows the current ordering is not that dimension (for example sort=relevance via active_control), plan a click on the surface sort control first, then the matching option, and answer only from the re-sorted snapshot. Never report a superlative from a list you have not sorted or verified; if the surface has no usable sort control, compare the metric values on the evidenceSnapshot cards yourself and answer with the single winning entity.';
 
 const TASK_PROGRESS_GUIDANCE = 'If taskProgress is present, treat it as an advisory summary of explicit operational constraints from the goal. The applied status means the current control or bounded successful action history matched the requested value; observed means the constraint was seen but not proven applied; pending means no matching operational evidence; conflicting means a current control value disagrees. Do not treat taskProgress as answer evidence or as proof that the task is complete. Preserve pending or conflicting constraints while choosing the next action, and re-observe after transitions.';
 
@@ -72,7 +75,7 @@ Valid tools:
 - wait: optional pattern and timeout
 
 Planner input shape: current.refs contains selected ref facts only. workingSet explains why selected refs were included, what was omitted, and which compact evidence is currently available. interactions, readables, navigation, and regions are bounded views over selected refs, not the full page.
-  Working-set reason codes: kw=goal keyword match, phrase=goal phrase match, role=role relevant to goal, focus=near the focused requirement, new=recently appeared, rep=region representative; the rest read as their plain words (ready, changed, target, ok, failed, recovery, horizon, value, submit, dead, answer, suggestion, nav, form).
+  Working-set reason codes: kw=goal keyword match, phrase=goal phrase match, role=role relevant to goal, focus=near the focused requirement, new=recently appeared, row=result row carrying a ranking metric, rep=region representative; the rest read as their plain words (ready, changed, target, ok, failed, recovery, horizon, value, submit, dead, answer, suggestion, nav, form).
   If evidenceSnapshot is present, it is a bounded relation-preserving summary of observed result cards. Treat a proven Rank #N card as stronger than an unranked position; an unranked entity is not proof of ordering. Use a snapshot refId for targeted verification only when it is also present in current.refs; a card without a current refId is read-only historical evidence. Do not claim an ordering that was not observed.
   In JSON mode, workingSet.actionSurface lists refs compatible with click/type/select/read operations. In PRC mode, each element in PLANNER SURFACE has a tools attribute (e.g. tools="c,r") listing compatible operations: c (click/close), t (type), s (select), r (read). Prefer tool-compatible refs. Ambiguous refs may be tried only when evidence supports them, but do not use a known incompatible ref for a tool.
   If no current ref is compatible with type (no typeableRefs in JSON or no "t" tool in PRC), never emit type. Click a compatible launcher and reobserve before typing; otherwise use wait, scroll, search_page, or escalate.
@@ -91,6 +94,8 @@ If recovery.state is navigation_oscillation, you are bouncing between the same p
 If lastResult from get, inspect_region, search_page, click, type, press, navigate has lastResult.valuePreview containing the requested answer or confirming the requested state/action, return done with that value. Do not repeat the same read or mutation after successful value evidence.
 
 If answerFeedback is present, the previous done answer was rejected because it missed required details. Do not repeat that answer unless missingDetails are answered with concrete evidence.
+
+If the goal asks for a superlative (most stars, cheapest, highest rated, largest) and evidenceSnapshot shows the current ordering is not that dimension (for example sort=relevance via active_control), plan a click on the surface sort control first, then the matching option, and answer only from the re-sorted snapshot. Never report a superlative from a list you have not sorted or verified; if the surface has no usable sort control, compare the metric values on the evidenceSnapshot cards yourself and answer with the single winning entity.
 
 If evidenceCoverage is present, treat it as a bounded summary of explicit read evidence. Missing or conflicting requirements need another targeted read or an honest escalation before done.
 
@@ -123,6 +128,9 @@ Click only elements whose tools attribute contains c (a tools="r"-only ref is ev
       if (state !== activeState) absentFragments.push(guidance);
     }
     if (!plannerInput.answerFeedback) absentFragments.push(ANSWER_FEEDBACK_GUIDANCE);
+    if (!isComparativeRankingGoal(plannerInput.goal?.toLowerCase() ?? '')) {
+      absentFragments.push(SUPERLATIVE_SORT_GUIDANCE);
+    }
     if (!plannerInput.taskProgress) absentFragments.push(TASK_PROGRESS_GUIDANCE);
     if (!plannerInput.horizon) absentFragments.push(HORIZON_GUIDANCE);
     const hasComboboxSurface = Object.values(plannerInput.current?.refs ?? {}).some(ref =>

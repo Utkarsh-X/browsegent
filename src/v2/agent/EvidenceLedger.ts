@@ -94,6 +94,17 @@ export function extractActiveSort(url: string, refs: V2Ref[] = []): ActiveSortPr
     }
   }
 
+  // 3. Generic sort control with a non-ranking label (e.g. "Sort by: Best
+  // match"): its presence proves the list's current ordering is relevance, not
+  // a ranking dimension, so superlative goals know the list is unsorted.
+  for (const ref of refs) {
+    if (ref.visibility !== 'visible') continue;
+    const text = [ref.name, ref.text].filter(Boolean).join(' ').trim();
+    if (/\bsort(?:ed)?\s+by\b/i.test(text) && text.length <= 120) {
+      return { dimension: 'relevance', direction: 'desc', source: 'active_control', rawLabel: text };
+    }
+  }
+
   return undefined;
 }
 

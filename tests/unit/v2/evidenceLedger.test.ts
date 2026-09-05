@@ -72,6 +72,33 @@ test('extractActiveSort extracts sort from active DOM controls', () => {
   assert.equal(domSort.source, 'active_control');
 });
 
+test('extractActiveSort reports relevance provenance for non-ranking sort labels', () => {
+  const refs = [
+    makeRef({
+      refId: 'ref_sort_best_match',
+      role: 'button',
+      name: 'Sort by: Best match',
+      text: 'Sort by: Best match',
+    }),
+  ];
+  const bestMatch = extractActiveSort('https://github.com/search?q=climate', refs);
+  assert.ok(bestMatch);
+  assert.equal(bestMatch.dimension, 'relevance');
+  assert.equal(bestMatch.direction, 'desc');
+  assert.equal(bestMatch.source, 'active_control');
+  assert.ok(bestMatch.rawLabel.includes('Best match'));
+
+  // Dimension-specific labels keep precedence over the generic fallback.
+  const starsRefs = [
+    makeRef({ refId: 'ref_sort_stars', role: 'button', name: 'Sort by: Most stars', text: 'Sort by: Most stars' }),
+  ];
+  const starsSort = extractActiveSort('https://github.com/search?q=climate', starsRefs);
+  assert.ok(starsSort);
+  assert.equal(starsSort.dimension, 'stars');
+
+  assert.equal(extractActiveSort('https://github.com/search?q=climate', []), undefined);
+});
+
 test('extractResultCards groups split-node items using spatial layout bands', () => {
   const refs: V2Ref[] = [
     makeRef({

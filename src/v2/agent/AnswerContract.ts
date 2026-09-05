@@ -306,7 +306,7 @@ export function partitionAnswerContractReasons(reasons: string[]): {
   return { hardReasons, advisoryReasons };
 }
 
-function isComparativeRankingGoal(normalizedGoal: string): boolean {
+export function isComparativeRankingGoal(normalizedGoal: string): boolean {
   // Temporal recency is a lookup constraint, not proof that the task asks for
   // a comparison. Keep explicit comparative terms and top-N/result language.
   const withoutTemporalTerms = normalizedGoal

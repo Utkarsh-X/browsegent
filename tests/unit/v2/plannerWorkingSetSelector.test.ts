@@ -1133,3 +1133,46 @@ test('A2: with equal relevance, ordering is deterministic by existing score then
 
   assert.deepEqual(selection1.selectedRefIds, selection2.selectedRefIds, 'selection should be deterministic');
 });
+
+test('P1: ranking goals pin below-fold metric-bearing result rows into the working set', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_sort', role: 'button', name: 'Sort by: Best match', text: 'Sort by: Best match', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_card_1', role: 'link', name: 'visible-lab/visible-lab', text: 'visible-lab/visible-lab 6 stars', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_row_hidden_winner', role: undefined, name: 'resource-watch/resource-watch', text: 'resource-watch/resource-watch 73 stars', visibility: 'offscreen', actionability: 'ready' }),
+    makeRef({ refId: 'ref_decorative', role: undefined, name: 'Decorative', text: 'Decorative', visibility: 'offscreen', actionability: 'ready' }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 2,
+    maxSecondaryRefs: 2,
+    maxReadableEvidence: 2,
+    maxNavigationRefs: 2,
+    maxRegionSummaries: 2,
+  }).select({ goal: 'Which repository has the most stars?', projection });
+
+  assert.ok(selection.selectedRefIds.includes('ref_row_hidden_winner'), 'metric-bearing offscreen row should be pinned');
+  const pinned = selection.workingSet.primaryRefs.find(ref => ref.refId === 'ref_row_hidden_winner')
+    ?? selection.workingSet.secondaryRefs.find(ref => ref.refId === 'ref_row_hidden_winner');
+  assert.ok(pinned, 'pinned row should be in the working set');
+  assert.ok(pinned.reasons.includes('result_row'), 'pinned row should carry the result_row reason');
+  assert.ok(!selection.selectedRefIds.includes('ref_decorative'), 'non-metric decorative row stays dropped');
+  assert.ok((selection.diagnostics.droppedByReason.offscreen_low_value ?? 0) >= 1, 'decorative row dropped as offscreen_low_value');
+});
+
+test('P1: non-ranking goals do not pin metric rows (exemption without promotion)', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_submit', role: 'button', name: 'Submit order', text: 'Submit order', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_row_hidden', role: undefined, name: 'resource-watch/resource-watch', text: 'resource-watch/resource-watch 73 stars', visibility: 'offscreen', actionability: 'ready' }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 1,
+    maxSecondaryRefs: 0,
+    maxReadableEvidence: 1,
+    maxNavigationRefs: 1,
+    maxRegionSummaries: 1,
+  }).select({ goal: 'Submit the order form', projection });
+
+  assert.ok(!selection.selectedRefIds.includes('ref_row_hidden'), 'metric row should not displace ready controls for non-ranking goals');
+  assert.equal(selection.diagnostics.droppedByReason.offscreen_low_value ?? 0, 0, 'metric row is data, not chrome: exempt from the low-value drop');
+});

@@ -476,6 +476,7 @@ const REASON_CODES: Record<string, string> = {
   dead_state_evidence: 'dead',
   answer_candidate: 'answer',
   suggestion_option: 'suggestion',
+  result_row: 'row',
   navigation_candidate: 'nav',
   form_candidate: 'form',
   region_representative: 'rep',
