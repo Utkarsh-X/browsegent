@@ -91,7 +91,6 @@ class FakeHarness {
   observations: BrowserObservation[];
   plannerInputs: Array<{ episodeId: string; input: unknown }> = [];
   plannerOutputs: Array<{ episodeId: string; output: unknown }> = [];
-  compactPlannerViews: Array<{ episodeId: string; payload: unknown }> = [];
   failures: FailureEvidence[] = [];
   flushCount = 0;
   latencySummary?: { totals: Record<string, number> };
@@ -131,7 +130,6 @@ class FakeHarness {
         transitions: [],
         graph: [],
         planner: [],
-        compactPlannerViews: [],
         failures: [],
         screenshots: [],
       },
@@ -145,7 +143,7 @@ class FakeHarness {
 
   recordCompactPlannerInput(episodeId: string, input: unknown): TraceArtifact {
     this.plannerInputs.push({ episodeId, input });
-    return { kind: 'compact_planner_input', id: 'compact-planner-input', path: 'compact-planner-input.json' };
+    return { kind: 'planner_input', id: `compact-planner-input-${episodeId}`, path: 'compact-planner-input.json' };
   }
 
   recordPlannerOutput(episodeId: string, output: unknown): TraceArtifact {
@@ -153,10 +151,6 @@ class FakeHarness {
     return { kind: 'planner_output', id: 'planner-output', path: 'planner-output.json' };
   }
 
-  recordCompactPlannerView(episodeId: string, payload: unknown): TraceArtifact {
-    this.compactPlannerViews.push({ episodeId, payload });
-    return { kind: 'planner_compact_view', id: `${episodeId}-compact`, path: `${episodeId}-compact.json` };
-  }
 
   recordFailureEvidence(failure: FailureEvidence): TraceArtifact {
     this.failures.push(failure);
@@ -1860,45 +1854,6 @@ test('V2AgentLoop preserves planner escalation reason in failureReason', async (
   );
 });
 
-test('V2AgentLoop records compact planner telemetry without changing planner input', async () => {
-  const { V2AgentLoop } = await loadAgentLoopModule();
-  const harness = new FakeHarness();
-  const planner = new FakePlanner([{ plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' }, { done: true, val: 'Clicked' }]);
-  const dispatcher = new FakeDispatcher();
-  const loop = new V2AgentLoop({
-    harnessFactory: () => harness,
-    plannerClient: planner,
-    dispatcherFactory: () => dispatcher,
-  });
-
-  const result = await loop.run({
-    url: 'https://example.test/form',
-    goal: 'Click submit',
-    maxSteps: 3,
-  });
-
-  assert.equal(result.success, true);
-  assert.equal(harness.plannerInputs.length, 2);
-  assert.equal(harness.compactPlannerViews.length, 2);
-  assert.equal(harness.compactPlannerViews[0].episodeId, harness.plannerInputs[0].episodeId);
-
-  const firstPayload = harness.compactPlannerViews[0].payload as {
-    version?: string;
-    stats?: { originalBytes?: number; compactBytes?: number; reductionRatio?: number };
-    coverage?: { plannedRefs?: string[]; actionRefCoverage?: number };
-    view?: { version?: string; actions?: Array<{ refId: string }> };
-  };
-
-  assert.equal(firstPayload.version, 'compact_planner_telemetry.v1');
-  assert.equal(firstPayload.view?.version, 'compact_planner_view.v1');
-  assert.ok((firstPayload.stats?.originalBytes ?? 0) > 0);
-  assert.ok((firstPayload.stats?.compactBytes ?? 0) > 0);
-  assert.ok((firstPayload.stats?.reductionRatio ?? 1) < 1);
-  assert.deepEqual(firstPayload.coverage?.plannedRefs, ['ref_submit']);
-  assert.equal(firstPayload.coverage?.actionRefCoverage, 1);
-  assert.deepEqual(planner.inputs[0], harness.plannerInputs[0].input);
-});
-
 test('V2AgentLoop routes through default planner when plannerMode is undefined or current', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const harness = new FakeHarness();
@@ -1913,7 +1868,6 @@ test('V2AgentLoop routes through default planner when plannerMode is undefined o
     url: 'https://example.test/form',
     goal: 'Click submit',
     maxSteps: 1,
-    plannerMode: 'current',
   });
 
   assert.equal(result.success, true);
@@ -1950,101 +1904,6 @@ test('V2AgentLoop records provider pacing separately from provider latency', asy
   assert.equal(result.success, true);
   assert.equal(harness.latencySummary?.totals.provider_pacing_wait, 37);
   assert.ok((harness.latencySummary?.totals.provider ?? 0) >= 0);
-});
-
-test('V2AgentLoop routes through compact client and returns ineligible when first ref is not represented', async () => {
-  const { V2AgentLoop } = await loadAgentLoopModule();
-  const harness = new FakeHarness();
-
-  const loop = new V2AgentLoop({
-    harnessFactory: () => harness,
-    plannerClient: {
-      call: async () => {
-        throw Object.assign(new Error('compact_planner_input_ineligible'), {
-          code: 'COMPACT_PLANNER_INPUT_INELIGIBLE',
-          inputTokens: 0,
-          outputTokens: 0,
-          durationMs: 5
-        });
-      }
-    },
-    dispatcherFactory: () => new FakeDispatcher(),
-  });
-
-  const result = await loop.run({
-    url: 'https://example.test/form',
-    goal: 'Click submit',
-    maxSteps: 1,
-    plannerMode: 'compact_enforced',
-  });
-
-  assert.equal(result.success, false);
-  assert.equal(result.failureReason, 'compact_planner_input_ineligible');
-});
-
-test('V2AgentLoop routes through compact client and succeeds when mock provider resolves successfully', async () => {
-  const { V2AgentLoop } = await loadAgentLoopModule();
-
-  // Create a custom observation with a clickable ref
-  const customRef = makeRef({ refId: 'ref_submit', name: 'Submit Button' });
-  const harness = new FakeHarness([
-    makeObservation('obs_initial', {
-      refs: [customRef]
-    })
-  ]);
-
-  const loop = new V2AgentLoop({
-    harnessFactory: () => harness,
-    dispatcherFactory: () => new FakeDispatcher(),
-  });
-
-  // Mock global fetch to return a valid compact plan
-  const originalFetch = globalThis.fetch;
-  const originalEnv = { ...process.env };
-  process.env.GEMINI_API_KEY = 'mock-key';
-  process.env.BROWSEGENT_GEMINI_RETRIES = '1';
-
-  globalThis.fetch = async (url, options) => {
-    return {
-      ok: true,
-      status: 200,
-      json: async () => ({
-        candidates: [
-          {
-            content: {
-              parts: [
-                { text: JSON.stringify({ done: true, val: 'Compact Mode Succeeds' }) }
-              ]
-            }
-          }
-        ],
-        usageMetadata: {
-          promptTokenCount: 10,
-          candidatesTokenCount: 20
-        }
-      })
-    } as any;
-  };
-
-  try {
-    const result = await loop.run({
-      url: 'https://example.test/form',
-      goal: 'Click submit',
-      maxSteps: 1,
-      plannerMode: 'compact_enforced',
-    });
-
-    assert.equal(result.success, true);
-    assert.equal(result.value, 'Compact Mode Succeeds');
-    assert.equal(result.metrics.inputTokens, 10);
-    assert.equal(result.metrics.outputTokens, 20);
-    assert.equal(harness.plannerInputs.length, 2);
-    assert.equal((harness.plannerInputs[0].input as any).version, 'v2.planner_input.v2');
-    assert.equal((harness.plannerInputs[1].input as any).version, 'compact_shadow_input.v1');
-  } finally {
-    globalThis.fetch = originalFetch;
-    process.env = originalEnv;
-  }
 });
 
 test('V2AgentLoop hard-blocks after 3 identical search_page actions', async () => {

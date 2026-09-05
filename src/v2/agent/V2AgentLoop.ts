@@ -17,15 +17,8 @@ import type { ContinuityGraphSnapshot } from '../graph/types';
 import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
 import { PlannerInputComposer } from '../planner/PlannerInputComposer';
 import { V2PlannerClient } from '../planner/V2PlannerClient';
-import { CompactPlannerClient } from '../planner/CompactPlannerClient';
 import type { PlannerAnswerFeedback, PlannerInput, PlannerOutput, PlannerSerializationConfig, PlannerOutputStep } from '../planner/types';
 import type { PlannerWorkingSetOptions } from '../planner/workingSetTypes';
-import {
-  buildCompactPlannerView,
-  buildPlainInteractiveSnapshotBaseline,
-  evaluateCompactPlannerCoverage,
-  measureCompactPlannerView,
-} from '../planner/CompactPlannerView';
 import { DeadStateDetector, type DeadStateEvidence } from '../runtime/DeadStateDetector';
 import { createDateSeekStop } from './SeekPolicy';
 import { FailureClassifier, type FailureEvidence } from '../runtime/FailureClassifier';
@@ -55,7 +48,7 @@ export class V2AgentLoop {
 
   async run(input: V2AgentLoopInput): Promise<V2AgentLoopResult> {
     const harness = this.createHarness();
-    const plannerClient = this.createPlannerClient(harness, input.plannerMode, input.plannerSerialization);
+    const plannerClient = this.createPlannerClient(harness, input.plannerSerialization);
     const dispatcher = this.options.dispatcherFactory?.(harness) ?? new V2ToolDispatcher(harness);
     const seekStop = createDateSeekStop(input.goal);
     const graph = new ContinuityGraph();
@@ -169,24 +162,11 @@ export class V2AgentLoop {
           });
         } catch (error) {
           ledger.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
-          recordCompactPlannerTelemetry({
-            harness,
-            plannerInput,
-            mode: 'normal',
-          });
           const plannerMetrics = readPlannerErrorMetrics(error);
           metrics.inputTokens += plannerMetrics.inputTokens;
           metrics.outputTokens += plannerMetrics.outputTokens;
           metrics.plannerDurationMs += plannerMetrics.durationMs;
-          if (error && (error as any).code === 'COMPACT_PLANNER_INPUT_INELIGIBLE') {
-            return await this.complete(harness, {
-              success: false,
-              value: '',
-              failureReason: 'compact_planner_input_ineligible',
-              steps: metrics.plannerCalls,
-              metrics,
-            }, ledger, outcomeRecorder);
-          }
+
           if (isPlannerInvalidOutputError(error)) {
             return await this.complete(harness, {
               success: false,
@@ -205,12 +185,6 @@ export class V2AgentLoop {
           }, ledger, outcomeRecorder);
         }
         ledger.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
-        recordCompactPlannerTelemetry({
-          harness,
-          plannerInput,
-          plannerOutput: plannerResult.output,
-          mode: 'normal',
-        });
         if (this.options.plannerClient) {
           harness.recordPlannerOutput?.(plannerInput.episodeId, {
             attempts: 1,
@@ -756,7 +730,6 @@ export class V2AgentLoop {
 
   private createPlannerClient(
     harness: V2AgentHarnessRuntime,
-    plannerMode?: 'current' | 'compact_enforced',
     plannerSerialization?: PlannerSerializationConfig,
   ): V2PlannerClientLike {
     if (this.options.plannerClient) {
@@ -775,11 +748,6 @@ export class V2AgentLoop {
         }
       : undefined;
 
-    if (plannerMode === 'compact_enforced') {
-      return new CompactPlannerClient({
-        traceStore,
-      });
-    }
 
     return new V2PlannerClient({
       traceStore,
@@ -861,12 +829,6 @@ export class V2AgentLoop {
         },
       });
       ledger?.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
-      recordCompactPlannerTelemetry({
-        harness,
-        plannerInput: finalizationInput,
-        plannerOutput: result.output,
-        mode: 'finalization',
-      });
       if (this.options.plannerClient) {
         harness.recordPlannerOutput?.(finalizationInput.episodeId, {
           attempts: 1,
@@ -944,11 +906,6 @@ export class V2AgentLoop {
       }
     } catch {
       ledger?.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
-      recordCompactPlannerTelemetry({
-        harness,
-        plannerInput: finalizationInput,
-        mode: 'finalization',
-      });
       // Finalization planner call failed — fall through to max_steps_exhausted
     }
     return undefined;
@@ -1015,12 +972,6 @@ export class V2AgentLoop {
         },
       });
       input.ledger?.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
-      recordCompactPlannerTelemetry({
-        harness: input.harness,
-        plannerInput: reconciliationInput,
-        plannerOutput: result.output,
-        mode: 'finalization',
-      });
       if (this.options.plannerClient) {
         input.harness.recordPlannerOutput?.(reconciliationInput.episodeId, {
           attempts: 1,
@@ -1055,45 +1006,12 @@ export class V2AgentLoop {
       }
     } catch {
       input.ledger?.recordPhase('provider', Math.max(0, Date.now() - providerStart - pacingWaitMs));
-      recordCompactPlannerTelemetry({
-        harness: input.harness,
-        plannerInput: reconciliationInput,
-        mode: 'finalization',
-      });
       // Reconciliation is best-effort; keep the original draft on provider failure.
     }
     return input.draftAnswer;
   }
 }
 
-function recordCompactPlannerTelemetry(input: {
-  harness: V2AgentHarnessRuntime;
-  plannerInput: PlannerInput;
-  plannerOutput?: PlannerOutput;
-  mode: 'normal' | 'finalization';
-}): void {
-  if (!input.harness.recordCompactPlannerView) {
-    return;
-  }
-
-  const compactView = buildCompactPlannerView(input.plannerInput);
-  const baseline = buildPlainInteractiveSnapshotBaseline(input.plannerInput);
-  const stats = measureCompactPlannerView(input.plannerInput, compactView, baseline);
-  const coverage = evaluateCompactPlannerCoverage(compactView, input.plannerOutput);
-
-  input.harness.recordCompactPlannerView(input.plannerInput.episodeId, {
-    version: 'compact_planner_telemetry.v1',
-    episodeId: input.plannerInput.episodeId,
-    mode: input.mode,
-    plannerInputVersion: input.plannerInput.version,
-    stats,
-    coverage,
-    observationEpoch: compactView.observationEpoch,
-    omitted: compactView.omitted,
-    view: compactView,
-    plainInteractiveBaseline: baseline,
-  });
-}
 
 function buildPlannerLineageStep(
   index: number,

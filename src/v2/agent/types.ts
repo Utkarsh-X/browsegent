@@ -11,7 +11,6 @@ export interface V2AgentLoopInput {
   goal: string;
   maxSteps: number;
   model?: string;
-  plannerMode?: 'current' | 'compact_enforced';
   plannerSerialization?: PlannerSerializationConfig;
   workingSetOptions?: PlannerWorkingSetOptions;
 }
@@ -61,7 +60,6 @@ export interface V2AgentHarnessRuntime extends V2ToolRuntime {
   recordCompactPlannerInput?(episodeId: string, input: unknown): TraceArtifact;
   recordPlannerOutput?(episodeId: string, output: unknown): TraceArtifact;
   recordFailureEvidence?(failure: FailureEvidence): TraceArtifact;
-  recordCompactPlannerView?(episodeId: string, payload: unknown): TraceArtifact;
   setLatencyLedger?(ledger: import('../trace/LatencyLedger').LatencyLedger): void;
   recordLatencyLedger?(summary: import('../trace/LatencyLedger').LedgerSummary): void;
   recordActionOutcomes?(summary: unknown): void;

@@ -412,9 +412,6 @@ export class BrowseGentV2Harness {
     return this.traceStore.recordFailureEvidence(failure);
   }
 
-  recordCompactPlannerView(episodeId: string, payload: unknown): TraceArtifact {
-    return this.traceStore.recordCompactPlannerView(episodeId, payload);
-  }
 
   async close(): Promise<void> {
     await this.session.close();

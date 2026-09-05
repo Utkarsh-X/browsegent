@@ -52,7 +52,6 @@ export interface RunBenchmarkOptions {
     expectedPlannerCalls: number,
     expectedToolExecutions: number,
   ) => Promise<BenchmarkTraceScore>;
-  plannerMode?: 'current' | 'compact_enforced';
   plannerSerialization?: BenchmarkRunMetadata['plannerSerialization'];
   workingSetOptions?: PlannerWorkingSetOptions;
 }
@@ -119,7 +118,6 @@ export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<B
           traceDir,
           headed: options.headed ?? false,
           requestMinIntervalMs: rateLimit.mode === 'paced' ? rateLimit.minIntervalMs : undefined,
-          plannerMode: options.plannerMode,
           plannerSerialization: options.plannerSerialization,
           workingSetOptions: options.workingSetOptions,
         });
@@ -326,14 +324,8 @@ export function readCliOptions(): RunBenchmarkOptions {
   const partitionArg = readPartitionArg();
   const plannerModeArg = readFlag('--planner-mode');
   const plannerSerializationArg = readPlannerSerializationArg();
-  let plannerMode: 'current' | 'compact_enforced' = 'current';
-  if (plannerModeArg === 'current' || plannerModeArg === 'compact_enforced') {
-    plannerMode = plannerModeArg;
-  } else if (plannerModeArg !== undefined) {
-    throw new Error(`Unsupported --planner-mode "${plannerModeArg}". Use current or compact_enforced.`);
-  }
-  if (plannerSerializationArg !== undefined && plannerMode === 'compact_enforced') {
-    throw new Error('--planner-serialization cannot be combined with --planner-mode compact_enforced; compact_enforced ignores planner serialization.');
+  if (plannerModeArg !== undefined) {
+    throw new Error(`--planner-mode "${plannerModeArg}" is no longer supported; the compact_enforced plane was removed (use --planner-serialization).`);
   }
 
   return {
@@ -345,7 +337,6 @@ export function readCliOptions(): RunBenchmarkOptions {
     requestRpm: requestRpmArg ? Number(requestRpmArg) : undefined,
     requestMinIntervalMs: requestMinIntervalArg ? Number(requestMinIntervalArg) : undefined,
     partition: partitionArg,
-    plannerMode,
     plannerSerialization: readPlannerSerializationConfig(plannerSerializationArg),
     workingSetOptions: readWorkingSetOptions(),
   };

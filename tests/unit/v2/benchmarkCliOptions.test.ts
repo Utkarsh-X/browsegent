@@ -26,7 +26,6 @@ function webVoyagerCli(argv: string[]): RunWebVoyagerLiteOptions {
 
 test('benchmark CLI leaves planner serialization and working set options undefined when no flags are passed', () => {
   const options = benchmarkCli([]);
-  assert.equal(options.plannerMode, 'current');
   assert.equal(options.plannerSerialization, undefined);
   assert.equal(options.workingSetOptions, undefined);
 });
@@ -68,18 +67,11 @@ test('benchmark CLI rejects serialization-only flags without --planner-serializa
   );
 });
 
-test('benchmark CLI rejects explicit planner serialization with --planner-mode compact_enforced', () => {
+test('benchmark CLI rejects --planner-mode (plane removed)', () => {
   assert.throws(
-    () => benchmarkCli(['--planner-serialization', 'prc', '--planner-mode', 'compact_enforced']),
-    /--planner-serialization cannot be combined with --planner-mode compact_enforced/,
+    () => benchmarkCli(['--planner-mode', 'compact_enforced']),
+    /no longer supported/,
   );
-  assert.throws(
-    () => benchmarkCli(['--planner-serialization', 'json', '--planner-mode', 'compact_enforced']),
-    /--planner-serialization cannot be combined with --planner-mode compact_enforced/,
-  );
-  const enforcedWithoutSerialization = benchmarkCli(['--planner-mode', 'compact_enforced']);
-  assert.equal(enforcedWithoutSerialization.plannerMode, 'compact_enforced');
-  assert.equal(enforcedWithoutSerialization.plannerSerialization, undefined);
 });
 
 test('benchmark CLI parses --readable-phrase-bonus independent of planner mode and serialization', () => {
@@ -87,9 +79,8 @@ test('benchmark CLI parses --readable-phrase-bonus independent of planner mode a
   assert.deepEqual(bonusOnly.workingSetOptions, { readablePhraseBonus: 60 });
   assert.equal(bonusOnly.plannerSerialization, undefined);
 
-  const withEnforcedMode = benchmarkCli(['--readable-phrase-bonus', '60', '--planner-mode', 'compact_enforced']);
+  const withEnforcedMode = benchmarkCli(['--readable-phrase-bonus', '60']);
   assert.deepEqual(withEnforcedMode.workingSetOptions, { readablePhraseBonus: 60 });
-  assert.equal(withEnforcedMode.plannerMode, 'compact_enforced');
   assert.equal(withEnforcedMode.plannerSerialization, undefined);
 
   const withJsonSerialization = benchmarkCli(['--readable-phrase-bonus', '60', '--planner-serialization', 'json']);
@@ -123,7 +114,6 @@ test('benchmark CLI rejects non-finite or negative --readable-phrase-bonus value
 
 test('webvoyager lite CLI leaves planner serialization and working set options undefined when no flags are passed', () => {
   const options = webVoyagerCli([]);
-  assert.equal(options.plannerMode, 'current');
   assert.equal(options.plannerSerialization, undefined);
   assert.equal(options.workingSetOptions, undefined);
 });
@@ -148,10 +138,10 @@ test('webvoyager lite CLI rejects serialization-only flags without --planner-ser
   );
 });
 
-test('webvoyager lite CLI rejects explicit planner serialization with --planner-mode compact_enforced', () => {
+test('webvoyager lite CLI rejects --planner-mode (plane removed)', () => {
   assert.throws(
-    () => webVoyagerCli(['--planner-serialization', 'prc', '--planner-mode', 'compact_enforced']),
-    /--planner-serialization cannot be combined with --planner-mode compact_enforced/,
+    () => webVoyagerCli(['--planner-mode', 'compact_enforced']),
+    /no longer supported/,
   );
 });
 
@@ -159,10 +149,6 @@ test('webvoyager lite CLI parses --readable-phrase-bonus independent of planner 
   const bonusOnly = webVoyagerCli(['--readable-phrase-bonus', '60']);
   assert.deepEqual(bonusOnly.workingSetOptions, { readablePhraseBonus: 60 });
   assert.equal(bonusOnly.plannerSerialization, undefined);
-
-  const withEnforcedMode = webVoyagerCli(['--readable-phrase-bonus', '60', '--planner-mode', 'compact_enforced']);
-  assert.deepEqual(withEnforcedMode.workingSetOptions, { readablePhraseBonus: 60 });
-  assert.equal(withEnforcedMode.plannerMode, 'compact_enforced');
 });
 
 test('webvoyager lite CLI rejects non-finite or negative --readable-phrase-bonus values', () => {

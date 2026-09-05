@@ -46,7 +46,6 @@ export class BrowserAgentRunner {
       goal: buildGoal(task, options),
       maxSteps,
       model: options.model ?? this.options.defaultModel,
-      ...(options.plannerMode !== undefined ? { plannerMode: options.plannerMode } : {}),
       ...(options.plannerSerialization !== undefined ? { plannerSerialization: options.plannerSerialization } : {}),
       ...(options.workingSetOptions !== undefined ? { workingSetOptions: options.workingSetOptions } : {}),
     });

@@ -1183,6 +1183,9 @@ test('V2PlannerClient records provider payload byte summaries without raw prompt
     mode: 'prc',
     prcTierOmitted: true,
     compactDataPlane: false,
+    prcLeanPlane: false,
+    conditionalSystemPrompt: false,
+    omitResponseJsonSchema: false,
   });
   assert.equal(outputJson.providerPayload.attempts.length, 1);
   assert.equal(outputJson.providerPayload.attempts[0].attempt, 1);
