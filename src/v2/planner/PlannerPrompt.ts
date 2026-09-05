@@ -19,6 +19,10 @@ const ANSWER_FEEDBACK_GUIDANCE = 'If answerFeedback is present, the previous don
 
 const SUPERLATIVE_SORT_GUIDANCE = 'If the goal asks for a superlative (most stars, cheapest, highest rated, largest) and evidenceSnapshot shows the current ordering is not that dimension (for example sort=relevance via active_control), plan a click on the surface sort control first, then the matching option, and answer only from the re-sorted snapshot. Never report a superlative from a list you have not sorted or verified; if the surface has no usable sort control, compare the metric values on the evidenceSnapshot cards yourself and answer with the single winning entity.';
 
+const SITE_SEARCH_GUIDANCE = "If PROBLEMS shows a zero_result_read_loop recovery state or repeated zero-match search_page reads, the current section does not contain the goal terms: switch to the site's own search — type the goal keywords into a visible search control and submit it, or navigate to the site's search results URL (origin + /search?q=<url-encoded goal keywords>) — instead of further zero-match reads or deeper section navigation.";
+
+const BUDGET_GUIDANCE = 'If PROBLEMS shows a budget_low signal, only 1-2 planner steps remain: prefer returning done from the strongest already-read evidence — or an honest report of what was found — over opening new pages; a grounded partial answer is worth more than exhausting the budget.';
+
 const TASK_PROGRESS_GUIDANCE = 'If taskProgress is present, treat it as an advisory summary of explicit operational constraints from the goal. The applied status means the current control or bounded successful action history matched the requested value; observed means the constraint was seen but not proven applied; pending means no matching operational evidence; conflicting means a current control value disagrees. Do not treat taskProgress as answer evidence or as proof that the task is complete. Preserve pending or conflicting constraints while choosing the next action, and re-observe after transitions.';
 
 const HORIZON_GUIDANCE = `HORIZON appears when a focused requirement's target (for example a month in a date picker) lies outside the widget's currently visible window. While HORIZON is present your mutation plan MUST be exactly the suggested plan line it contains: {"tool":"seek","ref":"<recommended control>"} — the runtime clicks it, re-observes, and repeats automatically until the target enters the window, so one seek replaces many clicks. Only deviate if the previous seek returned an error; then click the recommended control yourself once and re-plan. Never move the window away from the target. Do not re-open, re-click, or abandon the widget while the target is still outside the window.`;
@@ -92,6 +96,8 @@ If recovery.state is repeated_timeout_target or unresponsive_surface, actions ar
 If recovery.state is repeated_type_same_value, the same text was already typed into that control and it is not committed: click the matching suggestion option or press Enter to commit instead of typing the same value again.
 If recovery.state is navigation_oscillation, you are bouncing between the same pages: stop navigating, commit to the one surface that can advance the focused requirement, and act on its visible controls.
 If recovery.state is click_no_navigation, your clicks on link elements are succeeding but the page is not navigating: stop clicking sibling links expecting a page change. Read the link target (get on the link ref) or use a different affordance on the surface, and if the needed page cannot be reached by any visible control, report what the current evidence supports.
+If PROBLEMS shows a zero_result_read_loop recovery state or repeated zero-match search_page reads, the current section does not contain the goal terms: switch to the site's own search — type the goal keywords into a visible search control and submit it, or navigate to the site's search results URL (origin + /search?q=<url-encoded goal keywords>) — instead of further zero-match reads or deeper section navigation.
+If PROBLEMS shows a budget_low signal, only 1-2 planner steps remain: prefer returning done from the strongest already-read evidence — or an honest report of what was found — over opening new pages; a grounded partial answer is worth more than exhausting the budget.
 
 If lastResult from get, inspect_region, search_page, click, type, press, navigate has lastResult.valuePreview containing the requested answer or confirming the requested state/action, return done with that value. Do not repeat the same read or mutation after successful value evidence.
 
@@ -132,6 +138,13 @@ Click only elements whose tools attribute contains c (a tools="r"-only ref is ev
     if (!plannerInput.answerFeedback) absentFragments.push(ANSWER_FEEDBACK_GUIDANCE);
     if (!isComparativeRankingGoal(plannerInput.goal?.toLowerCase() ?? '')) {
       absentFragments.push(SUPERLATIVE_SORT_GUIDANCE);
+    }
+    const uncertaintySignals = plannerInput.uncertainty?.signals ?? [];
+    const zeroMatchLoop = plannerInput.recovery?.state === 'zero_result_read_loop'
+      || uncertaintySignals.some(signal => signal.startsWith('repeated_value_preview:search_page'));
+    if (!zeroMatchLoop) absentFragments.push(SITE_SEARCH_GUIDANCE);
+    if (!uncertaintySignals.some(signal => signal.startsWith('budget_low'))) {
+      absentFragments.push(BUDGET_GUIDANCE);
     }
     if (!plannerInput.taskProgress) absentFragments.push(TASK_PROGRESS_GUIDANCE);
     if (!plannerInput.horizon) absentFragments.push(HORIZON_GUIDANCE);

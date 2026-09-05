@@ -126,6 +126,12 @@ export class V2AgentLoop {
         evidenceLedger.recordObservation(observation, projection);
         const surfaceEvidence = evidenceLedger.getAllEvidenceReads();
         const evidenceCoverage = buildTaskEvidenceCoverage(input.goal, readEvidenceHistory, surfaceEvidence);
+        const remainingSteps = stepBudget - stepIndex;
+        if (remainingSteps > 0 && remainingSteps <= 2) {
+          // Budget-aware synthesis: the final episodes must prefer answering
+          // from already-read evidence over opening new surfaces.
+          runtimeUncertainty = appendRuntimeUncertaintySignals(runtimeUncertainty, [`budget_low:${remainingSteps}`]);
+        }
         const plannerInput = this.plannerInputComposer.compose({
           episodeId: `episode_${stepIndex + 1}_${observation.observationId}`,
           goal: input.goal,

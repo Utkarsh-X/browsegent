@@ -20,6 +20,7 @@ function inputWith(overrides: Partial<PlannerInput>): PlannerInput {
 test('conditional prompt keeps every subject-present block and removes only inactive recovery states', () => {
   const full = inputWith({
     goal: 'find the repository with the most stars',
+    uncertainty: { level: 'medium', signals: ['repeated_value_preview:search_page:global:3', 'budget_low:2'] },
     evidenceSnapshot: { cards: [] } as PlannerInput['evidenceSnapshot'],
     recovery: { state: 'surface_wide_blocker', severity: 'critical', nextMechanisms: [], signals: [] },
     answerFeedback: { previousAnswer: 'x', missingDetails: [], instruction: 'y' },
@@ -62,6 +63,8 @@ test('conditional prompt drops blocks whose subject is absent', () => {
   assert.ok(!plain.includes('If evidenceSnapshot is present'), 'evidenceSnapshot guidance dropped');
   assert.ok(!plain.includes('If recovery.state is surface_wide_blocker'), 'inactive recovery states dropped');
   assert.ok(!plain.includes('If the goal asks for a superlative'), 'superlative guidance dropped for non-ranking goal');
+  assert.ok(!plain.includes("switch to the site's own search"), 'site-search guidance dropped without zero-match loop');
+  assert.ok(!plain.includes('If PROBLEMS shows a budget_low signal'), 'budget guidance dropped without budget signal');
   assert.ok(plain.includes('If recovery.state is present'), 'general recovery guidance kept');
   assert.ok(plain.includes('GOAL PROGRESS lists goal requirements'), 'goal progress guidance kept');
   assert.ok(plain.includes('Click only elements whose tools attribute contains c'), 'click compatibility kept');
@@ -70,6 +73,25 @@ test('conditional prompt drops blocks whose subject is absent', () => {
 test('conditional prompt keeps superlative guidance only for ranking goals', () => {
   const ranking = buildV2PlannerSystemPrompt(config, inputWith({ goal: 'find the repository with the most stars' }));
   assert.ok(ranking.includes('If the goal asks for a superlative'), 'superlative guidance kept for ranking goal');
+});
+
+test('conditional prompt engages site-search and budget guidance only on their signals', () => {
+  const zeroMatchLoop = buildV2PlannerSystemPrompt(config, inputWith({
+    recovery: { state: 'zero_result_read_loop', severity: 'warning', nextMechanisms: [], signals: [] },
+  }));
+  assert.ok(zeroMatchLoop.includes("switch to the site's own search"), 'site-search guidance kept on zero_result_read_loop');
+  assert.ok(!zeroMatchLoop.includes('If PROBLEMS shows a budget_low signal'), 'budget guidance still dropped');
+
+  const budget = buildV2PlannerSystemPrompt(config, inputWith({
+    uncertainty: { level: 'medium', signals: ['budget_low:2'] },
+  }));
+  assert.ok(budget.includes('If PROBLEMS shows a budget_low signal'), 'budget guidance kept on budget_low signal');
+  assert.ok(!budget.includes("switch to the site's own search"), 'site-search guidance still dropped');
+
+  const searchPageLoop = buildV2PlannerSystemPrompt(config, inputWith({
+    uncertainty: { level: 'medium', signals: ['repeated_value_preview:search_page:global:3'] },
+  }));
+  assert.ok(searchPageLoop.includes("switch to the site's own search"), 'site-search guidance kept on repeated zero-match search_page');
 });
 
 test('conditional prompt keeps the guidance for the active recovery state only', () => {
