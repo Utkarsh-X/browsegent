@@ -275,6 +275,12 @@ const ADVISORY_REASON_PREFIXES = [
   'requested_item_count_missing:',
   'missing_requested_detail_',
   'requirements_unaddressed:',
+  // Ranking evidence depends on the search surface the engine happened to
+  // show (sorted vs best-match): when the model cannot produce it, rejecting
+  // the answer six times aborts the run instead of improving it. Steering
+  // tells the model to verify the ordering; acceptance records the caveat.
+  'missing_ranking_evidence',
+  'answer_does_not_match_top_ranked_evidence',
 ];
 
 /**

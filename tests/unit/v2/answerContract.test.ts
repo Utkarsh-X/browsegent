@@ -469,8 +469,9 @@ test('partitionAnswerContractReasons separates advisory completeness checks from
     'missing_requested_detail_hours',
     'requirements_unaddressed:search_not_executed',
   ]);
-  assert.deepEqual(hardReasons, ['empty_answer', 'incomplete_answer', 'missing_ranking_evidence']);
+  assert.deepEqual(hardReasons, ['empty_answer', 'incomplete_answer']);
   assert.deepEqual(advisoryReasons, [
+    'missing_ranking_evidence',
     'requested_item_count_missing:requested_5_answered_4',
     'missing_requested_detail_hours',
     'requirements_unaddressed:search_not_executed',

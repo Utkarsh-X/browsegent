@@ -94,6 +94,7 @@ export class V2AgentLoop {
       const evidenceLedger = new EvidenceLedger();
       const plannerTraceSteps: TraceStep[] = [];
       const recentObservationUrls: string[] = [];
+      let oscillationEpisodeCount = 0;
 
       for (let stepIndex = 0; stepIndex < stepBudget; stepIndex += 1) {
         ledger.beginStep(stepIndex);
@@ -103,7 +104,23 @@ export class V2AgentLoop {
         recentObservationUrls.push(observation.url);
         if (recentObservationUrls.length > 8) recentObservationUrls.splice(0, recentObservationUrls.length - 8);
         if (detectNavigationOscillation(recentObservationUrls)) {
+          oscillationEpisodeCount += 1;
           runtimeUncertainty = appendRuntimeUncertaintySignals(runtimeUncertainty, ['navigation_oscillation']);
+          if (oscillationEpisodeCount >= 3 && !deadStateEvidence) {
+            // Churn-stop steering has fired for three consecutive episodes and
+            // the planner kept oscillating: declare the dead state so the
+            // planner finalizes with the evidence it already collected instead
+            // of burning the remaining budget on the same loop.
+            const oscillationDeadState = this.deadStateDetector.assess({
+              projection,
+              failures: failureEvidence,
+              uncertainty: runtimeUncertainty,
+              localMechanismsExhausted: true,
+            });
+            deadStateEvidence = oscillationDeadState.evidence;
+          }
+        } else {
+          oscillationEpisodeCount = 0;
         }
         evidenceLedger.recordObservation(observation, projection);
         const surfaceEvidence = evidenceLedger.getAllEvidenceReads();
