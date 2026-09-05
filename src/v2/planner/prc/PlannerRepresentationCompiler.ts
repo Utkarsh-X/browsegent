@@ -7,7 +7,13 @@ export class PlannerRepresentationCompiler {
   compile(input: PlannerInput): PlannerRepresentationIR {
     const failureMap = buildFailureMap(input.failures ?? []);
     const pinnedRefIds = buildPinnedRefIds(input.workingSet);
-    const surface = buildSurface(input.current, failureMap, pinnedRefIds, input.workingSet?.actionSurface);
+    const surface = buildSurface(
+      input.current,
+      failureMap,
+      pinnedRefIds,
+      input.workingSet?.actionSurface,
+      buildDeltaMap(input.workingSet?.deltaRefs),
+    );
     const workingSet = input.workingSet ? buildWorkingSet(input.workingSet) : undefined;
     const decisionSignals = input.workingSet ? buildDecisionSignals(input.workingSet) : undefined;
     const allElements = [...surface.groups.flatMap(group => group.elements), ...surface.remainder];
@@ -51,6 +57,7 @@ function buildSurface(
   failureMap: Map<string, PlannerElementIR['failure']>,
   pinnedRefIds: Set<string>,
   actionSurface?: PlannerActionSurface,
+  deltaMap?: Map<string, 'new' | 'chg'>,
 ) {
   const laneByRef = new Map<string, { lane: PlannerElementLane; rank: number }>();
   addLane(laneByRef, current.interactions, 'interaction');
@@ -76,6 +83,7 @@ function buildSurface(
         laneInfo?.rank,
         failureMap.get(refId),
         tools.length > 0 ? tools : undefined,
+        deltaMap?.get(refId),
       ),
     );
   }
@@ -140,6 +148,7 @@ function normalizeElement(
   rank: number | undefined,
   failure: PlannerElementIR['failure'],
   tools: string[] | undefined,
+  delta: 'new' | 'chg' | undefined,
 ): PlannerElementIR {
   const anomalies: string[] = [];
   if (ref.visibility !== 'visible') anomalies.push(`visibility=${ref.visibility}`);
@@ -163,10 +172,19 @@ function normalizeElement(
     score: ref.score,
     regionId: ref.regionId,
     selectOptions: ref.selectOptions,
+    delta,
     anomalies,
     failure,
     tools,
   };
+}
+
+function buildDeltaMap(deltaRefs: { appeared?: readonly string[]; changed?: readonly string[] } | undefined): Map<string, 'new' | 'chg'> | undefined {
+  if (!deltaRefs || (deltaRefs.appeared?.length ?? 0) === 0 && (deltaRefs.changed?.length ?? 0) === 0) return undefined;
+  const map = new Map<string, 'new' | 'chg'>();
+  for (const refId of deltaRefs.changed ?? []) map.set(refId, 'chg');
+  for (const refId of deltaRefs.appeared ?? []) if (!map.has(refId)) map.set(refId, 'new');
+  return map;
 }
 
 function scoreTier(score: number): PlannerScoreTier {

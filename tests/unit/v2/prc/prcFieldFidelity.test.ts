@@ -137,7 +137,8 @@ function createRichPlannerInput(): PlannerInput {
       valuePreview: 'https://dictionary.cambridge.org/dictionary/english/serendipity',
     },
     workingSet: {
-      mode: 'extract',
+      deltaRefs: { appeared: [], changed: [] },
+        mode: 'extract',
       modeReason: 'definition_and_phonetics_visible',
       primaryRefs: [
         { refId: 'v2ref_1', kind: 'button', name: 'UK pronunciation audio', score: 120, reasons: ['goal_keyword_match', 'visible_ready'] },

@@ -116,6 +116,9 @@ export interface PlannerWorkingSet {
   navigationRefs: PlannerWorkingSetRef[];
   actionSurface: PlannerActionSurface;
   changedRefs: PlannerChangedRefsSummary;
+  /** Selected refs that appeared or changed since the previous action
+   *  (diff-first markers for the lean render). */
+  deltaRefs: { appeared: string[]; changed: string[] };
   failedRefs: PlannerWorkingSetRef[];
   quarantinedActions: PlannerQuarantinedAction[];
   regionSummaries: PlannerWorkingSetRegionSummary[];

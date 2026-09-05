@@ -225,6 +225,7 @@ test('V2PlannerClient rejects high-confidence type actions against known non-typ
   const plannerInput = makePlannerInput('episode_wrong_lane');
   plannerInput.version = 'v2.planner_input.v2';
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -274,6 +275,7 @@ test('V2PlannerClient allows ambiguous refs through action compatibility validat
   const plannerInput = makePlannerInput('episode_ambiguous_lane');
   plannerInput.version = 'v2.planner_input.v2';
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -572,6 +574,7 @@ test('V2PlannerClient includes action-compatible ref alternatives in retry feedb
     { refId: 'ref_input', rank: 2 },
   ];
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -653,6 +656,7 @@ test('V2PlannerClient explains ref versus observation identity after an unknown 
   };
   plannerInput.current.interactions = [{ refId: 'ref_submit', rank: 1 }];
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -738,6 +742,7 @@ test('V2PlannerClient tells the planner to open a launcher and reobserve when no
   const plannerInput = makePlannerInput('episode_no_typeable_refs');
   plannerInput.version = 'v2.planner_input.v2';
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -848,6 +853,7 @@ test('V2PlannerClient gives labeled recovery guidance for click-on-readable-only
     { refId: 'ref_search_box', rank: 2 },
   ];
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -934,6 +940,7 @@ test('V2PlannerClient rescues repeated click-on-readable-only output as safe get
   plannerInput.current.interactions = [{ refId: 'ref_result_row', rank: 1 }];
   plannerInput.current.readables = [{ refId: 'ref_result_row', rank: 1 }];
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -1009,6 +1016,7 @@ test('V2PlannerClient accepts queued launcher plan when first step is compatible
   plannerInput.current.readables = [];
   plannerInput.current.navigation = [];
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],

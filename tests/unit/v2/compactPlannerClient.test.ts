@@ -42,6 +42,7 @@ const mockPlannerInput = {
     }
   },
   workingSet: {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [{ refId: 'ref_submit', kind: 'button', name: 'Submit Button', score: 1, reasons: ['visible_ready'] }],

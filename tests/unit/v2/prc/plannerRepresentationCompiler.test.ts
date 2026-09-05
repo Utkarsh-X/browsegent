@@ -63,7 +63,8 @@ function makeInput(): PlannerInput {
       stats: { interactionCount: 3, readableCount: 0, navigationCount: 0, regionCount: 1 },
     },
     workingSet: {
-      mode: 'act',
+      deltaRefs: { appeared: [], changed: [] },
+        mode: 'act',
       modeReason: 'initial',
       primaryRefs: [{ refId: 'v2ref_1', kind: 'input', name: 'Search term', score: 115, reasons: ['goal_keyword_match', 'visible_ready'] }],
       secondaryRefs: [{ refId: 'v2ref_2', kind: 'select', name: 'Field', score: 115, reasons: ['form_candidate'] }],

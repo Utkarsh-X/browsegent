@@ -1176,3 +1176,25 @@ test('P1: non-ranking goals do not pin metric rows (exemption without promotion)
   assert.ok(!selection.selectedRefIds.includes('ref_row_hidden'), 'metric row should not displace ready controls for non-ranking goals');
   assert.equal(selection.diagnostics.droppedByReason.offscreen_low_value ?? 0, 0, 'metric row is data, not chrome: exempt from the low-value drop');
 });
+
+test('F2/F7b: selection exposes delta refs limited to the selected set', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_new_option', role: 'option', name: 'New Delhi India', text: 'New Delhi India', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_static', role: 'button', name: 'Static', text: 'Static', visibility: 'visible', actionability: 'ready' }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 4, maxSecondaryRefs: 4 }).select({
+    goal: 'Search for Delhi',
+    projection,
+    transitionEvidence: {
+      beforeObservationId: 'before', afterObservationId: 'after',
+      transitionClass: 'structural_local', strength: 'moderate',
+      generationChanged: false, urlChanged: false,
+      refChanges: { appeared: ['ref_new_option', 'ref_unselected_one'], disappeared: [], weakened: [], preserved: [] },
+      notes: [],
+    },
+  });
+
+  assert.ok(selection.workingSet.deltaRefs.appeared.includes('ref_new_option'), 'selected appeared ref is exposed for the +new marker');
+  assert.ok(!selection.workingSet.deltaRefs.appeared.includes('ref_unselected_one'), 'unselected refs are not marked');
+});

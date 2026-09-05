@@ -178,6 +178,10 @@ export class PlannerWorkingSetSelector {
       selectedRefIds,
       diagnostics,
       workingSet: {
+        deltaRefs: {
+          appeared: [...evidence.appearedRefs].filter(refId => selectedSet.has(refId)),
+          changed: [...evidence.changedRefs].filter(refId => selectedSet.has(refId)),
+        },
         mode: inferMode(input),
         modeReason: inferModeReason(input),
         primaryRefs: primary.map(candidate => toWorkingSetRef(candidate.item, candidate.reasons, candidate.score)),

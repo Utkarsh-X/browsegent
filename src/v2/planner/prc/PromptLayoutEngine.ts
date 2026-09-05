@@ -394,6 +394,15 @@ function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: 
   if (omittedElements > 0) {
     lines.push(`  ... ${omittedElements} elements omitted (payload cap)`);
   }
+  if (lean) {
+    const topRefs = ir.workingSet?.changedRefs.topRefs ?? [];
+    const named = topRefs
+      .map(ref => `${ref.refId} "${escapeAttr(compactValue(ref.name ?? ref.text ?? '', 48))}"`)
+      .slice(0, 8);
+    if (named.length > 0) {
+      lines.push(`  NEW SINCE LAST ACTION: ${named.join(' | ')}`);
+    }
+  }
   return lines.join('\n');
 }
 
@@ -420,6 +429,7 @@ function renderLeanElement(element: PlannerElementIR): string {
     element.anomalies.length ? `state="${escapeAttr(element.anomalies.join(','))}"` : undefined,
     element.failure ? `failed="${element.failure.kind}x${element.failure.count}"` : undefined,
     element.tools?.length ? `tools="${element.tools.join(',')}"` : undefined,
+    element.delta ? `+${element.delta}` : undefined,
   ].filter(Boolean);
   return `[${element.refId}] <${element.kind} ${attrs.join(' ')} />`;
 }

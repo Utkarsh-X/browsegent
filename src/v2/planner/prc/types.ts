@@ -43,6 +43,9 @@ export interface PlannerElementIR {
   score: number;
   regionId?: string;
   selectOptions?: string[];
+  /** Diff-first marker: element appeared ('new') or changed ('chg') since the
+   *  previous action. Deterministic from transition evidence. */
+  delta?: 'new' | 'chg';
   anomalies: string[];
   failure?: { kind: string; count: number; retryable: boolean; persistence: 'transient' | 'persistent' | 'unknown' };
   tools?: string[];

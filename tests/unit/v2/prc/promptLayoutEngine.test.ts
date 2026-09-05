@@ -26,7 +26,8 @@ const input: PlannerInput = {
     stats: { interactionCount: 2, readableCount: 0, navigationCount: 0, regionCount: 0 },
   },
   workingSet: {
-    mode: 'act',
+    deltaRefs: { appeared: [], changed: [] },
+        mode: 'act',
     modeReason: 'test',
     primaryRefs: [{ refId: 'r1', kind: 'button', name: 'Submit', score: 115, reasons: ['visible_ready'] }],
     secondaryRefs: [{ refId: 'r2', kind: 'input', name: 'Search', score: 90, reasons: ['form_candidate'] }],
@@ -44,7 +45,7 @@ const input: PlannerInput = {
 };
 
 test('PromptLayoutEngine renders mission first, compact tools attributes, and omits action surface list', () => {
-  const ir = new PlannerRepresentationCompiler().compile(input);
+  const ir = new PlannerRepresentationCompiler().compile(input as unknown as Parameters<InstanceType<typeof PlannerRepresentationCompiler>['compile']>[0]);
   const text = new PromptLayoutEngine().render(ir);
   assert.match(text, /^MISSION/);
   // r1 is clickable, so it has tools="c"
@@ -211,7 +212,7 @@ test('PromptLayoutEngine rendered prompt size is smaller on a high-density fixtu
 });
 
 test('PromptLayoutEngine renders enriched recovery with blockedAction and directive', () => {
-  const ir = new PlannerRepresentationCompiler().compile(input);
+  const ir = new PlannerRepresentationCompiler().compile(input as unknown as Parameters<InstanceType<typeof PlannerRepresentationCompiler>['compile']>[0]);
   // Inject a recovery state with blockedAction and nextMechanisms
   ir.execution.recovery = {
     state: 'repeated_read_same_value',
@@ -226,7 +227,7 @@ test('PromptLayoutEngine renders enriched recovery with blockedAction and direct
 });
 
 test('PromptLayoutEngine renders recovery without blockedAction when absent', () => {
-  const ir = new PlannerRepresentationCompiler().compile(input);
+  const ir = new PlannerRepresentationCompiler().compile(input as unknown as Parameters<InstanceType<typeof PlannerRepresentationCompiler>['compile']>[0]);
   ir.execution.recovery = {
     state: 'invalid_output_repeat',
     severity: 'critical',
@@ -240,7 +241,7 @@ test('PromptLayoutEngine renders recovery without blockedAction when absent', ()
 });
 
 test('PromptLayoutEngine renders recovery with global ref as just tool name', () => {
-  const ir = new PlannerRepresentationCompiler().compile(input);
+  const ir = new PlannerRepresentationCompiler().compile(input as unknown as Parameters<InstanceType<typeof PlannerRepresentationCompiler>['compile']>[0]);
   ir.execution.recovery = {
     state: 'zero_result_read_loop',
     severity: 'warning',
@@ -525,3 +526,36 @@ test('PromptLayoutEngine renders stale goal progress state verbatim in both mode
   const compact = layout.render(compiler.compile(inputWithStale), { compactDataPlane: true });
   assert.match(compact, /GP: destination=stale:"Paris" dates=NOT_SET focus=destination/);
 });
+
+test('F2/F7b: lean render marks delta elements and names the top changed refs', () => {
+  const input = {
+    version: 'v2.planner_input.v2',
+    episodeId: 'episode_delta',
+    goal: 'Search for Delhi',
+    current: {
+      projectionId: 'p', observationId: 'o', generationId: 1,
+      page: { url: 'https://x', title: 'x' },
+      refs: {
+        ref_new_option: { refId: 'ref_new_option', kind: 'option', name: 'New Delhi India', visibility: 'visible', actionability: 'ready', confidence: 1, score: 120 },
+      },
+      interactions: [{ refId: 'ref_new_option', rank: 1 }],
+      readables: [], navigation: [], regions: [],
+      warnings: [], stats: { interactionCount: 1, readableCount: 0, navigationCount: 0, regionCount: 0 },
+    },
+    workingSet: {
+      deltaRefs: { appeared: ['ref_new_option'], changed: [] },
+      mode: 'act', modeReason: 'fixture',
+      primaryRefs: [{ refId: 'ref_new_option', kind: 'option', name: 'New Delhi India', score: 120, reasons: ['recently_appeared'] }],
+      secondaryRefs: [], readableEvidence: [], navigationRefs: [], actionSurface: { clickableRefs: ['ref_new_option'], typeableRefs: [], selectableRefs: [], readableRefs: [], ambiguousRefs: [] },
+      changedRefs: { appearedCount: 1, weakenedCount: 0, preservedCount: 0, omittedCount: 0, topRefs: [{ refId: 'ref_new_option', kind: 'option', name: 'New Delhi India', score: 120, reasons: ['recently_appeared'] }] },
+      failedRefs: [], quarantinedActions: [], regionSummaries: [],
+      omitted: { observedRefCount: 1, selectedRefCount: 1, droppedRefCount: 0, droppedByReason: {} },
+    },
+    uncertainty: { level: 'low', signals: [] },
+  };
+  const ir = new PlannerRepresentationCompiler().compile(input as unknown as Parameters<InstanceType<typeof PlannerRepresentationCompiler>['compile']>[0]);
+  const rendered = new PromptLayoutEngine().render(ir, { leanPlane: true });
+  assert.ok(rendered.includes('+new'), 'delta marker rendered on the lean line');
+  assert.ok(rendered.includes('NEW SINCE LAST ACTION: ref_new_option "New Delhi India"'), 'changed-refs names line rendered');
+});
+
