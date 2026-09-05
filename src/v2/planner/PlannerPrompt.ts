@@ -155,6 +155,7 @@ export function buildV2PlannerUserMessage(
     return `Planner input:\n${new PromptLayoutEngine().render(ir, {
       prcTierOmitted: config.prcTierOmitted,
       compactDataPlane: config.compactDataPlane,
+      leanPlane: config.prcLeanPlane,
     })}`;
   }
 
