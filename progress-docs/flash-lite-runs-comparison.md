@@ -297,3 +297,28 @@ First run on the 50-task never-tuned holdout slice (`--slice fresh50-stable --ju
 3. **Planner/ref errors — 2** (GitHub__8, BBC__5 ref type mismatch); validation error 1 (BBC__25).
 
 **Response landed same day:** answer-contract item-count + multi-detail checks (`f1cb064`) and the requirement-completion gate (`next commit`) target classes 2a/2c/2d. Step-budget exhaustion (class 1) is the next investigation priority.
+
+---
+
+## 7. Regression Audit & Fix Record (2026-09-05, `webvoyager_lite_1788560555798`)
+
+A balanced30 run with the week's new answer gates regressed to strict 6/30 (baseline floor was 10/30). Per-task flip analysis vs run 8 attributed every explainable flip to the new gates' failure mode: a rejected done answer that the model could not satisfy burned the run in a rejection loop. Fixes landed in `a32c1b5` + `6497311`:
+
+1. `year` detail category requires an explicit year question ("what year"), not adjectival mentions ("2-year plan") — Amazon__10.
+2. Requirement-completion gate applies only to transactional destination+dates flows — informational date lookups never gate (Wolfram__Alpha__10).
+3. New check families (item-count, detail categories, requirement completion) are **advisory**: steer once, then accept the answer with `advisoryNotes` recorded. Long-standing hard checks keep their semantics.
+4. Honest gone-page/404 reports are valid terminal answers (the old pattern hard-rejected a benchmark-scored pass — Huggingface__10); hyphenated "4.6-star" forms satisfy the rating category.
+
+**Offline replay validation** (sub-agent, 55 stored passing answers across runs 8/fresh50/regressed): 49 accepted, 5 advisory (steer-once by design, incl. two *correct* enforcements), **0 hard rejections** after fixes. All 12 regressed-run answers now pass.
+
+## 8. Token-Efficiency Stack & A/B Projections
+
+The browser-control token study (§ research/browser-control-token-efficiency.md) confirmed our architecture finishes in fewer steps (their substrate exhausts 12 steps on 53% of tasks; ours on 11/30 finishes ≤5) but pays ~4x per call for serialized substrate reasoning. Landed, all flag-gated and measured on 228 stored run-8 episodes:
+
+| Variant | Flags | KB/call (sys+usr) | ~tokens/call | projected/task @7.6 calls |
+| :--- | :--- | :---: | :---: | :---: |
+| Run 1 baseline | (reason codes + attr caps already in) | 22.85 | ~6,933 | ~52.7K |
+| Run 2 | `--prc-lean-plane` | 17.79 | ~5,397 | ~41.0K |
+| Run 3 | `--prc-lean-plane --planner-conditional-prompt` | 14.34 | ~4,350 | ~33.1K |
+
+Projection caveats: per-episode shapes from run 8; actual call counts vary per run. The strict/judge scores of the three A/B runs decide whether the flags become defaults; token telemetry decides the efficiency claim.
