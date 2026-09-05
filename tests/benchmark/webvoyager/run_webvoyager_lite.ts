@@ -97,7 +97,7 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
         referenceHint: byTaskId.get(verdict.taskId)?.webVoyager.referenceAnswer?.answer as string | undefined,
         agentAnswer: result.value ?? '',
         finalUrl: readFinalPageUrl(tracePath),
-        pageEvidence: collectFinalPageEvidence(tracePath),
+        pageEvidence: collectFinalPageEvidence(tracePath, undefined, undefined, byTaskId.get(verdict.taskId)?.goal),
         judgeModel,
       });
       verdict.judgeVerdict = judgeOutcome.verdict;

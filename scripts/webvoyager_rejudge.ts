@@ -104,7 +104,7 @@ async function judgeWithRetry(input: {
     goal: input.goal,
     referenceHint: input.referenceHint,
     agentAnswer: input.agentAnswer,
-    pageEvidence: collectFinalPageEvidence(input.tracePath),
+    pageEvidence: collectFinalPageEvidence(input.tracePath, undefined, undefined, input.goal),
   });
   try {
     const result = await callProvider(JUDGE_SYSTEM_PROMPT, userPrompt, input.judgeModel, { plainTextResponse: true });

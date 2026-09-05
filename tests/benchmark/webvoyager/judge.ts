@@ -79,8 +79,20 @@ export async function judgeTaskResult(input: JudgeInput): Promise<JudgeOutcome> 
   }
 }
 
-/** Extracts a bounded readable-evidence excerpt from the LAST observation of a trace. */
-export function collectFinalPageEvidence(tracePathOrDir: string, maxLines = 40, maxCharsPerLine = 90): string {
+/**
+ * Extracts a bounded readable-evidence excerpt from the LAST observation of a
+ * trace. The official protocol gives the judge the final page's accessibility
+ * tree; truncating to the first DOM-order refs yields pure header chrome on
+ * content-heavy pages, so the excerpt leads with goal-relevant lines (selected
+ * against the task goal only — never the agent's answer — so it cannot
+ * manufacture support for a wrong answer) and fills the rest in DOM order.
+ */
+export function collectFinalPageEvidence(
+  tracePathOrDir: string,
+  maxLines = 110,
+  maxCharsPerLine = 120,
+  goal?: string,
+): string {
   let traceDir = tracePathOrDir;
   try {
     if (statSync(tracePathOrDir).isFile()) {
@@ -117,19 +129,55 @@ export function collectFinalPageEvidence(tracePathOrDir: string, maxLines = 40, 
   try {
     const observation = JSON.parse(readFileSync(join(observationsDir, last), 'utf8'));
     const lines: string[] = [];
+    const seen = new Set<string>();
     for (const ref of observation.refs ?? []) {
-      if (lines.length >= maxLines) break;
       const name = String(ref.name ?? '').replace(/\s+/g, ' ').trim();
       const text = String(ref.text ?? '').replace(/\s+/g, ' ').trim();
       const role = String(ref.role ?? ref.kind ?? '');
       if (!name && !text) continue;
-      const line = `${role}: ${name || text}`.slice(0, maxCharsPerLine);
-      if (line.length > role.length + 2) lines.push(line);
+      const content = text && text !== name ? `${name} | ${text}` : name || text;
+      const line = `${role}: ${content}`.slice(0, maxCharsPerLine);
+      if (line.length <= role.length + 2) continue;
+      if (seen.has(line)) continue;
+      seen.add(line);
+      lines.push(line);
     }
-    return lines.join('\n');
+    if (lines.length <= maxLines) return lines.join('\n');
+
+    const relevantQuota = Math.floor(maxLines * 0.7);
+    const relevant = goal ? selectGoalRelevantLines(lines, goal, relevantQuota) : [];
+    const relevantSet = new Set(relevant);
+    const rest = lines.filter(line => !relevantSet.has(line)).slice(0, maxLines - relevant.length);
+    return [...relevant, ...rest].join('\n');
   } catch {
     return '';
   }
+}
+
+/**
+ * Ranks evidence lines by distinct goal-token coverage (deterministic, DOM
+ * order preserved within equal scores) and returns the best quota of them.
+ */
+function selectGoalRelevantLines(lines: readonly string[], goal: string, quota: number): string[] {
+  if (quota <= 0) return [];
+  const tokens = Array.from(new Set(
+    goal.toLowerCase().split(/[^a-z0-9]+/).filter(token => token.length >= 3),
+  ));
+  if (tokens.length === 0) return [];
+  const scored = lines
+    .map((line, index) => {
+      const haystack = line.toLowerCase();
+      let score = 0;
+      for (const token of tokens) {
+        if (haystack.includes(token)) score += 1;
+      }
+      return { index, score };
+    })
+    .filter(entry => entry.score > 0)
+    .sort((left, right) => right.score - left.score || left.index - right.index)
+    .slice(0, quota)
+    .sort((left, right) => left.index - right.index);
+  return scored.map(entry => lines[entry.index]);
 }
 
 function sortByObservationIndex(left: string, right: string): number {
