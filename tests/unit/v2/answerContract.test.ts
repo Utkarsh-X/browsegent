@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  findListPageOnlyAnswerSignal,
   inferAnswerContract,
+  isSearchOrListingUrl,
   parseRequestedDetailCategories,
   parseRequestedItemCount,
   partitionAnswerContractReasons,
@@ -491,4 +493,62 @@ test('rating category accepts hyphenated star forms', () => {
   const contract = inferAnswerContract('Find a stainless steel 12-cup coffee maker with a 4.6-star rating under $100');
   const validation = validateAnswerAgainstContract('The Cuisinart DCC-1200P1 has a 4.6-star rating and costs $109.', contract);
   assert.equal(validation.reasons.includes('missing_requested_detail_rating'), false);
+});
+
+test('findListPageOnlyAnswerSignal fires for entity answers grounded only on a listing surface', () => {
+  const reason = findListPageOnlyAnswerSignal({
+    url: 'https://www.coursera.org/search?query=machine%20learning',
+    contractKind: 'entity',
+    answer: 'Introduction to Machine Learning covers 4 modules over 1-3 months.',
+    listedEntities: ['Introduction to Machine Learning', 'Deep Learning Specialization'],
+  });
+  assert.ok(reason?.startsWith('list_page_only_answer'));
+  assert.ok(reason!.includes('Introduction to Machine Learning'));
+});
+
+test('findListPageOnlyAnswerSignal ignores numeric goals, non-listing URLs, and unmatched answers', () => {
+  const base = {
+    contractKind: 'entity',
+    answer: 'Other Institute Program details',
+    listedEntities: ['Some course'],
+  };
+  assert.equal(findListPageOnlyAnswerSignal({ ...base, url: 'https://www.coursera.org/search?q=x' }), undefined, 'answer does not name a listed entity');
+  assert.equal(
+    findListPageOnlyAnswerSignal({
+      contractKind: 'number',
+      url: 'https://www.coursera.org/search?q=x',
+      answer: 'The price of the first result is $49.',
+      listedEntities: ['Some course'],
+    }),
+    undefined,
+    'numeric goals may answer from a listing page',
+  );
+  assert.equal(
+    findListPageOnlyAnswerSignal({
+      contractKind: 'entity',
+      url: 'https://www.coursera.org/learn/machine-learning',
+      answer: 'Some course details',
+      listedEntities: ['Some course'],
+    }),
+    undefined,
+    'a detail page is not a listing surface',
+  );
+});
+
+test('isSearchOrListingUrl recognizes query-driven result surfaces', () => {
+  assert.equal(isSearchOrListingUrl('https://x.test/search?query=a'), true);
+  assert.equal(isSearchOrListingUrl('https://x.test/list?q=a'), true);
+  assert.equal(isSearchOrListingUrl('https://x.test/s?k=drone'), true);
+  assert.equal(isSearchOrListingUrl('https://x.test/product/123'), false);
+  assert.equal(isSearchOrListingUrl('https://x.test/course/machine-learning'), false);
+});
+
+test('partitionAnswerContractReasons routes list_page_only_answer to advisory', () => {
+  const { hardReasons, advisoryReasons } = partitionAnswerContractReasons([
+    'list_page_only_answer: the answer names "X" while still on the listing surface',
+    'empty_answer',
+  ]);
+  assert.deepEqual(hardReasons, ['empty_answer']);
+  assert.equal(advisoryReasons.length, 1);
+  assert.ok(advisoryReasons[0].startsWith('list_page_only_answer'));
 });

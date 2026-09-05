@@ -561,3 +561,32 @@ test('RecoveryStateBuilder stops navigation churn on the oscillation signal', ()
   assert.equal(recovery.state, 'navigation_oscillation');
   assert.ok(recovery.nextMechanisms.includes('commit_to_current_surface_until_progress'));
 });
+
+test('RecoveryStateBuilder detects click-no-navigation from the runtime signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: true,
+      kind: 'click',
+      targetRef: 'ref_card_link',
+      traceStepId: 'step_5',
+    },
+    failures: [],
+    uncertaintySignals: ['click_no_navigation'],
+  });
+
+  assert.equal(recovery?.state, 'click_no_navigation');
+  assert.equal(recovery?.severity, 'warning');
+  assert.equal(recovery?.blockedAction?.tool, 'click');
+  assert.equal(recovery?.blockedAction?.ref, 'ref_card_link');
+  assert.ok(recovery?.nextMechanisms.includes('read_link_target_before_clicking_again'));
+});
+
+test('RecoveryStateBuilder does not emit click-no-navigation without the signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: { success: true, kind: 'click', targetRef: 'ref_card_link', traceStepId: 'step_5' },
+    failures: [],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery, undefined);
+});

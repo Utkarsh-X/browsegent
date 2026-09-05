@@ -12,6 +12,7 @@ const RECOVERY_STATE_GUIDANCE: ReadonlyArray<readonly [state: string, text: stri
   ['unresponsive_surface', 'If recovery.state is repeated_timeout_target or unresponsive_surface, actions are timing out: wait once, re-observe, then choose a different target; never re-click the ref that timed out, and report the unresponsiveness honestly if it persists.'],
   ['repeated_type_same_value', 'If recovery.state is repeated_type_same_value, the same text was already typed into that control and it is not committed: click the matching suggestion option or press Enter to commit instead of typing the same value again.'],
   ['navigation_oscillation', 'If recovery.state is navigation_oscillation, you are bouncing between the same pages: stop navigating, commit to the one surface that can advance the focused requirement, and act on its visible controls.'],
+  ['click_no_navigation', 'If recovery.state is click_no_navigation, your clicks on link elements are succeeding but the page is not navigating: stop clicking sibling links expecting a page change. Read the link target (get on the link ref) or use a different affordance on the surface, and if the needed page cannot be reached by any visible control, report what the current evidence supports.'],
 ];
 
 const ANSWER_FEEDBACK_GUIDANCE = 'If answerFeedback is present, the previous done answer was rejected because it missed required details. Do not repeat that answer unless missingDetails are answered with concrete evidence.';
@@ -90,6 +91,7 @@ If recovery.state is surface_wide_blocker, one overlay covers many refs: stop cl
 If recovery.state is repeated_timeout_target or unresponsive_surface, actions are timing out: wait once, re-observe, then choose a different target; never re-click the ref that timed out, and report the unresponsiveness honestly if it persists.
 If recovery.state is repeated_type_same_value, the same text was already typed into that control and it is not committed: click the matching suggestion option or press Enter to commit instead of typing the same value again.
 If recovery.state is navigation_oscillation, you are bouncing between the same pages: stop navigating, commit to the one surface that can advance the focused requirement, and act on its visible controls.
+If recovery.state is click_no_navigation, your clicks on link elements are succeeding but the page is not navigating: stop clicking sibling links expecting a page change. Read the link target (get on the link ref) or use a different affordance on the surface, and if the needed page cannot be reached by any visible control, report what the current evidence supports.
 
 If lastResult from get, inspect_region, search_page, click, type, press, navigate has lastResult.valuePreview containing the requested answer or confirming the requested state/action, return done with that value. Do not repeat the same read or mutation after successful value evidence.
 

@@ -8,6 +8,7 @@ export type PlannerRecoveryStateKind =
   | 'surface_wide_blocker'
   | 'unresponsive_surface'
   | 'navigation_oscillation'
+  | 'click_no_navigation'
   | 'same_action_loop'
   | 'repeated_read_same_value'
   | 'repeated_type_same_value'
@@ -56,6 +57,9 @@ export class RecoveryStateBuilder {
 
     const oscillation = buildNavigationOscillationRecovery(input, signals);
     if (oscillation) return oscillation;
+
+    const clickNoNavigation = buildClickNoNavigationRecovery(input, signals);
+    if (clickNoNavigation) return clickNoNavigation;
 
     if (signals.some(signal => signal.startsWith('repeated_no_progress_transition:'))) {
       return {
@@ -368,6 +372,28 @@ function buildNavigationOscillationRecovery(
       'commit_to_current_surface_until_progress',
       'act_on_visible_controls',
       'reobserve_current_surface',
+    ],
+    signals,
+  };
+}
+
+function buildClickNoNavigationRecovery(
+  input: RecoveryStateBuilderInput,
+  signals: string[],
+): PlannerRecoveryState | undefined {
+  if (!signals.includes('click_no_navigation')) return undefined;
+
+  return {
+    state: 'click_no_navigation',
+    severity: 'warning',
+    blockedAction: input.lastResult?.kind === 'click'
+      ? { tool: 'click', ref: input.lastResult.targetRef }
+      : undefined,
+    nextMechanisms: [
+      'read_link_target_before_clicking_again',
+      'choose_alternative_ref',
+      'expand_or_reobserve',
+      'act_on_visible_controls',
     ],
     signals,
   };

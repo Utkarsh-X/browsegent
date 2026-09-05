@@ -1,4 +1,4 @@
-import { inferAnswerContract, partitionAnswerContractReasons, validateAnswerAgainstContract } from './AnswerContract';
+import { inferAnswerContract, partitionAnswerContractReasons, validateAnswerAgainstContract, findListPageOnlyAnswerSignal } from './AnswerContract';
 import { detectAnswerEvidenceConflicts } from './AnswerGrounding';
 import { stripInternalRefTokens } from './AnswerHygiene';
 import { findUnaddressedDateRequirements } from './RequirementCompletionGate';
@@ -95,6 +95,7 @@ export class V2AgentLoop {
       const plannerTraceSteps: TraceStep[] = [];
       const recentObservationUrls: string[] = [];
       let oscillationEpisodeCount = 0;
+      let noNavClickStreak = 0;
 
       for (let stepIndex = 0; stepIndex < stepBudget; stepIndex += 1) {
         ledger.beginStep(stepIndex);
@@ -222,7 +223,8 @@ export class V2AgentLoop {
 
         if (plannerResult.output.done === true) {
             const value = normalizeAnswerValue(plannerResult.output.val ?? '', input.goal);
-            const answerValidation = validateAnswerAgainstContract(value, inferAnswerContract(input.goal), {
+            const answerContract = inferAnswerContract(input.goal);
+            const answerValidation = validateAnswerAgainstContract(value, answerContract, {
               evidenceText: buildAnswerValidationEvidence(readEvidenceHistory, surfaceEvidence, evidenceLedger),
             });
           const coverageReasons = answerValidation.ok ? missingCoverageReasons(evidenceCoverage) : [];
@@ -231,7 +233,18 @@ export class V2AgentLoop {
             goalProgress: plannerInput.goalProgress,
             answer: value,
           });
-          const validationReasons = [...answerValidation.reasons, ...coverageReasons, ...requirementReasons];
+          const listPageReason = findListPageOnlyAnswerSignal({
+            url: observation.url,
+            contractKind: answerContract.kind,
+            answer: value,
+            listedEntities: collectListedEntityNames(observation, evidenceLedger),
+          });
+          const validationReasons = [
+            ...answerValidation.reasons,
+            ...coverageReasons,
+            ...requirementReasons,
+            ...(listPageReason ? [listPageReason] : []),
+          ];
           const { hardReasons, advisoryReasons } = partitionAnswerContractReasons(validationReasons);
           if (hardReasons.length > 0) {
             const rejectedAnswerKey = buildRejectedAnswerKey(
@@ -474,6 +487,28 @@ export class V2AgentLoop {
               readEvidenceProduced: isReadEvidence(lastResult),
               inputApplied: lastResult.success && (plannedStep.tool === 'type' || plannedStep.tool === 'select'),
             });
+            if (lastResult.success && plannedStep.tool === 'click') {
+              // A link click that leaves the URL unchanged twice in a row is
+              // the signature of clicking sibling cards/chips while the site
+              // never navigates (JS-handled or dead links). Two occurrences
+              // raise a recovery state with alternative mechanisms; only link
+              // targets participate so widget clicks never trip it.
+              const clickTarget = actionObservation.refs.find(ref => ref.refId === plannedStep.ref);
+              const clickTargetIsLink = clickTarget?.role === 'link' || clickTarget?.tagName?.toLowerCase() === 'a';
+              if (clickTargetIsLink) {
+                const navigated = lastResult.evidence?.urlChanged === true
+                  || normalizeUrlForNavigationCompare(observation.url) !== normalizeUrlForNavigationCompare(actionObservation.url);
+                if (navigated) {
+                  noNavClickStreak = 0;
+                } else {
+                  noNavClickStreak += 1;
+                  if (noNavClickStreak >= 2) {
+                    runtimeUncertainty = appendRuntimeUncertaintySignals(runtimeUncertainty, ['click_no_navigation']);
+                    noNavClickStreak = 0;
+                  }
+                }
+              }
+            }
           }
 
           plannerTraceSteps.push(buildPlannerLineageStep(
@@ -1150,12 +1185,32 @@ function formatPlannerEscalation(kind: string, reason: string | undefined): stri
   return compactReason ? `planner_escalated:${kind}:${compactReason}` : `planner_escalated:${kind}`;
 }
 
+/**
+ * Entity names rendered on the current surface — structured result cards plus
+ * visible suggestion options. These are what a list-page answer would have
+ * been derived from without opening the entity's own page.
+ */
+function collectListedEntityNames(observation: BrowserObservation, ledger: EvidenceLedger): string[] {
+  const names: string[] = [];
+  for (const card of ledger.getResultCards()) {
+    const entity = card.entityName?.trim();
+    if (entity) names.push(entity);
+    if (names.length >= 40) return names;
+  }
+  for (const ref of observation.refs ?? []) {
+    if (ref.role?.trim().toLowerCase() !== 'option') continue;
+    const label = (ref.name ?? ref.text ?? '').trim();
+    if (label.length >= 4) names.push(label);
+    if (names.length >= 40) return names;
+  }
+  return names;
+}
+
 function buildAnswerFeedback(
   previousAnswer: string,
   missingDetails: string[],
   forceStrategyPivot = false,
-): PlannerAnswerFeedback {
-  return {
+): PlannerAnswerFeedback {  return {
     previousAnswer,
     missingDetails,
     instruction: forceStrategyPivot

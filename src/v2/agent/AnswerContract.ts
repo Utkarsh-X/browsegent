@@ -281,7 +281,46 @@ const ADVISORY_REASON_PREFIXES = [
   // tells the model to verify the ordering; acceptance records the caveat.
   'missing_ranking_evidence',
   'answer_does_not_match_top_ranked_evidence',
+  // Answering entity details from a search/listing page (cards, suggestion
+  // chips) instead of the entity's own page steers once; the delivered
+  // answer survives with the caveat recorded.
+  'list_page_only_answer',
 ];
+
+export interface ListPageAnswerSignalInput {
+  /** Current observation URL. */
+  url: string;
+  /** Answer-contract kind inferred from the goal. */
+  contractKind: string;
+  /** The normalized done answer. */
+  answer: string;
+  /** Entity names rendered on the current surface (cards, suggestion options). */
+  listedEntities: readonly string[];
+}
+
+/**
+ * Detects a done answer that names an entity from a search/listing surface
+ * while the goal seeks information about that entity (entity/description
+ * contracts). Numeric and item-count answers legitimately come from listing
+ * pages, so those contract kinds never fire. Advisory only: the caller steers
+ * once and then accepts the answer.
+ */
+export function findListPageOnlyAnswerSignal(input: ListPageAnswerSignalInput): string | undefined {
+  if (input.contractKind !== 'entity' && input.contractKind !== 'description') return undefined;
+  if (!isSearchOrListingUrl(input.url)) return undefined;
+  const matched = input.listedEntities.find(entity =>
+    entity.length >= 4 && answerIncludesEntity(input.answer, entity));
+  return matched
+    ? `list_page_only_answer: the answer names "${matched}" while still on the listing surface; open the entity's own page (click its link) and verify the details there before done`
+    : undefined;
+}
+
+/** URL-shape heuristic for search/listing pages (query-driven result surfaces). */
+export function isSearchOrListingUrl(url: string): boolean {
+  if (/[?&](?:q|query|s|k|search_query|searchterm|keyword|keywords)=/i.test(url)) return true;
+  if (/\/search(?:\/|\?|$)/i.test(url)) return true;
+  return false;
+}
 
 /**
  * Splits contract reasons into hard (long-standing answer-shape failures that

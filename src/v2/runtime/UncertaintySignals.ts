@@ -117,7 +117,8 @@ function chooseLevel(signals: string[]): RuntimeUncertainty['level'] {
       || signal.startsWith('repeated_no_progress_transition:')
       || signal.startsWith('repeated_no_progress_target:')
       || signal.startsWith('repeated_value_preview:')
-      || signal === 'transition_class:hard_reset',
+      || signal === 'transition_class:hard_reset'
+      || signal === 'click_no_navigation',
     )
   ) {
     return 'medium';

@@ -50,3 +50,11 @@ test('detectNavigationOscillation flags two-page alternation and same-URL reload
   assert.equal(detectNavigationOscillation(['a', 'b', 'c']), false);
   assert.equal(detectNavigationOscillation([]), false);
 });
+
+test('click_no_navigation raises uncertainty to medium', () => {
+  const signals = new UncertaintySignals().fromRuntimeState({
+    extraSignals: ['click_no_navigation'],
+  });
+  assert.equal(signals.level, 'medium');
+  assert.ok(signals.signals.includes('click_no_navigation'));
+});
