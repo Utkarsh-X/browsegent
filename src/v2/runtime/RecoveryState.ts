@@ -119,6 +119,7 @@ export class RecoveryStateBuilder {
         severity: 'warning',
         blockedAction: blockedActionFromSignal(signals.find(signal => signal.startsWith('repeated_value_preview:type:'))),
         nextMechanisms: [
+          'use_pick_option_primitive',
           'confirm_combobox_selection',
           'click_matching_suggestion_option',
           'avoid_retyping_committed_values',
