@@ -10,6 +10,7 @@ export type PlannerRecoveryStateKind =
   | 'navigation_oscillation'
   | 'click_no_navigation'
   | 'navigate_loop'
+  | 'calendar_click_stalled'
   | 'same_action_loop'
   | 'repeated_read_same_value'
   | 'repeated_type_same_value'
@@ -67,6 +68,9 @@ export class RecoveryStateBuilder {
 
     const navigateLoop = buildNavigateLoopRecovery(input, signals);
     if (navigateLoop) return navigateLoop;
+
+    const calendarStalled = buildCalendarClickStalledRecovery(input, signals);
+    if (calendarStalled) return calendarStalled;
 
     if (signals.some(signal => signal.startsWith('repeated_no_progress_transition:'))) {
       return {
@@ -400,6 +404,28 @@ function buildNavigationOscillationRecovery(
       'avoid_navigation_churn',
       'commit_to_current_surface_until_progress',
       'act_on_visible_controls',
+      'reobserve_current_surface',
+    ],
+    signals,
+  };
+}
+
+function buildCalendarClickStalledRecovery(
+  input: RecoveryStateBuilderInput,
+  signals: string[],
+): PlannerRecoveryState | undefined {
+  if (!signals.includes('calendar_click_stalled')) return undefined;
+
+  return {
+    state: 'calendar_click_stalled',
+    severity: 'warning',
+    blockedAction: input.lastResult?.kind === 'click'
+      ? { tool: 'click', ref: input.lastResult.targetRef }
+      : undefined,
+    nextMechanisms: [
+      'verify_picker_state_with_get',
+      'use_keyboard_navigation',
+      'avoid_reclicking_sibling_cells',
       'reobserve_current_surface',
     ],
     signals,

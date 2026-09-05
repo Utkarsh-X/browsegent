@@ -639,3 +639,28 @@ test('RecoveryStateBuilder emits max_step_risk only under budget pressure with u
   });
   assert.notEqual(noBudget?.state, 'max_step_risk');
 });
+
+test('RecoveryStateBuilder detects calendar click stalls from the runtime signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: { success: true, kind: 'click', targetRef: 'ref_day_cell', traceStepId: 'step_9' },
+    failures: [],
+    uncertaintySignals: ['calendar_click_stalled'],
+  });
+
+  assert.equal(recovery?.state, 'calendar_click_stalled');
+  assert.equal(recovery?.blockedAction?.tool, 'click');
+  assert.equal(recovery?.blockedAction?.ref, 'ref_day_cell');
+  assert.ok(recovery?.nextMechanisms.includes('verify_picker_state_with_get'));
+  assert.ok(recovery?.nextMechanisms.includes('use_keyboard_navigation'));
+  assert.ok(recovery?.nextMechanisms.includes('avoid_reclicking_sibling_cells'));
+});
+
+test('RecoveryStateBuilder does not emit calendar_click_stalled without the signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: { success: true, kind: 'click', targetRef: 'ref_day_cell', traceStepId: 'step_9' },
+    failures: [],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery, undefined);
+});

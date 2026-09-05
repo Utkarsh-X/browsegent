@@ -26,6 +26,8 @@ export interface InputExecutionResult<TValue = unknown> {
   interactionEvidence?: {
     clickEventObserved: boolean;
     targetConnectedAfterAction: boolean;
+    /** Resolved link target when the clicked element carries href (C1). */
+    href?: string;
   };
 }
 
@@ -127,15 +129,20 @@ export class InputService {
         ...(position ? { position } : {}),
         ...(useForce ? { force: true } : {}),
       });
-      const [clickEventObserved, targetConnectedAfterAction] = await Promise.all([
+      const [clickEventObserved, targetConnectedAfterAction, href] = await Promise.all([
         clickOutcome.evaluate(outcome => outcome.clickEventObserved),
         target.evaluate(element => element.isConnected),
+        target.evaluate(element => {
+          const anchor = element.closest('a[href]') ?? (element instanceof HTMLAnchorElement ? element : undefined);
+          return anchor?.getAttribute('href') ?? undefined;
+        }).catch(() => undefined),
       ]);
       return {
         kind: 'click',
         interactionEvidence: {
           clickEventObserved,
           targetConnectedAfterAction,
+          href: href ?? undefined,
         },
       };
     } catch (error) {

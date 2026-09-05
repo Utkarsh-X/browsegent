@@ -96,6 +96,9 @@ export interface TransitionEvidence {
     preserved: string[];
   };
   notes: string[];
+  /** Resolved href of the clicked anchor (C1 href-vs-landed check); absent
+   *  for non-link clicks. Additive telemetry, never a decision by itself. */
+  clickedHref?: string;
 }
 
 export interface V2ToolError {

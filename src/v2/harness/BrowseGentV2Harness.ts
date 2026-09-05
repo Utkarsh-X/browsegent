@@ -555,6 +555,9 @@ export class BrowseGentV2Harness {
     const after = await this.captureAfterMutationObservation(before);
     this.ledger?.recordPhase('observation_capture', Date.now() - obsStart);
     const evidence = this.transitionService.compare(before, after);
+    if (execution.interactionEvidence?.href) {
+      evidence.clickedHref = execution.interactionEvidence.href;
+    }
     if (after.refs.length === 0) {
       // The post-mutation capture came back empty even after the bounded
       // recapture: say so instead of silence, carrying the pre-action URL so

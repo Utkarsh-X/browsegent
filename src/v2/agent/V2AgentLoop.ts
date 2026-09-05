@@ -1,5 +1,6 @@
 import { inferAnswerContract, partitionAnswerContractReasons, validateAnswerAgainstContract, findListPageOnlyAnswerSignal } from './AnswerContract';
 import { commitPhaseReady } from '../planner/CommitPhase';
+import { buildMonthNameLookup, parseCalendarLabel } from '../planner/DateLabelMatcher';
 import { detectAnswerEvidenceConflicts } from './AnswerGrounding';
 import { stripInternalRefTokens } from './AnswerHygiene';
 import { findUnaddressedDateRequirements } from './RequirementCompletionGate';
@@ -91,6 +92,8 @@ export class V2AgentLoop {
       let oscillationEpisodeCount = 0;
       let noNavClickStreak = 0;
       let sameUrlNavigationRejections = 0;
+      let calendarNoEffectStreak = 0;
+      const linkNoNavigationFired = new Set<string>();
 
       for (let stepIndex = 0; stepIndex < stepBudget; stepIndex += 1) {
         ledger.beginStep(stepIndex);
@@ -501,6 +504,44 @@ export class V2AgentLoop {
                     noNavClickStreak = 0;
                   }
                 }
+              }
+            }
+            // C1 href-vs-landed (advisory, once per ref+URL): a real link was
+            // clicked and the page did not move toward its target. Evaluated
+            // against the fresh post-action observation, so late navigations
+            // absorb into no-op.
+            if (lastResult.evidence?.clickedHref) {
+              const firedKey = `${plannedStep.ref}|${actionObservation.url}`;
+              try {
+                const hrefUrl = new URL(lastResult.evidence.clickedHref, actionObservation.url);
+                const beforeUrl = new URL(actionObservation.url);
+                const afterUrl = new URL(observation.url);
+                const sameSurface = (a: URL, b: URL) => a.origin + a.pathname === b.origin + b.pathname;
+                if (!linkNoNavigationFired.has(firedKey) && !sameSurface(hrefUrl, beforeUrl) && sameSurface(afterUrl, beforeUrl)) {
+                  linkNoNavigationFired.add(firedKey);
+                  runtimeUncertainty = appendRuntimeUncertaintySignals(runtimeUncertainty, ['link_no_navigation']);
+                }
+              } catch {
+                // Unparseable href: no signal.
+              }
+            }
+            // W-C calendar verification: effect-less clicks on date cells.
+            if (plannedStep.tool === 'click' && lastResult.success) {
+              const clickedRef = actionObservation.refs.find(ref => ref.refId === plannedStep.ref);
+              const cellLabel = `${clickedRef?.name ?? ''} ${clickedRef?.text ?? ''}`.trim();
+              const isCalendarCell = Boolean(cellLabel) && isCalendarDateLabel(cellLabel, actionObservation.lang);
+              const observableChange = lastResult.evidence?.urlChanged === true
+                || lastResult.evidence?.generationChanged === true
+                || (lastResult.evidence?.refChanges.appeared.length ?? 0) > 0
+                || (lastResult.evidence?.refChanges.weakened.length ?? 0) > 0;
+              if (isCalendarCell && !observableChange) {
+                calendarNoEffectStreak += 1;
+                if (calendarNoEffectStreak >= 2) {
+                  runtimeUncertainty = appendRuntimeUncertaintySignals(runtimeUncertainty, ['calendar_click_stalled']);
+                  calendarNoEffectStreak = 0;
+                }
+              } else if (observableChange) {
+                calendarNoEffectStreak = 0;
               }
             }
           }
@@ -1167,6 +1208,19 @@ function buildRejectedAnswerKey(
     .map(entry => `${entry.kind}:${entry.targetRef ?? ''}:${entry.text}`)
     .join('|');
   return `${observation.observationId}|${reasons.join('|')}|${answer}|${evidence}`;
+}
+
+const calendarLookupCache = new Map<string, ReturnType<typeof buildMonthNameLookup>>();
+
+function isCalendarDateLabel(label: string, lang: string | undefined): boolean {
+  if (!lang) return false;
+  let lookup = calendarLookupCache.get(lang);
+  if (lookup === undefined) {
+    lookup = buildMonthNameLookup(lang);
+    calendarLookupCache.set(lang, lookup);
+  }
+  if (!lookup) return false;
+  return parseCalendarLabel(label, lookup) !== undefined;
 }
 
 function appendRuntimeUncertaintySignals(
