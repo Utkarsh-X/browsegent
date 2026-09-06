@@ -250,7 +250,8 @@ function inferProviderFromModel(model: string): LlmProvider | null {
     model.startsWith('ox-') ||
     model.startsWith('anthropic/') ||
     model.startsWith('meta-llama/') ||
-    model.startsWith('deepseek/')
+    model.startsWith('deepseek/') ||
+    model.startsWith('minimax/')
   ) return 'openrouter';
   if (model.startsWith('gemini')) return 'gemini';
   if (model.startsWith('gpt')) return 'openai';

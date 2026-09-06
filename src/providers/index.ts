@@ -36,7 +36,8 @@ export function detectProvider(model: string): LlmProvider {
     model.startsWith('ox-') ||
     model.startsWith('anthropic/') ||
     model.startsWith('meta-llama/') ||
-    model.startsWith('deepseek/')
+    model.startsWith('deepseek/') ||
+    model.startsWith('minimax/')
   ) return 'openrouter';
   if (model.startsWith('gemini') || model.startsWith('google/gemini')) return 'gemini';
   if (model.startsWith('cerebras/') || model.startsWith('qwen')) return 'cerebras';
