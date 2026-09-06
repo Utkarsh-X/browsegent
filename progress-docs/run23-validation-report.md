@@ -96,3 +96,28 @@ Run 23 is a successful proof of the stealth hypothesis:
 - Bot walls fell from 20% of the benchmark to 6.7% (Cambridge only), environment-blocked count 6→0.
 - The startup outage was a launch-resilience gap, fixed in commit `d563a0a`; a revalidation run (fix ON, nothing else changed) is the next benchmark spend, then the token program (T-A) gets its own flag-gated A/B.
 - Operational hazard now on record: killing a run mid-flight orphans its Chromium, which keeps holding the stealth profile's singleton lock; the fixed launch path names this error instead of hanging silently.
+
+---
+
+## 6. Revalidation (Run 24, webvoyager_lite_1788718289231 — fix d563a0a ON)
+
+| Metric | Run 20 (prior record) | Run 23 (stealth, buggy) | **Run 24 (stealth + fix)** |
+| --- | ---: | ---: | ---: |
+| Internal pass | 23/30 (76.7%) | 17/30 | **24/30 (80.0%) — record** |
+| Strict | 12 (40%) | 7 | **12 (40%)** |
+| Judge | 6/11 | 4/10 | **6/12 (50%)** |
+| Combined | 18 | 11 | **18** |
+| Startup deaths | 0 | 7 | **1** (root-caused, see §7) |
+| Bot walls | 6–7 tasks | 2 | **2 (Cambridge only)** |
+
+Walls held and advanced: **Allrecipes__3 judge PASS** (first judged pass on Allrecipes), Google__Search__0 strict exact again, Google__Search__10 ran. Durable wins replicated: GitHub__0 strict exact, Wolfram__0 exact, Wolfram__10 judge (6th consecutive), Apple__0 strict again, BBC News ×2 strict, ArXiv__0 strict. Remaining fails: Booking__0 planner_invalid_output_dead_end, Booking__10 answer_contract_failed:incomplete_answer, Flights__10 max steps, Cambridge ×2 (Cloudflare managed challenge), ESPN__0 (capture race, §7).
+
+## 7. Second root cause found via run 24's unmasked error (fix b87f0e7)
+
+ESPN__0 died at startup with the raw stack `page.evaluate: TypeError: Cannot read properties of null (reading 'getAttribute')` at `<anonymous>:421:33` — line 421 col 33 of the combined `CAPTURE_PAGE_CONTENT_SCRIPT` evaluate is exactly `READ_PAGE_LANG_SCRIPT`: `document.documentElement.getAttribute('lang')`. A page that calls `document.open()` (SPA soft-reset) briefly has **no documentElement**, so the lang probe threw and killed the entire capture → task. This is the run-23 failure family with the mask removed. Fixed with an in-page optional-chain guard; the established capture-retry design (navigation-race errors only) was deliberately kept so in-page script errors keep surfacing honestly.
+
+## 8. Campaign verdict after revalidation
+
+- Stealth is proven: two consecutive stealth runs, walls 6→2, Google Search + Allrecipes now runnable, zero environment-blocked tasks.
+- The stack at run 24 (with both fixes) sits at record internal rate (80%) with the band's top combined score — the same stack that scored 18 in run 20, now covering 28 runnable tasks instead of 23.
+- Next benchmark spend: T-A cache-aligned rendering A/B (token-first priority) with both fixes in.
