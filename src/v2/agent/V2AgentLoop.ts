@@ -1,4 +1,4 @@
-import { inferAnswerContract, partitionAnswerContractReasons, validateAnswerAgainstContract, findListPageOnlyAnswerSignal } from './AnswerContract';
+import { inferAnswerContract, partitionAnswerContractReasons, validateAnswerAgainstContract, findListPageOnlyAnswerSignal, findUnverifiedSuperlativeAnswer } from './AnswerContract';
 import { commitPhaseReady } from '../planner/CommitPhase';
 import { buildMonthNameLookup, parseCalendarLabel } from '../planner/DateLabelMatcher';
 import { detectAnswerEvidenceConflicts } from './AnswerGrounding';
@@ -224,11 +224,19 @@ export class V2AgentLoop {
             answer: value,
             listedEntities: collectListedEntityNames(observation, evidenceLedger),
           });
+          const activeSort = evidenceLedger.getActiveSort();
+          const superlativeReason = findUnverifiedSuperlativeAnswer({
+            goal: input.goal,
+            answer: value,
+            activeSort: activeSort ? { dimension: activeSort.dimension, direction: activeSort.direction } : undefined,
+            cards: evidenceLedger.getResultCards().map(card => ({ entityName: card.entityName, metrics: card.metrics })),
+          });
           const validationReasons = [
             ...answerValidation.reasons,
             ...coverageReasons,
             ...requirementReasons,
             ...(listPageReason ? [listPageReason] : []),
+            ...(superlativeReason ? [superlativeReason] : []),
           ];
           const { hardReasons, advisoryReasons } = partitionAnswerContractReasons(validationReasons);
           if (hardReasons.length > 0) {

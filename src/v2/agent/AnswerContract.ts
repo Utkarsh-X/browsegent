@@ -285,6 +285,9 @@ const ADVISORY_REASON_PREFIXES = [
   // chips) instead of the entity's own page steers once; the delivered
   // answer survives with the caveat recorded.
   'list_page_only_answer',
+  // Substrate-verified superlative check: the ledger's parsed card metrics
+  // contradict the claimed best-while-unsorted answer.
+  'unverified_superlative_answer',
 ];
 
 export interface ListPageAnswerSignalInput {
@@ -320,6 +323,76 @@ export function isSearchOrListingUrl(url: string): boolean {
   if (/[?&](?:q|query|s|k|search_query|searchterm|keyword|keywords)=/i.test(url)) return true;
   if (/\/search(?:\/|\?|$)/i.test(url)) return true;
   return false;
+}
+
+export interface SuperlativeVerificationInput {
+  goal: string;
+  answer: string;
+  /** Sort provenance from the evidence ledger; undefined when no sort was observed. */
+  activeSort?: { dimension: string; direction: string };
+  /** Structured cards with parsed metrics from the evidence ledger. */
+  cards: Array<{ entityName?: string; metrics: { stars?: number; price?: number; rating?: number } }>;
+}
+
+export interface RankingDimension {
+  dimension: 'stars' | 'price' | 'rating';
+  direction: 'asc' | 'desc';
+}
+
+/**
+ * Parses the metric a comparative-ranking goal asks a superlative about.
+ * Deliberately narrow: only the dimensions the evidence ledger parses from
+ * result cards. Returns undefined for every other goal shape.
+ */
+export function parseRankingDimension(normalizedGoal: string): RankingDimension | undefined {
+  const stars = /\b(?:most|highest|top|best[- ](?:starred?|rated)|largest)\b[^.]{0,40}\bstar(?:red|s)?\b|\bstar(?:red|s)?\b[^.]{0,40}\b(?:most|highest)\b/.test(normalizedGoal)
+    || /\bmost\s+stars\b/.test(normalizedGoal);
+  const rating = /\b(?:highest|best|top)[- ]?rated\b|\bhighest\s+(?:user\s+)?rating\b|\bbest\s+reviews?\b/.test(normalizedGoal);
+  const price = /\b(?:cheapest|lowest[- ]priced?|least\s+expensive)\b|\blowest\s+price\b/.test(normalizedGoal);
+  if (stars) return { dimension: 'stars', direction: 'desc' };
+  if (rating) return { dimension: 'rating', direction: 'desc' };
+  if (price) return { dimension: 'price', direction: 'asc' };
+  return undefined;
+}
+
+/**
+ * Substrate-side superlative verification (R4): when a ranking goal's answer
+ * names a card whose parsed metric is demonstrably NOT the best among the
+ * observed cards while the surface's own sort provenance says the list was
+ * never ordered by that dimension, the claim is unverified. Deterministic —
+ * uses the ledger's parsed metrics, not model compliance. Advisory only.
+ */
+export function findUnverifiedSuperlativeAnswer(input: SuperlativeVerificationInput): string | undefined {
+  const dimension = parseRankingDimension(input.goal.toLowerCase());
+  if (!dimension) return undefined;
+  // The list was actually ordered by the goal's dimension: provenance backs
+  // the claim (provenRank semantics).
+  if (input.activeSort?.dimension === dimension.dimension) return undefined;
+
+  const withMetric = input.cards.filter(card => card.metrics?.[dimension.dimension] !== undefined);
+  if (withMetric.length < 2) return undefined;
+
+  const best = withMetric.reduce((best, card) => {
+    const value = card.metrics[dimension.dimension]!;
+    const bestValue = best.metrics[dimension.dimension]!;
+    if (dimension.direction === 'desc') return value > bestValue ? card : best;
+    return value < bestValue ? card : best;
+  }, withMetric[0]);
+
+  const named = input.cards.find(card => card.entityName && answerIncludesEntity(input.answer, card.entityName));
+  if (!named) return undefined;
+  if (named === best || named.entityName === best.entityName) return undefined;
+
+  const formatMetric = (card: typeof best): string => {
+    const value = card.metrics[dimension.dimension]!;
+    return dimension.dimension === 'price' ? `$${value}` : `${value} ${dimension.dimension === 'stars' ? 'stars' : 'rating'}`;
+  };
+  const others = withMetric
+    .filter(card => card !== named)
+    .slice(0, 3)
+    .map(card => `${card.entityName} ${formatMetric(card)}`)
+    .join(', ');
+  return `unverified_superlative_answer: the answer names "${named.entityName}" but the observed cards include ${others} — the surface ordering (${input.activeSort ? `${input.activeSort.dimension}` : 'unsorted'}) was never sorted by ${dimension.dimension}; click the sort control or compare the metric values before claiming the superlative`;
 }
 
 /**

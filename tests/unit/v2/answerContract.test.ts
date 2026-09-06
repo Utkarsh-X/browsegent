@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   findListPageOnlyAnswerSignal,
+  findUnverifiedSuperlativeAnswer,
+  parseRankingDimension,
   inferAnswerContract,
   isSearchOrListingUrl,
   parseRequestedDetailCategories,
@@ -551,4 +553,61 @@ test('partitionAnswerContractReasons routes list_page_only_answer to advisory', 
   assert.deepEqual(hardReasons, ['empty_answer']);
   assert.equal(advisoryReasons.length, 1);
   assert.ok(advisoryReasons[0].startsWith('list_page_only_answer'));
+});
+
+test('findUnverifiedSuperlativeAnswer steers when the named card is not the metric-best on an unsorted surface', () => {
+  const reason = findUnverifiedSuperlativeAnswer({
+    goal: 'Which open-source climate visualization project has the most stars?',
+    answer: 'The most starred project is viz-app with a rich dashboard.',
+    activeSort: { dimension: 'relevance', direction: 'desc' },
+    cards: [
+      { entityName: 'resource-watch/resource-watch', metrics: { stars: 73 } },
+      { entityName: 'viz-app', metrics: { stars: 6 } },
+      { entityName: 'climate-canvas', metrics: { stars: 20 } },
+    ],
+  });
+  assert.ok(reason?.startsWith('unverified_superlative_answer'));
+  assert.ok(reason!.includes('resource-watch/resource-watch 73 stars'));
+  assert.ok(reason!.includes('relevance'), 'naming the observed ordering makes the steering concrete');
+});
+
+test('findUnverifiedSuperlativeAnswer stays silent when the answer is metric-best, sorted, or unverifiable', () => {
+  const cards = [
+    { entityName: 'resource-watch/resource-watch', metrics: { stars: 73 } },
+    { entityName: 'viz-app', metrics: { stars: 6 } },
+  ];
+  const base = { goal: 'Which project has the most stars?', answer: 'resource-watch/resource-watch wins.' };
+  assert.equal(findUnverifiedSuperlativeAnswer({ ...base, activeSort: { dimension: 'relevance', direction: 'desc' }, cards }), undefined, 'naming the best card is plausible');
+  assert.equal(
+    findUnverifiedSuperlativeAnswer({
+      ...base, answer: 'viz-app wins.',
+      activeSort: { dimension: 'stars', direction: 'desc' }, cards,
+    }),
+    undefined,
+    'sorted-by-stars provenance backs the claim',
+  );
+  assert.equal(
+    findUnverifiedSuperlativeAnswer({ ...base, answer: 'unrelated text.', activeSort: { dimension: 'relevance', direction: 'desc' }, cards }),
+    undefined,
+    'answers that name no card are not verifiable this way',
+  );
+  assert.equal(
+    findUnverifiedSuperlativeAnswer({ ...base, answer: 'viz-app wins.', activeSort: undefined, cards: [cards[0]] }),
+    undefined,
+    'fewer than two metric-bearing cards: cannot verify',
+  );
+});
+
+test('parseRankingDimension covers stars, rating, and price superlatives only', () => {
+  assert.deepEqual(parseRankingDimension('which repo has the most stars'), { dimension: 'stars', direction: 'desc' });
+  assert.deepEqual(parseRankingDimension('find the best rated coffee maker'), { dimension: 'rating', direction: 'desc' });
+  assert.deepEqual(parseRankingDimension('what is the cheapest flight'), { dimension: 'price', direction: 'asc' });
+  assert.equal(parseRankingDimension('what is the capital of france'), undefined);
+  assert.equal(parseRankingDimension('list the top 5 movies'), undefined);
+});
+
+test('partitionAnswerContractReasons routes unverified_superlative_answer to advisory', () => {
+  const { advisoryReasons } = partitionAnswerContractReasons(['unverified_superlative_answer: x', 'empty_answer']);
+  assert.equal(advisoryReasons.length, 1);
+  assert.ok(advisoryReasons[0].startsWith('unverified_superlative_answer'));
 });
