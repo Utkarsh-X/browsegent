@@ -35,20 +35,21 @@ export class StabilizationService {
     // D3: SPA hydration and popover re-renders routinely land inside the old
     // fixed window, producing empty or weakened captures. When the page
     // carries the mutation sampler, extend the wait (bounded) until the DOM
-    // has been quiet for mutationQuietMs. Pages without the sampler keep the
-    // exact legacy behavior.
-    const deadline = startedAt + maxSettleMs;
-    while (Date.now() < deadline) {
-      const quietFor = await page.evaluate(() => {
+    // has been quiet for mutationQuietMs. The wait loop runs IN-PAGE (one
+    // round trip, D3.1) instead of polling evaluate from Node. Pages without
+    // the sampler keep the exact legacy behavior.
+    const remainingCapMs = Math.max(0, maxSettleMs - (Date.now() - startedAt));
+    if (remainingCapMs > quietWindowMs) {
+      await page.evaluate(async ({ quietMs, capMs }: { quietMs: number; capMs: number }) => {
         const store = window as unknown as { __bgSettle?: { lastMutationTs: number } };
         const settle = store.__bgSettle;
-        return settle ? Date.now() - settle.lastMutationTs : undefined;
-      }).catch(() => undefined);
-      if (quietFor === undefined) break;
-      if (quietFor >= mutationQuietMs) break;
-      const remaining = deadline - Date.now();
-      if (remaining <= 0) break;
-      await page.waitForTimeout(Math.min(50, remaining)).catch(() => undefined);
+        if (!settle) return;
+        const deadline = Date.now() + capMs;
+        while (Date.now() < deadline) {
+          if (Date.now() - settle.lastMutationTs >= quietMs) return;
+          await new Promise(resolve => setTimeout(resolve, 25));
+        }
+      }, { quietMs: mutationQuietMs, capMs: remainingCapMs }).catch(() => undefined);
     }
 
     return {
