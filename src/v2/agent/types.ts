@@ -39,7 +39,8 @@ export interface V2PlannerClientLike {
   call(input: {
     plannerInput: PlannerInput;
     model?: string;
-    mode?: 'normal' | 'finalization';
+    mode?: 'normal' | 'finalization' | 'done_candidate';
+    checklistSuffix?: string;
     onPacingWait?: (durationMs: number) => void;
   }): Promise<{
     output: PlannerOutput;

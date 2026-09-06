@@ -34,7 +34,10 @@ export interface V2PlannerClientOptions {
 export interface V2PlannerCallInput {
   plannerInput: PlannerInput;
   model?: string;
-  mode?: 'normal' | 'finalization';
+  mode?: 'normal' | 'finalization' | 'done_candidate';
+  /** Done-candidate verification checklist appended to the user message when
+   *  mode='done_candidate' (answer-quality round 1, D1). */
+  checklistSuffix?: string;
   onPacingWait?: (durationMs: number) => void;
 }
 
@@ -89,7 +92,9 @@ export class V2PlannerClient {
       input.plannerInput,
       this.plannerSerialization,
     );
-    let userMessage = baseUserMessage;
+    let userMessage = input.mode === 'done_candidate' && input.checklistSuffix
+      ? `${baseUserMessage}\n\n${input.checklistSuffix}`
+      : baseUserMessage;
     let totalInputTokens = 0;
     let totalCachedInputTokens: number | undefined;
     let totalOutputTokens = 0;

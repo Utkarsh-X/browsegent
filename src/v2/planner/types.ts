@@ -307,6 +307,9 @@ export interface PlannerSerializationConfig {
    *  leave element lines, render once as a CONTINUITY header). Lean-plane only;
    *  off-path byte-identical. */
   pageModel?: boolean;
+  /** Answer-quality D1: one done-candidate verification re-ask at the answer
+   *  acceptance point (steer-once, hard-capped). Off-path byte-identical. */
+  doneCandidateChecklist?: boolean;
   /** Drop responseJsonSchema from the provider call (887 B/call). Measured
    *  0 parse failures across 422 calls without it; robustJsonParse covers
    *  malformed output. Default off until validated on a full run. */

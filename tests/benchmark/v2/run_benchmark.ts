@@ -278,6 +278,7 @@ function formatPlannerSerialization(serialization: BenchmarkRunMetadata['planner
     `prcStableOrder=${serialization?.prcStableOrder ?? 'not-set'}`,
     `composedPrompt=${serialization?.composedPrompt ?? 'not-set'}`,
     `pageModel=${serialization?.pageModel ?? 'not-set'}`,
+    `doneChecklist=${serialization?.doneCandidateChecklist ?? 'not-set'}`,
   ].join(' ');
 }
 

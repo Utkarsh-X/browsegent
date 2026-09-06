@@ -13,7 +13,7 @@ export interface PlannerOutputValidationContext {
   allowedRefs?: readonly string[];
   regionRefs?: Readonly<Record<string, string>>;
   actionSurface?: PlannerActionSurface;
-  mode?: 'normal' | 'finalization';
+  mode?: 'normal' | 'finalization' | 'done_candidate';
   actionCompatibilityScope?: 'all_steps' | 'first_step';
 }
 

@@ -85,3 +85,15 @@ test('composed prompt is smaller than the conditional prompt on a subject-light 
   assert.ok(comp < cond, `composed (${comp} B) must be smaller than conditional (${cond} B)`);
   assert.ok(comp < 7139, `subject-light composed head (${comp} B) must sit under the fixed-core budget`);
 });
+
+import { buildDoneCandidateChecklist } from '../../../src/v2/agent/V2AgentLoop';
+
+test('done-candidate checklist embeds the evidence and the four verification items', () => {
+  const checklist = buildDoneCandidateChecklist('EVIDENCE_TEXT_MARKER');
+  assert.ok(checklist.includes('EVIDENCE_TEXT_MARKER'), 'validation evidence must ride the re-ask');
+  assert.ok(checklist.includes('Item count'), 'item-count check present');
+  assert.ok(checklist.includes('Claim source'), 'claim-source check present');
+  assert.ok(checklist.includes('Value, not narration'), 'value-vs-narration check present');
+  assert.ok(checklist.includes('Language'), 'language check present');
+  assert.ok(checklist.includes('escalate honestly'), 'honest escalation stays a compliant exit');
+});

@@ -86,6 +86,7 @@ export class V2AgentLoop {
       let lastRejectedAnswerKey: string | undefined;
       let repeatedRejectedAnswerCount = 0;
       let advisorySteered = false;
+      let doneChecklistUsed = false;
       const evidenceLedger = new EvidenceLedger();
       const plannerTraceSteps: TraceStep[] = [];
       const recentObservationUrls: string[] = [];
@@ -301,10 +302,54 @@ export class V2AgentLoop {
             continue;
           }
           answerFeedback = undefined;
+          // Answer-quality D1: one done-candidate verification re-ask at the
+          // acceptance point (flag-gated, hard-capped once per task). The
+          // original answer always stands unless the re-ask returns a PASSING
+          // revised done — an escalate verdict from the checklist keeps the
+          // original answer (a delivered answer is never swapped for an
+          // escalation).
+          let acceptedValue = value;
+          const checklistNote = advisoryReasons.length > 0 ? advisoryReasons.join('|') : undefined;
+          if (input.plannerSerialization?.doneCandidateChecklist === true && !doneChecklistUsed) {
+            doneChecklistUsed = true;
+            const checklistInput: typeof plannerInput = {
+              ...plannerInput,
+              episodeId: `episode_done_candidate_${observation.observationId}`,
+              workingSet: plannerInput.workingSet
+                ? { ...plannerInput.workingSet, mode: 'done_candidate' }
+                : plannerInput.workingSet,
+            };
+            try {
+              metrics.plannerCalls += 1;
+              const checklistResult = await plannerClient.call({
+                plannerInput: checklistInput,
+                model: input.model,
+                mode: 'done_candidate',
+                checklistSuffix: buildDoneCandidateChecklist(
+                  buildAnswerValidationEvidence(readEvidenceHistory, surfaceEvidence, evidenceLedger),
+                ),
+                onPacingWait: () => undefined,
+              });
+              metrics.inputTokens += checklistResult.inputTokens;
+              metrics.outputTokens += checklistResult.outputTokens;
+              metrics.plannerDurationMs += checklistResult.durationMs;
+              if (checklistResult.output.done === true && checklistResult.output.val) {
+                const revised = normalizeAnswerValue(checklistResult.output.val, input.goal);
+                const revisedValidation = validateAnswerAgainstContract(revised, answerContract, {
+                  evidenceText: buildAnswerValidationEvidence(readEvidenceHistory, surfaceEvidence, evidenceLedger),
+                });
+                if (revisedValidation.ok && revised !== acceptedValue) {
+                  acceptedValue = revised;
+                }
+              }
+            } catch {
+              // The checklist re-ask is advisory: any failure keeps the original answer.
+            }
+          }
           return await this.complete(harness, {
             success: true,
-            value,
-            advisoryNotes: advisoryReasons.length > 0 ? advisoryReasons.join('|') : undefined,
+            value: acceptedValue,
+            advisoryNotes: checklistNote,
             steps: metrics.plannerCalls,
             metrics,
           }, ledger, outcomeRecorder);
@@ -1875,4 +1920,22 @@ export function normalizeAnswerValue(value: string, goal: string): string {
   }
 
   return sanitized;
+}
+
+/**
+ * Answer-quality round 1 (D1): the done-candidate verification checklist. One
+ * planner re-ask at the answer-acceptance point renders this suffix with the
+ * task's validation evidence in view; the planner may re-answer from evidence
+ * or escalate honestly. Advisory by contract: the original answer stands
+ * unless the re-ask returns a passing revised done.
+ */
+export function buildDoneCandidateChecklist(validationEvidence: string): string {
+  return `DONE-CANDIDATE VERIFICATION — a proposed answer is on record. Verify it against the evidence:
+1. Item count: if the goal requests a specific number of items (for example "5", "both", "all three"), the answer must contain at least that many enumerated items.
+2. Claim source: every fact in the answer must be quotable from the evidence below; if a fact is not in the evidence, replace it with what the evidence shows; if the evidence cannot answer the goal, return {"escalate":"dead_end","reason":"..."} honestly.
+3. Value, not narration: the answer must deliver the requested value itself — never instructions like "click on ... for details".
+4. Language: answer in the goal's language.
+Return done with the verified answer, or escalate honestly.
+Evidence:
+${validationEvidence}`;
 }
