@@ -816,7 +816,7 @@ const READ_PAGE_READINESS_SCRIPT = `
 `;
 
 const READ_PAGE_LANG_SCRIPT = `
-(() => document.documentElement.getAttribute('lang') || '')()
+(() => document.documentElement?.getAttribute('lang') || '')()
 `;
 
 const CAPTURE_PAGE_CONTENT_SCRIPT = `
