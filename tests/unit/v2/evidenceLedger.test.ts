@@ -456,8 +456,11 @@ test('EvidenceLedger: Real GitHub captured trace regression (obs_1_8.json)', asy
   assert.equal(activeSort.direction, 'desc');
 
   const cards = extractResultCards(obs, activeSort);
-  // Must extract the 4 true repository cards, not 40 facet links
-  assert.equal(cards.length, 4);
+  // Must extract the true repository cards, not facet links. Offscreen rows
+  // participate since the ledger un-blinding (S8): the winning data sits
+  // below the fold, so the count exceeds the old visible-only 4.
+  assert.ok(cards.length >= 4, `expected at least 4 repo cards, got ${cards.length}`);
+  assert.ok(cards.every(card => card.entityName), 'every card names an entity');
 
   // Card 1: resource-watch/resource-watch with 73 stars at Rank #1
   assert.equal(cards[0].entityName, 'resource-watch/resource-watch');
@@ -474,9 +477,10 @@ test('EvidenceLedger: Real GitHub captured trace regression (obs_1_8.json)', asy
   assert.equal(cards[2].metrics.stars, 20);
   assert.equal(cards[2].provenRank, 3);
 
-  // Card 4: akshaysonvane (stars below fold, provenRank undefined)
+  // Card 4: akshaysonvane — with offscreen rows participating and a stars
+  // sort active, every star-bearing card carries a proven rank.
   assert.equal(cards[3].entityName, 'akshaysonvane/Climate-Change-Data-Analytics-Visualization');
-  assert.equal(cards[3].provenRank, undefined);
+  assert.equal(cards[3].provenRank, 4);
 
   // Verify NO sidebar facet cards exist
   assert.ok(!cards.some(c => c.entityName?.includes('Jupyter') || c.entityName?.includes('TypeScript') || c.entityName?.includes('1.3k')));

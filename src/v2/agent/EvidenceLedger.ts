@@ -230,7 +230,11 @@ export function extractResultCards(
   observation: BrowserObservation,
   activeSort?: ActiveSortProvenance,
 ): StructuredResultCard[] {
-  const visibleRefs = (observation.refs ?? []).filter(ref => ref.visibility === 'visible');
+  // Offscreen result rows participate: the winning data frequently sits below
+  // the fold (run-15 GitHub resource-watch at y=797/906; S8 blindness) and
+  // P1 already pins such rows into the working set — the ledger must see the
+  // same data the planner sees. Hidden remains excluded.
+  const visibleRefs = (observation.refs ?? []).filter(ref => ref.visibility !== 'hidden');
   if (visibleRefs.length === 0) return [];
 
   // Identify raw anchor elements
