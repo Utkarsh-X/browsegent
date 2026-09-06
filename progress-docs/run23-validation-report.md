@@ -137,3 +137,13 @@ Research: `stealth-hardening-plan.md` (owner-run agent, worktree BrowseGent-arch
 All §8 Step-2 guards pass: walls hold (Allrecipes__3 judge pass 3rd consecutive; Google__Search__0 strict-exact 3rd consecutive; **Google__Search__10 first-ever judge pass**; Cambridge ×2 captcha_wall as the driver-bound verdict predicts), duration parity (85.2s vs 86.3s), no new failure classes. Scores: internal 73.3% (22/30), strict 9/30, judge 8/13 = 61.5% (modern-era high), combined 17/30 — one task inside the band vs run 24's 18. Strict variance (12→9) is clean composition: ArXiv__0/BBC__0 answered-but-drifted (known live-content-drift class), Amazon__10/BBC__10 completion variance, ESPN__0 strict gained.
 
 **Decision: coherent-UA stealth launch is the production stealth config** (`3960a60` stands). The stealth campaign is complete: walls 6→2, two root-caused reliability fixes, UA coherence, driver-bound Cambridge settled by experiment.
+
+## 11. T-B composed-prompt A/B (Run 26, webvoyager_lite_1788729313820)
+
+Treatment: `--planner-composed-prompt` under coherent-UA stealth (baseline = run 25). **All outcome guards pass: internal 24/30 (80%, ties all-time record), combined 18/30 (ties record), judge 8/14 = 57.1%, strict 10 (band), walls hold (Cambridge ×2 only), env-blocked 0.** Strict anchors 7/9 kept (Amazon__0 = completion variance, Google__Map__10 → judge pass, still combined); new conversions: ArXiv__10 first-ever judge pass, Huggingface__0 strict.
+
+**System bytes, measured in production:** mean 7,557 B / p50 8,056 / p90 9,019 (guard ≤9,033 ✓) vs the conditional path's ~8,838 mean — the composed prompt delivered its designed −14.8% in live use. Per-call user bytes flat (9,413 vs 9,463) as designed. calls/task 8.27 vs 7.83 (+0.44, marginally past the ±0.4 guard — watch item; net tokens/task ≈ flat this sample since the per-call system savings were partially offset by call-count variance).
+
+**T0 cache telemetry (first reading):** `cachedInputTokens` present in only 5 of 248 episodes (18,605 tok ≈ 1.4% of input) — Gemini's implicit cache fires occasionally but is NOT a dependable lever for flash-lite on this account, empirically confirming the research verdict: fewer billable bytes (T-B → T-C) is the correct main lever.
+
+**Decision: composed prompt is the production system-prompt path.** Next per the world-model contract: stage 2a (STATE split + marker normalization), then stage 2b (H4 additive carry + hybrid delta wire, behind the C6 replay gate).
