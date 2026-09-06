@@ -301,6 +301,12 @@ export interface PlannerSerializationConfig {
   /** Composed system prompt (T-B): stable fixed head + conditional tail in
    *  engagement order, compressed per the token-round-1 block audit. */
   composedPrompt?: boolean;
+  /** Page-model stage 2a (world-model contract C1/C3): L1 section split —
+   *  volatile observation/focus lines move after PLANNER SURFACE — plus
+   *  continuity-marker normalization (state=weakened / confidence / +new / +chg
+   *  leave element lines, render once as a CONTINUITY header). Lean-plane only;
+   *  off-path byte-identical. */
+  pageModel?: boolean;
   /** Drop responseJsonSchema from the provider call (887 B/call). Measured
    *  0 parse failures across 422 calls without it; robustJsonParse covers
    *  malformed output. Default off until validated on a full run. */

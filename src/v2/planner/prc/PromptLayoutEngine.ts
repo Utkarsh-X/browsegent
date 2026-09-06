@@ -3,10 +3,32 @@ import type { PlannerElementIR, PlannerRepresentationIR } from './types';
 export class PromptLayoutEngine {
   render(
     ir: PlannerRepresentationIR,
-    options: { prcTierOmitted?: boolean; compactDataPlane?: boolean; leanPlane?: boolean } = {},
+    options: { prcTierOmitted?: boolean; compactDataPlane?: boolean; leanPlane?: boolean; pageModel?: boolean } = {},
   ): string {
     if (options.compactDataPlane) {
       return renderCompactDataPlane(ir, options);
+    }
+
+    // Page-model stage 2a (L1): the volatile situation lines (observation, focus)
+    // move after PLANNER SURFACE so same-page consecutive payloads share a longer
+    // byte prefix, and continuity markers leave element lines (see
+    // renderSurface's CONTINUITY header). Lean-plane only; off-path byte-identical.
+    if (options.leanPlane === true && options.pageModel === true) {
+      return [
+        renderMission(ir),
+        renderStateHead(ir),
+        renderSurface(ir, options),
+        renderStateTail(ir),
+        renderRecentEvents(ir),
+        renderEvidenceCoverage(ir),
+        renderGoalProgress(ir),
+        renderHorizon(ir),
+        renderTaskProgress(ir),
+        renderEvidenceSnapshot(ir),
+        renderProblems(ir),
+        renderWorkingSet(ir, true),
+        renderDecisionSignals(ir),
+      ].filter(Boolean).join('\n\n');
     }
 
     return [
@@ -266,6 +288,23 @@ function renderState(ir: PlannerRepresentationIR): string {
   return lines.length > 1 ? lines.join('\n') : '';
 }
 
+/** Page-model L1: the page identity is the stable head of the payload. */
+function renderStateHead(ir: PlannerRepresentationIR): string {
+  const lines = ['STATE'];
+  if (ir.execution.page) lines.push(`  page: "${ir.execution.page.title}" ${ir.execution.page.url}`);
+  return lines.length > 1 ? lines.join('\n') : '';
+}
+
+/** Page-model L1: the volatile situation lines sit after the surface. */
+function renderStateTail(ir: PlannerRepresentationIR): string {
+  const lines = ['STATE'];
+  if (ir.execution.continuity) {
+    lines.push(`  observation: ${ir.execution.continuity.observationId ?? 'unknown'} gen=${ir.execution.continuity.generationId ?? 'unknown'} refs=${ir.execution.continuity.presentRefCount}`);
+  }
+  if (ir.execution.focus) lines.push(`  focus: ${ir.execution.focus.refId} ${ir.execution.focus.reason}`);
+  return lines.length > 1 ? lines.join('\n') : '';
+}
+
 function renderRecentEvents(ir: PlannerRepresentationIR): string {
   const lines = ['RECENT EVENTS'];
   const last = ir.execution.lastResult;
@@ -368,14 +407,23 @@ function renderTaskProgress(ir: PlannerRepresentationIR): string {
   return lines.join('\n');
 }
 
-function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: boolean; leanPlane?: boolean }): string {
+function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: boolean; compactDataPlane?: boolean; leanPlane?: boolean; pageModel?: boolean }): string {
   // PLANNER SURFACE always emits — the page surface is always present in planner context
   const lines = ['PLANNER SURFACE'];
   const lean = options.leanPlane === true;
+  // Page-model C3: continuity markers leave element lines and render once, after
+  // the stable block, as a single header — identity churn from bookkeeping ends.
+  const normalizeMarkers = lean === true && options.pageModel === true;
+  let weakenedCount = 0;
+  let changedCount = 0;
   let budget = lean ? LEAN_SURFACE_PAYLOAD_CAP : Number.POSITIVE_INFINITY;
   let omittedElements = 0;
   const pushElement = (element: PlannerElementIR): void => {
-    const line = `    ${lean ? renderLeanElement(element) : renderElement(element, options)}`;
+    if (normalizeMarkers) {
+      if (element.anomalies.some(a => a.startsWith('state='))) weakenedCount += 1;
+      if (element.delta) changedCount += 1;
+    }
+    const line = `    ${lean ? renderLeanElement(element, normalizeMarkers) : renderElement(element, options)}`;
     if (line.length > budget) {
       omittedElements += 1;
       return;
@@ -407,6 +455,9 @@ function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: 
   if (omittedElements > 0) {
     lines.push(`  ... ${omittedElements} elements omitted (payload cap)`);
   }
+  if (normalizeMarkers && (weakenedCount > 0 || changedCount > 0)) {
+    lines.push(`  CONTINUITY: weakened=${weakenedCount} refs carried from before the last action; changed=${changedCount}`);
+  }
   if (lean) {
     const topRefs = ir.workingSet?.changedRefs.topRefs ?? [];
     const named = topRefs
@@ -428,7 +479,7 @@ const LEAN_SURFACE_PAYLOAD_CAP = 12_000;
  * Internal scoring metadata (lane/tier/score) and default states are omitted —
  * measured at ~1,100 tokens/call of substrate plumbing.
  */
-function renderLeanElement(element: PlannerElementIR): string {
+function renderLeanElement(element: PlannerElementIR, normalizeMarkers = false): string {
   const attrs = [
     `name="${escapeAttr(compactValue(element.name, 120))}"`,
     element.role && element.role !== element.kind ? `role="${escapeAttr(element.role)}"` : undefined,
@@ -439,10 +490,14 @@ function renderLeanElement(element: PlannerElementIR): string {
     element.selectOptions?.length
       ? `options="${escapeAttr(compactValue(element.selectOptions.map(option => compactValue(option, MAX_OPTION_CHARS)).join(' | '), MAX_OPTIONS_TOTAL_CHARS))}"`
       : undefined,
-    element.anomalies.length ? `state="${escapeAttr(element.anomalies.join(','))}"` : undefined,
+    // Page-model C3: continuity markers (state=weakened / confidence=…) move to
+    // the surface's CONTINUITY header; element facts (visibility, actionability) stay.
+    element.anomalies.length
+      ? `state="${escapeAttr((normalizeMarkers ? element.anomalies.filter(a => !a.startsWith('state=') && !a.startsWith('confidence=')) : element.anomalies).join(','))}"`
+      : undefined,
     element.failure ? `failed="${element.failure.kind}x${element.failure.count}"` : undefined,
     element.tools?.length ? `tools="${element.tools.join(',')}"` : undefined,
-    element.delta ? `+${element.delta}` : undefined,
+    !normalizeMarkers && element.delta ? `+${element.delta}` : undefined,
   ].filter(Boolean);
   return `[${element.refId}] <${element.kind} ${attrs.join(' ')} />`;
 }

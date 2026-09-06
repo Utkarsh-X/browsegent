@@ -296,8 +296,9 @@ function readPlannerSerializationConfig(
   const conditionalPrompt = hasFlag('--planner-conditional-prompt');
   const stableOrder = hasFlag('--prc-stable-order');
   const composedPrompt = hasFlag('--planner-composed-prompt');
+  const pageModel = hasFlag('--prc-page-model');
   const noJsonSchema = hasFlag('--planner-no-json-schema');
-  if (prcTierOmitted || compactDataPlane || prcLeanPlane || conditionalPrompt || stableOrder || composedPrompt) {
+  if (prcTierOmitted || compactDataPlane || prcLeanPlane || conditionalPrompt || stableOrder || composedPrompt || pageModel) {
     if (mode !== 'prc') {
       const flags = [
         ...(prcTierOmitted ? ['--prc-tier-omitted'] : []),
@@ -306,6 +307,7 @@ function readPlannerSerializationConfig(
         ...(conditionalPrompt ? ['--planner-conditional-prompt'] : []),
         ...(stableOrder ? ['--prc-stable-order'] : []),
         ...(composedPrompt ? ['--planner-composed-prompt'] : []),
+        ...(pageModel ? ['--prc-page-model'] : []),
       ];
       throw new Error(`${flags.join(' and ')} require --planner-serialization prc.`);
     }
@@ -317,6 +319,7 @@ function readPlannerSerializationConfig(
       ...(conditionalPrompt ? { conditionalSystemPrompt: true } : {}),
       ...(stableOrder ? { prcStableOrder: true } : {}),
       ...(composedPrompt ? { composedPrompt: true } : {}),
+      ...(pageModel ? { pageModel: true } : {}),
     };
   }
   if (noJsonSchema) {

@@ -310,6 +310,7 @@ export function buildV2PlannerUserMessage(
       prcTierOmitted: config.prcTierOmitted,
       compactDataPlane: config.compactDataPlane,
       leanPlane: config.prcLeanPlane,
+      pageModel: config.pageModel,
     })}`;
   }
 
