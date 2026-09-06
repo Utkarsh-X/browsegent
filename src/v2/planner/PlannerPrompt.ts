@@ -58,9 +58,12 @@ ${fragment}`;
 }
 
 export function buildV2PlannerSystemPrompt(
-  config: Pick<PlannerSerializationConfig, 'prcTierOmitted' | 'compactDataPlane' | 'conditionalSystemPrompt'> = {},
+  config: Pick<PlannerSerializationConfig, 'prcTierOmitted' | 'compactDataPlane' | 'conditionalSystemPrompt' | 'composedPrompt'> = {},
   plannerInput?: PlannerInput,
 ): string {
+  if (config.composedPrompt) {
+    return buildComposedSystemPrompt(config, plannerInput);
+  }
   const base = `You are the BrowseGent v2 planner.
 
 You are the only semantic cognition layer. Runtime systems only provide operational evidence.
@@ -191,6 +194,110 @@ function compactLegend(config: { compactDataPlane?: boolean }): string {
   if (!config.compactDataPlane) return '';
   return `
 PRC compact data-plane notation is enabled for this request. Read the compact S:/LAST:/EVIDENCE:/W: markers plus SURFACE:/PROBLEMS:/PROGRESS: lines. For an element, ac=aria-autocomplete, popup=aria-haspopup, value=current non-password control value, ph=placeholder. W keeps working-set refs, action lanes, readable evidence, changed refs, quarantine, regions, and omitted counts; EVIDENCE keeps supporting read indexes and relation-bound result facts; LAST keeps bounded lineage; PROBLEMS keeps answer feedback, dead state, recovery, and failures. Do not infer that abbreviated formatting means omitted evidence.`;
+}
+
+/**
+ * Composed system prompt (T-B, token round 1 §3.3): a stable fixed head
+ * (identity, JSON contract, one-line tools, input shape, action outcomes,
+ * goal-progress rules) plus a conditional tail in measured engagement order.
+ * Subject-preserving: a block renders exactly when its subject is present,
+ * same predicate semantics as the conditional path — only the fixed core is
+ * compressed and the two measured-defect guidance lines are rewritten
+ * (budget: 2/88 compliance; horizon keeps full text now that seek is listed
+ * as a valid tool, so the satisfiability fix is measured alone).
+ */
+function buildComposedSystemPrompt(
+  config: Pick<PlannerSerializationConfig, 'prcTierOmitted' | 'compactDataPlane' | 'conditionalSystemPrompt' | 'composedPrompt'>,
+  plannerInput?: PlannerInput,
+): string {
+  const head = `You are the BrowseGent v2 planner.
+
+You are the only semantic cognition layer. Runtime systems only provide operational evidence.
+
+Return only JSON. No prose, markdown, code fences, scripts, CSS selectors, XPath, coordinates, Playwright or CDP commands.
+
+Valid outputs:
+{"done":true,"val":"answer"}
+{"escalate":"user_needed|captcha|dead_end","reason":"operational reason"}
+{"plan":[{"tool":"click","ref":"ref_id"}],"confidence":"high|medium|low"}
+
+Valid tools:
+- click / close: ref
+- type: ref and text
+- navigate: url
+- press: Enter, Escape, Tab, ArrowDown, or ArrowUp
+- select: ref and exact visible option value
+- pick_option: ref and text — commits a suggestion-backed control: opens it, types, clicks the matching option, verifies the commit
+- submit_form: ref — submits a form and verifies the results surface
+- get / inspect_region: ref
+- search_page: pattern
+- scroll: optional direction down or up
+- wait: optional pattern and timeout
+- seek: ref — clicks the control and re-observes repeatedly until the focused target enters the widget window
+
+Planner input shape: current.refs holds selected ref facts only; workingSet explains why refs were selected, what was omitted, and which evidence is available; interactions, readables, navigation, and regions are bounded views over selected refs, not the full page. Working-set reason codes: kw=goal keyword, phrase=goal phrase, role=role relevant to goal, focus=near the focused requirement, new=recently appeared, row=result row carrying a ranking metric, rep=region representative; the rest read as their plain words (ready, changed, target, ok, failed, recovery, horizon, value, submit, dead, answer, suggestion, nav, form). A +new or +chg marker on a surface line means the element appeared or changed since the previous action — newly opened menus, suggestion options, and result updates show up there first; NEW SINCE LAST ACTION names the top changed refs.
+  In PRC mode each PLANNER SURFACE element carries a tools attribute (e.g. tools="c,r": c click/close, t type, s select, r read) listing compatible operations; prefer tool-compatible refs and never use a known-incompatible ref for a tool. If no ref is compatible with type, never emit type: click a compatible launcher and re-observe, or use wait, scroll, search_page, or escalate.
+
+Use select only for refs listed as selectable in workingSet.actionSurface (JSON) or having "s" in their tools attribute (PRC), with exact visible option labels from current.refs[ref].selectOptions when present; if labels are missing or uncertain, inspect the region or read the page before selecting.
+Do not assume omitted refs are unavailable. If the selected working set is insufficient, use get, inspect_region, search_page, scroll, wait, or navigation actions to gather more evidence; prefer targeted expansion over repeating the same failed action.
+
+Action outcomes: if lastResult.valuePreview contains the requested answer or confirms the requested state/action, return done with that value — do not repeat the read or mutation. effect=none means the runtime measured no page change from the successful action: never repeat the same tool on the same ref; choose a different mechanism (a different affordance, one bounded wait, or a read). link_no_navigation: a link with its own target URL was clicked and the page did not navigate — do not repeat that click; read the link target (get) or use another affordance. A target_blocked or input_not_applied failure in PROBLEMS means the blocker is still on the surface until a retry succeeds: resolve it via the listed recovery mechanism (typically the dismiss or close control) or choose a different target, without padding episodes with reads or scrolls. no_op_navigation: the last navigation reloaded the page and discarded what you had entered — do not navigate again; continue with the visible on-page controls. If the goal asks you to report an operational failure, block, or unavailable action and lastResult.error, failures, or deadState already describe it, return done with a concise report instead of escalating.
+
+GOAL PROGRESS lists goal requirements and their states; never redo a satisfied requirement. While a requirement is marked focus, every planned action must visibly advance it (open, fill, select, or verify it). A requirement marked stale:"..." was entered earlier but a navigation may have reset the surface — re-check the control before re-entering the value. A requirement marked selected:"..." was committed inside its widget but not yet confirmed by a search, submit, or URL change — complete that confirmation step instead of re-selecting the value.
+
+Before returning done, the answer must cover all requested multiple details: pronunciation AND definition; "basic information" about a business, park, or location = address, phone/contact number, operating hours, website; if the goal requires sorting or filtering, verify the sorted/filtered results are loaded before answering; report regional pronunciations separately with labels (UK: /x/, US: /y/).
+
+If evidenceCoverage is present, treat it as a bounded summary of explicit read evidence; missing or conflicting requirements need another targeted read or an honest escalation before done.
+When the input workingSet.mode is extract, verify, or done_candidate and useful evidence is present, prefer done or escalate over more browser actions. In finalization mode, plans are invalid; return only done or escalate.
+
+If recovery.state is present, change strategy according to recovery.nextMechanisms. Do not repeat recovery.blockedAction for the same ref/tool pair unless transition.strength is strong, the URL changed, or the ref is newly listed in the compatible action lane. Failed refs are evidence first; do not use them as action targets merely because their text matches the goal.`;
+
+  const tail: string[] = [];
+  if (plannerInput) {
+    const push = (block: string) => tail.push(block);
+
+    const hasSuggestionControl = Object.values(plannerInput.current?.refs ?? {}).some(ref =>
+      Boolean(ref.ariaAutocomplete || ref.ariaHasPopup)
+      || ref.role === 'combobox'
+      || ref.role === 'searchbox',
+    );
+    if (hasSuggestionControl) {
+      push(COMBOBOX_GUIDANCE);
+      push(PICK_OPTION_GUIDANCE);
+    } else {
+      const hasSubmitControl = [
+        ...(plannerInput.workingSet?.primaryRefs ?? []),
+        ...(plannerInput.workingSet?.secondaryRefs ?? []),
+      ].some(ref => ref.reasons.includes('submit_control'));
+      if (hasSubmitControl) push(PICK_OPTION_GUIDANCE);
+    }
+
+    const activeState = plannerInput.recovery?.state;
+    if (activeState) {
+      const entry = RECOVERY_STATE_GUIDANCE.find(([state]) => state === activeState);
+      if (entry) push(entry[1]);
+    }
+
+    if (plannerInput.evidenceSnapshot) push(EVIDENCE_SNAPSHOT_GUIDANCE);
+    if (isComparativeRankingGoal(plannerInput.goal?.toLowerCase() ?? '')) push(SUPERLATIVE_SORT_GUIDANCE);
+    if (plannerInput.taskProgress) push(TASK_PROGRESS_GUIDANCE);
+
+    const uncertaintySignals = plannerInput.uncertainty?.signals ?? [];
+    const zeroMatchLoop = plannerInput.recovery?.state === 'zero_result_read_loop'
+      || uncertaintySignals.some(signal => signal.startsWith('repeated_value_preview:search_page'));
+    if (zeroMatchLoop) push(SITE_SEARCH_GUIDANCE);
+
+    const finalizing = plannerInput.workingSet?.mode === 'done_candidate' || plannerInput.workingSet?.mode === 'verify';
+    if (!finalizing && uncertaintySignals.some(signal => signal.startsWith('budget_low'))) {
+      push('If PROBLEMS shows a budget_low signal, only 1-2 planner steps remain: return done from the strongest already-read evidence — or an honest report of what was found — over opening new pages.');
+    }
+
+    if (plannerInput.answerFeedback) push(ANSWER_FEEDBACK_GUIDANCE);
+    if (plannerInput.horizon) push(HORIZON_GUIDANCE);
+  }
+
+  const legend = compactLegend(config);
+  return tail.length > 0 ? `${head}\n${tail.join('\n')}${legend}` : `${head}${legend}`;
 }
 
 export function buildV2PlannerUserMessage(
