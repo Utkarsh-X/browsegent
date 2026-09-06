@@ -1,18 +1,49 @@
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import type { BrowserSessionOptions } from './types';
 
 /**
  * Stealth launch (T1, probe-validated): persistent profile + --headless=new +
- * AutomationControlled disabled + consistent client hints. The probe cleared
+ * AutomationControlled disabled + coherent binary-derived UA. The probe cleared
  * Allrecipes and Google headless under this config where the plain launch was
  * walled. Opt-in via BROWSEGENT_STEALTH=1; unset keeps the legacy launch
  * byte-for-byte. Profile persists across the whole suite so any warm-up cost
  * amortizes to zero per task.
+ *
+ * UA is derived from the launched binary (never hardcoded — versions decay):
+ * the native headless UA carries a HeadlessChrome token, which is the measured
+ * Allrecipes/Google wall trigger; replacing it with Chrome while leaving
+ * everything else native keeps UA, sec-ch-ua and navigator.userAgentData
+ * pointing at the same binary version. No extraHTTPHeaders overrides: native
+ * client hints are already coherent, and injected ones are partially ignored.
  */
-const STEALTH_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
+
+let coherentUserAgentPromise: Promise<string> | undefined;
+
+function coherentUserAgent(): Promise<string> {
+  coherentUserAgentPromise ??= (async () => {
+    const bootstrapDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bg-ua-'));
+    try {
+      const probe = await chromium.launchPersistentContext(bootstrapDir, {
+        headless: false,
+        args: ['--headless=new'],
+      });
+      try {
+        const page = probe.pages()[0] ?? await probe.newPage();
+        const native = await page.evaluate(() => navigator.userAgent);
+        return native.replace('HeadlessChrome', 'Chrome');
+      } finally {
+        await probe.close().catch(() => undefined);
+      }
+    } finally {
+      fs.rmSync(bootstrapDir, { recursive: true, force: true });
+    }
+  })();
+  return coherentUserAgentPromise;
+}
 
 function stealthEnabled(): boolean {
   return process.env.BROWSEGENT_STEALTH?.trim() === '1';
@@ -53,17 +84,13 @@ export class BrowserSession {
         '--no-first-run',
         '--no-default-browser-check',
         '--disable-default-apps',
-        `--window-size=${this.options.viewport.width},${this.options.viewport.height}`,
+        // Slightly larger than the viewport so innerWidth/outerWidth differ,
+        // as on a real browser (headless otherwise reports inner==outer).
+        `--window-size=${this.options.viewport.width + 84},${this.options.viewport.height + 132}`,
       ],
       viewport: this.options.viewport,
-      userAgent: STEALTH_UA,
+      userAgent: await coherentUserAgent(),
       locale: 'en-US',
-      extraHTTPHeaders: {
-        'Accept-Language': 'en-US,en;q=0.9',
-        'sec-ch-ua': '"Chromium";v="134", "Google Chrome";v="134", "Not-A.Brand";v="99"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-      },
     });
     try {
       const pages = context.pages().filter(p => !p.isClosed());

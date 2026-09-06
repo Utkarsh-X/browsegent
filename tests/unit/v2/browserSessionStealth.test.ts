@@ -15,8 +15,21 @@ test('BROWSEGENT_STEALTH launches the hardened persistent context (UA, profile, 
     const page = session.currentPage();
     const ua = await page.evaluate(() => navigator.userAgent);
     const webdriver = await page.evaluate(() => navigator.webdriver);
+    const uaDataBrands = await page.evaluate(() =>
+      ((navigator as unknown as { userAgentData?: { brands?: Array<{ brand: string; version: string }> } }).userAgentData?.brands ?? [])
+        .map(b => b.version).join(','),
+    );
     assert.ok(!ua.includes('Headless'), `headless marker leaked into UA: ${ua}`);
     assert.equal(webdriver, false, 'navigator.webdriver must read false under stealth');
+    // Coherence: the UA's major version must equal the client-hint brands'
+    // major version — the spoofed Chrome/134 vs binary-145 mismatch is a
+    // remotely checkable contradiction (measured by the stealth research).
+    const uaMajor = ua.match(/Chrome\/(\d+)/)?.[1];
+    assert.ok(uaMajor, `UA must carry a Chrome major version: ${ua}`);
+    assert.ok(
+      uaDataBrands.split(',').filter(Boolean).every(v => v.split('.')[0] === uaMajor),
+      `UA major ${uaMajor} must match userAgentData brands [${uaDataBrands}]`,
+    );
     assert.ok(fs.existsSync(profileDir), 'persistent profile directory created');
     await session.close();
   } finally {
