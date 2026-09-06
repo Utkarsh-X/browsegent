@@ -121,3 +121,13 @@ ESPN__0 died at startup with the raw stack `page.evaluate: TypeError: Cannot rea
 - Stealth is proven: two consecutive stealth runs, walls 6→2, Google Search + Allrecipes now runnable, zero environment-blocked tasks.
 - The stack at run 24 (with both fixes) sits at record internal rate (80%) with the band's top combined score — the same stack that scored 18 in run 20, now covering 28 runnable tasks instead of 23.
 - Next benchmark spend: T-A cache-aligned rendering A/B (token-first priority) with both fixes in.
+
+## 9. Stealth research folded + T1 hardening landed (2026-09-07)
+
+Research: `stealth-hardening-plan.md` (owner-run agent, worktree BrowseGent-arch-stealth). Key verdicts, all measured: Allrecipes/Google walls are triggered by the HeadlessChrome UA token; our Chrome/134 spoof vs native userAgentData 145 was a remotely checkable contradiction; Cambridge is a **driver-bound** Cloudflare managed challenge (same binary undriven clears in <65s; every driven variant challenges forever; Turnstile widget never renders).
+
+**Landed (commit `3960a60`):** coherent binary-derived UA (Chrome/145.0.0.0, no hardcoded versions), extraHTTPHeaders client-hint overrides removed (they were partially ignored and incoherent), window-size offset (inner≠outer). Probed through production BrowserSession headless: **Allrecipes CLEARED 2.0s (360 interactive), Google CLEARED 0.5s (45)**; UA↔brands coherence pinned by unit test.
+
+**Patchright probe (the decisive Cambridge experiment):** patchright 1.62.3 + coherent UA + persistent profile → **STILL_CHALLENGED at 121.5s** (same signature: "Just a moment...", zero Turnstile iframes). Together with the research's rebrowser result, this confirms the wall at a depth beyond all public driver patches. **Decision: no Patchright adoption** (no measured benefit; not worth a fork dependency + second browser binary). Cambridge-class walls stay honest `captcha_wall`, in-denominator. Stealth research loop is **closed** — no further rounds on Cambridge.
+
+**Deferred (research-ranked low):** T2 undriven warm-up (optional, low load-bearing), V1 extension pruning (not on the v2 hot path). Note: `patchright` was installed `--no-save` for the probe and remains in node_modules only.
