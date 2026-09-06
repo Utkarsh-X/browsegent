@@ -131,3 +131,9 @@ Research: `stealth-hardening-plan.md` (owner-run agent, worktree BrowseGent-arch
 **Patchright probe (the decisive Cambridge experiment):** patchright 1.62.3 + coherent UA + persistent profile → **STILL_CHALLENGED at 121.5s** (same signature: "Just a moment...", zero Turnstile iframes). Together with the research's rebrowser result, this confirms the wall at a depth beyond all public driver patches. **Decision: no Patchright adoption** (no measured benefit; not worth a fork dependency + second browser binary). Cambridge-class walls stay honest `captcha_wall`, in-denominator. Stealth research loop is **closed** — no further rounds on Cambridge.
 
 **Deferred (research-ranked low):** T2 undriven warm-up (optional, low load-bearing), V1 extension pruning (not on the v2 hot path). Note: `patchright` was installed `--no-save` for the probe and remains in node_modules only.
+
+## 10. Coherent-UA validation (Run 25, webvoyager_lite_1788723829378)
+
+All §8 Step-2 guards pass: walls hold (Allrecipes__3 judge pass 3rd consecutive; Google__Search__0 strict-exact 3rd consecutive; **Google__Search__10 first-ever judge pass**; Cambridge ×2 captcha_wall as the driver-bound verdict predicts), duration parity (85.2s vs 86.3s), no new failure classes. Scores: internal 73.3% (22/30), strict 9/30, judge 8/13 = 61.5% (modern-era high), combined 17/30 — one task inside the band vs run 24's 18. Strict variance (12→9) is clean composition: ArXiv__0/BBC__0 answered-but-drifted (known live-content-drift class), Amazon__10/BBC__10 completion variance, ESPN__0 strict gained.
+
+**Decision: coherent-UA stealth launch is the production stealth config** (`3960a60` stands). The stealth campaign is complete: walls 6→2, two root-caused reliability fixes, UA coherence, driver-bound Cambridge settled by experiment.
