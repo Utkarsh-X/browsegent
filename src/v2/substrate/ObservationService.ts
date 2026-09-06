@@ -38,7 +38,7 @@ export class ObservationService {
 
     const { url, title, captured, prose, lang } = state;
 
-    const identities = await resolveBackendNodeIds(input.page, captured.length);
+    const identities = await resolveBackendNodeIds(input.page, captured.length, undefined, captured);
     const refs = captured.map((candidate, index): V2Ref => ({
       refId: `ref_${input.generationId}_${index + 1}`,
       generationId: input.generationId,
@@ -218,10 +218,49 @@ export function buildBrowserObservation(input: BuildObservationInput): BrowserOb
   };
 }
 
+/** Above this captured-element count the batched tree payload is capped out
+ *  and the legacy marker+describeNode path takes over (D4 blueprint guard). */
+const BATCH_IDENTITY_MAX_ELEMENTS = 2_000;
+
+interface CdpTreeNode {
+  nodeId?: number;
+  nodeName?: string;
+  nodeType?: number;
+  backendNodeId?: number;
+  children?: CdpTreeNode[];
+  shadowRoots?: CdpTreeNode[];
+  templateContents?: CdpTreeNode[];
+  contentDocument?: CdpTreeNode;
+  frameId?: string;
+}
+
+/**
+ * Flattens a CDP node tree in the exact pre-order the in-page walk uses:
+ * for each element — yield it, then its shadow subtrees, then its light
+ * children — so position i in this list is the element with walkIndex i.
+ * Text nodes, template contents, and nested documents are skipped (the
+ * in-page walk never crosses them).
+ */
+function flattenCdpElementOrder(root: CdpTreeNode): CdpTreeNode[] {
+  const out: CdpTreeNode[] = [];
+  const visit = (node: CdpTreeNode): void => {
+    if (node.nodeType === 1) out.push(node);
+    for (const shadow of node.shadowRoots ?? []) {
+      visit(shadow);
+    }
+    for (const child of node.children ?? []) {
+      visit(child);
+    }
+  };
+  visit(root);
+  return out;
+}
+
 export async function resolveBackendNodeIds(
   page: Page,
   count: number,
   createBridge: (page: Page) => Promise<CdpBridge> = CdpBridge.create,
+  captured?: Array<{ walkIndex?: number; tagName?: string }>,
 ): Promise<Array<{ backendNodeId?: number; frameId?: string }>> {
   const identities = Array.from({ length: count }, () => ({} as { backendNodeId?: number; frameId?: string }));
   let bridge: CdpBridge | undefined;
@@ -230,6 +269,40 @@ export async function resolveBackendNodeIds(
     bridge = await createBridge(page).catch(() => undefined);
     if (!bridge) {
       return identities;
+    }
+
+    // D4 batched identity: one getDocument(-1, pierce) round trip replaces up
+    // to 150 sequential describeNode calls and pierces shadow roots, so
+    // shadow refs gain real backendNodeIds. Position-aligned join against the
+    // in-page walk order with a tagName guard; any page-level failure falls
+    // through to the legacy marker path unchanged.
+    if (count > 0 && captured && count <= BATCH_IDENTITY_MAX_ELEMENTS) {
+      try {
+        const tree = await bridge.send<{ root?: CdpTreeNode }>('DOM.getDocument', { depth: -1, pierce: true });
+        const root = tree.root;
+        if (root?.nodeId !== undefined) {
+          const ordered = flattenCdpElementOrder(root);
+          let matched = 0;
+          for (let index = 0; index < count; index += 1) {
+            const walkIndex = captured[index]?.walkIndex;
+            const tagName = captured[index]?.tagName;
+            if (walkIndex === undefined || walkIndex >= ordered.length) continue;
+            const node = ordered[walkIndex];
+            const expected = String(tagName ?? '').toUpperCase();
+            const actual = String(node.nodeName ?? '').toUpperCase();
+            if (expected && expected !== actual) continue;
+            identities[index].backendNodeId = node.backendNodeId;
+            identities[index].frameId = root.frameId;
+            matched += 1;
+          }
+          if (matched > 0) {
+            return identities;
+          }
+          // Complete join failure: fall through to the legacy path below.
+        }
+      } catch (error) {
+        console.warn('[ObservationService] batched CDP identity failed, falling back to legacy path:', error instanceof Error ? error.message : error);
+      }
     }
 
     let rootNodeId: number | undefined;
@@ -558,6 +631,9 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
 
   walk(document);
 
+  const walkIndexByElement = new Map();
+  elements.forEach((el, walkIdx) => walkIndexByElement.set(el, walkIdx));
+
   const roleNameCounts = new Map();
   const markedElements = [];
   const markerPrefix = 'browsegent-v2-' + Math.random().toString(36).slice(2);
@@ -608,6 +684,7 @@ const COLLECT_INTERACTIVE_ELEMENTS_SCRIPT = `
         : undefined;
 
       return {
+        walkIndex: walkIndexByElement.get(element),
         targetId: 'target_' + hashString((selectorCandidates[0] || element.tagName) + '|' + (name || '') + '|' + text + '|' + index),
         selectorCandidates,
         tagName,

@@ -35,6 +35,8 @@ export interface BuildObservationInput {
 }
 
 export interface CapturedElement {
+  /** Position of this element in the document-order walk (D4 batched identity join). */
+  walkIndex?: number;
   targetId: string;
   frameId?: string;
   selectorCandidates: string[];

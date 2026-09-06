@@ -430,3 +430,70 @@ test('ObservationService.capture waits out a titled interactive-free shell and r
   assert.equal(result.refs.length, 1);
   assert.equal(evaluateCallCount, 4); // empty, empty (waited), refs, cleanup
 });
+
+test('resolveBackendNodeIds joins backendNodeIds from one batched getDocument tree', async () => {
+  const { resolveBackendNodeIds } = await import('../../../src/v2/substrate/ObservationService');
+  const calls: string[] = [];
+  const mockBridge = {
+    send: async (method: string) => {
+      calls.push(method);
+      if (method === 'DOM.getDocument') {
+        return {
+          root: {
+            nodeId: 1, nodeName: '#document', nodeType: 9, frameId: 'frame-main',
+            children: [
+              { nodeId: 2, nodeName: 'HTML', nodeType: 1, backendNodeId: 101, children: [
+                { nodeId: 3, nodeName: 'BODY', nodeType: 1, backendNodeId: 102, children: [
+                  { nodeId: 4, nodeName: 'DIV', nodeType: 1, backendNodeId: 103, children: [] },
+                  { nodeId: 5, nodeName: '#text', nodeType: 3, children: [] },
+                  { nodeId: 6, nodeName: 'A', nodeType: 1, backendNodeId: 104, children: [] },
+                ] },
+              ] },
+            ],
+          },
+        };
+      }
+      throw new Error(`unexpected ${method}`);
+    },
+    dispose: async () => undefined,
+  };
+
+  const captured = [
+    { walkIndex: 0, tagName: 'HTML' },
+    { walkIndex: 1, tagName: 'BODY' },
+    { walkIndex: 2, tagName: 'DIV' },
+    { walkIndex: 3, tagName: 'A' },
+  ];
+  const identities = await resolveBackendNodeIds({ evaluate: async () => undefined } as never, 4, async () => mockBridge as never, captured);
+
+  assert.deepEqual(calls, ['DOM.getDocument'], 'one round trip, no describeNode calls');
+  assert.equal(identities[0].backendNodeId, 101);
+  assert.equal(identities[2].backendNodeId, 103);
+  assert.equal(identities[3].backendNodeId, 104, 'walk order counts elements only');
+  assert.equal(identities[3].frameId, 'frame-main');
+});
+
+test('resolveBackendNodeIds falls back to the legacy path when the join mismatches', async () => {
+  const { resolveBackendNodeIds } = await import('../../../src/v2/substrate/ObservationService');
+  const mockBridge = {
+    send: async (method: string) => {
+      if (method === 'DOM.getDocument') {
+        return { root: { nodeId: 1, nodeName: '#document', nodeType: 9, children: [
+          { nodeId: 2, nodeName: 'SPAN', nodeType: 1, backendNodeId: 900, children: [] },
+        ] } };
+      }
+      if (method === 'DOM.querySelectorAll') {
+        return { nodeIds: [7] };
+      }
+      if (method === 'DOM.describeNode') {
+        return { node: { backendNodeId: 901, frameId: 'f', attributes: ['data-browsegent-v2-marker', 'browsegent-x-0'] } };
+      }
+      throw new Error(`unexpected ${method}`);
+    },
+    dispose: async () => undefined,
+  };
+
+  const captured = [{ walkIndex: 0, tagName: 'A' }];
+  const identities = await resolveBackendNodeIds({ evaluate: async () => undefined } as never, 1, async () => mockBridge as never, captured);
+  assert.equal(identities[0].backendNodeId, 901, 'legacy describeNode path recovered the identity');
+});

@@ -176,3 +176,34 @@ test('scoreBenchmarkResult classifies startup crash without trace separately', (
 
   assert.equal(scored.failureType, 'runtime_startup_failure');
 });
+
+test('scoreBenchmarkResult classifies v2_max_steps_exhausted as budget_exceeded and not passed', () => {
+  const scored = scoreBenchmarkResult(task, {
+    adapterId: 'browser-control',
+    taskId: task.taskId,
+    attempt: 1,
+    success: false,
+    value: 'some partial answer extracted from page',
+    failureReason: 'v2_max_steps_exhausted',
+    metrics: { plannerCalls: 12, toolExecutions: 11, durationMs: 120000 },
+  }, { ok: true, errors: [] });
+
+  assert.equal(scored.passed, false);
+  assert.equal(scored.failureType, 'budget_exceeded');
+});
+
+test('scoreBenchmarkResult classifies cloudflare and turnstile challenge walls as captcha_wall', () => {
+  const scored = scoreBenchmarkResult(task, {
+    adapterId: 'browser-control',
+    taskId: task.taskId,
+    attempt: 1,
+    success: false,
+    value: 'The page is blocked by a Cloudflare security verification block.',
+    failureReason: 'Bot verification / access block: The page is blocked by a Cloudflare security verification block.',
+    metrics: { plannerCalls: 10, toolExecutions: 9, durationMs: 90000 },
+  }, { ok: true, errors: [] });
+
+  assert.equal(scored.passed, false);
+  assert.equal(scored.failureType, 'captcha_wall');
+});
+
