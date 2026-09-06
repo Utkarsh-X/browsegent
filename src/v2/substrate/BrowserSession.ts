@@ -35,13 +35,20 @@ export class BrowserSession {
     };
   }
 
-  private async openStealth(url: string): Promise<void> {
+  /**
+   * One launch attempt of the stealth persistent context. Verifies the browser
+   * actually came up and the acquired page is live: run-23 telemetry showed
+   * Chromium processes dying at/near launch (profile exit_type "Crashed",
+   * 40-114s stuck startups), which previously surfaced as confusing downstream
+   * "no active page" errors instead of a precise launch failure.
+   */
+  private async launchStealthAttempt(): Promise<{ context: BrowserContext; page: Page }> {
     const profileDir = stealthProfileDir();
     fs.mkdirSync(profileDir, { recursive: true });
     const context = await chromium.launchPersistentContext(profileDir, {
       headless: false,
       args: [
-        ...(!this.options.headed ? ['--headless=new'] : []),
+        ...(!this.options.headed ? ['--headless=new'] : ['--window-position=50,50']),
         '--disable-blink-features=AutomationControlled',
         '--no-first-run',
         '--no-default-browser-check',
@@ -58,22 +65,67 @@ export class BrowserSession {
         'sec-ch-ua-platform': '"Windows"',
       },
     });
-    this.context = context;
-    const pages = context.pages();
-    this.page = pages.length > 0 ? pages[0] : await context.newPage();
-    await this.installSettlementSampler(this.page).catch(() => undefined);
+    try {
+      const pages = context.pages().filter(p => !p.isClosed());
+      const page = pages.length > 0 ? pages[0] : await context.newPage();
+      if (page.isClosed()) throw new Error('acquired page is already closed');
+      if (this.options.headed) {
+        await page.bringToFront().catch(() => undefined);
+      }
+      await this.installSettlementSampler(page).catch(() => undefined);
+      return { context, page };
+    } catch (error) {
+      await context.close().catch(() => undefined);
+      throw error;
+    }
+  }
 
+  /** Launch with one self-healing retry (transient crashes, stale profile locks). */
+  private async openStealthContext(): Promise<{ context: BrowserContext; page: Page }> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        return await this.launchStealthAttempt();
+      } catch (error) {
+        lastError = error;
+        await new Promise(r => setTimeout(r, 1500));
+      }
+    }
+    const detail = lastError instanceof Error ? lastError.message : String(lastError);
+    throw new Error(`stealth_launch_failed after retry: ${detail}`);
+  }
+
+  /** goto with the legacy 3-attempt loop; a page that dies mid-load fails fast. */
+  private async gotoWithRetry(page: Page, url: string): Promise<void> {
     let attempts = 0;
     while (attempts < 3) {
       try {
-        await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        break;
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        return;
       } catch (error) {
+        if (page.isClosed()) {
+          const detail = error instanceof Error ? error.message : String(error);
+          throw new Error(`page closed while loading ${url}: ${detail}`);
+        }
         attempts += 1;
         if (attempts >= 3) throw error;
         await new Promise(r => setTimeout(r, 2000));
       }
     }
+  }
+
+  /** open() must either deliver a live page or throw precisely — never resolve broken. */
+  private assertLivePage(source: string): void {
+    if (!this.page || this.page.isClosed()) {
+      throw new Error(`${source} open() finished without a live page`);
+    }
+  }
+
+  private async openStealth(url: string): Promise<void> {
+    const launched = await this.openStealthContext();
+    this.context = launched.context;
+    this.page = launched.page;
+    await this.gotoWithRetry(launched.page, url);
   }
 
   async open(url: string): Promise<void> {
@@ -86,25 +138,39 @@ export class BrowserSession {
       // is the point. Closed only via close().
       if (!this.context) {
         await this.openStealth(url);
+        this.assertLivePage('stealth');
         return;
       }
-      await this.installSettlementSampler(this.page!).catch(() => undefined);
-      let attempts = 0;
-      while (attempts < 3) {
-        try {
-          await this.page!.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-          break;
-        } catch (error) {
-          attempts += 1;
-          if (attempts >= 3) throw error;
-          await new Promise(r => setTimeout(r, 2000));
+      // Context reuse (in-task navigate): secure a live page on the existing
+      // context; if the context died underneath us, rebuild from scratch.
+      let page: Page;
+      try {
+        page = await this.context.newPage();
+        if (page.isClosed()) throw new Error('new page closed immediately');
+        if (this.options.headed) {
+          await page.bringToFront().catch(() => undefined);
         }
+        await this.installSettlementSampler(page).catch(() => undefined);
+      } catch {
+        this.page = undefined;
+        const dead = this.context;
+        this.context = undefined;
+        await dead.close().catch(() => undefined);
+        await this.openStealth(url);
+        this.assertLivePage('stealth');
+        return;
       }
+      this.page = page;
+      await this.gotoWithRetry(page, url);
+      this.assertLivePage('stealth');
       return;
     }
 
     if (!this.browser) {
-      this.browser = await chromium.launch({ headless: !this.options.headed });
+      this.browser = await chromium.launch({
+        headless: !this.options.headed,
+        args: this.options.headed ? ['--window-position=50,50'] : [],
+      });
     }
 
     if (this.page) {
@@ -129,6 +195,9 @@ export class BrowserSession {
     } else {
       this.page = await this.browser.newPage({ viewport: this.options.viewport });
     }
+    if (this.options.headed) {
+      await this.page.bringToFront().catch(() => undefined);
+    }
     await this.installSettlementSampler(this.page).catch(() => undefined);
 
     let attempts = 0;
@@ -142,6 +211,7 @@ export class BrowserSession {
         await new Promise(r => setTimeout(r, 2000));
       }
     }
+    this.assertLivePage('legacy');
   }
 
   /**
