@@ -1,4 +1,4 @@
-import { inferAnswerContract, partitionAnswerContractReasons, validateAnswerAgainstContract, findListPageOnlyAnswerSignal, findUnverifiedSuperlativeAnswer } from './AnswerContract';
+import { inferAnswerContract, partitionAnswerContractReasons, validateAnswerAgainstContract, findListPageOnlyAnswerSignal, findUnverifiedSuperlativeAnswer, findAnswerLanguageMismatch, findAnswerCurrencyMismatch, findDelegationPhrasing } from './AnswerContract';
 import { commitPhaseReady } from '../planner/CommitPhase';
 import { buildMonthNameLookup, parseCalendarLabel } from '../planner/DateLabelMatcher';
 import { detectAnswerEvidenceConflicts } from './AnswerGrounding';
@@ -231,12 +231,19 @@ export class V2AgentLoop {
             activeSort: activeSort ? { dimension: activeSort.dimension, direction: activeSort.direction } : undefined,
             cards: evidenceLedger.getResultCards().map(card => ({ entityName: card.entityName, metrics: card.metrics })),
           });
+          // Answer-quality round 1 (D2): mechanical form-defect detectors, advisory.
+          const languageReason = findAnswerLanguageMismatch({ goal: input.goal, answer: value });
+          const currencyReason = findAnswerCurrencyMismatch({ goal: input.goal, answer: value });
+          const delegationReason = findDelegationPhrasing({ answer: value });
           const validationReasons = [
             ...answerValidation.reasons,
             ...coverageReasons,
             ...requirementReasons,
             ...(listPageReason ? [listPageReason] : []),
             ...(superlativeReason ? [superlativeReason] : []),
+            ...(languageReason ? [languageReason] : []),
+            ...(currencyReason ? [currencyReason] : []),
+            ...(delegationReason ? [delegationReason] : []),
           ];
           const { hardReasons, advisoryReasons } = partitionAnswerContractReasons(validationReasons);
           if (hardReasons.length > 0) {

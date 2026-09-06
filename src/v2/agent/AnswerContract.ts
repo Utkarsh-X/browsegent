@@ -288,6 +288,10 @@ const ADVISORY_REASON_PREFIXES = [
   // Substrate-verified superlative check: the ledger's parsed card metrics
   // contradict the claimed best-while-unsorted answer.
   'unverified_superlative_answer',
+  // Answer-quality round 1 (D2): mechanical form-defect detectors, all advisory.
+  'answer_language_mismatch',
+  'answer_currency_mismatch',
+  'delegation_phrasing_answer',
 ];
 
 export interface ListPageAnswerSignalInput {
@@ -393,6 +397,61 @@ export function findUnverifiedSuperlativeAnswer(input: SuperlativeVerificationIn
     .map(card => `${card.entityName} ${formatMetric(card)}`)
     .join(', ');
   return `unverified_superlative_answer: the answer names "${named.entityName}" but the observed cards include ${others} — the surface ordering (${input.activeSort ? `${input.activeSort.dimension}` : 'unsorted'}) was never sorted by ${dimension.dimension}; click the sort control or compare the metric values before claiming the superlative`;
+}
+
+/**
+ * Answer-quality round-1 (D2) mechanical detectors — advisory steer-once, each
+ * surfaced once per task by the caller. They detect answer FORM defects only:
+ * they never judge factual content and never pressure the planner away from an
+ * honest escalation.
+ */
+
+const NON_GOAL_SCRIPT_RANGES = /[ऀ-ॿ一-鿿぀-ヿ가-힯Ѐ-ӿ؀-ۿ]/g;
+
+/**
+ * The census's Hindi-answer class: the goal is plain English (no non-Latin
+ * script) but the answer is composed in another script. Fires only on a
+ * substantial non-Latin run so an occasional imported word never trips it.
+ */
+export function findAnswerLanguageMismatch(input: { goal: string; answer: string }): string | undefined {
+  const goalForeign = (input.goal.match(NON_GOAL_SCRIPT_RANGES) ?? []).length;
+  if (goalForeign > 0) return undefined;
+  const answerForeign = (input.answer.match(NON_GOAL_SCRIPT_RANGES) ?? []).length;
+  return answerForeign >= 8
+    ? `answer_language_mismatch: the goal is in English but the answer contains ${answerForeign} non-Latin script characters; answer in the goal's language`
+    : undefined;
+}
+
+/**
+ * The INR-vs-USD class: the goal names an explicit $/USD/dollars frame and the
+ * answer prices in another currency symbol while containing no dollar price.
+ */
+export function findAnswerCurrencyMismatch(input: { goal: string; answer: string }): string | undefined {
+  if (!/\$|usd|dollars?/i.test(input.goal)) return undefined;
+  const foreign = input.answer.match(/[₤₦₹€£¥]/g) ?? [];
+  if (foreign.length === 0) return undefined;
+  if (/[$]|usd|dollars?/i.test(input.answer)) return undefined;
+  return `answer_currency_mismatch: the goal asks for USD/$ pricing but the answer quotes ${foreign[0]} prices; convert to the goal's currency frame or state the source currency explicitly`;
+}
+
+/**
+ * The how-to-for-humans class: the answer narrates next actions instead of
+ * delivering the value. Advisory: forces the real choice — fetch the value,
+ * or escalate honestly — rather than shipping instructions.
+ */
+const DELEGATION_PATTERNS = [
+  /(?:please\s+)?click (?:on )?(?:the |'|"|‘|’)?/i,
+  /navigate to/i,
+  /you (?:should|can|may|need to|will (?:need to|want to))/i,
+  /for (?:details|more information)/i,
+  /to view (?:the |your |this )/i,
+];
+
+export function findDelegationPhrasing(input: { answer: string }): string | undefined {
+  const hits = DELEGATION_PATTERNS.filter(pattern => pattern.test(input.answer)).length;
+  return hits >= 2
+    ? 'delegation_phrasing_answer: the answer narrates actions instead of delivering the value; answer with the requested value itself, or escalate honestly if the value cannot be reached'
+    : undefined;
 }
 
 /**
