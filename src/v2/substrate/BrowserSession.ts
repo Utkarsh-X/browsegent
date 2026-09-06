@@ -42,6 +42,7 @@ export class BrowserSession {
     } else {
       this.page = await this.browser.newPage({ viewport: this.options.viewport });
     }
+    await this.installSettlementSampler(this.page).catch(() => undefined);
 
     let attempts = 0;
     while (attempts < 3) {
@@ -54,6 +55,40 @@ export class BrowserSession {
         await new Promise(r => setTimeout(r, 2000));
       }
     }
+  }
+
+  /**
+   * D3 settlement sampler: records the timestamp of the last DOM mutation so
+   * the stabilization service can wait for real quiet instead of a fixed
+   * 75 ms guess. Installed as an init script so every navigation re-arms it;
+   * failure to install degrades silently to the legacy fixed window.
+   */
+  private async installSettlementSampler(page: Page): Promise<void> {
+    await page.addInitScript(() => {
+      const store = window as unknown as { __bgSettle?: { lastMutationTs: number } };
+      store.__bgSettle = { lastMutationTs: Date.now() };
+      const mark = () => {
+        if (store.__bgSettle) store.__bgSettle.lastMutationTs = Date.now();
+      };
+      const install = () => {
+        try {
+          const observer = new MutationObserver(mark);
+          observer.observe(document.documentElement || document, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            characterData: true,
+          });
+        } catch {
+          // Observer unavailable: the fixed window remains the behavior.
+        }
+      };
+      if (document.documentElement) {
+        install();
+      } else {
+        document.addEventListener('DOMContentLoaded', install, { once: true });
+      }
+    });
   }
 
   currentPage(): Page {
