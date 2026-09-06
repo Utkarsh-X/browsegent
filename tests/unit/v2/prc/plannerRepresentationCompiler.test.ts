@@ -198,3 +198,47 @@ test('PRC compiler preserves working-set evidence, changes, quarantine, and regi
   assert.deepEqual(ir.workingSet?.regionSummaries, input.workingSet!.regionSummaries);
 });
 
+
+test('PRC compiler stable order (O1): region members, groups, and remainder sort by numeric refId', () => {
+  const input = makeInput();
+  // Insertion order deliberately differs from refNum order everywhere.
+  input.current.refs = {
+    v2ref_9: {
+      refId: 'v2ref_9', kind: 'link', role: 'link', name: 'Znav late',
+      visibility: 'visible', actionability: 'ready', state: 'live', confidence: 1, score: 10,
+    },
+    v2ref_5: {
+      refId: 'v2ref_5', kind: 'button', role: 'button', name: 'Mid readable',
+      visibility: 'visible', actionability: 'ready', state: 'live', confidence: 1, score: 10,
+    },
+    v2ref_3: input.current.refs['v2ref_3']!,
+    v2ref_1: input.current.refs['v2ref_1']!,
+    v2ref_2: input.current.refs['v2ref_2']!,
+  };
+  input.current.interactions = [...input.current.interactions].reverse();
+  input.current.readables = [{ refId: 'v2ref_5', rank: 1 }];
+  input.current.navigation = [{ refId: 'v2ref_9', rank: 1 }];
+  input.current.regions = [
+    { regionId: 'region_nav_1', kind: 'navigation', label: 'Nav Region', refIds: ['v2ref_9'], score: 10 },
+    { ...input.current.regions[0]!, refIds: ['v2ref_3', 'v2ref_1', 'v2ref_2'] },
+  ];
+  input.current.stats = { interactionCount: 3, readableCount: 1, navigationCount: 1, regionCount: 2 };
+
+  const on = new PlannerRepresentationCompiler().compile(input, { stableOrder: true });
+
+  // Region members render in refNum order, not the listed (3,1,2) order.
+  const formGroup = on.surface.groups.find(g => g.regionId === 'region_form_1')!;
+  assert.deepEqual(formGroup.elements.map(e => e.refId), ['v2ref_1', 'v2ref_2', 'v2ref_3']);
+  // Groups sort by their min member refNum (form=1 before nav=9 despite listing order).
+  assert.deepEqual(on.surface.groups.map(g => g.regionId), ['region_form_1', 'region_nav_1']);
+  // Remainder sorts by refNum (v2ref_5 before the later-numbered v2ref_9... nav ref is grouped,
+  // so remainder holds only ungrouped refs; v2ref_5 stays first regardless of insertion order).
+  assert.equal(on.surface.remainder.some(e => e.refId === 'v2ref_5'), true);
+
+  // Off-path: default compile keeps the current insertion-order behavior (region listed first
+  // stays first; region members keep listed order).
+  const off = new PlannerRepresentationCompiler().compile(input);
+  assert.deepEqual(off.surface.groups.map(g => g.regionId), ['region_nav_1', 'region_form_1']);
+  const offForm = off.surface.groups.find(g => g.regionId === 'region_form_1')!;
+  assert.deepEqual(offForm.elements.map(e => e.refId), ['v2ref_3', 'v2ref_1', 'v2ref_2']);
+});

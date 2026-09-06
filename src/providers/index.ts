@@ -18,6 +18,11 @@ export interface ProviderResult {
   text: string;
   inputTokens: number;
   outputTokens: number;
+  /** Tokens the provider reported as served from its prompt cache, if it
+   *  reports one at all. Gemini: usageMetadata.cachedContentTokenCount;
+   *  OpenRouter: usage.prompt_tokens_details.cached_tokens. Undefined means
+   *  the provider sent no cache field — it is NOT evidence of zero caching. */
+  cachedInputTokens?: number;
 }
 
 export interface ProviderCallOptions {
@@ -171,12 +176,15 @@ async function callGemini(system: string, user: string, model: string, options: 
       if (response.ok) {
         const data = await response.json() as {
           candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-          usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+          usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; cachedContentTokenCount?: number };
         };
         const result = {
           text: data.candidates?.[0]?.content?.parts?.[0]?.text ?? '',
           inputTokens: data.usageMetadata?.promptTokenCount ?? estimatedInputTokens,
           outputTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
+          ...(data.usageMetadata?.cachedContentTokenCount !== undefined
+            ? { cachedInputTokens: data.usageMetadata.cachedContentTokenCount }
+            : {}),
         };
         recordProviderCall({
           provider: 'gemini',
@@ -386,13 +394,15 @@ async function callOpenRouter(
     if (response.ok) {
       const data = (await response.json()) as {
         choices?: Array<{ message?: { content?: string } }>;
-        usage?: { prompt_tokens?: number; completion_tokens?: number };
+        usage?: { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } };
       };
       const text = data.choices?.[0]?.message?.content ?? '';
+      const cached = data.usage?.prompt_tokens_details?.cached_tokens;
       return {
         text,
         inputTokens: data.usage?.prompt_tokens ?? countTokens(system + user),
         outputTokens: data.usage?.completion_tokens ?? countTokens(text),
+        ...(cached !== undefined ? { cachedInputTokens: cached } : {}),
       };
     }
 

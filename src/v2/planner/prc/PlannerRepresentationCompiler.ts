@@ -4,7 +4,7 @@ import type { PlannerElementIR, PlannerElementLane, PlannerRepresentationIR, Pla
 import type { PlannerActionSurface } from '../workingSetTypes';
 
 export class PlannerRepresentationCompiler {
-  compile(input: PlannerInput): PlannerRepresentationIR {
+  compile(input: PlannerInput, options: { stableOrder?: boolean } = {}): PlannerRepresentationIR {
     const failureMap = buildFailureMap(input.failures ?? []);
     const pinnedRefIds = buildPinnedRefIds(input.workingSet);
     const surface = buildSurface(
@@ -13,6 +13,7 @@ export class PlannerRepresentationCompiler {
       pinnedRefIds,
       input.workingSet?.actionSurface,
       buildDeltaMap(input.workingSet?.deltaRefs),
+      options.stableOrder === true,
     );
     const workingSet = input.workingSet ? buildWorkingSet(input.workingSet) : undefined;
     const decisionSignals = input.workingSet ? buildDecisionSignals(input.workingSet) : undefined;
@@ -58,7 +59,10 @@ function buildSurface(
   pinnedRefIds: Set<string>,
   actionSurface?: PlannerActionSurface,
   deltaMap?: Map<string, 'new' | 'chg'>,
+  stableOrder = false,
 ) {
+  // O1 canonical order: numeric refId suffix (v2ref_N first-appearance order,
+  // append-only). Ties keep insertion order (Array.sort is stable).
   const laneByRef = new Map<string, { lane: PlannerElementLane; rank: number }>();
   addLane(laneByRef, current.interactions, 'interaction');
   addLane(laneByRef, current.readables, 'readable');
@@ -94,6 +98,7 @@ function buildSurface(
       const regionElements = region.refIds
         .map(refId => elementsByRef.get(refId))
         .filter((element): element is PlannerElementIR => Boolean(element));
+      if (stableOrder) regionElements.sort((a, b) => refNum(a.refId) - refNum(b.refId));
       for (const element of regionElements) groupedRefs.add(element.refId);
       const maxVisible = regionElements.length <= 5 ? regionElements.length : regionElements.length <= 20 ? 3 : 2;
       const visibleElements = selectVisibleRegionElements(regionElements, maxVisible, pinnedRefIds);
@@ -109,6 +114,10 @@ function buildSurface(
     .filter(group => group.totalCount > 0);
 
   const remainder = [...elementsByRef.values()].filter(element => !groupedRefs.has(element.refId));
+  if (stableOrder) {
+    remainder.sort((a, b) => refNum(a.refId) - refNum(b.refId));
+    groups.sort((a, b) => minRefNum(a.elements) - minRefNum(b.elements));
+  }
 
   return {
     groups,
@@ -287,4 +296,13 @@ function buildWorkingSet(workingSet: NonNullable<PlannerInput['workingSet']>): W
       byReason: workingSet.omitted.droppedByReason,
     } : undefined,
   };
+}
+
+function refNum(refId: string): number {
+  const match = /(\d+)$/.exec(refId);
+  return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+}
+
+function minRefNum(elements: PlannerElementIR[]): number {
+  return elements.reduce((min, element) => Math.min(min, refNum(element.refId)), Number.MAX_SAFE_INTEGER);
 }

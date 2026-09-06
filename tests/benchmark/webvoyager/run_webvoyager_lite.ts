@@ -240,6 +240,7 @@ export function readCliOptions(): RunWebVoyagerLiteOptions {
     judgeEnabled,
     judgeModel,
     model,
+    headed: hasFlag('--headed') || process.env.BROWSEGENT_V2_HEADED === 'true',
     count: countArg ? Number(countArg) : undefined,
     geminiKeyIndex: keyIndexArg ? Number(keyIndexArg) : undefined,
     requestRpm: requestRpmArg ? Number(requestRpmArg) : undefined,
@@ -293,14 +294,16 @@ function readPlannerSerializationConfig(
   const compactDataPlane = hasFlag('--compact-data-plane');
   const prcLeanPlane = hasFlag('--prc-lean-plane');
   const conditionalPrompt = hasFlag('--planner-conditional-prompt');
+  const stableOrder = hasFlag('--prc-stable-order');
   const noJsonSchema = hasFlag('--planner-no-json-schema');
-  if (prcTierOmitted || compactDataPlane || prcLeanPlane || conditionalPrompt) {
+  if (prcTierOmitted || compactDataPlane || prcLeanPlane || conditionalPrompt || stableOrder) {
     if (mode !== 'prc') {
       const flags = [
         ...(prcTierOmitted ? ['--prc-tier-omitted'] : []),
         ...(compactDataPlane ? ['--compact-data-plane'] : []),
         ...(prcLeanPlane ? ['--prc-lean-plane'] : []),
         ...(conditionalPrompt ? ['--planner-conditional-prompt'] : []),
+        ...(stableOrder ? ['--prc-stable-order'] : []),
       ];
       throw new Error(`${flags.join(' and ')} require --planner-serialization prc.`);
     }
@@ -310,6 +313,7 @@ function readPlannerSerializationConfig(
       ...(compactDataPlane ? { compactDataPlane: true } : {}),
       ...(prcLeanPlane ? { prcLeanPlane: true } : {}),
       ...(conditionalPrompt ? { conditionalSystemPrompt: true } : {}),
+      ...(stableOrder ? { prcStableOrder: true } : {}),
     };
   }
   if (noJsonSchema) {

@@ -275,6 +275,8 @@ function formatPlannerSerialization(serialization: BenchmarkRunMetadata['planner
     `mode=${mode}`,
     `prcTierOmitted=${serialization?.prcTierOmitted ?? 'not-set'}`,
     `compactDataPlane=${serialization?.compactDataPlane ?? 'not-set'}`,
+    `prcStableOrder=${serialization?.prcStableOrder ?? 'not-set'}`,
+    `composedPrompt=${serialization?.composedPrompt ?? 'not-set'}`,
   ].join(' ');
 }
 

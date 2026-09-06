@@ -14,6 +14,7 @@ export interface V2PlannerProviderResult {
   text: string;
   inputTokens: number;
   outputTokens: number;
+  cachedInputTokens?: number;
 }
 
 export type V2PlannerProvider = (
@@ -42,6 +43,7 @@ export interface V2PlannerCallResult {
   rawText: string;
   inputTokens: number;
   outputTokens: number;
+  cachedInputTokens?: number;
   durationMs: number;
 }
 
@@ -89,6 +91,7 @@ export class V2PlannerClient {
     );
     let userMessage = baseUserMessage;
     let totalInputTokens = 0;
+    let totalCachedInputTokens: number | undefined;
     let totalOutputTokens = 0;
     let lastRawText = '';
     let lastErrors: string[] = [];
@@ -118,6 +121,7 @@ export class V2PlannerClient {
           metrics: {
             inputTokens: totalInputTokens,
             outputTokens: totalOutputTokens,
+            ...(totalCachedInputTokens !== undefined ? { cachedInputTokens: totalCachedInputTokens } : {}),
             durationMs,
           },
         });
@@ -133,6 +137,9 @@ export class V2PlannerClient {
       }
       totalInputTokens += providerResult.inputTokens;
       totalOutputTokens += providerResult.outputTokens;
+      if (providerResult.cachedInputTokens !== undefined) {
+        totalCachedInputTokens = (totalCachedInputTokens ?? 0) + providerResult.cachedInputTokens;
+      }
       lastRawText = providerResult.text;
 
       const validation = this.parseAndValidate(providerResult.text, input);
@@ -143,6 +150,7 @@ export class V2PlannerClient {
           rawText: providerResult.text,
           inputTokens: totalInputTokens,
           outputTokens: totalOutputTokens,
+          ...(totalCachedInputTokens !== undefined ? { cachedInputTokens: totalCachedInputTokens } : {}),
           durationMs,
         };
 
@@ -155,6 +163,7 @@ export class V2PlannerClient {
           metrics: {
             inputTokens: totalInputTokens,
             outputTokens: totalOutputTokens,
+            ...(totalCachedInputTokens !== undefined ? { cachedInputTokens: totalCachedInputTokens } : {}),
             durationMs,
           },
         });

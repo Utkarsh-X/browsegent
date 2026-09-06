@@ -293,6 +293,14 @@ export interface PlannerSerializationConfig {
   prcLeanPlane?: boolean;
   /** Inject guidance blocks only when their subject is present in the episode input. */
   conditionalSystemPrompt?: boolean;
+  /** Canonical deterministic surface order (O1): region members, region groups
+   *  (by min member), and the remainder all ordered by numeric refId — the
+   *  append-only first-appearance order. Zero byte delta; makes consecutive-
+   *  episode element lines diffable (the T-C prerequisite). */
+  prcStableOrder?: boolean;
+  /** Composed system prompt (T-B): stable fixed head + conditional tail in
+   *  engagement order, compressed per the token-round-1 block audit. */
+  composedPrompt?: boolean;
   /** Drop responseJsonSchema from the provider call (887 B/call). Measured
    *  0 parse failures across 422 calls without it; robustJsonParse covers
    *  malformed output. Default off until validated on a full run. */
