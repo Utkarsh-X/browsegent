@@ -1,6 +1,26 @@
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
+import fs from 'fs';
+import path from 'path';
 
 import type { BrowserSessionOptions } from './types';
+
+/**
+ * Stealth launch (T1, probe-validated): persistent profile + --headless=new +
+ * AutomationControlled disabled + consistent client hints. The probe cleared
+ * Allrecipes and Google headless under this config where the plain launch was
+ * walled. Opt-in via BROWSEGENT_STEALTH=1; unset keeps the legacy launch
+ * byte-for-byte. Profile persists across the whole suite so any warm-up cost
+ * amortizes to zero per task.
+ */
+const STEALTH_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
+
+function stealthEnabled(): boolean {
+  return process.env.BROWSEGENT_STEALTH?.trim() === '1';
+}
+
+function stealthProfileDir(): string {
+  return process.env.BROWSEGENT_STEALTH_PROFILE?.trim() || path.resolve('logs', 'stealth-profile');
+}
 
 export class BrowserSession {
   private browser?: Browser;
@@ -15,7 +35,74 @@ export class BrowserSession {
     };
   }
 
+  private async openStealth(url: string): Promise<void> {
+    const profileDir = stealthProfileDir();
+    fs.mkdirSync(profileDir, { recursive: true });
+    const context = await chromium.launchPersistentContext(profileDir, {
+      headless: false,
+      args: [
+        ...(!this.options.headed ? ['--headless=new'] : []),
+        '--disable-blink-features=AutomationControlled',
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-default-apps',
+        `--window-size=${this.options.viewport.width},${this.options.viewport.height}`,
+      ],
+      viewport: this.options.viewport,
+      userAgent: STEALTH_UA,
+      locale: 'en-US',
+      extraHTTPHeaders: {
+        'Accept-Language': 'en-US,en;q=0.9',
+        'sec-ch-ua': '"Chromium";v="134", "Google Chrome";v="134", "Not-A.Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+      },
+    });
+    this.context = context;
+    const pages = context.pages();
+    this.page = pages.length > 0 ? pages[0] : await context.newPage();
+    await this.installSettlementSampler(this.page).catch(() => undefined);
+
+    let attempts = 0;
+    while (attempts < 3) {
+      try {
+        await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        break;
+      } catch (error) {
+        attempts += 1;
+        if (attempts >= 3) throw error;
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+  }
+
   async open(url: string): Promise<void> {
+    if (stealthEnabled()) {
+      if (this.page) {
+        await this.page.close().catch(() => undefined);
+        this.page = undefined;
+      }
+      // Reuse the persistent context across tasks: the profile's cookie trust
+      // is the point. Closed only via close().
+      if (!this.context) {
+        await this.openStealth(url);
+        return;
+      }
+      await this.installSettlementSampler(this.page!).catch(() => undefined);
+      let attempts = 0;
+      while (attempts < 3) {
+        try {
+          await this.page!.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+          break;
+        } catch (error) {
+          attempts += 1;
+          if (attempts >= 3) throw error;
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+      return;
+    }
+
     if (!this.browser) {
       this.browser = await chromium.launch({ headless: !this.options.headed });
     }
