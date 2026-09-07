@@ -87,6 +87,8 @@ export class V2AgentLoop {
       let repeatedRejectedAnswerCount = 0;
       let advisorySteered = false;
       let doneChecklistUsed = false;
+      let previousObservation: BrowserObservation | undefined;
+      let previousPlannerInput: PlannerInput | undefined;
       const evidenceLedger = new EvidenceLedger();
       const plannerTraceSteps: TraceStep[] = [];
       const recentObservationUrls: string[] = [];
@@ -147,7 +149,14 @@ export class V2AgentLoop {
           workingSetOptions: input.workingSetOptions,
           trace: plannerTraceSteps.length > 0 ? plannerTraceSteps : undefined,
           maxLineageSteps: 5,
+          previousRenderedRefs: buildPreviousRenderedRefs(
+            input.plannerSerialization?.deltaSurface === true,
+            previousPlannerInput,
+            previousObservation,
+          ),
         });
+        previousObservation = observation;
+        previousPlannerInput = plannerInput;
         harness.recordPlannerInput?.(plannerInput.episodeId, plannerInput);
         ledger.recordPhase('local_compute', Date.now() - composeStart);
         metrics.plannerCalls += 1;
@@ -1938,4 +1947,23 @@ export function buildDoneCandidateChecklist(validationEvidence: string): string 
 Return done with the verified answer, or escalate honestly.
 Evidence:
 ${validationEvidence}`;
+}
+
+/**
+ * Page-model 2b (H4): the previous episode's rendered working-set refs with the
+ * targetIds they carried then — the additive-carry join keys.
+ */
+function buildPreviousRenderedRefs(
+  enabled: boolean | undefined,
+  previousPlannerInput: PlannerInput | undefined,
+  previousObservation: BrowserObservation | undefined,
+): ReadonlyArray<{ refId: string; targetId?: string }> | undefined {
+  if (!enabled || !previousPlannerInput?.workingSet || !previousObservation) return undefined;
+  const targetByRefId = new Map(previousObservation.refs.map(ref => [ref.refId, ref.targetId]));
+  return [
+    ...previousPlannerInput.workingSet.primaryRefs,
+    ...previousPlannerInput.workingSet.secondaryRefs,
+  ]
+    .map(ref => ({ refId: ref.refId, targetId: targetByRefId.get(ref.refId) }))
+    .filter((entry): entry is { refId: string; targetId: string } => entry.targetId !== undefined);
 }

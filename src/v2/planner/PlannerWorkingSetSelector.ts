@@ -54,6 +54,10 @@ export interface PlannerWorkingSetSelectorInput {
   lastResult?: V2ToolResult;
   failureEvidence?: FailureEvidence[];
   uncertaintySignals?: readonly string[];
+  /** Page-model 2b (H4): refs rendered in the previous episode (refId + the
+   *  targetId they had then). Still-alive matches join the selection
+   *  additively — nothing is ever displaced. */
+  previousRenderedRefs?: ReadonlyArray<{ refId: string; targetId?: string }>;
 }
 
 interface Candidate {
@@ -155,10 +159,15 @@ export class PlannerWorkingSetSelector {
     const selectedRefIds = selectedWithHorizon
       .map(candidate => candidate.item.refId);
     const selectedSet = new Set(selectedRefIds);
+    // Page-model 2b (H4 additive carry): previously-rendered refs that are
+    // still alive join the selection additively. Nothing is ever displaced —
+    // displacement variants measured 52-82 acted refs starved; additive: 0.
+    const carried = carryPreviouslyRendered(input, candidates, selectedSet, MAX_CARRIED_REFS);
     const raceLosers = selected
       .filter(candidate => !selectedSet.has(candidate.item.refId)).length;
     const primary = selectedWithHorizon.slice(0, this.options.maxPrimaryRefs);
     const secondary = selectedWithHorizon.slice(this.options.maxPrimaryRefs, this.options.maxPrimaryRefs + this.options.maxSecondaryRefs);
+    secondary.push(...carried);
     const readableEvidence = buildReadableEvidence(input.projection, selectedSet, this.options, scoreByRef);
     const quarantinedActions = buildQuarantinedActions(input);
     const actionSurface = buildActionSurface(input.projection, selectedSet, quarantinedActions);
@@ -1013,4 +1022,31 @@ function normalizeText(value: string | undefined): string {
 
 function normalizeTargetIdentity(value: string): string {
   return value.replace(/[^a-zA-Z0-9_.-]+/g, '_').slice(0, 80) || 'unknown';
+}
+
+/** Page-model 2b: H4 carried-ref pressure valve (binds on <1% of pairs per the round-2 replay). */
+const MAX_CARRIED_REFS = 32;
+
+function carryPreviouslyRendered(
+  input: PlannerWorkingSetSelectorInput,
+  candidates: Candidate[],
+  selectedSet: Set<string>,
+  maxCarried: number,
+): Candidate[] {
+  const carried: Candidate[] = [];
+  if (!input.previousRenderedRefs || input.previousRenderedRefs.length === 0) return carried;
+  const currentByTarget = new Map<string, Candidate>();
+  for (const candidate of candidates) {
+    if (candidate.item.targetId) currentByTarget.set(candidate.item.targetId, candidate);
+  }
+  for (const prev of input.previousRenderedRefs) {
+    if (carried.length >= maxCarried) break;
+    if (!prev.targetId) continue;
+    const current = currentByTarget.get(prev.targetId);
+    if (!current || selectedSet.has(current.item.refId)) continue;
+    selectedSet.add(current.item.refId);
+    current.reasons.add('carried');
+    carried.push(current);
+  }
+  return carried;
 }

@@ -56,6 +56,10 @@ export interface PlannerInputComposerInput {
   evidenceSnapshot?: PlannerEvidenceSnapshot;
   workingSetOptions?: PlannerWorkingSetOptions;
   goalProgress?: PlannerGoalProgress;
+  /** Page-model 2b (H4): the previous episode's rendered refs with the
+   *  targetIds they had then; still-alive matches join the working set
+   *  additively. Undefined = carry disabled (off-path). */
+  previousRenderedRefs?: ReadonlyArray<{ refId: string; targetId?: string }>;
 }
 
 export interface PlannerInput {
@@ -310,6 +314,10 @@ export interface PlannerSerializationConfig {
   /** Answer-quality D1: one done-candidate verification re-ask at the answer
    *  acceptance point (steer-once, hard-capped). Off-path byte-identical. */
   doneCandidateChecklist?: boolean;
+  /** Page-model stage 2b (world-model contract C2/C3): H4 additive carry of
+   *  previously-rendered still-alive refs plus the hybrid delta surface wire.
+   *  Additive only — nothing is ever displaced (measured zero starvation). */
+  deltaSurface?: boolean;
   /** Drop responseJsonSchema from the provider call (887 B/call). Measured
    *  0 parse failures across 422 calls without it; robustJsonParse covers
    *  malformed output. Default off until validated on a full run. */

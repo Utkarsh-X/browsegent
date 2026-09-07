@@ -26,7 +26,8 @@ export type WorkingSetIncludeReason =
   | 'result_row'
   | 'navigation_candidate'
   | 'form_candidate'
-  | 'region_representative';
+  | 'region_representative'
+  | 'carried';
 
 export type WorkingSetDropReason =
   | 'hidden_low_value'

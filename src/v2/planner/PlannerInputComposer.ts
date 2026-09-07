@@ -74,6 +74,7 @@ export class PlannerInputComposer {
       lastResult: input.lastResult,
       failureEvidence: input.failureEvidence,
       uncertaintySignals: input.runtimeUncertainty?.signals,
+      previousRenderedRefs: input.previousRenderedRefs,
     });
     const current = workingSetSelection.current;
     const taskProgress = buildTaskProgress({
