@@ -41,6 +41,8 @@ export interface V2PlannerClientLike {
     model?: string;
     mode?: 'normal' | 'finalization' | 'done_candidate';
     checklistSuffix?: string;
+    /** Page-model 2b (W2 wire): previous payload's surface element lines. */
+    previousSurfaceLines?: readonly string[];
     onPacingWait?: (durationMs: number) => void;
   }): Promise<{
     output: PlannerOutput;

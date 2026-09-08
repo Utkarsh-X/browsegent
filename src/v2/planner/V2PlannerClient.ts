@@ -38,6 +38,10 @@ export interface V2PlannerCallInput {
   /** Done-candidate verification checklist appended to the user message when
    *  mode='done_candidate' (answer-quality round 1, D1). */
   checklistSuffix?: string;
+  /** Page-model 2b (W2 wire): the previous payload's surface element lines —
+   *  the line-diff source for the changed class. Undefined = no previous
+   *  render (first episode renders everything full). */
+  previousSurfaceLines?: readonly string[];
   onPacingWait?: (durationMs: number) => void;
 }
 
@@ -91,6 +95,7 @@ export class V2PlannerClient {
     const baseUserMessage = buildV2PlannerUserMessage(
       input.plannerInput,
       this.plannerSerialization,
+      input.previousSurfaceLines,
     );
     let userMessage = input.mode === 'done_candidate' && input.checklistSuffix
       ? `${baseUserMessage}\n\n${input.checklistSuffix}`

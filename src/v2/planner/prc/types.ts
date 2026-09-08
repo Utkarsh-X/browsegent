@@ -65,6 +65,10 @@ export interface PlannerSurfaceIR {
   remainder: PlannerElementIR[];
   /** Bounded non-interactive page text (D1); rendered as its own group. */
   prose?: Array<{ proseId: string; anchorRefIds: string[]; text: string }>;
+  /** All elements in serialized refs-map order (rank order) — the W2 wire's
+   *  flat surface order. The serialized projection is built in interactions
+   *  rank order, so refs-map order IS rank order. */
+  elementsInRefOrder: PlannerElementIR[];
   inputRefCount: number;
   surfaceRefCount: number;
 }

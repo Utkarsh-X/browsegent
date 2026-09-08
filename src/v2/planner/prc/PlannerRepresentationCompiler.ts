@@ -127,6 +127,10 @@ function buildSurface(
       anchorRefIds: [...entry.anchorRefIds],
       text: entry.text,
     })),
+    // Serialized refs-map order = interactions rank order (the composer builds
+    // the map by iterating selected interactions), so this is the rank order
+    // the W2 wire renders in.
+    elementsInRefOrder: [...elementsByRef.values()],
     inputRefCount: Object.keys(current.refs).length,
     surfaceRefCount: groups.reduce((sum, group) => sum + group.elements.length, 0) + remainder.length,
   };

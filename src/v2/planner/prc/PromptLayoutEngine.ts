@@ -1,9 +1,11 @@
+import type { PlannerInput } from '../types';
 import type { PlannerElementIR, PlannerRepresentationIR } from './types';
+import { PlannerRepresentationCompiler } from './PlannerRepresentationCompiler';
 
 export class PromptLayoutEngine {
   render(
     ir: PlannerRepresentationIR,
-    options: { prcTierOmitted?: boolean; compactDataPlane?: boolean; leanPlane?: boolean; pageModel?: boolean } = {},
+    options: { prcTierOmitted?: boolean; compactDataPlane?: boolean; leanPlane?: boolean; pageModel?: boolean; deltaSurface?: boolean; previousSurfaceLines?: readonly string[] } = {},
   ): string {
     if (options.compactDataPlane) {
       return renderCompactDataPlane(ir, options);
@@ -14,9 +16,10 @@ export class PromptLayoutEngine {
     // byte prefix, and continuity markers leave element lines (see
     // renderSurface's CONTINUITY header). Lean-plane only; off-path byte-identical.
     if (options.leanPlane === true && options.pageModel === true) {
+      const wireMode = options.deltaSurface === true;
       return [
         renderMission(ir),
-        renderStateHead(ir),
+        renderStateHead(ir, wireMode),
         renderSurface(ir, options),
         renderStateTail(ir),
         renderRecentEvents(ir),
@@ -288,9 +291,12 @@ function renderState(ir: PlannerRepresentationIR): string {
   return lines.length > 1 ? lines.join('\n') : '';
 }
 
-/** Page-model L1: the page identity is the stable head of the payload. */
-function renderStateHead(ir: PlannerRepresentationIR): string {
+/** Page-model L1: the page identity is the stable head of the payload.
+ *  Wire mode keeps the 8-byte STATE-blank-line convention the fixture pack
+ *  pins (STATE, blank, page line — the reference renderer's split shape). */
+function renderStateHead(ir: PlannerRepresentationIR, wireMode = false): string {
   const lines = ['STATE'];
+  if (wireMode) lines.push('');
   if (ir.execution.page) lines.push(`  page: "${ir.execution.page.title}" ${ir.execution.page.url}`);
   return lines.length > 1 ? lines.join('\n') : '';
 }
@@ -407,23 +413,36 @@ function renderTaskProgress(ir: PlannerRepresentationIR): string {
   return lines.join('\n');
 }
 
-function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: boolean; compactDataPlane?: boolean; leanPlane?: boolean; pageModel?: boolean }): string {
+function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: boolean; compactDataPlane?: boolean; leanPlane?: boolean; pageModel?: boolean; deltaSurface?: boolean; previousSurfaceLines?: readonly string[] }): string {
   // PLANNER SURFACE always emits — the page surface is always present in planner context
   const lines = ['PLANNER SURFACE'];
   const lean = options.leanPlane === true;
   // Page-model C3: continuity markers leave element lines and render once, after
   // the stable block, as a single header — identity churn from bookkeeping ends.
   const normalizeMarkers = lean === true && options.pageModel === true;
+  // Page-model 2b part 2 (W2 delta wire): refs whose content did not change since
+  // the previous action render as a minimal kind+name line. The renderer cannot
+  // see the previous render, so the working set's diff markers stand in for the
+  // changed class (the selector derives them from the same transition evidence).
+  // Carried refs render minimal too — their content is unchanged by definition.
+  const wireMode = normalizeMarkers === true && options.deltaSurface === true;
   let weakenedCount = 0;
   let changedCount = 0;
+  // W2 changed class: an element whose full marker-free lean line differs
+  // from the same ref's line in the previous render (content changed or the
+  // ref is new). The previous render's element lines arrive from the agent
+  // loop, which owns the previous payload; the renderer stays stateless.
+  const prevLines = options.previousSurfaceLines;
+  const prevLineByRef = new Map<string, string>();
+  if (wireMode && prevLines) {
+    for (const line of prevLines) {
+      const refId = /^\s*\[(v2ref[^\]]+)\]/.exec(line)?.[1];
+      if (refId) prevLineByRef.set(refId, line.trim());
+    }
+  }
   let budget = lean ? LEAN_SURFACE_PAYLOAD_CAP : Number.POSITIVE_INFINITY;
   let omittedElements = 0;
-  const pushElement = (element: PlannerElementIR): void => {
-    if (normalizeMarkers) {
-      if (element.anomalies.some(a => a.startsWith('state='))) weakenedCount += 1;
-      if (element.delta) changedCount += 1;
-    }
-    const line = `    ${lean ? renderLeanElement(element, normalizeMarkers) : renderElement(element, options)}`;
+  const pushLine = (line: string): void => {
     if (line.length > budget) {
       omittedElements += 1;
       return;
@@ -431,25 +450,55 @@ function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: 
     budget -= line.length;
     lines.push(line);
   };
-  for (const group of ir.surface.groups) {
-    lines.push(`  ${group.label} (${group.regionId}${group.omittedCount ? `, omitted ${group.omittedCount} of ${group.totalCount}` : ''})`);
-    for (const element of group.elements) pushElement(element);
-  }
-  if (ir.surface.remainder.length > 0) {
-    lines.push('  Page Elements');
-    for (const element of ir.surface.remainder) pushElement(element);
-  }
-  if (ir.surface.prose?.length) {
-    lines.push('  Page Text (bounded)');
-    for (const entry of ir.surface.prose) {
-      const anchor = entry.anchorRefIds.length ? ` ("anchor: ${entry.anchorRefIds.join(',')}")` : '';
-      const line = `    [${entry.proseId}]${anchor} ${escapeAttr(compactValue(entry.text, 300))}`;
-      if (line.length > budget) {
-        omittedElements += 1;
-        continue;
+  const pushElement = (element: PlannerElementIR): void => {
+    if (normalizeMarkers) {
+      if (element.anomalies.some(a => a.startsWith('state=')) || element.anomalies.some(a => a.startsWith('confidence='))) weakenedCount += 1;
+      if (element.delta) changedCount += 1;
+    }
+    const line = `    ${lean ? renderLeanElement(element, normalizeMarkers) : renderElement(element, options)}`;
+    pushLine(line);
+  };
+  if (wireMode) {
+  // W2 wire: one flat list in refs-map (rank) order, split into the full
+  // block (changed ∪ always-full) followed by the minimal block (stable
+  // refs). Region headers and prose drop out — the wire's payload is the
+  // ref set itself. Continuity counts cover the whole element set,
+  // budget-independent: weakened = continuity-marker anomalies. The header's
+  // changed count stays 0 on the wire: the delta markers ride on the full
+  // lines themselves, so a summary count would duplicate them (the fixture
+  // pack pins this convention byte-exactly).
+    const fullBlock: string[] = [];
+    const minimalBlock: string[] = [];
+    for (const element of ir.surface.elementsInRefOrder) {
+      if (element.anomalies.some(a => a.startsWith('state=')) || element.anomalies.some(a => a.startsWith('confidence='))) weakenedCount += 1;
+      const classifierLine = renderLeanElement(element, true);
+      const changed = !isMinimalWireElement(element, prevLineByRef.get(element.refId), classifierLine);
+      if (changed) {
+        // Wire full lines keep the +new/+chg delta markers (appearance/change
+        // is exactly the information the wire must surface); continuity
+        // markers stay normalized away.
+        fullBlock.push(`    ${renderLeanElement(element, true, true)}`);
+      } else {
+        minimalBlock.push(`  ${renderMinimalWireElement(element)}`);
       }
-      budget -= line.length;
-      lines.push(line);
+    }
+    for (const line of fullBlock) pushLine(line);
+    for (const line of minimalBlock) pushLine(line);
+  } else {
+    for (const group of ir.surface.groups) {
+      lines.push(`  ${group.label} (${group.regionId}${group.omittedCount ? `, omitted ${group.omittedCount} of ${group.totalCount}` : ''})`);
+      for (const element of group.elements) pushElement(element);
+    }
+    if (ir.surface.remainder.length > 0) {
+      lines.push('  Page Elements');
+      for (const element of ir.surface.remainder) pushElement(element);
+    }
+    if (ir.surface.prose?.length) {
+      lines.push('  Page Text (bounded)');
+      for (const entry of ir.surface.prose) {
+        const anchor = entry.anchorRefIds.length ? ` ("anchor: ${entry.anchorRefIds.join(',')}")` : '';
+        pushLine(`    [${entry.proseId}]${anchor} ${escapeAttr(compactValue(entry.text, 300))}`);
+      }
     }
   }
   if (omittedElements > 0) {
@@ -458,7 +507,9 @@ function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: 
   if (normalizeMarkers && (weakenedCount > 0 || changedCount > 0)) {
     lines.push(`  CONTINUITY: weakened=${weakenedCount} refs carried from before the last action; changed=${changedCount}`);
   }
-  if (lean) {
+  // The wire's payload is the ref set itself — the NEW SINCE summary is
+  // redundant there (changed refs already render full).
+  if (lean && !wireMode) {
     const topRefs = ir.workingSet?.changedRefs.topRefs ?? [];
     const named = topRefs
       .map(ref => `${ref.refId} "${escapeAttr(compactValue(ref.name ?? ref.text ?? '', 48))}"`)
@@ -474,12 +525,44 @@ function renderSurface(ir: PlannerRepresentationIR, options: { prcTierOmitted?: 
 const LEAN_SURFACE_PAYLOAD_CAP = 12_000;
 
 /**
+ * W2 delta wire: an element renders as a minimal kind+name line when its
+ * full marker-free lean line is byte-identical to the same ref's line in
+ * the previous render (content unchanged) and it is not always-full.
+ * Always-full is the simulation's narrow class: inputs/selects (values
+ * move), autocomplete/combobox roles (option sets move), and failed refs
+ * (failure state is episode-specific) must never be id-referenced only.
+ * Without a previous render (first episode) everything renders full — no
+ * information is ever dropped on the first call.
+ */
+function isMinimalWireElement(
+  element: PlannerElementIR,
+  previousLine: string | undefined,
+  currentLine: string,
+): boolean {
+  if (element.failure) return false;
+  if (element.kind === 'input' || element.kind === 'select') return false;
+  if (element.ariaAutocomplete || element.ariaHasPopup) return false;
+  if (previousLine === undefined) return false;
+  return previousLine === currentLine.trim();
+}
+
+/**
+ * W2 minimal stable-ref line: id + kind + name (120-char cap), production
+ * attr order, no value attr, no role attr — the stateless-completeness floor
+ * from the world-model round-3 report. The compiler already falls back
+ * name → text → refId, so the name attr is never silently empty.
+ */
+function renderMinimalWireElement(element: PlannerElementIR): string {
+  return `[${element.refId}] <${element.kind} name="${escapeAttr(compactValue(element.name, 120))}" />`;
+}
+
+/**
  * Lean element rendering: name/value plus the attributes the planner guidance
  * actually references (tools, autocomplete signals, anomalies, failures).
  * Internal scoring metadata (lane/tier/score) and default states are omitted —
  * measured at ~1,100 tokens/call of substrate plumbing.
  */
-function renderLeanElement(element: PlannerElementIR, normalizeMarkers = false): string {
+function renderLeanElement(element: PlannerElementIR, normalizeMarkers = false, keepDelta = false): string {
   const attrs = [
     `name="${escapeAttr(compactValue(element.name, 120))}"`,
     element.role && element.role !== element.kind ? `role="${escapeAttr(element.role)}"` : undefined,
@@ -492,12 +575,20 @@ function renderLeanElement(element: PlannerElementIR, normalizeMarkers = false):
       : undefined,
     // Page-model C3: continuity markers (state=weakened / confidence=…) move to
     // the surface's CONTINUITY header; element facts (visibility, actionability) stay.
+    // Page-model 2a conformance: when every anomaly is a continuity marker the
+    // filtered array empties and the attr is omitted entirely — never a phantom
+    // state="" (the round-2 textual strip left one; the fixtures pin omission).
     element.anomalies.length
-      ? `state="${escapeAttr((normalizeMarkers ? element.anomalies.filter(a => !a.startsWith('state=') && !a.startsWith('confidence=')) : element.anomalies).join(','))}"`
+      ? (() => {
+          const anomalies = normalizeMarkers
+            ? element.anomalies.filter(a => !a.startsWith('state=') && !a.startsWith('confidence='))
+            : element.anomalies;
+          return anomalies.length > 0 ? `state="${escapeAttr(anomalies.join(','))}"` : undefined;
+        })()
       : undefined,
     element.failure ? `failed="${element.failure.kind}x${element.failure.count}"` : undefined,
     element.tools?.length ? `tools="${element.tools.join(',')}"` : undefined,
-    !normalizeMarkers && element.delta ? `+${element.delta}` : undefined,
+    element.delta && (keepDelta || !normalizeMarkers) ? `+${element.delta}` : undefined,
   ].filter(Boolean);
   return `[${element.refId}] <${element.kind} ${attrs.join(' ')} />`;
 }
@@ -533,6 +624,19 @@ function renderElement(element: PlannerElementIR, options: { prcTierOmitted?: bo
   return `[${element.refId}] <${element.kind} ${attrs.join(' ')} />`;
 }
 
+/**
+ * Page-model 2b (W2 wire): the previous payload's full marker-free surface
+ * element lines — the line-diff source for the changed class. The loop owns
+ * the previous render; the renderer stays stateless. The baseline is the
+ * previous input's stage-2a full render (the same semantics the validated
+ * simulation used): re-rendering it through the layout engine keeps the
+ * line format, selection, and budget cap byte-faithful by construction.
+ */
+export function buildPreviousSurfaceLines(plannerInput: PlannerInput): string[] {
+  const ir = new PlannerRepresentationCompiler().compile(plannerInput, { stableOrder: false });
+  const rendered = new PromptLayoutEngine().render(ir, { leanPlane: true, pageModel: true });
+  return rendered.split('\n').filter(line => /^    \[v2ref[^\]]+\]/.test(line));
+}
 /**
  * Short, still-readable codes for the fixed working-set reason vocabulary.
  * The long snake_case tokens repeat per ref in every working-set list and were

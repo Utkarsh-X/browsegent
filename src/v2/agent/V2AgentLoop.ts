@@ -17,6 +17,7 @@ import { ContinuityGraph } from '../graph/ContinuityGraph';
 import type { ContinuityGraphSnapshot } from '../graph/types';
 import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
 import { PlannerInputComposer } from '../planner/PlannerInputComposer';
+import { buildPreviousSurfaceLines } from '../planner/prc/PromptLayoutEngine';
 import { V2PlannerClient } from '../planner/V2PlannerClient';
 import type { PlannerAnswerFeedback, PlannerInput, PlannerOutput, PlannerSerializationConfig, PlannerOutputStep } from '../planner/types';
 import type { PlannerWorkingSetOptions } from '../planner/workingSetTypes';
@@ -155,6 +156,11 @@ export class V2AgentLoop {
             previousObservation,
           ),
         });
+        // W2 wire input: the previous payload's surface element lines (the
+        // changed class is a line-diff against them). Only when the wire is on.
+        const wireSurfaceLines = input.plannerSerialization?.deltaSurface === true && previousPlannerInput
+          ? buildPreviousSurfaceLines(previousPlannerInput)
+          : undefined;
         previousObservation = observation;
         previousPlannerInput = plannerInput;
         harness.recordPlannerInput?.(plannerInput.episodeId, plannerInput);
@@ -168,6 +174,7 @@ export class V2AgentLoop {
             plannerInput,
             model: input.model,
             mode: 'normal',
+            previousSurfaceLines: wireSurfaceLines,
             onPacingWait: durationMs => {
               pacingWaitMs += durationMs;
               ledger.recordPhase('provider_pacing_wait', durationMs);

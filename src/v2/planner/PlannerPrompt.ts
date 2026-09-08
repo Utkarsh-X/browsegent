@@ -303,6 +303,7 @@ If recovery.state is present, change strategy according to recovery.nextMechanis
 export function buildV2PlannerUserMessage(
   input: PlannerInput,
   config: PlannerSerializationConfig = { mode: 'json' },
+  previousSurfaceLines?: readonly string[],
 ): string {
   if (config.mode === 'prc') {
     const ir = new PlannerRepresentationCompiler().compile(input, { stableOrder: config.prcStableOrder === true });
@@ -311,6 +312,8 @@ export function buildV2PlannerUserMessage(
       compactDataPlane: config.compactDataPlane,
       leanPlane: config.prcLeanPlane,
       pageModel: config.pageModel,
+      deltaSurface: config.deltaSurface === true,
+      previousSurfaceLines,
     })}`;
   }
 

@@ -315,8 +315,11 @@ export interface PlannerSerializationConfig {
    *  acceptance point (steer-once, hard-capped). Off-path byte-identical. */
   doneCandidateChecklist?: boolean;
   /** Page-model stage 2b (world-model contract C2/C3): H4 additive carry of
-   *  previously-rendered still-alive refs plus the hybrid delta surface wire.
-   *  Additive only — nothing is ever displaced (measured zero starvation). */
+   *  previously-rendered still-alive refs plus the W2 delta-surface wire
+   *  (stable refs render as minimal kind+name lines; the changed class is a
+   *  line-diff against the previous payload's element lines, supplied per
+   *  call by the agent loop). Additive only — nothing is ever displaced
+   *  (measured zero starvation). */
   deltaSurface?: boolean;
   /** Drop responseJsonSchema from the provider call (887 B/call). Measured
    *  0 parse failures across 422 calls without it; robustJsonParse covers
