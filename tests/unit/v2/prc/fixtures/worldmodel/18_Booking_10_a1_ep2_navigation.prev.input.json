@@ -1,0 +1,150 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "observationId": "obs_1_1",
+    "presentRefCount": 0,
+    "refCount": 0,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_1_0",
+    "transitionCount": 0,
+    "url": "https://www.booking.com/"
+  },
+  "current": {
+    "generationId": 1,
+    "interactions": [],
+    "navigation": [],
+    "observationId": "obs_1_1",
+    "page": {
+      "title": "502 Bad Gateway",
+      "url": "https://www.booking.com/"
+    },
+    "projectionId": "projection_obs_1_1",
+    "readables": [],
+    "refs": {},
+    "regions": [],
+    "stats": {
+      "interactionCount": 0,
+      "navigationCount": 0,
+      "readableCount": 0,
+      "regionCount": 0
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_1_obs_1_1",
+  "evidenceCoverage": {
+    "contractKind": "unknown",
+    "readCount": 0,
+    "requirements": [],
+    "status": "ready"
+  },
+  "goal": "Find a well-reviewed hotel in Paris with available bookings suitable for a couple (2 adults) on Valentine's Day week, February 14-21, 2027, that offers free cancellation options.",
+  "goalProgress": {
+    "entries": [
+      {
+        "key": "destination",
+        "state": "NOT_SET"
+      },
+      {
+        "key": "dates",
+        "state": "NOT_SET"
+      },
+      {
+        "key": "guests",
+        "state": "unverified"
+      },
+      {
+        "key": "free cancellation",
+        "state": "unverified"
+      },
+      {
+        "key": "well-reviewed",
+        "state": "unverified"
+      }
+    ],
+    "focus": "destination"
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 319,
+    "totalPlannerInputBytes": 2334,
+    "workingSetBytes": 547
+  },
+  "taskProgress": {
+    "items": [
+      {
+        "key": "destination",
+        "requested": "Paris",
+        "status": "pending"
+      },
+      {
+        "key": "date_range",
+        "requested": "February 14-21, 2027",
+        "status": "pending"
+      },
+      {
+        "key": "traveler_count",
+        "requested": "2 adults",
+        "status": "pending"
+      },
+      {
+        "key": "filter:free_cancellation",
+        "requested": "free cancellation",
+        "status": "pending"
+      }
+    ],
+    "status": "incomplete"
+  },
+  "uncertainty": {
+    "level": "high",
+    "signals": [
+      "empty_interactions"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [],
+      "readableRefs": [],
+      "selectableRefs": [],
+      "typeableRefs": []
+    },
+    "changedRefs": {
+      "appearedCount": 0,
+      "omittedCount": 0,
+      "preservedCount": 0,
+      "topRefs": [],
+      "weakenedCount": 0
+    },
+    "deltaRefs": {
+      "appeared": [],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "extract",
+    "modeReason": "goal_requests_information",
+    "navigationRefs": [],
+    "omitted": {
+      "droppedByReason": {},
+      "droppedRefCount": 0,
+      "observedRefCount": 0,
+      "selectedRefCount": 0
+    },
+    "primaryRefs": [],
+    "quarantinedActions": [],
+    "readableEvidence": [],
+    "regionSummaries": [],
+    "secondaryRefs": []
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {},
+    "droppedRefCount": 0,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 0,
+    "selectedByReason": {},
+    "selectedRefCount": 0
+  }
+}

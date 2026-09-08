@@ -1,0 +1,3219 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "latestTransition": {
+      "strength": "strong",
+      "transitionClass": "structural_macrostate",
+      "transitionId": "transition_obs_1_4_obs_1_5"
+    },
+    "observationId": "obs_1_5",
+    "presentRefCount": 3225,
+    "refCount": 6335,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_5_4",
+    "transitionCount": 4,
+    "url": "https://www.google.com/travel/flights?tfs=CBwQARodag0IAhIJL20vMDIydHE0cgwIAxIIL20vMDUyYncaHWoMCAMSCC9tLzA1MmJ3cg0IAhIJL20vMDIydHE0QAFIAXABggELCP___________wGYAQE&tfu=KgIIAw"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_4409"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_4409"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_4415"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_4416"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_4424"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_4431"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_180"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_6310"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_4380"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_216"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_4398"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_4399"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_4410"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_4417"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_4425"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_4432"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_1241"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_1243"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_1244"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_235"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_4400"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_4402"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_4403"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_4411"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_4413"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_4414"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_4418"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_4420"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_4421"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_4426"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_4428"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_4429"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_4433"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_4440"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_6322"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_6323"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_6334"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_6335"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_6346"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_6347"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_6468"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_6471"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_6472"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_6475"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_6476"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_6481"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_6482"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_6489"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_6515"
+      },
+      {
+        "rank": 49,
+        "refId": "v2ref_6516"
+      },
+      {
+        "rank": 50,
+        "refId": "v2ref_6519"
+      },
+      {
+        "rank": 51,
+        "refId": "v2ref_6520"
+      },
+      {
+        "rank": 52,
+        "refId": "v2ref_6523"
+      },
+      {
+        "rank": 53,
+        "refId": "v2ref_6524"
+      },
+      {
+        "rank": 54,
+        "refId": "v2ref_6527"
+      },
+      {
+        "rank": 55,
+        "refId": "v2ref_6528"
+      },
+      {
+        "rank": 56,
+        "refId": "v2ref_6531"
+      },
+      {
+        "rank": 57,
+        "refId": "v2ref_6532"
+      },
+      {
+        "rank": 58,
+        "refId": "v2ref_6535"
+      },
+      {
+        "rank": 59,
+        "refId": "v2ref_6539"
+      },
+      {
+        "rank": 60,
+        "refId": "v2ref_6540"
+      },
+      {
+        "rank": 61,
+        "refId": "v2ref_6545"
+      },
+      {
+        "rank": 62,
+        "refId": "v2ref_6546"
+      },
+      {
+        "rank": 63,
+        "refId": "v2ref_6360"
+      },
+      {
+        "rank": 64,
+        "refId": "v2ref_6361"
+      },
+      {
+        "rank": 65,
+        "refId": "v2ref_6374"
+      },
+      {
+        "rank": 66,
+        "refId": "v2ref_6375"
+      },
+      {
+        "rank": 67,
+        "refId": "v2ref_6386"
+      },
+      {
+        "rank": 68,
+        "refId": "v2ref_6387"
+      },
+      {
+        "rank": 69,
+        "refId": "v2ref_6398"
+      },
+      {
+        "rank": 70,
+        "refId": "v2ref_6399"
+      },
+      {
+        "rank": 71,
+        "refId": "v2ref_6412"
+      },
+      {
+        "rank": 72,
+        "refId": "v2ref_6413"
+      },
+      {
+        "rank": 73,
+        "refId": "v2ref_6424"
+      },
+      {
+        "rank": 74,
+        "refId": "v2ref_6425"
+      },
+      {
+        "rank": 75,
+        "refId": "v2ref_6438"
+      },
+      {
+        "rank": 76,
+        "refId": "v2ref_6439"
+      },
+      {
+        "rank": 77,
+        "refId": "v2ref_6450"
+      },
+      {
+        "rank": 78,
+        "refId": "v2ref_6451"
+      },
+      {
+        "rank": 79,
+        "refId": "v2ref_6463"
+      },
+      {
+        "rank": 80,
+        "refId": "v2ref_6464"
+      }
+    ],
+    "navigation": [],
+    "observationId": "obs_1_5",
+    "page": {
+      "title": "Find Cheap Flights Worldwide & Book Your Ticket - Google Flights",
+      "url": "https://www.google.com/travel/flights?tfs=CBwQARodag0IAhIJL20vMDIydHE0cgwIAxIIL20vMDUyYncaHWoMCAMSCC9tLzA1MmJ3cg0IAhIJL20vMDIydHE0QAFIAXABggELCP___________wGYAQE&tfu=KgIIAw"
+    },
+    "projectionId": "projection_obs_1_5",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_4409"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_4415"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_4416"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_4424"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_4431"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_180"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_6310"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_4380"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_216"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_4398"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_4399"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_4410"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_4417"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_4425"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_4432"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_235"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_4440"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_6322"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_6323"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_6334"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_6335"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_6346"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_6347"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_6468"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_6471"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_6472"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_6475"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_6476"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_6481"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_6482"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_6489"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_6515"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_6516"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_6519"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_6520"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_6523"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_6524"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_6527"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_6528"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_6531"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_6532"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_6535"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_6539"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_6540"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_6545"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_6546"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_6360"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_6361"
+      }
+    ],
+    "refs": {
+      "v2ref_1241": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1241",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1243": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1243",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1244": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1244",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_180": {
+        "actionability": "ready",
+        "ariaAutocomplete": "none",
+        "ariaHasPopup": "listbox",
+        "confidence": 1,
+        "kind": "select",
+        "name": "Economy",
+        "refId": "v2ref_180",
+        "role": "combobox",
+        "score": 112,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_216": {
+        "actionability": "ready",
+        "ariaAutocomplete": "inline",
+        "ariaHasPopup": "true",
+        "confidence": 1,
+        "kind": "input",
+        "name": "Where from?",
+        "refId": "v2ref_216",
+        "role": "combobox",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_235": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "Swap origin and destination.",
+        "refId": "v2ref_235",
+        "role": "button",
+        "score": 95,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_4380": {
+        "actionability": "ready",
+        "ariaHasPopup": "dialog",
+        "confidence": 1,
+        "kind": "button",
+        "name": "1 passenger",
+        "refId": "v2ref_4380",
+        "role": "button",
+        "score": 110,
+        "state": "live",
+        "text": "1",
+        "visibility": "visible"
+      },
+      "v2ref_4398": {
+        "actionability": "ready",
+        "ariaAutocomplete": "both",
+        "ariaHasPopup": "true",
+        "confidence": 1,
+        "kind": "input",
+        "name": "Where else?",
+        "refId": "v2ref_4398",
+        "role": "combobox",
+        "score": 109,
+        "state": "live",
+        "value": "Edinburgh, United Kingdom",
+        "visibility": "visible"
+      },
+      "v2ref_4399": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Origin, Select multiple airports",
+        "refId": "v2ref_4399",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4400": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4400",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4402": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4402",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4403": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4403",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4409": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Edinburgh, United Kingdom",
+        "refId": "v2ref_4409",
+        "role": "option",
+        "score": 115,
+        "state": "live",
+        "text": "Edinburgh, United KingdomCapital of Scotland.Showing 1 nearby location.",
+        "visibility": "visible"
+      },
+      "v2ref_4410": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Toggle nearby airports for Edinburgh, United Kingdom",
+        "refId": "v2ref_4410",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4411": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4411",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4413": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4413",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4414": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4414",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4415": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Edinburgh Airport (EDI)",
+        "refId": "v2ref_4415",
+        "role": "option",
+        "score": 115,
+        "state": "live",
+        "text": "Edinburgh AirportEDI11 km to destination.Sub-item 1 of 1",
+        "visibility": "visible"
+      },
+      "v2ref_4416": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Edinburg, Texas, USA",
+        "refId": "v2ref_4416",
+        "role": "option",
+        "score": 115,
+        "state": "live",
+        "text": "Edinburg, Texas, USACity in Texas.Nearby locations are hidden.",
+        "visibility": "visible"
+      },
+      "v2ref_4417": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Toggle nearby airports for Edinburg, Texas, USA",
+        "refId": "v2ref_4417",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4418": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4418",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4420": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4420",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4421": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4421",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4424": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Edinburgh of the Seven Seas, St. Helena",
+        "refId": "v2ref_4424",
+        "role": "option",
+        "score": 115,
+        "state": "live",
+        "text": "Edinburgh of the Seven Seas, St. HelenaVillage in Tristan da Cunha, Saint Helena, Ascension and Tristan da Cunha.Nearby locations are hidden.",
+        "visibility": "visible"
+      },
+      "v2ref_4425": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Toggle nearby airports for Edinburgh of the Seven Seas, St. Helena",
+        "refId": "v2ref_4425",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4426": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4426",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4428": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4428",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4429": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4429",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4431": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Edinburg, Virginia, USA",
+        "refId": "v2ref_4431",
+        "role": "option",
+        "score": 115,
+        "state": "live",
+        "text": "Edinburg, Virginia, USATown in Virginia.Nearby locations are hidden.",
+        "visibility": "visible"
+      },
+      "v2ref_4432": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Toggle nearby airports for Edinburg, Virginia, USA",
+        "refId": "v2ref_4432",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4433": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4433",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4440": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Edinburgh, Indiana, USA",
+        "refId": "v2ref_4440",
+        "role": "option",
+        "score": 90,
+        "state": "live",
+        "text": "Edinburgh, Indiana, USATown in Indiana.Nearby locations are hidden.",
+        "visibility": "offscreen"
+      },
+      "v2ref_6310": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Search",
+        "refId": "v2ref_6310",
+        "role": "button",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_6322": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹8,600",
+        "refId": "v2ref_6322",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6323": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹8,600",
+        "refId": "v2ref_6323",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6334": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹12,271",
+        "refId": "v2ref_6334",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6335": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹12,271",
+        "refId": "v2ref_6335",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6346": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹13,121",
+        "refId": "v2ref_6346",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6347": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹13,121",
+        "refId": "v2ref_6347",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6360": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹11,860",
+        "refId": "v2ref_6360",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6361": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹11,860",
+        "refId": "v2ref_6361",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6374": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,241",
+        "refId": "v2ref_6374",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6375": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,241",
+        "refId": "v2ref_6375",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6386": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹13,772",
+        "refId": "v2ref_6386",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6387": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹13,772",
+        "refId": "v2ref_6387",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6398": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹12,300",
+        "refId": "v2ref_6398",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6399": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹12,300",
+        "refId": "v2ref_6399",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6412": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹9,308",
+        "refId": "v2ref_6412",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6413": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹9,308",
+        "refId": "v2ref_6413",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6424": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,261",
+        "refId": "v2ref_6424",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6425": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,261",
+        "refId": "v2ref_6425",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6438": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,451",
+        "refId": "v2ref_6438",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6439": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,451",
+        "refId": "v2ref_6439",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6450": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹9,181",
+        "refId": "v2ref_6450",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6451": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹9,181",
+        "refId": "v2ref_6451",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6463": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹8,612",
+        "refId": "v2ref_6463",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6464": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹8,612",
+        "refId": "v2ref_6464",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6468": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals",
+        "refId": "v2ref_6468",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6471": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals",
+        "refId": "v2ref_6471",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6472": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Know when to book with price insightsPrice history and trend data show you the best time to book your airline ticket to get the cheapest price for your flight",
+        "refId": "v2ref_6472",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6475": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Know when to book with price insightsPrice history and trend data show you the best time to book your airline ticket to get the cheapest price for your flight",
+        "refId": "v2ref_6475",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6476": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Track flight prices for a tripNot ready to book yet? Observe price changes for a route or flight and get notified when prices drop.",
+        "refId": "v2ref_6476",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6481": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Track flight prices for a tripNot ready to book yet? Observe price changes for a route or flight and get notified when prices drop.",
+        "refId": "v2ref_6481",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6482": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore the best flight deals with AIDescribe your ideal trip and let Google Flights find you the best deals",
+        "refId": "v2ref_6482",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6489": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore the best flight deals with AIDescribe your ideal trip and let Google Flights find you the best deals",
+        "refId": "v2ref_6489",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6515": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "What are some good flight destinations from India?",
+        "refId": "v2ref_6515",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6516": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "What are some good flight destinations from India?",
+        "refId": "v2ref_6516",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6519": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "How can I find last-minute flight deals?",
+        "refId": "v2ref_6519",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6520": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "How can I find last-minute flight deals?",
+        "refId": "v2ref_6520",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6523": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "How can I find cheap flights for a weekend getaway?",
+        "refId": "v2ref_6523",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6524": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "How can I find cheap flights for a weekend getaway?",
+        "refId": "v2ref_6524",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6527": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "How can I find flight deals if my travel plans are flexible?",
+        "refId": "v2ref_6527",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6528": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "How can I find flight deals if my travel plans are flexible?",
+        "refId": "v2ref_6528",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6531": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "How can I find cheap flights to anywhere?",
+        "refId": "v2ref_6531",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6532": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "How can I find cheap flights to anywhere?",
+        "refId": "v2ref_6532",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6535": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "How can I get flight alerts for my trip?",
+        "refId": "v2ref_6535",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6539": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Flights from cities in India",
+        "refId": "v2ref_6539",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6540": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Flights from cities in India",
+        "refId": "v2ref_6540",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6545": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "International flights from India",
+        "refId": "v2ref_6545",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6546": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "International flights from India",
+        "refId": "v2ref_6546",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      }
+    },
+    "regions": [],
+    "stats": {
+      "interactionCount": 80,
+      "navigationCount": 0,
+      "readableCount": 64,
+      "regionCount": 0
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_5_obs_1_5",
+  "evidenceCoverage": {
+    "contractKind": "ranked_entity",
+    "readCount": 37,
+    "requirements": [
+      {
+        "key": "ranking_evidence",
+        "status": "uncertain",
+        "supportingReadIndexes": []
+      }
+    ],
+    "status": "uncertain"
+  },
+  "goal": "Book a journey with return option on same day from Edinburg to Manchester on December 28th and show me the lowest price option available.",
+  "goalProgress": {
+    "entries": [
+      {
+        "key": "destination",
+        "state": "typed:\"Edinburg\""
+      },
+      {
+        "key": "destinationTo",
+        "state": "typed:\"Manchester\""
+      },
+      {
+        "key": "dates",
+        "state": "NOT_SET"
+      },
+      {
+        "key": "cheapest",
+        "state": "unverified"
+      }
+    ],
+    "focus": "dates"
+  },
+  "lastResult": {
+    "effect": "page",
+    "evidence": {
+      "strength": "strong",
+      "transitionClass": "structural_macrostate"
+    },
+    "kind": "type",
+    "success": true,
+    "targetRef": "v2ref_216",
+    "traceStepId": "step_4",
+    "valuePreview": "Edinburgh Where from? combobox"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_2",
+        "beforeObservationId": "obs_1_1",
+        "index": 0,
+        "kind": "type",
+        "status": "completed",
+        "stepId": "step_1",
+        "strength": "moderate",
+        "targetName": "Where from?",
+        "targetRef": "v2ref_216",
+        "transitionClass": "structural_local",
+        "value": "Edinburg"
+      },
+      {
+        "afterObservationId": "obs_1_3",
+        "beforeObservationId": "obs_1_2",
+        "index": 1,
+        "kind": "type",
+        "status": "completed",
+        "stepId": "step_2",
+        "strength": "moderate",
+        "targetName": "Where to?",
+        "targetRef": "v2ref_236",
+        "transitionClass": "structural_local",
+        "value": "Manchester"
+      },
+      {
+        "afterObservationId": "obs_1_4",
+        "beforeObservationId": "obs_1_3",
+        "index": 2,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_3",
+        "strength": "moderate",
+        "targetName": "Manchester, United Kingdom",
+        "targetRef": "v2ref_1260",
+        "transitionClass": "structural_local"
+      },
+      {
+        "afterObservationId": "obs_1_5",
+        "beforeObservationId": "obs_1_4",
+        "index": 3,
+        "kind": "type",
+        "status": "completed",
+        "stepId": "step_4",
+        "strength": "strong",
+        "targetName": "Where from?",
+        "targetRef": "v2ref_216",
+        "transitionClass": "structural_macrostate",
+        "value": "Edinburgh"
+      }
+    ],
+    "totalSteps": 4,
+    "truncated": false
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 20249,
+    "totalPlannerInputBytes": 52345,
+    "workingSetBytes": 28303
+  },
+  "taskProgress": {
+    "items": [
+      {
+        "evidence": [
+          "v2ref_4398",
+          "v2ref_236"
+        ],
+        "key": "destination",
+        "requested": "Manchester",
+        "status": "conflicting"
+      }
+    ],
+    "status": "conflicting"
+  },
+  "transition": {
+    "afterObservationId": "obs_1_5",
+    "beforeObservationId": "obs_1_4",
+    "generationChanged": false,
+    "notes": [
+      "url_changed",
+      "refs_appeared:2177",
+      "refs_disappeared:2137",
+      "refs_weakened:361",
+      "ref_changed:v2ref_163",
+      "ref_changed:v2ref_170",
+      "ref_changed:v2ref_171",
+      "ref_changed:v2ref_172"
+    ],
+    "refChangeCounts": {
+      "appeared": 2177,
+      "disappeared": 2137,
+      "preserved": 517,
+      "weakened": 361
+    },
+    "strength": "strong",
+    "transitionClass": "structural_macrostate",
+    "urlChanged": true
+  },
+  "uncertainty": {
+    "level": "medium",
+    "signals": [
+      "low_confidence_refs:531",
+      "low_confidence_ref:v2ref_298",
+      "low_confidence_ref:v2ref_235",
+      "low_confidence_ref:v2ref_236",
+      "low_confidence_ref:v2ref_253",
+      "weakened_refs:361"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_4409",
+        "v2ref_4415",
+        "v2ref_4416",
+        "v2ref_4424",
+        "v2ref_4431",
+        "v2ref_180",
+        "v2ref_6310",
+        "v2ref_4380",
+        "v2ref_216",
+        "v2ref_4398",
+        "v2ref_4399",
+        "v2ref_4410",
+        "v2ref_4417",
+        "v2ref_4425",
+        "v2ref_4432",
+        "v2ref_235",
+        "v2ref_4440"
+      ],
+      "readableRefs": [
+        "v2ref_4409",
+        "v2ref_4415",
+        "v2ref_4416",
+        "v2ref_4424",
+        "v2ref_4431",
+        "v2ref_180",
+        "v2ref_6310",
+        "v2ref_4380",
+        "v2ref_216",
+        "v2ref_4398",
+        "v2ref_4399",
+        "v2ref_4410",
+        "v2ref_4417",
+        "v2ref_4425",
+        "v2ref_4432",
+        "v2ref_235",
+        "v2ref_4440",
+        "v2ref_6322",
+        "v2ref_6323",
+        "v2ref_6334",
+        "v2ref_6335",
+        "v2ref_6346",
+        "v2ref_6347",
+        "v2ref_6468",
+        "v2ref_6471",
+        "v2ref_6472",
+        "v2ref_6475",
+        "v2ref_6476",
+        "v2ref_6481",
+        "v2ref_6482",
+        "v2ref_6489",
+        "v2ref_6515",
+        "v2ref_6516",
+        "v2ref_6519",
+        "v2ref_6520",
+        "v2ref_6523",
+        "v2ref_6524",
+        "v2ref_6527",
+        "v2ref_6528",
+        "v2ref_6531",
+        "v2ref_6532",
+        "v2ref_6535",
+        "v2ref_6539",
+        "v2ref_6540",
+        "v2ref_6545",
+        "v2ref_6546",
+        "v2ref_6360",
+        "v2ref_6361",
+        "v2ref_6374",
+        "v2ref_6375",
+        "v2ref_6386",
+        "v2ref_6387",
+        "v2ref_6398",
+        "v2ref_6399",
+        "v2ref_6412",
+        "v2ref_6413",
+        "v2ref_6424",
+        "v2ref_6425",
+        "v2ref_6438",
+        "v2ref_6439",
+        "v2ref_6450",
+        "v2ref_6451",
+        "v2ref_6463",
+        "v2ref_6464"
+      ],
+      "selectableRefs": [
+        "v2ref_180"
+      ],
+      "typeableRefs": [
+        "v2ref_216",
+        "v2ref_4398"
+      ]
+    },
+    "changedRefs": {
+      "appearedCount": 2177,
+      "omittedCount": 2514,
+      "preservedCount": 517,
+      "topRefs": [
+        {
+          "kind": "generic",
+          "name": "Edinburgh of the Seven Seas, St. Helena",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "suggestion_option",
+            "visible_ready"
+          ],
+          "refId": "v2ref_4424",
+          "role": "option",
+          "score": 485,
+          "text": "Edinburgh of the Seven Seas, St. HelenaVillage in Tristan da Cunha, Saint Helena, Ascension and Tristan da Cunha.Nearby locations are hidden."
+        },
+        {
+          "kind": "generic",
+          "name": "Edinburg, Texas, USA",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "suggestion_option",
+            "visible_ready"
+          ],
+          "refId": "v2ref_4416",
+          "role": "option",
+          "score": 475,
+          "text": "Edinburg, Texas, USACity in Texas.Nearby locations are hidden."
+        },
+        {
+          "kind": "generic",
+          "name": "Edinburg, Virginia, USA",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "suggestion_option",
+            "visible_ready"
+          ],
+          "refId": "v2ref_4431",
+          "role": "option",
+          "score": 475,
+          "text": "Edinburg, Virginia, USATown in Virginia.Nearby locations are hidden."
+        },
+        {
+          "kind": "generic",
+          "name": "Edinburgh, United Kingdom",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "suggestion_option",
+            "visible_ready"
+          ],
+          "refId": "v2ref_4409",
+          "role": "option",
+          "score": 465,
+          "text": "Edinburgh, United KingdomCapital of Scotland.Showing 1 nearby location."
+        },
+        {
+          "kind": "generic",
+          "name": "Edinburgh Airport (EDI)",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "suggestion_option",
+            "visible_ready"
+          ],
+          "refId": "v2ref_4415",
+          "role": "option",
+          "score": 465,
+          "text": "Edinburgh AirportEDI11 km to destination.Sub-item 1 of 1"
+        },
+        {
+          "kind": "generic",
+          "name": "from ₹8,600",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "result_row"
+          ],
+          "refId": "v2ref_6322",
+          "score": 396,
+          "text": "from ₹8,600"
+        },
+        {
+          "kind": "generic",
+          "name": "from ₹8,600",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "result_row"
+          ],
+          "refId": "v2ref_6323",
+          "score": 396,
+          "text": "from ₹8,600"
+        },
+        {
+          "kind": "generic",
+          "name": "from ₹12,271",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "result_row"
+          ],
+          "refId": "v2ref_6334",
+          "score": 396,
+          "text": "from ₹12,271"
+        },
+        {
+          "kind": "generic",
+          "name": "from ₹12,271",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "result_row"
+          ],
+          "refId": "v2ref_6335",
+          "score": 396,
+          "text": "from ₹12,271"
+        },
+        {
+          "kind": "generic",
+          "name": "from ₹13,121",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "result_row"
+          ],
+          "refId": "v2ref_6346",
+          "score": 396,
+          "text": "from ₹13,121"
+        },
+        {
+          "kind": "generic",
+          "name": "from ₹13,121",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "result_row"
+          ],
+          "refId": "v2ref_6347",
+          "score": 396,
+          "text": "from ₹13,121"
+        },
+        {
+          "kind": "button",
+          "name": "Toggle nearby airports for Edinburg, Texas, USA",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_4417",
+          "role": "button",
+          "score": 379
+        },
+        {
+          "kind": "button",
+          "name": "Toggle nearby airports for Edinburgh of the Seven Seas, St. Helena",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_4425",
+          "role": "button",
+          "score": 379
+        },
+        {
+          "kind": "button",
+          "name": "Toggle nearby airports for Edinburg, Virginia, USA",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_4432",
+          "role": "button",
+          "score": 379
+        },
+        {
+          "kind": "generic",
+          "name": "from ₹11,860",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "result_row"
+          ],
+          "refId": "v2ref_6360",
+          "score": 351,
+          "text": "from ₹11,860"
+        },
+        {
+          "kind": "generic",
+          "name": "from ₹11,860",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "result_row"
+          ],
+          "refId": "v2ref_6361",
+          "score": 351,
+          "text": "from ₹11,860"
+        }
+      ],
+      "weakenedCount": 361
+    },
+    "deltaRefs": {
+      "appeared": [
+        "v2ref_4424",
+        "v2ref_4416",
+        "v2ref_4431",
+        "v2ref_4409",
+        "v2ref_4415",
+        "v2ref_6322",
+        "v2ref_6323",
+        "v2ref_6334"
+      ],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "verify",
+    "modeReason": "recent_value_evidence",
+    "navigationRefs": [],
+    "omitted": {
+      "droppedByReason": {
+        "generic_low_value": 16,
+        "hidden_low_value": 414,
+        "offscreen_low_value": 29,
+        "rank_loss": 2605,
+        "unlabeled_action": 8
+      },
+      "droppedRefCount": 3145,
+      "observedRefCount": 3225,
+      "selectedRefCount": 80
+    },
+    "primaryRefs": [
+      {
+        "kind": "generic",
+        "name": "Edinburgh of the Seven Seas, St. Helena",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "suggestion_option",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4424",
+        "role": "option",
+        "score": 485,
+        "text": "Edinburgh of the Seven Seas, St. HelenaVillage in Tristan da Cunha, Saint Helena, Ascension and Tristan da Cunha.Nearby locations are hidden."
+      },
+      {
+        "kind": "generic",
+        "name": "Edinburg, Texas, USA",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "suggestion_option",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4416",
+        "role": "option",
+        "score": 475,
+        "text": "Edinburg, Texas, USACity in Texas.Nearby locations are hidden."
+      },
+      {
+        "kind": "generic",
+        "name": "Edinburg, Virginia, USA",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "suggestion_option",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4431",
+        "role": "option",
+        "score": 475,
+        "text": "Edinburg, Virginia, USATown in Virginia.Nearby locations are hidden."
+      },
+      {
+        "kind": "generic",
+        "name": "Edinburgh, United Kingdom",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "suggestion_option",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4409",
+        "role": "option",
+        "score": 465,
+        "text": "Edinburgh, United KingdomCapital of Scotland.Showing 1 nearby location."
+      },
+      {
+        "kind": "generic",
+        "name": "Edinburgh Airport (EDI)",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "suggestion_option",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4415",
+        "role": "option",
+        "score": 465,
+        "text": "Edinburgh AirportEDI11 km to destination.Sub-item 1 of 1"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹8,600",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6322",
+        "score": 396,
+        "text": "from ₹8,600"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹8,600",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6323",
+        "score": 396,
+        "text": "from ₹8,600"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹12,271",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6334",
+        "score": 396,
+        "text": "from ₹12,271"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹12,271",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6335",
+        "score": 396,
+        "text": "from ₹12,271"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹13,121",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6346",
+        "score": 396,
+        "text": "from ₹13,121"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹13,121",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6347",
+        "score": 396,
+        "text": "from ₹13,121"
+      },
+      {
+        "kind": "button",
+        "name": "Toggle nearby airports for Edinburg, Texas, USA",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4417",
+        "role": "button",
+        "score": 379
+      },
+      {
+        "kind": "button",
+        "name": "Toggle nearby airports for Edinburgh of the Seven Seas, St. Helena",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4425",
+        "role": "button",
+        "score": 379
+      },
+      {
+        "kind": "button",
+        "name": "Toggle nearby airports for Edinburg, Virginia, USA",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4432",
+        "role": "button",
+        "score": 379
+      },
+      {
+        "kind": "button",
+        "name": "Search",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_6310",
+        "role": "button",
+        "score": 371,
+        "text": "Search"
+      },
+      {
+        "kind": "button",
+        "name": "1 passenger",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4380",
+        "role": "button",
+        "score": 370,
+        "text": "1"
+      },
+      {
+        "kind": "input",
+        "name": "Where else?",
+        "reasons": [
+          "form_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4398",
+        "role": "combobox",
+        "score": 369
+      },
+      {
+        "kind": "button",
+        "name": "Origin, Select multiple airports",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4399",
+        "role": "button",
+        "score": 369
+      },
+      {
+        "kind": "button",
+        "name": "Toggle nearby airports for Edinburgh, United Kingdom",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4410",
+        "role": "button",
+        "score": 369
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4400",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4402",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4403",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4411",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4413",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4414",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4418",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4420",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4421",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4426",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4428",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4429",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4433",
+        "score": 355
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4424",
+        "text": "Edinburgh of the Seven Seas, St. Helena Edinburgh of the Seven Seas, St. HelenaVillage in Tristan da Cunha, Saint Helena, Ascension and Tristan da Cunha.Nearby locations are hidden."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4416",
+        "text": "Edinburg, Texas, USA Edinburg, Texas, USACity in Texas.Nearby locations are hidden."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4431",
+        "text": "Edinburg, Virginia, USA Edinburg, Virginia, USATown in Virginia.Nearby locations are hidden."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4409",
+        "text": "Edinburgh, United Kingdom Edinburgh, United KingdomCapital of Scotland.Showing 1 nearby location."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4415",
+        "text": "Edinburgh Airport (EDI) Edinburgh AirportEDI11 km to destination.Sub-item 1 of 1"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6322",
+        "text": "from ₹8,600 from ₹8,600"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6323",
+        "text": "from ₹8,600 from ₹8,600"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6334",
+        "text": "from ₹12,271 from ₹12,271"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6335",
+        "text": "from ₹12,271 from ₹12,271"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6346",
+        "text": "from ₹13,121 from ₹13,121"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6347",
+        "text": "from ₹13,121 from ₹13,121"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4417",
+        "text": "Toggle nearby airports for Edinburg, Texas, USA"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4425",
+        "text": "Toggle nearby airports for Edinburgh of the Seven Seas, St. Helena"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4432",
+        "text": "Toggle nearby airports for Edinburg, Virginia, USA"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6310",
+        "text": "Search Search"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4380",
+        "text": "1 passenger 1"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4398",
+        "text": "Where else?"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4399",
+        "text": "Origin, Select multiple airports"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4410",
+        "text": "Toggle nearby airports for Edinburgh, United Kingdom"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6360",
+        "text": "from ₹11,860 from ₹11,860"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6361",
+        "text": "from ₹11,860 from ₹11,860"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6374",
+        "text": "from ₹16,241 from ₹16,241"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6375",
+        "text": "from ₹16,241 from ₹16,241"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6386",
+        "text": "from ₹13,772 from ₹13,772"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6387",
+        "text": "from ₹13,772 from ₹13,772"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6398",
+        "text": "from ₹12,300 from ₹12,300"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6399",
+        "text": "from ₹12,300 from ₹12,300"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6412",
+        "text": "from ₹9,308 from ₹9,308"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6413",
+        "text": "from ₹9,308 from ₹9,308"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6424",
+        "text": "from ₹16,261 from ₹16,261"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6425",
+        "text": "from ₹16,261 from ₹16,261"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6438",
+        "text": "from ₹16,451 from ₹16,451"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6439",
+        "text": "from ₹16,451 from ₹16,451"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6450",
+        "text": "from ₹9,181 from ₹9,181"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6451",
+        "text": "from ₹9,181 from ₹9,181"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6463",
+        "text": "from ₹8,612 from ₹8,612"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6464",
+        "text": "from ₹8,612 from ₹8,612"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6472",
+        "text": "Know when to book with price insightsPrice history and trend data show you the best time to book your airline ticket to get the cheapest price for your flight Know when to book with price insightsPrice history and tre..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6475",
+        "text": "Know when to book with price insightsPrice history and trend data show you the best time to book your airline ticket to get the cheapest price for your flight Know when to book with price insightsPrice history and tre..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_216",
+        "text": "Where from?"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_180",
+        "text": "Economy Economy"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6468",
+        "text": "Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6471",
+        "text": "Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6476",
+        "text": "Track flight prices for a tripNot ready to book yet? Observe price changes for a route or flight and get notified when prices drop. Track flight prices for a tripNot ready to book yet? Observe price changes for a rout..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6481",
+        "text": "Track flight prices for a tripNot ready to book yet? Observe price changes for a route or flight and get notified when prices drop. Track flight prices for a tripNot ready to book yet? Observe price changes for a rout..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6482",
+        "text": "Explore the best flight deals with AIDescribe your ideal trip and let Google Flights find you the best deals Explore the best flight deals with AIDescribe your ideal trip and let Google Flights find you the best deals"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6489",
+        "text": "Explore the best flight deals with AIDescribe your ideal trip and let Google Flights find you the best deals Explore the best flight deals with AIDescribe your ideal trip and let Google Flights find you the best deals"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_235",
+        "text": "Swap origin and destination."
+      }
+    ],
+    "regionSummaries": [],
+    "secondaryRefs": [
+      {
+        "kind": "generic",
+        "name": "from ₹11,860",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6360",
+        "score": 351,
+        "text": "from ₹11,860"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹11,860",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6361",
+        "score": 351,
+        "text": "from ₹11,860"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,241",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6374",
+        "score": 351,
+        "text": "from ₹16,241"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,241",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6375",
+        "score": 351,
+        "text": "from ₹16,241"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹13,772",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6386",
+        "score": 351,
+        "text": "from ₹13,772"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹13,772",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6387",
+        "score": 351,
+        "text": "from ₹13,772"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹12,300",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6398",
+        "score": 351,
+        "text": "from ₹12,300"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹12,300",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6399",
+        "score": 351,
+        "text": "from ₹12,300"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹9,308",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6412",
+        "score": 351,
+        "text": "from ₹9,308"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹9,308",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6413",
+        "score": 351,
+        "text": "from ₹9,308"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,261",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6424",
+        "score": 351,
+        "text": "from ₹16,261"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,261",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6425",
+        "score": 351,
+        "text": "from ₹16,261"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,451",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6438",
+        "score": 351,
+        "text": "from ₹16,451"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,451",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6439",
+        "score": 351,
+        "text": "from ₹16,451"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹9,181",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6450",
+        "score": 351,
+        "text": "from ₹9,181"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹9,181",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6451",
+        "score": 351,
+        "text": "from ₹9,181"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹8,612",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6463",
+        "score": 351,
+        "text": "from ₹8,612"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹8,612",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "result_row"
+        ],
+        "refId": "v2ref_6464",
+        "score": 351,
+        "text": "from ₹8,612"
+      },
+      {
+        "kind": "generic",
+        "name": "Know when to book with price insightsPrice history and trend data show you the best time to book your airline ticket to get the cheapest price for your flight",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6472",
+        "score": 306,
+        "text": "Know when to book with price insightsPrice history and trend data show you the best time to book your airline ticket to get the cheapest price for your flight"
+      },
+      {
+        "kind": "generic",
+        "name": "Know when to book with price insightsPrice history and trend data show you the best time to book your airline ticket to get the cheapest price for your flight",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6475",
+        "score": 306,
+        "text": "Know when to book with price insightsPrice history and trend data show you the best time to book your airline ticket to get the cheapest price for your flight"
+      },
+      {
+        "kind": "input",
+        "name": "Where from?",
+        "reasons": [
+          "form_candidate",
+          "goal_keyword_match",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_216",
+        "role": "combobox",
+        "score": 289
+      },
+      {
+        "kind": "select",
+        "name": "Economy",
+        "reasons": [
+          "form_candidate",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_180",
+        "role": "combobox",
+        "score": 282,
+        "text": "Economy"
+      },
+      {
+        "kind": "generic",
+        "name": "Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6468",
+        "score": 276,
+        "text": "Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals"
+      },
+      {
+        "kind": "generic",
+        "name": "Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6471",
+        "score": 276,
+        "text": "Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals"
+      },
+      {
+        "kind": "generic",
+        "name": "Track flight prices for a tripNot ready to book yet? Observe price changes for a route or flight and get notified when prices drop.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6476",
+        "score": 276,
+        "text": "Track flight prices for a tripNot ready to book yet? Observe price changes for a route or flight and get notified when prices drop."
+      },
+      {
+        "kind": "generic",
+        "name": "Track flight prices for a tripNot ready to book yet? Observe price changes for a route or flight and get notified when prices drop.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6481",
+        "score": 276,
+        "text": "Track flight prices for a tripNot ready to book yet? Observe price changes for a route or flight and get notified when prices drop."
+      },
+      {
+        "kind": "generic",
+        "name": "Explore the best flight deals with AIDescribe your ideal trip and let Google Flights find you the best deals",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6482",
+        "score": 276,
+        "text": "Explore the best flight deals with AIDescribe your ideal trip and let Google Flights find you the best deals"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore the best flight deals with AIDescribe your ideal trip and let Google Flights find you the best deals",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6489",
+        "score": 276,
+        "text": "Explore the best flight deals with AIDescribe your ideal trip and let Google Flights find you the best deals"
+      },
+      {
+        "kind": "button",
+        "name": "Swap origin and destination.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_235",
+        "role": "button",
+        "score": 275
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1241",
+        "score": 265
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1243",
+        "score": 265
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1244",
+        "score": 265
+      },
+      {
+        "kind": "generic",
+        "name": "Edinburgh, Indiana, USA",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4440",
+        "role": "option",
+        "score": 260,
+        "text": "Edinburgh, Indiana, USATown in Indiana.Nearby locations are hidden."
+      },
+      {
+        "kind": "generic",
+        "name": "What are some good flight destinations from India?",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6515",
+        "score": 256,
+        "text": "What are some good flight destinations from India?"
+      },
+      {
+        "kind": "generic",
+        "name": "What are some good flight destinations from India?",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6516",
+        "score": 256,
+        "text": "What are some good flight destinations from India?"
+      },
+      {
+        "kind": "generic",
+        "name": "Flights from cities in India",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6539",
+        "score": 256,
+        "text": "Flights from cities in India"
+      },
+      {
+        "kind": "generic",
+        "name": "Flights from cities in India",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6540",
+        "score": 256,
+        "text": "Flights from cities in India"
+      },
+      {
+        "kind": "generic",
+        "name": "International flights from India",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6545",
+        "score": 256,
+        "text": "International flights from India"
+      },
+      {
+        "kind": "generic",
+        "name": "International flights from India",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6546",
+        "score": 256,
+        "text": "International flights from India"
+      },
+      {
+        "kind": "generic",
+        "name": "How can I find last-minute flight deals?",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6519",
+        "score": 246,
+        "text": "How can I find last-minute flight deals?"
+      },
+      {
+        "kind": "generic",
+        "name": "How can I find last-minute flight deals?",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6520",
+        "score": 246,
+        "text": "How can I find last-minute flight deals?"
+      },
+      {
+        "kind": "generic",
+        "name": "How can I find cheap flights for a weekend getaway?",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6523",
+        "score": 246,
+        "text": "How can I find cheap flights for a weekend getaway?"
+      },
+      {
+        "kind": "generic",
+        "name": "How can I find cheap flights for a weekend getaway?",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6524",
+        "score": 246,
+        "text": "How can I find cheap flights for a weekend getaway?"
+      },
+      {
+        "kind": "generic",
+        "name": "How can I find flight deals if my travel plans are flexible?",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6527",
+        "score": 246,
+        "text": "How can I find flight deals if my travel plans are flexible?"
+      },
+      {
+        "kind": "generic",
+        "name": "How can I find flight deals if my travel plans are flexible?",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6528",
+        "score": 246,
+        "text": "How can I find flight deals if my travel plans are flexible?"
+      },
+      {
+        "kind": "generic",
+        "name": "How can I find cheap flights to anywhere?",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6531",
+        "score": 246,
+        "text": "How can I find cheap flights to anywhere?"
+      },
+      {
+        "kind": "generic",
+        "name": "How can I find cheap flights to anywhere?",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6532",
+        "score": 246,
+        "text": "How can I find cheap flights to anywhere?"
+      },
+      {
+        "kind": "generic",
+        "name": "How can I get flight alerts for my trip?",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_6535",
+        "score": 246,
+        "text": "How can I get flight alerts for my trip?"
+      }
+    ]
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {
+      "generic_low_value": 16,
+      "hidden_low_value": 414,
+      "offscreen_low_value": 29,
+      "rank_loss": 2605,
+      "unlabeled_action": 8
+    },
+    "droppedRefCount": 3145,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 3225,
+    "selectedByReason": {
+      "form_candidate": 12,
+      "goal_keyword_match": 154,
+      "navigation_candidate": 79,
+      "recently_appeared": 2169,
+      "recently_changed": 2551,
+      "result_row": 48,
+      "suggestion_option": 5,
+      "visible_ready": 53
+    },
+    "selectedRefCount": 80
+  }
+}

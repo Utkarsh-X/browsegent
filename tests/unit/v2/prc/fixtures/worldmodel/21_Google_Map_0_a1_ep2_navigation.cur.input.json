@@ -1,0 +1,1313 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "latestTransition": {
+      "strength": "strong",
+      "transitionClass": "structural_macrostate",
+      "transitionId": "transition_obs_1_1_obs_1_2"
+    },
+    "observationId": "obs_1_2",
+    "presentRefCount": 24,
+    "refCount": 26,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_2_1",
+    "transitionCount": 1,
+    "url": "https://www.google.com/maps/@26.8402688,80.9435136,10z?entry=ttu&g_ep=EgoyMDI2MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_22"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_22"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_15"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_5"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_10"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_9"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_25"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_26"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_3"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_19"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_20"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_11"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_12"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_14"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_16"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_18"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_23"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_24"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_4"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_6"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_13"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_17"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_21"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_7"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_8"
+      }
+    ],
+    "navigation": [],
+    "observationId": "obs_1_2",
+    "page": {
+      "title": "Google Maps",
+      "url": "https://www.google.com/maps/@26.8402688,80.9435136,10z?entry=ttu&g_ep=EgoyMDI2MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+    },
+    "projectionId": "projection_obs_1_2",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_22"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_15"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_5"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_10"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_9"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_25"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_26"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_3"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_19"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_20"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_11"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_12"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_14"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_16"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_18"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_23"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_24"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_4"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_6"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_21"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_7"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_8"
+      }
+    ],
+    "refs": {
+      "v2ref_10": {
+        "actionability": "ready",
+        "ariaHasPopup": "grid",
+        "confidence": 1,
+        "kind": "input",
+        "name": "beauty salons in Seattle, WA",
+        "refId": "v2ref_10",
+        "role": "combobox",
+        "score": 109,
+        "state": "live",
+        "value": "beauty salons in Seattle, WA",
+        "visibility": "visible"
+      },
+      "v2ref_11": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Menu",
+        "refId": "v2ref_11",
+        "role": "button",
+        "score": 104,
+        "state": "live",
+        "text": "",
+        "visibility": "visible"
+      },
+      "v2ref_12": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_12",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_13": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_13",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_14": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_14",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_15": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Saved",
+        "refId": "v2ref_15",
+        "role": "button",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_16": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_16",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_17": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_17",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_18": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_18",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_19": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Saved",
+        "refId": "v2ref_19",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_20": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Saved",
+        "refId": "v2ref_20",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_21": {
+        "actionability": "disabled",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Recents",
+        "refId": "v2ref_21",
+        "role": "button",
+        "score": 88,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_22": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Get app",
+        "refId": "v2ref_22",
+        "role": "button",
+        "score": 113,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_23": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_23",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_24": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_24",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_25": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Get app",
+        "refId": "v2ref_25",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_26": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Get app",
+        "refId": "v2ref_26",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_3": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Search",
+        "refId": "v2ref_3",
+        "role": "button",
+        "score": 106,
+        "state": "live",
+        "text": "",
+        "visibility": "visible"
+      },
+      "v2ref_4": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_4",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_5": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Directions",
+        "refId": "v2ref_5",
+        "role": "button",
+        "score": 110,
+        "state": "live",
+        "text": "",
+        "visibility": "visible"
+      },
+      "v2ref_6": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_6",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_7": {
+        "actionability": "blocked",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "Collapse side panel",
+        "refId": "v2ref_7",
+        "role": "button",
+        "score": 26,
+        "state": "weakened",
+        "text": "",
+        "visibility": "hidden"
+      },
+      "v2ref_8": {
+        "actionability": "blocked",
+        "confidence": 0.55,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_8",
+        "score": 13,
+        "state": "weakened",
+        "visibility": "hidden"
+      },
+      "v2ref_9": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key.",
+        "refId": "v2ref_9",
+        "role": "application",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      }
+    },
+    "regions": [],
+    "stats": {
+      "interactionCount": 24,
+      "navigationCount": 0,
+      "readableCount": 22,
+      "regionCount": 0
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_2_obs_1_2",
+  "evidenceCoverage": {
+    "contractKind": "unknown",
+    "readCount": 20,
+    "requirements": [],
+    "status": "ready"
+  },
+  "goal": "Find 5 beauty salons with ratings greater than 4.8 in Seattle, WA.",
+  "goalProgress": {
+    "entries": [
+      {
+        "key": "destination",
+        "state": "typed:\"Seattle\""
+      }
+    ]
+  },
+  "lastResult": {
+    "effect": "page",
+    "evidence": {
+      "strength": "strong",
+      "transitionClass": "structural_macrostate"
+    },
+    "kind": "type",
+    "success": true,
+    "targetRef": "v2ref_2",
+    "traceStepId": "step_1",
+    "valuePreview": "beauty salons in Seattle, WA q combobox"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_2",
+        "beforeObservationId": "obs_1_1",
+        "index": 0,
+        "kind": "type",
+        "status": "completed",
+        "stepId": "step_1",
+        "strength": "strong",
+        "targetName": "q",
+        "targetRef": "v2ref_2",
+        "transitionClass": "structural_macrostate",
+        "value": "beauty salons in Seattle, WA"
+      }
+    ],
+    "totalSteps": 1,
+    "truncated": false
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 5889,
+    "totalPlannerInputBytes": 17078,
+    "workingSetBytes": 8779
+  },
+  "taskProgress": {
+    "items": [
+      {
+        "evidence": [
+          "v2ref_10"
+        ],
+        "key": "destination",
+        "requested": "Seattle",
+        "status": "applied"
+      }
+    ],
+    "status": "ready"
+  },
+  "transition": {
+    "afterObservationId": "obs_1_2",
+    "beforeObservationId": "obs_1_1",
+    "generationChanged": false,
+    "notes": [
+      "url_changed",
+      "refs_appeared:18",
+      "refs_disappeared:2",
+      "refs_weakened:2",
+      "ref_changed:v2ref_7",
+      "ref_changed:v2ref_8",
+      "box_changed:v2ref_3",
+      "box_changed:v2ref_4"
+    ],
+    "refChangeCounts": {
+      "appeared": 18,
+      "disappeared": 2,
+      "preserved": 4,
+      "weakened": 2
+    },
+    "strength": "strong",
+    "transitionClass": "structural_macrostate",
+    "urlChanged": true
+  },
+  "uncertainty": {
+    "level": "medium",
+    "signals": [
+      "low_confidence_refs:2",
+      "low_confidence_ref:v2ref_7",
+      "low_confidence_ref:v2ref_8",
+      "weakened_refs:2"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_22",
+        "v2ref_15",
+        "v2ref_5",
+        "v2ref_10",
+        "v2ref_3",
+        "v2ref_11"
+      ],
+      "readableRefs": [
+        "v2ref_22",
+        "v2ref_15",
+        "v2ref_5",
+        "v2ref_10",
+        "v2ref_9",
+        "v2ref_25",
+        "v2ref_26",
+        "v2ref_3",
+        "v2ref_19",
+        "v2ref_20",
+        "v2ref_11",
+        "v2ref_12",
+        "v2ref_14",
+        "v2ref_16",
+        "v2ref_18",
+        "v2ref_23",
+        "v2ref_24",
+        "v2ref_4",
+        "v2ref_6",
+        "v2ref_21",
+        "v2ref_7",
+        "v2ref_8"
+      ],
+      "selectableRefs": [],
+      "typeableRefs": [
+        "v2ref_10"
+      ]
+    },
+    "changedRefs": {
+      "appearedCount": 18,
+      "omittedCount": 4,
+      "preservedCount": 4,
+      "topRefs": [
+        {
+          "kind": "input",
+          "name": "beauty salons in Seattle, WA",
+          "reasons": [
+            "form_candidate",
+            "goal_keyword_match",
+            "goal_phrase_match",
+            "recently_appeared",
+            "recently_changed",
+            "role_relevant_to_goal",
+            "visible_ready"
+          ],
+          "refId": "v2ref_10",
+          "role": "combobox",
+          "score": 499
+        },
+        {
+          "kind": "button",
+          "name": "Get app",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_22",
+          "role": "button",
+          "score": 373,
+          "text": "Get app"
+        },
+        {
+          "kind": "button",
+          "name": "Saved",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_15",
+          "role": "button",
+          "score": 371,
+          "text": "Saved"
+        },
+        {
+          "kind": "generic",
+          "name": "Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key.",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_9",
+          "role": "application",
+          "score": 369
+        },
+        {
+          "kind": "generic",
+          "name": "Get app",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_25",
+          "score": 368,
+          "text": "Get app"
+        },
+        {
+          "kind": "generic",
+          "name": "Get app",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_26",
+          "score": 368,
+          "text": "Get app"
+        },
+        {
+          "kind": "generic",
+          "name": "Saved",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_19",
+          "score": 365,
+          "text": "Saved"
+        },
+        {
+          "kind": "generic",
+          "name": "Saved",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_20",
+          "score": 365,
+          "text": "Saved"
+        },
+        {
+          "kind": "button",
+          "name": "Menu",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_11",
+          "role": "button",
+          "score": 364,
+          "text": ""
+        },
+        {
+          "kind": "generic",
+          "name": "",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_12",
+          "score": 357,
+          "text": ""
+        },
+        {
+          "kind": "generic",
+          "name": "",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_14",
+          "score": 357,
+          "text": ""
+        },
+        {
+          "kind": "generic",
+          "name": "",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_16",
+          "score": 357,
+          "text": ""
+        },
+        {
+          "kind": "generic",
+          "name": "",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_18",
+          "score": 357,
+          "text": ""
+        },
+        {
+          "kind": "generic",
+          "name": "",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_23",
+          "score": 357,
+          "text": ""
+        },
+        {
+          "kind": "generic",
+          "name": "",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_24",
+          "score": 357,
+          "text": ""
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_13",
+          "score": 355
+        }
+      ],
+      "weakenedCount": 2
+    },
+    "deltaRefs": {
+      "appeared": [
+        "v2ref_10",
+        "v2ref_22",
+        "v2ref_15",
+        "v2ref_9",
+        "v2ref_25",
+        "v2ref_26",
+        "v2ref_19",
+        "v2ref_20"
+      ],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "verify",
+    "modeReason": "recent_value_evidence",
+    "navigationRefs": [],
+    "omitted": {
+      "droppedByReason": {},
+      "droppedRefCount": 0,
+      "observedRefCount": 24,
+      "selectedRefCount": 24
+    },
+    "primaryRefs": [
+      {
+        "kind": "input",
+        "name": "beauty salons in Seattle, WA",
+        "reasons": [
+          "form_candidate",
+          "goal_keyword_match",
+          "goal_phrase_match",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_10",
+        "role": "combobox",
+        "score": 499
+      },
+      {
+        "kind": "button",
+        "name": "Get app",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_22",
+        "role": "button",
+        "score": 373,
+        "text": "Get app"
+      },
+      {
+        "kind": "button",
+        "name": "Saved",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_15",
+        "role": "button",
+        "score": 371,
+        "text": "Saved"
+      },
+      {
+        "kind": "generic",
+        "name": "Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key.",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_9",
+        "role": "application",
+        "score": 369
+      },
+      {
+        "kind": "generic",
+        "name": "Get app",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_25",
+        "score": 368,
+        "text": "Get app"
+      },
+      {
+        "kind": "generic",
+        "name": "Get app",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_26",
+        "score": 368,
+        "text": "Get app"
+      },
+      {
+        "kind": "generic",
+        "name": "Saved",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_19",
+        "score": 365,
+        "text": "Saved"
+      },
+      {
+        "kind": "generic",
+        "name": "Saved",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_20",
+        "score": 365,
+        "text": "Saved"
+      },
+      {
+        "kind": "button",
+        "name": "Menu",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_11",
+        "role": "button",
+        "score": 364,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_12",
+        "score": 357,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_14",
+        "score": 357,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_16",
+        "score": 357,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_18",
+        "score": 357,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_23",
+        "score": 357,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_24",
+        "score": 357,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_13",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_17",
+        "score": 355
+      },
+      {
+        "kind": "button",
+        "name": "Recents",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_21",
+        "role": "button",
+        "score": 248,
+        "text": "Recents"
+      },
+      {
+        "kind": "button",
+        "name": "Directions",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_5",
+        "role": "button",
+        "score": 210,
+        "text": ""
+      },
+      {
+        "kind": "button",
+        "name": "Search",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_3",
+        "role": "button",
+        "score": 206,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_4",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_6",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "button",
+        "name": "Collapse side panel",
+        "reasons": [
+          "recently_changed"
+        ],
+        "refId": "v2ref_7",
+        "role": "button",
+        "score": 96,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "recently_changed"
+        ],
+        "refId": "v2ref_8",
+        "score": 83,
+        "text": ""
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_10",
+        "text": "beauty salons in Seattle, WA"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_22",
+        "text": "Get app Get app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_15",
+        "text": "Saved Saved"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_9",
+        "text": "Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_25",
+        "text": "Get app Get app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_26",
+        "text": "Get app Get app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_19",
+        "text": "Saved Saved"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_20",
+        "text": "Saved Saved"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_11",
+        "text": "Menu "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_12",
+        "text": " "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_14",
+        "text": " "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_16",
+        "text": " "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_18",
+        "text": " "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_23",
+        "text": " "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_24",
+        "text": " "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_21",
+        "text": "Recents Recents"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_5",
+        "text": "Directions "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_3",
+        "text": "Search "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4",
+        "text": " "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6",
+        "text": " "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_7",
+        "text": "Collapse side panel "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_8",
+        "text": " "
+      }
+    ],
+    "regionSummaries": [],
+    "secondaryRefs": []
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {},
+    "droppedRefCount": 0,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 24,
+    "selectedByReason": {
+      "form_candidate": 1,
+      "goal_keyword_match": 1,
+      "goal_phrase_match": 1,
+      "recently_appeared": 18,
+      "recently_changed": 20,
+      "role_relevant_to_goal": 1,
+      "visible_ready": 21
+    },
+    "selectedRefCount": 24
+  }
+}

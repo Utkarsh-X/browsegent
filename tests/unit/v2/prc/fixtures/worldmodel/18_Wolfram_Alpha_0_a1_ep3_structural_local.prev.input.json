@@ -1,0 +1,3466 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "latestTransition": {
+      "strength": "moderate",
+      "transitionClass": "structural_local",
+      "transitionId": "transition_obs_1_1_obs_1_2"
+    },
+    "observationId": "obs_1_2",
+    "presentRefCount": 423,
+    "refCount": 439,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_2_1",
+    "transitionCount": 1,
+    "url": "https://www.wolframalpha.com/"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_1"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_102"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_144"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_147"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_162"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_200"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_210"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_214"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_221"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_255"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_258"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_267"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_285"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_457"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_54"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_58"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_78"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_81"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_88"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_155"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_276"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_151"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_424"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_95"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_110"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_145"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_150"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_170"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_2"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_201"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_203"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_213"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_220"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_227"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_256"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_266"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_275"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_291"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_57"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_62"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_79"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_87"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_94"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_161"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_284"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_50"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_63"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_101"
+      },
+      {
+        "rank": 49,
+        "refId": "v2ref_154"
+      },
+      {
+        "rank": 50,
+        "refId": "v2ref_425"
+      },
+      {
+        "rank": 51,
+        "refId": "v2ref_209"
+      },
+      {
+        "rank": 52,
+        "refId": "v2ref_5"
+      },
+      {
+        "rank": 53,
+        "refId": "v2ref_9"
+      },
+      {
+        "rank": 54,
+        "refId": "v2ref_10"
+      },
+      {
+        "rank": 55,
+        "refId": "v2ref_6"
+      },
+      {
+        "rank": 56,
+        "refId": "v2ref_146"
+      },
+      {
+        "rank": 57,
+        "refId": "v2ref_202"
+      },
+      {
+        "rank": 58,
+        "refId": "v2ref_257"
+      },
+      {
+        "rank": 59,
+        "refId": "v2ref_80"
+      },
+      {
+        "rank": 60,
+        "refId": "v2ref_69"
+      },
+      {
+        "rank": 61,
+        "refId": "v2ref_16"
+      },
+      {
+        "rank": 62,
+        "refId": "v2ref_24"
+      },
+      {
+        "rank": 63,
+        "refId": "v2ref_426"
+      },
+      {
+        "rank": 64,
+        "refId": "v2ref_427"
+      },
+      {
+        "rank": 65,
+        "refId": "v2ref_428"
+      },
+      {
+        "rank": 66,
+        "refId": "v2ref_429"
+      },
+      {
+        "rank": 67,
+        "refId": "v2ref_431"
+      },
+      {
+        "rank": 68,
+        "refId": "v2ref_432"
+      },
+      {
+        "rank": 69,
+        "refId": "v2ref_433"
+      },
+      {
+        "rank": 70,
+        "refId": "v2ref_434"
+      },
+      {
+        "rank": 71,
+        "refId": "v2ref_435"
+      },
+      {
+        "rank": 72,
+        "refId": "v2ref_436"
+      },
+      {
+        "rank": 73,
+        "refId": "v2ref_459"
+      },
+      {
+        "rank": 74,
+        "refId": "v2ref_460"
+      },
+      {
+        "rank": 75,
+        "refId": "v2ref_111"
+      },
+      {
+        "rank": 76,
+        "refId": "v2ref_125"
+      },
+      {
+        "rank": 77,
+        "refId": "v2ref_132"
+      },
+      {
+        "rank": 78,
+        "refId": "v2ref_139"
+      },
+      {
+        "rank": 79,
+        "refId": "v2ref_171"
+      },
+      {
+        "rank": 80,
+        "refId": "v2ref_175"
+      }
+    ],
+    "navigation": [
+      {
+        "rank": 1,
+        "refId": "v2ref_102"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_144"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_147"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_162"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_200"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_210"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_214"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_221"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_255"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_258"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_267"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_285"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_78"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_81"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_88"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_155"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_276"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_151"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_95"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_203"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_9"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_69"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_24"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_111"
+      }
+    ],
+    "observationId": "obs_1_2",
+    "page": {
+      "title": "Wolfram|Alpha: Computational Intelligence",
+      "url": "https://www.wolframalpha.com/"
+    },
+    "projectionId": "projection_obs_1_2",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_102"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_144"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_147"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_162"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_200"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_210"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_214"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_221"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_255"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_258"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_267"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_285"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_457"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_54"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_58"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_78"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_81"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_88"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_155"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_276"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_151"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_424"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_95"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_110"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_145"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_150"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_170"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_2"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_201"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_203"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_213"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_220"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_227"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_256"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_266"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_275"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_291"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_57"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_62"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_79"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_87"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_94"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_161"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_284"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_50"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_63"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_101"
+      }
+    ],
+    "refs": {
+      "v2ref_1": {
+        "actionability": "ready",
+        "ariaHasPopup": "true",
+        "confidence": 1,
+        "kind": "button",
+        "name": "UPGRADE TO PRO",
+        "refId": "v2ref_1",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_10": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "TOUR",
+        "refId": "v2ref_10",
+        "score": 103,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_101": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Algebra",
+        "refId": "v2ref_101",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_102": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Plotting & Graphics",
+        "refId": "v2ref_102",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_110": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Plotting & Graphics",
+        "refId": "v2ref_110",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_111": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Calculus & Analysis",
+        "refId": "v2ref_111",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_125": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Differential Equations",
+        "refId": "v2ref_125",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_132": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Statistics",
+        "refId": "v2ref_132",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_139": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "More Topics »",
+        "refId": "v2ref_139",
+        "regionId": "region_repeated_2",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_144": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Science & Technology",
+        "refId": "v2ref_144",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Science & Technology ›",
+        "visibility": "visible"
+      },
+      "v2ref_145": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Science & Technology",
+        "refId": "v2ref_145",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_146": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "›",
+        "refId": "v2ref_146",
+        "regionId": "region_repeated_1",
+        "role": "presentation",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_147": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Units & Measures",
+        "refId": "v2ref_147",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_150": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Units & Measures",
+        "refId": "v2ref_150",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_151": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Physics",
+        "refId": "v2ref_151",
+        "role": "link",
+        "score": 112,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_154": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Physics",
+        "refId": "v2ref_154",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_155": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Chemistry",
+        "refId": "v2ref_155",
+        "role": "link",
+        "score": 114,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_16": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "Language and theme selector",
+        "refId": "v2ref_16",
+        "role": "button",
+        "score": 95,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_161": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Chemistry",
+        "refId": "v2ref_161",
+        "score": 110,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_162": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Engineering",
+        "refId": "v2ref_162",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_170": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Engineering",
+        "refId": "v2ref_170",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_171": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Computational Sciences",
+        "refId": "v2ref_171",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_175": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Earth Sciences",
+        "refId": "v2ref_175",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_2": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "UPGRADE TO PRO",
+        "refId": "v2ref_2",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_200": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Society & Culture",
+        "refId": "v2ref_200",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Society & Culture ›",
+        "visibility": "visible"
+      },
+      "v2ref_201": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Society & Culture",
+        "refId": "v2ref_201",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_202": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "›",
+        "refId": "v2ref_202",
+        "regionId": "region_repeated_1",
+        "role": "presentation",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_203": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "People",
+        "refId": "v2ref_203",
+        "role": "link",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_209": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "People",
+        "refId": "v2ref_209",
+        "score": 107,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_210": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Arts & Media",
+        "refId": "v2ref_210",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_213": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Arts & Media",
+        "refId": "v2ref_213",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_214": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Dates & Times",
+        "refId": "v2ref_214",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_220": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Dates & Times",
+        "refId": "v2ref_220",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_221": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Words & Linguistics",
+        "refId": "v2ref_221",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_227": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Words & Linguistics",
+        "refId": "v2ref_227",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_24": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "link",
+        "name": "WolframAlpha logo",
+        "refId": "v2ref_24",
+        "role": "link",
+        "score": 95,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_255": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Everyday Life",
+        "refId": "v2ref_255",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Everyday Life ›",
+        "visibility": "visible"
+      },
+      "v2ref_256": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Everyday Life",
+        "refId": "v2ref_256",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_257": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "›",
+        "refId": "v2ref_257",
+        "regionId": "region_repeated_1",
+        "role": "presentation",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_258": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Personal Health",
+        "refId": "v2ref_258",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_266": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Personal Health",
+        "refId": "v2ref_266",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_267": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Personal Finance",
+        "refId": "v2ref_267",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_275": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Personal Finance",
+        "refId": "v2ref_275",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_276": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Surprises",
+        "refId": "v2ref_276",
+        "role": "link",
+        "score": 114,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_284": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Surprises",
+        "refId": "v2ref_284",
+        "score": 110,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_285": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Entertainment",
+        "refId": "v2ref_285",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_291": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Entertainment",
+        "refId": "v2ref_291",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_424": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Sign in",
+        "refId": "v2ref_424",
+        "role": "button",
+        "score": 112,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_425": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign in",
+        "refId": "v2ref_425",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_426": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_426",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_427": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_427",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_428": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_428",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_429": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_429",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_431": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_431",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_432": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_432",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_433": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_433",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_434": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_434",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_435": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_435",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_436": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_436",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_457": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "input",
+        "name": "WolframAlpha input field",
+        "refId": "v2ref_457",
+        "role": "textbox",
+        "score": 115,
+        "state": "live",
+        "text": "derivative of x^2 at x=5.6",
+        "value": "derivative of x^2 at x=5.6",
+        "visibility": "visible"
+      },
+      "v2ref_459": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_459",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_460": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_460",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_5": {
+        "actionability": "ready",
+        "ariaHasPopup": "true",
+        "confidence": 1,
+        "kind": "button",
+        "name": "APPS",
+        "refId": "v2ref_5",
+        "role": "button",
+        "score": 107,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_50": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Compute input button",
+        "refId": "v2ref_50",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_54": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "natural language",
+        "refId": "v2ref_54",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "text": "Natural Language",
+        "visibility": "visible"
+      },
+      "v2ref_57": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Natural Language",
+        "refId": "v2ref_57",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_58": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "math input",
+        "refId": "v2ref_58",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "text": "Math Input",
+        "visibility": "visible"
+      },
+      "v2ref_6": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "APPS",
+        "refId": "v2ref_6",
+        "score": 103,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_62": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Math Input",
+        "refId": "v2ref_62",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_63": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "photo input",
+        "refId": "v2ref_63",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_69": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "refId": "v2ref_69",
+        "role": "link",
+        "score": 99,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_78": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Mathematics",
+        "refId": "v2ref_78",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Mathematics ›",
+        "visibility": "visible"
+      },
+      "v2ref_79": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Mathematics",
+        "refId": "v2ref_79",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_80": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "›",
+        "refId": "v2ref_80",
+        "regionId": "region_repeated_1",
+        "role": "presentation",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_81": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Step-by-Step Solutions",
+        "refId": "v2ref_81",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_87": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Step-by-Step Solutions",
+        "refId": "v2ref_87",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_88": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Elementary Math",
+        "refId": "v2ref_88",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_9": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "TOUR",
+        "refId": "v2ref_9",
+        "role": "link",
+        "score": 107,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_94": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Elementary Math",
+        "refId": "v2ref_94",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_95": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Algebra",
+        "refId": "v2ref_95",
+        "role": "link",
+        "score": 112,
+        "state": "live",
+        "visibility": "visible"
+      }
+    },
+    "regions": [
+      {
+        "kind": "repeated_list",
+        "label": "Repeated presentation controls",
+        "refIds": [
+          "v2ref_80",
+          "v2ref_146",
+          "v2ref_202",
+          "v2ref_257"
+        ],
+        "regionId": "region_repeated_1",
+        "score": 100
+      },
+      {
+        "kind": "repeated_list",
+        "label": "Repeated link controls",
+        "refIds": [
+          "v2ref_139"
+        ],
+        "regionId": "region_repeated_2",
+        "score": 100
+      }
+    ],
+    "stats": {
+      "interactionCount": 80,
+      "navigationCount": 29,
+      "readableCount": 67,
+      "regionCount": 2
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_2_obs_1_2",
+  "evidenceCoverage": {
+    "contractKind": "unknown",
+    "readCount": 61,
+    "requirements": [],
+    "status": "ready"
+  },
+  "goal": "derivative of x^2 when x=5.6",
+  "lastResult": {
+    "effect": "local",
+    "evidence": {
+      "strength": "moderate",
+      "transitionClass": "structural_local"
+    },
+    "kind": "type",
+    "success": true,
+    "targetRef": "v2ref_49",
+    "traceStepId": "step_1",
+    "valuePreview": "derivative of x^2 at x=5.6 WolframAlpha input field textbox"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_2",
+        "beforeObservationId": "obs_1_1",
+        "index": 0,
+        "kind": "type",
+        "status": "completed",
+        "stepId": "step_1",
+        "strength": "moderate",
+        "targetName": "WolframAlpha input field",
+        "targetRef": "v2ref_49",
+        "transitionClass": "structural_local",
+        "value": "derivative of x^2 at x=5.6"
+      }
+    ],
+    "totalSteps": 1,
+    "truncated": false
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 19146,
+    "totalPlannerInputBytes": 44916,
+    "workingSetBytes": 23547
+  },
+  "transition": {
+    "afterObservationId": "obs_1_2",
+    "beforeObservationId": "obs_1_1",
+    "generationChanged": false,
+    "notes": [
+      "refs_appeared:16",
+      "refs_disappeared:16",
+      "refs_weakened:2",
+      "ref_changed:v2ref_16",
+      "ref_changed:v2ref_24",
+      "box_changed:v2ref_1",
+      "box_changed:v2ref_2",
+      "box_changed:v2ref_3"
+    ],
+    "refChangeCounts": {
+      "appeared": 16,
+      "disappeared": 16,
+      "preserved": 405,
+      "weakened": 2
+    },
+    "strength": "moderate",
+    "transitionClass": "structural_local",
+    "urlChanged": false
+  },
+  "uncertainty": {
+    "level": "medium",
+    "signals": [
+      "low_confidence_refs:2",
+      "low_confidence_ref:v2ref_16",
+      "low_confidence_ref:v2ref_24",
+      "weakened_refs:2"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_1",
+        "v2ref_102",
+        "v2ref_144",
+        "v2ref_147",
+        "v2ref_162",
+        "v2ref_200",
+        "v2ref_210",
+        "v2ref_214",
+        "v2ref_221",
+        "v2ref_255",
+        "v2ref_258",
+        "v2ref_267",
+        "v2ref_285",
+        "v2ref_54",
+        "v2ref_58",
+        "v2ref_78",
+        "v2ref_81",
+        "v2ref_88",
+        "v2ref_155",
+        "v2ref_276",
+        "v2ref_151",
+        "v2ref_424",
+        "v2ref_95",
+        "v2ref_203",
+        "v2ref_50",
+        "v2ref_63",
+        "v2ref_5",
+        "v2ref_9",
+        "v2ref_69",
+        "v2ref_16",
+        "v2ref_24",
+        "v2ref_111",
+        "v2ref_125",
+        "v2ref_132",
+        "v2ref_139",
+        "v2ref_171",
+        "v2ref_175"
+      ],
+      "readableRefs": [
+        "v2ref_1",
+        "v2ref_102",
+        "v2ref_144",
+        "v2ref_147",
+        "v2ref_162",
+        "v2ref_200",
+        "v2ref_210",
+        "v2ref_214",
+        "v2ref_221",
+        "v2ref_255",
+        "v2ref_258",
+        "v2ref_267",
+        "v2ref_285",
+        "v2ref_457",
+        "v2ref_54",
+        "v2ref_58",
+        "v2ref_78",
+        "v2ref_81",
+        "v2ref_88",
+        "v2ref_155",
+        "v2ref_276",
+        "v2ref_151",
+        "v2ref_424",
+        "v2ref_95",
+        "v2ref_110",
+        "v2ref_145",
+        "v2ref_150",
+        "v2ref_170",
+        "v2ref_2",
+        "v2ref_201",
+        "v2ref_203",
+        "v2ref_213",
+        "v2ref_220",
+        "v2ref_227",
+        "v2ref_256",
+        "v2ref_266",
+        "v2ref_275",
+        "v2ref_291",
+        "v2ref_57",
+        "v2ref_62",
+        "v2ref_79",
+        "v2ref_87",
+        "v2ref_94",
+        "v2ref_161",
+        "v2ref_284",
+        "v2ref_50",
+        "v2ref_63",
+        "v2ref_101",
+        "v2ref_154",
+        "v2ref_425",
+        "v2ref_209",
+        "v2ref_5",
+        "v2ref_9",
+        "v2ref_10",
+        "v2ref_6",
+        "v2ref_146",
+        "v2ref_202",
+        "v2ref_257",
+        "v2ref_80",
+        "v2ref_16",
+        "v2ref_24",
+        "v2ref_111",
+        "v2ref_125",
+        "v2ref_132",
+        "v2ref_139",
+        "v2ref_171",
+        "v2ref_175"
+      ],
+      "selectableRefs": [],
+      "typeableRefs": [
+        "v2ref_457"
+      ]
+    },
+    "changedRefs": {
+      "appearedCount": 16,
+      "omittedCount": 1,
+      "preservedCount": 405,
+      "topRefs": [
+        {
+          "kind": "input",
+          "name": "WolframAlpha input field",
+          "reasons": [
+            "form_candidate",
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_457",
+          "role": "textbox",
+          "score": 385,
+          "text": "derivative of x^2 at x=5.6"
+        },
+        {
+          "kind": "button",
+          "name": "Sign in",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_424",
+          "role": "button",
+          "score": 372,
+          "text": "Sign in"
+        },
+        {
+          "kind": "generic",
+          "name": "Sign in",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_425",
+          "score": 368,
+          "text": "Sign in"
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_426",
+          "score": 355
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_427",
+          "score": 355
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_428",
+          "score": 355
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_429",
+          "score": 355
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_431",
+          "score": 355
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_432",
+          "score": 355
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_433",
+          "score": 355
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_434",
+          "score": 355
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_435",
+          "score": 355
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_436",
+          "score": 355
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_459",
+          "score": 355
+        },
+        {
+          "kind": "generic",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_460",
+          "score": 355
+        },
+        {
+          "kind": "button",
+          "name": "Language and theme selector",
+          "reasons": [
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_16",
+          "role": "button",
+          "score": 265
+        }
+      ],
+      "weakenedCount": 2
+    },
+    "deltaRefs": {
+      "appeared": [
+        "v2ref_457",
+        "v2ref_424",
+        "v2ref_425",
+        "v2ref_426",
+        "v2ref_427",
+        "v2ref_428",
+        "v2ref_429",
+        "v2ref_431"
+      ],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "verify",
+    "modeReason": "recent_value_evidence",
+    "navigationRefs": [
+      {
+        "kind": "link",
+        "name": "Plotting & Graphics",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_102",
+        "role": "link",
+        "score": 115,
+        "text": "Plotting & Graphics"
+      },
+      {
+        "kind": "link",
+        "name": "Science & Technology",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_144",
+        "role": "link",
+        "score": 115,
+        "text": "Science & Technology ›"
+      },
+      {
+        "kind": "link",
+        "name": "Units & Measures",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_147",
+        "role": "link",
+        "score": 115,
+        "text": "Units & Measures"
+      },
+      {
+        "kind": "link",
+        "name": "Engineering",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_162",
+        "role": "link",
+        "score": 115,
+        "text": "Engineering"
+      },
+      {
+        "kind": "link",
+        "name": "Society & Culture",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_200",
+        "role": "link",
+        "score": 115,
+        "text": "Society & Culture ›"
+      },
+      {
+        "kind": "link",
+        "name": "Arts & Media",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_210",
+        "role": "link",
+        "score": 115,
+        "text": "Arts & Media"
+      },
+      {
+        "kind": "link",
+        "name": "Dates & Times",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_214",
+        "role": "link",
+        "score": 115,
+        "text": "Dates & Times"
+      },
+      {
+        "kind": "link",
+        "name": "Words & Linguistics",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_221",
+        "role": "link",
+        "score": 115,
+        "text": "Words & Linguistics"
+      },
+      {
+        "kind": "link",
+        "name": "Everyday Life",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_255",
+        "role": "link",
+        "score": 115,
+        "text": "Everyday Life ›"
+      },
+      {
+        "kind": "link",
+        "name": "Personal Health",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_258",
+        "role": "link",
+        "score": 115,
+        "text": "Personal Health"
+      },
+      {
+        "kind": "link",
+        "name": "Personal Finance",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_267",
+        "role": "link",
+        "score": 115,
+        "text": "Personal Finance"
+      },
+      {
+        "kind": "link",
+        "name": "Entertainment",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_285",
+        "role": "link",
+        "score": 115,
+        "text": "Entertainment"
+      },
+      {
+        "kind": "link",
+        "name": "Mathematics",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_78",
+        "role": "link",
+        "score": 115,
+        "text": "Mathematics ›"
+      },
+      {
+        "kind": "link",
+        "name": "Step-by-Step Solutions",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_81",
+        "role": "link",
+        "score": 115,
+        "text": "Step-by-Step Solutions"
+      },
+      {
+        "kind": "link",
+        "name": "Elementary Math",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_88",
+        "role": "link",
+        "score": 115,
+        "text": "Elementary Math"
+      },
+      {
+        "kind": "link",
+        "name": "Chemistry",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_155",
+        "role": "link",
+        "score": 114,
+        "text": "Chemistry"
+      },
+      {
+        "kind": "link",
+        "name": "Surprises",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_276",
+        "role": "link",
+        "score": 114,
+        "text": "Surprises"
+      },
+      {
+        "kind": "link",
+        "name": "Physics",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_151",
+        "role": "link",
+        "score": 112,
+        "text": "Physics"
+      },
+      {
+        "kind": "link",
+        "name": "Algebra",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_95",
+        "role": "link",
+        "score": 112,
+        "text": "Algebra"
+      },
+      {
+        "kind": "link",
+        "name": "People",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_203",
+        "role": "link",
+        "score": 111,
+        "text": "People"
+      },
+      {
+        "kind": "link",
+        "name": "TOUR",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_9",
+        "role": "link",
+        "score": 107,
+        "text": "TOUR"
+      },
+      {
+        "kind": "link",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_69",
+        "role": "link",
+        "score": 99
+      },
+      {
+        "kind": "link",
+        "name": "WolframAlpha logo",
+        "reasons": [
+          "navigation_candidate",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_24",
+        "role": "link",
+        "score": 95
+      },
+      {
+        "kind": "link",
+        "name": "Calculus & Analysis",
+        "reasons": [
+          "navigation_candidate"
+        ],
+        "refId": "v2ref_111",
+        "role": "link",
+        "score": 90,
+        "text": "Calculus & Analysis"
+      }
+    ],
+    "omitted": {
+      "droppedByReason": {
+        "generic_low_value": 99,
+        "hidden_low_value": 48,
+        "offscreen_low_value": 157,
+        "rank_loss": 35,
+        "unlabeled_action": 4
+      },
+      "droppedRefCount": 343,
+      "observedRefCount": 423,
+      "selectedRefCount": 80
+    },
+    "primaryRefs": [
+      {
+        "kind": "input",
+        "name": "WolframAlpha input field",
+        "reasons": [
+          "form_candidate",
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_457",
+        "role": "textbox",
+        "score": 385,
+        "text": "derivative of x^2 at x=5.6"
+      },
+      {
+        "kind": "button",
+        "name": "Sign in",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_424",
+        "role": "button",
+        "score": 372,
+        "text": "Sign in"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign in",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_425",
+        "score": 368,
+        "text": "Sign in"
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_426",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_427",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_428",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_429",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_431",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_432",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_433",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_434",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_435",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_436",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_459",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_460",
+        "score": 355
+      },
+      {
+        "kind": "button",
+        "name": "Language and theme selector",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_16",
+        "role": "button",
+        "score": 265
+      },
+      {
+        "kind": "link",
+        "name": "WolframAlpha logo",
+        "reasons": [
+          "navigation_candidate",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_24",
+        "role": "link",
+        "score": 265
+      },
+      {
+        "kind": "button",
+        "name": "UPGRADE TO PRO",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1",
+        "role": "button",
+        "score": 215,
+        "text": "UPGRADE TO PRO"
+      },
+      {
+        "kind": "link",
+        "name": "Plotting & Graphics",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_102",
+        "role": "link",
+        "score": 215,
+        "text": "Plotting & Graphics"
+      },
+      {
+        "kind": "link",
+        "name": "Science & Technology",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_144",
+        "role": "link",
+        "score": 215,
+        "text": "Science & Technology ›"
+      },
+      {
+        "kind": "link",
+        "name": "Units & Measures",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_147",
+        "role": "link",
+        "score": 215,
+        "text": "Units & Measures"
+      },
+      {
+        "kind": "link",
+        "name": "Engineering",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_162",
+        "role": "link",
+        "score": 215,
+        "text": "Engineering"
+      },
+      {
+        "kind": "link",
+        "name": "Society & Culture",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_200",
+        "role": "link",
+        "score": 215,
+        "text": "Society & Culture ›"
+      },
+      {
+        "kind": "link",
+        "name": "Arts & Media",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_210",
+        "role": "link",
+        "score": 215,
+        "text": "Arts & Media"
+      },
+      {
+        "kind": "link",
+        "name": "Dates & Times",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_214",
+        "role": "link",
+        "score": 215,
+        "text": "Dates & Times"
+      },
+      {
+        "kind": "link",
+        "name": "Words & Linguistics",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_221",
+        "role": "link",
+        "score": 215,
+        "text": "Words & Linguistics"
+      },
+      {
+        "kind": "link",
+        "name": "Everyday Life",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_255",
+        "role": "link",
+        "score": 215,
+        "text": "Everyday Life ›"
+      },
+      {
+        "kind": "link",
+        "name": "Personal Health",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_258",
+        "role": "link",
+        "score": 215,
+        "text": "Personal Health"
+      },
+      {
+        "kind": "link",
+        "name": "Personal Finance",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_267",
+        "role": "link",
+        "score": 215,
+        "text": "Personal Finance"
+      },
+      {
+        "kind": "link",
+        "name": "Entertainment",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_285",
+        "role": "link",
+        "score": 215,
+        "text": "Entertainment"
+      },
+      {
+        "kind": "button",
+        "name": "natural language",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_54",
+        "role": "button",
+        "score": 215,
+        "text": "Natural Language"
+      },
+      {
+        "kind": "button",
+        "name": "math input",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_58",
+        "role": "button",
+        "score": 215,
+        "text": "Math Input"
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_457",
+        "text": "WolframAlpha input field derivative of x^2 at x=5.6"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_424",
+        "text": "Sign in Sign in"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_425",
+        "text": "Sign in Sign in"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_16",
+        "text": "Language and theme selector"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_24",
+        "text": "WolframAlpha logo"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1",
+        "text": "UPGRADE TO PRO UPGRADE TO PRO"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_102",
+        "text": "Plotting & Graphics Plotting & Graphics"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_144",
+        "text": "Science & Technology Science & Technology ›"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_147",
+        "text": "Units & Measures Units & Measures"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_162",
+        "text": "Engineering Engineering"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_200",
+        "text": "Society & Culture Society & Culture ›"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_210",
+        "text": "Arts & Media Arts & Media"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_214",
+        "text": "Dates & Times Dates & Times"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_221",
+        "text": "Words & Linguistics Words & Linguistics"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_255",
+        "text": "Everyday Life Everyday Life ›"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_258",
+        "text": "Personal Health Personal Health"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_267",
+        "text": "Personal Finance Personal Finance"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_285",
+        "text": "Entertainment Entertainment"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_54",
+        "text": "natural language Natural Language"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_58",
+        "text": "math input Math Input"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_78",
+        "text": "Mathematics Mathematics ›"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_81",
+        "text": "Step-by-Step Solutions Step-by-Step Solutions"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_88",
+        "text": "Elementary Math Elementary Math"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_155",
+        "text": "Chemistry Chemistry"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_276",
+        "text": "Surprises Surprises"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_151",
+        "text": "Physics Physics"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_95",
+        "text": "Algebra Algebra"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_110",
+        "text": "Plotting & Graphics Plotting & Graphics"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_145",
+        "text": "Science & Technology Science & Technology"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_150",
+        "text": "Units & Measures Units & Measures"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_170",
+        "text": "Engineering Engineering"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2",
+        "text": "UPGRADE TO PRO UPGRADE TO PRO"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_201",
+        "text": "Society & Culture Society & Culture"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_203",
+        "text": "People People"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_213",
+        "text": "Arts & Media Arts & Media"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_220",
+        "text": "Dates & Times Dates & Times"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_227",
+        "text": "Words & Linguistics Words & Linguistics"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_256",
+        "text": "Everyday Life Everyday Life"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_266",
+        "text": "Personal Health Personal Health"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_275",
+        "text": "Personal Finance Personal Finance"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_291",
+        "text": "Entertainment Entertainment"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_57",
+        "text": "Natural Language Natural Language"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_62",
+        "text": "Math Input Math Input"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_79",
+        "text": "Mathematics Mathematics"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_87",
+        "text": "Step-by-Step Solutions Step-by-Step Solutions"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_94",
+        "text": "Elementary Math Elementary Math"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_161",
+        "text": "Chemistry Chemistry"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_284",
+        "text": "Surprises Surprises"
+      }
+    ],
+    "regionSummaries": [
+      {
+        "label": "Repeated presentation controls",
+        "omittedRefCount": 1,
+        "regionId": "region_repeated_1",
+        "representativeRefs": [
+          "v2ref_80",
+          "v2ref_146",
+          "v2ref_202"
+        ]
+      },
+      {
+        "label": "Repeated link controls",
+        "omittedRefCount": 3,
+        "regionId": "region_repeated_2",
+        "representativeRefs": [
+          "v2ref_139"
+        ]
+      }
+    ],
+    "secondaryRefs": [
+      {
+        "kind": "link",
+        "name": "Mathematics",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_78",
+        "role": "link",
+        "score": 215,
+        "text": "Mathematics ›"
+      },
+      {
+        "kind": "link",
+        "name": "Step-by-Step Solutions",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_81",
+        "role": "link",
+        "score": 215,
+        "text": "Step-by-Step Solutions"
+      },
+      {
+        "kind": "link",
+        "name": "Elementary Math",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_88",
+        "role": "link",
+        "score": 215,
+        "text": "Elementary Math"
+      },
+      {
+        "kind": "link",
+        "name": "Chemistry",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_155",
+        "role": "link",
+        "score": 214,
+        "text": "Chemistry"
+      },
+      {
+        "kind": "link",
+        "name": "Surprises",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_276",
+        "role": "link",
+        "score": 214,
+        "text": "Surprises"
+      },
+      {
+        "kind": "link",
+        "name": "Physics",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_151",
+        "role": "link",
+        "score": 212,
+        "text": "Physics"
+      },
+      {
+        "kind": "link",
+        "name": "Algebra",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_95",
+        "role": "link",
+        "score": 212,
+        "text": "Algebra"
+      },
+      {
+        "kind": "generic",
+        "name": "Plotting & Graphics",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_110",
+        "score": 211,
+        "text": "Plotting & Graphics"
+      },
+      {
+        "kind": "generic",
+        "name": "Science & Technology",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_145",
+        "score": 211,
+        "text": "Science & Technology"
+      },
+      {
+        "kind": "generic",
+        "name": "Units & Measures",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_150",
+        "score": 211,
+        "text": "Units & Measures"
+      },
+      {
+        "kind": "generic",
+        "name": "Engineering",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_170",
+        "score": 211,
+        "text": "Engineering"
+      },
+      {
+        "kind": "generic",
+        "name": "UPGRADE TO PRO",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_2",
+        "score": 211,
+        "text": "UPGRADE TO PRO"
+      },
+      {
+        "kind": "generic",
+        "name": "Society & Culture",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_201",
+        "score": 211,
+        "text": "Society & Culture"
+      },
+      {
+        "kind": "link",
+        "name": "People",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_203",
+        "role": "link",
+        "score": 211,
+        "text": "People"
+      },
+      {
+        "kind": "generic",
+        "name": "Arts & Media",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_213",
+        "score": 211,
+        "text": "Arts & Media"
+      },
+      {
+        "kind": "generic",
+        "name": "Dates & Times",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_220",
+        "score": 211,
+        "text": "Dates & Times"
+      },
+      {
+        "kind": "generic",
+        "name": "Words & Linguistics",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_227",
+        "score": 211,
+        "text": "Words & Linguistics"
+      },
+      {
+        "kind": "generic",
+        "name": "Everyday Life",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_256",
+        "score": 211,
+        "text": "Everyday Life"
+      },
+      {
+        "kind": "generic",
+        "name": "Personal Health",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_266",
+        "score": 211,
+        "text": "Personal Health"
+      },
+      {
+        "kind": "generic",
+        "name": "Personal Finance",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_275",
+        "score": 211,
+        "text": "Personal Finance"
+      },
+      {
+        "kind": "generic",
+        "name": "Entertainment",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_291",
+        "score": 211,
+        "text": "Entertainment"
+      },
+      {
+        "kind": "generic",
+        "name": "Natural Language",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_57",
+        "score": 211,
+        "text": "Natural Language"
+      },
+      {
+        "kind": "generic",
+        "name": "Math Input",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_62",
+        "score": 211,
+        "text": "Math Input"
+      },
+      {
+        "kind": "generic",
+        "name": "Mathematics",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_79",
+        "score": 211,
+        "text": "Mathematics"
+      },
+      {
+        "kind": "generic",
+        "name": "Step-by-Step Solutions",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_87",
+        "score": 211,
+        "text": "Step-by-Step Solutions"
+      },
+      {
+        "kind": "generic",
+        "name": "Elementary Math",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_94",
+        "score": 211,
+        "text": "Elementary Math"
+      },
+      {
+        "kind": "generic",
+        "name": "Chemistry",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_161",
+        "score": 210,
+        "text": "Chemistry"
+      },
+      {
+        "kind": "generic",
+        "name": "Surprises",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_284",
+        "score": 210,
+        "text": "Surprises"
+      },
+      {
+        "kind": "button",
+        "name": "Compute input button",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_50",
+        "role": "button",
+        "score": 209
+      },
+      {
+        "kind": "button",
+        "name": "photo input",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_63",
+        "role": "button",
+        "score": 209
+      },
+      {
+        "kind": "generic",
+        "name": "Algebra",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_101",
+        "score": 208,
+        "text": "Algebra"
+      },
+      {
+        "kind": "generic",
+        "name": "Physics",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_154",
+        "score": 208,
+        "text": "Physics"
+      },
+      {
+        "kind": "generic",
+        "name": "People",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_209",
+        "score": 207,
+        "text": "People"
+      },
+      {
+        "kind": "button",
+        "name": "APPS",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_5",
+        "role": "button",
+        "score": 207,
+        "text": "APPS"
+      },
+      {
+        "kind": "link",
+        "name": "TOUR",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_9",
+        "role": "link",
+        "score": 207,
+        "text": "TOUR"
+      },
+      {
+        "kind": "generic",
+        "name": "TOUR",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_10",
+        "score": 203,
+        "text": "TOUR"
+      },
+      {
+        "kind": "generic",
+        "name": "APPS",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_6",
+        "score": 203,
+        "text": "APPS"
+      },
+      {
+        "kind": "generic",
+        "name": "›",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_146",
+        "role": "presentation",
+        "score": 201,
+        "text": "›"
+      },
+      {
+        "kind": "generic",
+        "name": "›",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_202",
+        "role": "presentation",
+        "score": 201,
+        "text": "›"
+      },
+      {
+        "kind": "generic",
+        "name": "›",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_257",
+        "role": "presentation",
+        "score": 201,
+        "text": "›"
+      },
+      {
+        "kind": "generic",
+        "name": "›",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_80",
+        "role": "presentation",
+        "score": 201,
+        "text": "›"
+      },
+      {
+        "kind": "link",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_69",
+        "role": "link",
+        "score": 199
+      },
+      {
+        "kind": "link",
+        "name": "Calculus & Analysis",
+        "reasons": [
+          "navigation_candidate"
+        ],
+        "refId": "v2ref_111",
+        "role": "link",
+        "score": 90,
+        "text": "Calculus & Analysis"
+      },
+      {
+        "kind": "link",
+        "name": "Differential Equations",
+        "reasons": [
+          "navigation_candidate"
+        ],
+        "refId": "v2ref_125",
+        "role": "link",
+        "score": 90,
+        "text": "Differential Equations"
+      },
+      {
+        "kind": "link",
+        "name": "Statistics",
+        "reasons": [
+          "navigation_candidate"
+        ],
+        "refId": "v2ref_132",
+        "role": "link",
+        "score": 90,
+        "text": "Statistics"
+      },
+      {
+        "kind": "link",
+        "name": "More Topics »",
+        "reasons": [
+          "navigation_candidate"
+        ],
+        "refId": "v2ref_139",
+        "role": "link",
+        "score": 90,
+        "text": "More Topics »"
+      },
+      {
+        "kind": "link",
+        "name": "Computational Sciences",
+        "reasons": [
+          "navigation_candidate"
+        ],
+        "refId": "v2ref_171",
+        "role": "link",
+        "score": 90,
+        "text": "Computational Sciences"
+      },
+      {
+        "kind": "link",
+        "name": "Earth Sciences",
+        "reasons": [
+          "navigation_candidate"
+        ],
+        "refId": "v2ref_175",
+        "role": "link",
+        "score": 90,
+        "text": "Earth Sciences"
+      }
+    ]
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {
+      "generic_low_value": 99,
+      "hidden_low_value": 48,
+      "offscreen_low_value": 157,
+      "rank_loss": 35,
+      "unlabeled_action": 4
+    },
+    "droppedRefCount": 343,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 423,
+    "selectedByReason": {
+      "form_candidate": 1,
+      "goal_keyword_match": 1,
+      "navigation_candidate": 64,
+      "recently_appeared": 15,
+      "recently_changed": 17,
+      "visible_ready": 74
+    },
+    "selectedRefCount": 80
+  }
+}

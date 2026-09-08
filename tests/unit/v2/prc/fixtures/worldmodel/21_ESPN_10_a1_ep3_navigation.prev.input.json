@@ -1,0 +1,3648 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "latestTransition": {
+      "strength": "moderate",
+      "transitionClass": "structural_local",
+      "transitionId": "transition_obs_1_1_obs_1_2"
+    },
+    "observationId": "obs_1_2",
+    "presentRefCount": 1326,
+    "refCount": 1729,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_2_1",
+    "transitionCount": 1,
+    "url": "https://www.espn.in/"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_1076"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1076"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1112"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_1244"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_1352"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_1369"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_1374"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_1379"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_1384"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_1389"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_1394"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_1399"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_1404"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_1409"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_1414"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_1419"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_1424"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_1465"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_1475"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_554"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_794"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_814"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_826"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_1124"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_1077"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_1113"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_1245"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_1246"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_1353"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_1377"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_1378"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_1382"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_1383"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_1392"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_1393"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_1397"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_1398"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_1407"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_1408"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_1412"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_1413"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_1422"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_1423"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_1468"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_1473"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_1474"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_1482"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_1483"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_549"
+      },
+      {
+        "rank": 49,
+        "refId": "v2ref_555"
+      },
+      {
+        "rank": 50,
+        "refId": "v2ref_795"
+      },
+      {
+        "rank": 51,
+        "refId": "v2ref_815"
+      },
+      {
+        "rank": 52,
+        "refId": "v2ref_816"
+      },
+      {
+        "rank": 53,
+        "refId": "v2ref_1372"
+      },
+      {
+        "rank": 54,
+        "refId": "v2ref_1373"
+      },
+      {
+        "rank": 55,
+        "refId": "v2ref_1417"
+      },
+      {
+        "rank": 56,
+        "refId": "v2ref_1418"
+      },
+      {
+        "rank": 57,
+        "refId": "v2ref_556"
+      },
+      {
+        "rank": 58,
+        "refId": "v2ref_1078"
+      },
+      {
+        "rank": 59,
+        "refId": "v2ref_1387"
+      },
+      {
+        "rank": 60,
+        "refId": "v2ref_1388"
+      },
+      {
+        "rank": 61,
+        "refId": "v2ref_1402"
+      },
+      {
+        "rank": 62,
+        "refId": "v2ref_1403"
+      },
+      {
+        "rank": 63,
+        "refId": "v2ref_1426"
+      },
+      {
+        "rank": 64,
+        "refId": "v2ref_827"
+      },
+      {
+        "rank": 65,
+        "refId": "v2ref_796"
+      },
+      {
+        "rank": 66,
+        "refId": "v2ref_1114"
+      },
+      {
+        "rank": 67,
+        "refId": "v2ref_1125"
+      },
+      {
+        "rank": 68,
+        "refId": "v2ref_1354"
+      },
+      {
+        "rank": 69,
+        "refId": "v2ref_828"
+      },
+      {
+        "rank": 70,
+        "refId": "v2ref_1126"
+      },
+      {
+        "rank": 71,
+        "refId": "v2ref_1370"
+      },
+      {
+        "rank": 72,
+        "refId": "v2ref_1371"
+      },
+      {
+        "rank": 73,
+        "refId": "v2ref_1375"
+      },
+      {
+        "rank": 74,
+        "refId": "v2ref_1376"
+      },
+      {
+        "rank": 75,
+        "refId": "v2ref_1380"
+      },
+      {
+        "rank": 76,
+        "refId": "v2ref_1381"
+      },
+      {
+        "rank": 77,
+        "refId": "v2ref_1385"
+      },
+      {
+        "rank": 78,
+        "refId": "v2ref_1386"
+      },
+      {
+        "rank": 79,
+        "refId": "v2ref_1390"
+      },
+      {
+        "rank": 80,
+        "refId": "v2ref_1391"
+      }
+    ],
+    "navigation": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1076"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1112"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_1244"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_1352"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_1369"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_1374"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_1379"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_1384"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_1389"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_1394"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_1399"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_1404"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_1409"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_1414"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_1419"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_1424"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_1465"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_1475"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_554"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_794"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_814"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_826"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_1124"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_549"
+      }
+    ],
+    "observationId": "obs_1_2",
+    "page": {
+      "title": "ESPN India - Serving Sports Fans. Anytime. Anywhere.",
+      "url": "https://www.espn.in/"
+    },
+    "projectionId": "projection_obs_1_2",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1076"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1112"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_1244"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_1352"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_1369"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_1374"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_1379"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_1384"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_1389"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_1394"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_1399"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_1404"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_1409"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_1414"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_1419"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_1424"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_1465"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_1475"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_554"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_794"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_814"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_826"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_1124"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_1077"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_1113"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_1245"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_1246"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_1353"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_1377"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_1378"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_1382"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_1383"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_1392"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_1393"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_1397"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_1398"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_1407"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_1408"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_1412"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_1413"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_1422"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_1423"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_1468"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_1473"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_1474"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_1482"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_1483"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_549"
+      }
+    ],
+    "refs": {
+      "v2ref_1076": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_cricket",
+        "refId": "v2ref_1076",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Cricket Cricket",
+        "visibility": "visible"
+      },
+      "v2ref_1077": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Cricket Cricket",
+        "refId": "v2ref_1077",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1078": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Cricket",
+        "refId": "v2ref_1078",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1112": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_chess",
+        "refId": "v2ref_1112",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Chess Chess",
+        "visibility": "visible"
+      },
+      "v2ref_1113": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Chess Chess",
+        "refId": "v2ref_1113",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1114": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Chess",
+        "refId": "v2ref_1114",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1124": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_f1",
+        "refId": "v2ref_1124",
+        "role": "link",
+        "score": 114,
+        "state": "live",
+        "text": "F1 F1",
+        "visibility": "visible"
+      },
+      "v2ref_1125": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "F1 F1",
+        "refId": "v2ref_1125",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1126": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "F1",
+        "refId": "v2ref_1126",
+        "score": 99,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1244": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "More Sports More Sports",
+        "refId": "v2ref_1244",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1245": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "More Sports More Sports",
+        "refId": "v2ref_1245",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1246": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "More Sports",
+        "refId": "v2ref_1246",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1352": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_watch",
+        "refId": "v2ref_1352",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Watch Watch",
+        "visibility": "visible"
+      },
+      "v2ref_1353": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Watch Watch",
+        "refId": "v2ref_1353",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1354": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Watch",
+        "refId": "v2ref_1354",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1369": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:1:ipl2026",
+        "refId": "v2ref_1369",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "IPL 2026",
+        "visibility": "visible"
+      },
+      "v2ref_1370": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1370",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1371": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1371",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1372": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "IPL 2026",
+        "refId": "v2ref_1372",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1373": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "IPL 2026",
+        "refId": "v2ref_1373",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1374": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:2:indiansuperleague",
+        "refId": "v2ref_1374",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Indian Super League",
+        "visibility": "visible"
+      },
+      "v2ref_1375": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1375",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1376": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1376",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1377": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Indian Super League",
+        "refId": "v2ref_1377",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1378": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Indian Super League",
+        "refId": "v2ref_1378",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1379": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:3:premierleague",
+        "refId": "v2ref_1379",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "English Premier League",
+        "visibility": "visible"
+      },
+      "v2ref_1380": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1380",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1381": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1381",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1382": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "English Premier League",
+        "refId": "v2ref_1382",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1383": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "English Premier League",
+        "refId": "v2ref_1383",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1384": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:4:laliga",
+        "refId": "v2ref_1384",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "La Liga",
+        "visibility": "visible"
+      },
+      "v2ref_1385": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1385",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1386": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1386",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1387": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "La Liga",
+        "refId": "v2ref_1387",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1388": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "La Liga",
+        "refId": "v2ref_1388",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1389": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:5:championsleague",
+        "refId": "v2ref_1389",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "UEFA Champions League",
+        "visibility": "visible"
+      },
+      "v2ref_1390": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1390",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1391": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1391",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1392": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "UEFA Champions League",
+        "refId": "v2ref_1392",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1393": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "UEFA Champions League",
+        "refId": "v2ref_1393",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1394": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:6:europaleague",
+        "refId": "v2ref_1394",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Europa League",
+        "visibility": "visible"
+      },
+      "v2ref_1397": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Europa League",
+        "refId": "v2ref_1397",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1398": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Europa League",
+        "refId": "v2ref_1398",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1399": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:7:seriea",
+        "refId": "v2ref_1399",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Serie A",
+        "visibility": "visible"
+      },
+      "v2ref_1402": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Serie A",
+        "refId": "v2ref_1402",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1403": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Serie A",
+        "refId": "v2ref_1403",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1404": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:8:bundesliga",
+        "refId": "v2ref_1404",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Bundesliga",
+        "visibility": "visible"
+      },
+      "v2ref_1407": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Bundesliga",
+        "refId": "v2ref_1407",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1408": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Bundesliga",
+        "refId": "v2ref_1408",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1409": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:9:ufc",
+        "refId": "v2ref_1409",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Ultimate Fighting Championship",
+        "visibility": "visible"
+      },
+      "v2ref_1412": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Ultimate Fighting Championship",
+        "refId": "v2ref_1412",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1413": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Ultimate Fighting Championship",
+        "refId": "v2ref_1413",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1414": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:10:ileague",
+        "refId": "v2ref_1414",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "I-League",
+        "visibility": "visible"
+      },
+      "v2ref_1417": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "I-League",
+        "refId": "v2ref_1417",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1418": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "I-League",
+        "refId": "v2ref_1418",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1419": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:11:parisolympics",
+        "refId": "v2ref_1419",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Paris Olympics",
+        "visibility": "visible"
+      },
+      "v2ref_1422": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Paris Olympics",
+        "refId": "v2ref_1422",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1423": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Paris Olympics",
+        "refId": "v2ref_1423",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1424": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=lrail:link:featuredsports:1:kabaddi",
+        "refId": "v2ref_1424",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Kabaddi",
+        "visibility": "visible"
+      },
+      "v2ref_1426": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Kabaddi",
+        "refId": "v2ref_1426",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1465": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=fp:feed:1:story",
+        "refId": "v2ref_1465",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "The crown lies heavy: Gukesh leans on Anand's experience and wisdom amid poor formIs there such a thing as the World Championship crown weighing too heavily on its holders?22hAaditya NarayanMaria Emilianova / FIDE",
+        "visibility": "visible"
+      },
+      "v2ref_1468": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Aaditya Narayan",
+        "refId": "v2ref_1468",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1473": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Maria Emilianova / FIDE",
+        "refId": "v2ref_1473",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1474": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Maria Emilianova / FIDE",
+        "refId": "v2ref_1474",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1475": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=fp:feed:2:eng.1:story",
+        "refId": "v2ref_1475",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Man City have given Maresca everything he needs to challenge this season15hRob Dawson(Photo by Robbie Jay Barratt - AMA/Getty Images)",
+        "visibility": "visible"
+      },
+      "v2ref_1482": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "(Photo by Robbie Jay Barratt - AMA/Getty Images)",
+        "refId": "v2ref_1482",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1483": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "(Photo by Robbie Jay Barratt - AMA/Getty Images)",
+        "refId": "v2ref_1483",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_549": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Log In",
+        "refId": "v2ref_549",
+        "regionId": "region_repeated_1",
+        "role": "link",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_554": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_soccer",
+        "refId": "v2ref_554",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Football Football",
+        "visibility": "visible"
+      },
+      "v2ref_555": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Football Football",
+        "refId": "v2ref_555",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_556": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Football",
+        "refId": "v2ref_556",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_794": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_hockey",
+        "refId": "v2ref_794",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Hockey Hockey",
+        "visibility": "visible"
+      },
+      "v2ref_795": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hockey Hockey",
+        "refId": "v2ref_795",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_796": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hockey",
+        "refId": "v2ref_796",
+        "score": 107,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_814": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_badminton",
+        "refId": "v2ref_814",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "Badminton Badminton",
+        "visibility": "visible"
+      },
+      "v2ref_815": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Badminton Badminton",
+        "refId": "v2ref_815",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_816": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Badminton",
+        "refId": "v2ref_816",
+        "score": 110,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_826": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_nba",
+        "refId": "v2ref_826",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "text": "NBA NBA",
+        "visibility": "visible"
+      },
+      "v2ref_827": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "NBA NBA",
+        "refId": "v2ref_827",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_828": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "NBA",
+        "refId": "v2ref_828",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      }
+    },
+    "regions": [
+      {
+        "kind": "repeated_list",
+        "label": "Repeated link controls",
+        "refIds": [
+          "v2ref_549"
+        ],
+        "regionId": "region_repeated_1",
+        "score": 100
+      }
+    ],
+    "stats": {
+      "interactionCount": 80,
+      "navigationCount": 24,
+      "readableCount": 70,
+      "regionCount": 1
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_2_obs_1_2",
+  "evidenceCoverage": {
+    "contractKind": "unknown",
+    "readCount": 94,
+    "requirements": [],
+    "status": "ready"
+  },
+  "goal": "Check ESPN for the score and a brief recap of the latest college football championship game.",
+  "lastResult": {
+    "effect": "local",
+    "evidence": {
+      "strength": "moderate",
+      "transitionClass": "structural_local"
+    },
+    "kind": "click",
+    "success": true,
+    "targetRef": "v2ref_16",
+    "traceStepId": "step_1",
+    "valuePreview": "Open Search button"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_2",
+        "beforeObservationId": "obs_1_1",
+        "index": 0,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_1",
+        "strength": "moderate",
+        "targetName": "Open Search",
+        "targetRef": "v2ref_16",
+        "transitionClass": "structural_local"
+      }
+    ],
+    "totalSteps": 1,
+    "truncated": false
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 20127,
+    "totalPlannerInputBytes": 54084,
+    "workingSetBytes": 31721
+  },
+  "transition": {
+    "afterObservationId": "obs_1_2",
+    "beforeObservationId": "obs_1_1",
+    "generationChanged": false,
+    "notes": [
+      "refs_appeared:1189",
+      "refs_disappeared:403",
+      "refs_weakened:121",
+      "ref_changed:v2ref_544",
+      "ref_changed:v2ref_545",
+      "ref_changed:v2ref_548",
+      "ref_changed:v2ref_19",
+      "ref_changed:v2ref_542"
+    ],
+    "refChangeCounts": {
+      "appeared": 1189,
+      "disappeared": 403,
+      "preserved": 18,
+      "weakened": 121
+    },
+    "strength": "moderate",
+    "transitionClass": "structural_local",
+    "urlChanged": false
+  },
+  "uncertainty": {
+    "level": "medium",
+    "signals": [
+      "low_confidence_refs:121",
+      "low_confidence_ref:v2ref_385",
+      "low_confidence_ref:v2ref_386",
+      "low_confidence_ref:v2ref_387",
+      "low_confidence_ref:v2ref_388",
+      "weakened_refs:121"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_1076",
+        "v2ref_1112",
+        "v2ref_1244",
+        "v2ref_1352",
+        "v2ref_1369",
+        "v2ref_1374",
+        "v2ref_1379",
+        "v2ref_1384",
+        "v2ref_1389",
+        "v2ref_1394",
+        "v2ref_1399",
+        "v2ref_1404",
+        "v2ref_1409",
+        "v2ref_1414",
+        "v2ref_1419",
+        "v2ref_1424",
+        "v2ref_1465",
+        "v2ref_1475",
+        "v2ref_554",
+        "v2ref_794",
+        "v2ref_814",
+        "v2ref_826",
+        "v2ref_1124",
+        "v2ref_549"
+      ],
+      "readableRefs": [
+        "v2ref_1076",
+        "v2ref_1112",
+        "v2ref_1244",
+        "v2ref_1352",
+        "v2ref_1369",
+        "v2ref_1374",
+        "v2ref_1379",
+        "v2ref_1384",
+        "v2ref_1389",
+        "v2ref_1394",
+        "v2ref_1399",
+        "v2ref_1404",
+        "v2ref_1409",
+        "v2ref_1414",
+        "v2ref_1419",
+        "v2ref_1424",
+        "v2ref_1465",
+        "v2ref_1475",
+        "v2ref_554",
+        "v2ref_794",
+        "v2ref_814",
+        "v2ref_826",
+        "v2ref_1124",
+        "v2ref_1077",
+        "v2ref_1113",
+        "v2ref_1245",
+        "v2ref_1246",
+        "v2ref_1353",
+        "v2ref_1377",
+        "v2ref_1378",
+        "v2ref_1382",
+        "v2ref_1383",
+        "v2ref_1392",
+        "v2ref_1393",
+        "v2ref_1397",
+        "v2ref_1398",
+        "v2ref_1407",
+        "v2ref_1408",
+        "v2ref_1412",
+        "v2ref_1413",
+        "v2ref_1422",
+        "v2ref_1423",
+        "v2ref_1468",
+        "v2ref_1473",
+        "v2ref_1474",
+        "v2ref_1482",
+        "v2ref_1483",
+        "v2ref_549",
+        "v2ref_555",
+        "v2ref_795",
+        "v2ref_815",
+        "v2ref_816",
+        "v2ref_1372",
+        "v2ref_1373",
+        "v2ref_1417",
+        "v2ref_1418",
+        "v2ref_556",
+        "v2ref_1078",
+        "v2ref_1387",
+        "v2ref_1388",
+        "v2ref_1402",
+        "v2ref_1403",
+        "v2ref_1426",
+        "v2ref_827",
+        "v2ref_796",
+        "v2ref_1114",
+        "v2ref_1125",
+        "v2ref_1354",
+        "v2ref_828",
+        "v2ref_1126"
+      ],
+      "selectableRefs": [],
+      "typeableRefs": []
+    },
+    "changedRefs": {
+      "appearedCount": 1188,
+      "omittedCount": 1289,
+      "preservedCount": 18,
+      "topRefs": [
+        {
+          "kind": "link",
+          "name": "&lpos=fp:feed:1:story",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1465",
+          "role": "link",
+          "score": 405,
+          "text": "The crown lies heavy: Gukesh leans on Anand's experience and wisdom amid poor formIs there such a thing as the World Championship crown weighing too heavily on its holders?22hAaditya NarayanMaria Emilianova / FIDE"
+        },
+        {
+          "kind": "link",
+          "name": "&lpos=lrail:link:featured:9:ufc",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1409",
+          "role": "link",
+          "score": 385,
+          "text": "Ultimate Fighting Championship"
+        },
+        {
+          "kind": "link",
+          "name": "&lpos=sitenavdefault+sitenav_soccer",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_554",
+          "role": "link",
+          "score": 385,
+          "text": "Football Football"
+        },
+        {
+          "kind": "generic",
+          "name": "Ultimate Fighting Championship",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1412",
+          "score": 381,
+          "text": "Ultimate Fighting Championship"
+        },
+        {
+          "kind": "generic",
+          "name": "Ultimate Fighting Championship",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1413",
+          "score": 381,
+          "text": "Ultimate Fighting Championship"
+        },
+        {
+          "kind": "generic",
+          "name": "Football Football",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_555",
+          "score": 381,
+          "text": "Football Football"
+        },
+        {
+          "kind": "generic",
+          "name": "Football",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_556",
+          "score": 379,
+          "text": "Football"
+        },
+        {
+          "kind": "link",
+          "name": "&lpos=fp:feed:7:coll:carousel:yy:story",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1567",
+          "role": "link",
+          "score": 270,
+          "text": "Chelsea held to draw by Aston Villa in their first WSL game of the season19hPA"
+        },
+        {
+          "kind": "link",
+          "name": "&lpos=fp:feed:7:coll:carousel:yy:story",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1576",
+          "role": "link",
+          "score": 270,
+          "text": "'It was the best time to come back to England': Ona Batlle on swapping Barcelona for Arsenal3dShubi Arun"
+        },
+        {
+          "kind": "link",
+          "name": "&lpos=lrail:link:sites:1:thecricketmonthly",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1455",
+          "role": "link",
+          "score": 260,
+          "text": "The Cricket Monthly"
+        },
+        {
+          "kind": "link",
+          "name": "&lpos=fp:feed:4:story",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1512",
+          "role": "link",
+          "score": 260,
+          "text": "Gasly takes first shock pole for Alpine in Monza18hPA"
+        },
+        {
+          "kind": "link",
+          "name": "&lpos=fp:feed:7:coll:carousel:yy:story",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1550",
+          "role": "link",
+          "score": 260,
+          "text": "Why Tottenham, London City won the WSL transfer window; Man United among losers2dEmily Keogh"
+        },
+        {
+          "kind": "link",
+          "name": "Addendum to the Global Privacy Policy",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1631",
+          "role": "link",
+          "score": 260,
+          "text": "Addendum to the Global Privacy Policy"
+        },
+        {
+          "kind": "generic",
+          "name": "The Cricket Monthly",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1458",
+          "score": 256,
+          "text": "The Cricket Monthly"
+        },
+        {
+          "kind": "generic",
+          "name": "The Cricket Monthly",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1459",
+          "score": 256,
+          "text": "The Cricket Monthly"
+        },
+        {
+          "kind": "generic",
+          "name": "ESPN Staff",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1522",
+          "score": 256,
+          "text": "ESPN Staff"
+        }
+      ],
+      "weakenedCount": 121
+    },
+    "deltaRefs": {
+      "appeared": [
+        "v2ref_1465",
+        "v2ref_1409",
+        "v2ref_554",
+        "v2ref_1412",
+        "v2ref_1413",
+        "v2ref_555",
+        "v2ref_556",
+        "v2ref_1567"
+      ],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "act",
+    "modeReason": "default_action_mode",
+    "navigationRefs": [
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_cricket",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1076",
+        "role": "link",
+        "score": 115,
+        "text": "Cricket Cricket"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_chess",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1112",
+        "role": "link",
+        "score": 115,
+        "text": "Chess Chess"
+      },
+      {
+        "kind": "link",
+        "name": "More Sports More Sports",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1244",
+        "role": "link",
+        "score": 115,
+        "text": "More Sports More Sports"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_watch",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1352",
+        "role": "link",
+        "score": 115,
+        "text": "Watch Watch"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:1:ipl2026",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1369",
+        "role": "link",
+        "score": 115,
+        "text": "IPL 2026"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:2:indiansuperleague",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1374",
+        "role": "link",
+        "score": 115,
+        "text": "Indian Super League"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:3:premierleague",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1379",
+        "role": "link",
+        "score": 115,
+        "text": "English Premier League"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:4:laliga",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1384",
+        "role": "link",
+        "score": 115,
+        "text": "La Liga"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:5:championsleague",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1389",
+        "role": "link",
+        "score": 115,
+        "text": "UEFA Champions League"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:6:europaleague",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1394",
+        "role": "link",
+        "score": 115,
+        "text": "Europa League"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:7:seriea",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1399",
+        "role": "link",
+        "score": 115,
+        "text": "Serie A"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:8:bundesliga",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1404",
+        "role": "link",
+        "score": 115,
+        "text": "Bundesliga"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:9:ufc",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1409",
+        "role": "link",
+        "score": 115,
+        "text": "Ultimate Fighting Championship"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:10:ileague",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1414",
+        "role": "link",
+        "score": 115,
+        "text": "I-League"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:11:parisolympics",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1419",
+        "role": "link",
+        "score": 115,
+        "text": "Paris Olympics"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featuredsports:1:kabaddi",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1424",
+        "role": "link",
+        "score": 115,
+        "text": "Kabaddi"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=fp:feed:1:story",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1465",
+        "role": "link",
+        "score": 115,
+        "text": "The crown lies heavy: Gukesh leans on Anand's experience and wisdom amid poor formIs there such a thing as the World Championship crown weighing too heavily on its holders?22hAaditya NarayanMaria Emilianova / FIDE"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=fp:feed:2:eng.1:story",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1475",
+        "role": "link",
+        "score": 115,
+        "text": "Man City have given Maresca everything he needs to challenge this season15hRob Dawson(Photo by Robbie Jay Barratt - AMA/Getty Images)"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_soccer",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_554",
+        "role": "link",
+        "score": 115,
+        "text": "Football Football"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_hockey",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_794",
+        "role": "link",
+        "score": 115,
+        "text": "Hockey Hockey"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_badminton",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_814",
+        "role": "link",
+        "score": 115,
+        "text": "Badminton Badminton"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_nba",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_826",
+        "role": "link",
+        "score": 115,
+        "text": "NBA NBA"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_f1",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1124",
+        "role": "link",
+        "score": 114,
+        "text": "F1 F1"
+      },
+      {
+        "kind": "link",
+        "name": "Log In",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_549",
+        "role": "link",
+        "score": 111,
+        "text": "Log In"
+      }
+    ],
+    "omitted": {
+      "droppedByReason": {
+        "hidden_low_value": 5,
+        "rank_loss": 1232,
+        "unlabeled_action": 8
+      },
+      "droppedRefCount": 1248,
+      "observedRefCount": 1328,
+      "selectedRefCount": 80
+    },
+    "primaryRefs": [
+      {
+        "kind": "link",
+        "name": "&lpos=fp:feed:1:story",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1465",
+        "role": "link",
+        "score": 405,
+        "text": "The crown lies heavy: Gukesh leans on Anand's experience and wisdom amid poor formIs there such a thing as the World Championship crown weighing too heavily on its holders?22hAaditya NarayanMaria Emilianova / FIDE"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:9:ufc",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1409",
+        "role": "link",
+        "score": 385,
+        "text": "Ultimate Fighting Championship"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_soccer",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_554",
+        "role": "link",
+        "score": 385,
+        "text": "Football Football"
+      },
+      {
+        "kind": "generic",
+        "name": "Ultimate Fighting Championship",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1412",
+        "score": 381,
+        "text": "Ultimate Fighting Championship"
+      },
+      {
+        "kind": "generic",
+        "name": "Ultimate Fighting Championship",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1413",
+        "score": 381,
+        "text": "Ultimate Fighting Championship"
+      },
+      {
+        "kind": "generic",
+        "name": "Football Football",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_555",
+        "score": 381,
+        "text": "Football Football"
+      },
+      {
+        "kind": "generic",
+        "name": "Football",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_556",
+        "score": 379,
+        "text": "Football"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_cricket",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1076",
+        "role": "link",
+        "score": 375,
+        "text": "Cricket Cricket"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_chess",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1112",
+        "role": "link",
+        "score": 375,
+        "text": "Chess Chess"
+      },
+      {
+        "kind": "link",
+        "name": "More Sports More Sports",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1244",
+        "role": "link",
+        "score": 375,
+        "text": "More Sports More Sports"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_watch",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1352",
+        "role": "link",
+        "score": 375,
+        "text": "Watch Watch"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:1:ipl2026",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1369",
+        "role": "link",
+        "score": 375,
+        "text": "IPL 2026"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:2:indiansuperleague",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1374",
+        "role": "link",
+        "score": 375,
+        "text": "Indian Super League"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:3:premierleague",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1379",
+        "role": "link",
+        "score": 375,
+        "text": "English Premier League"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:4:laliga",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1384",
+        "role": "link",
+        "score": 375,
+        "text": "La Liga"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:5:championsleague",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1389",
+        "role": "link",
+        "score": 375,
+        "text": "UEFA Champions League"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:6:europaleague",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1394",
+        "role": "link",
+        "score": 375,
+        "text": "Europa League"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:7:seriea",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1399",
+        "role": "link",
+        "score": 375,
+        "text": "Serie A"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:8:bundesliga",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1404",
+        "role": "link",
+        "score": 375,
+        "text": "Bundesliga"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:10:ileague",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1414",
+        "role": "link",
+        "score": 375,
+        "text": "I-League"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featured:11:parisolympics",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1419",
+        "role": "link",
+        "score": 375,
+        "text": "Paris Olympics"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=lrail:link:featuredsports:1:kabaddi",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1424",
+        "role": "link",
+        "score": 375,
+        "text": "Kabaddi"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=fp:feed:2:eng.1:story",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1475",
+        "role": "link",
+        "score": 375,
+        "text": "Man City have given Maresca everything he needs to challenge this season15hRob Dawson(Photo by Robbie Jay Barratt - AMA/Getty Images)"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_hockey",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_794",
+        "role": "link",
+        "score": 375,
+        "text": "Hockey Hockey"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_badminton",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_814",
+        "role": "link",
+        "score": 375,
+        "text": "Badminton Badminton"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_nba",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_826",
+        "role": "link",
+        "score": 375,
+        "text": "NBA NBA"
+      },
+      {
+        "kind": "link",
+        "name": "&lpos=sitenavdefault+sitenav_f1",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1124",
+        "role": "link",
+        "score": 374,
+        "text": "F1 F1"
+      },
+      {
+        "kind": "generic",
+        "name": "Cricket Cricket",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1077",
+        "score": 371,
+        "text": "Cricket Cricket"
+      },
+      {
+        "kind": "generic",
+        "name": "Chess Chess",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1113",
+        "score": 371,
+        "text": "Chess Chess"
+      },
+      {
+        "kind": "generic",
+        "name": "More Sports More Sports",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1245",
+        "score": 371,
+        "text": "More Sports More Sports"
+      },
+      {
+        "kind": "generic",
+        "name": "More Sports",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1246",
+        "score": 371,
+        "text": "More Sports"
+      },
+      {
+        "kind": "generic",
+        "name": "Watch Watch",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1353",
+        "score": 371,
+        "text": "Watch Watch"
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1465",
+        "text": "&lpos=fp:feed:1:story The crown lies heavy: Gukesh leans on Anand's experience and wisdom amid poor formIs there such a thing as the World Championship crown weighing too heavily on its holders?22hAaditya NarayanMaria..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1409",
+        "text": "&lpos=lrail:link:featured:9:ufc Ultimate Fighting Championship"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_554",
+        "text": "&lpos=sitenavdefault+sitenav_soccer Football Football"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1412",
+        "text": "Ultimate Fighting Championship Ultimate Fighting Championship"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1413",
+        "text": "Ultimate Fighting Championship Ultimate Fighting Championship"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_555",
+        "text": "Football Football Football Football"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_556",
+        "text": "Football Football"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1076",
+        "text": "&lpos=sitenavdefault+sitenav_cricket Cricket Cricket"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1112",
+        "text": "&lpos=sitenavdefault+sitenav_chess Chess Chess"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1244",
+        "text": "More Sports More Sports More Sports More Sports"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1352",
+        "text": "&lpos=sitenavdefault+sitenav_watch Watch Watch"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1369",
+        "text": "&lpos=lrail:link:featured:1:ipl2026 IPL 2026"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1374",
+        "text": "&lpos=lrail:link:featured:2:indiansuperleague Indian Super League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1379",
+        "text": "&lpos=lrail:link:featured:3:premierleague English Premier League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1384",
+        "text": "&lpos=lrail:link:featured:4:laliga La Liga"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1389",
+        "text": "&lpos=lrail:link:featured:5:championsleague UEFA Champions League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1394",
+        "text": "&lpos=lrail:link:featured:6:europaleague Europa League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1399",
+        "text": "&lpos=lrail:link:featured:7:seriea Serie A"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1404",
+        "text": "&lpos=lrail:link:featured:8:bundesliga Bundesliga"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1414",
+        "text": "&lpos=lrail:link:featured:10:ileague I-League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1419",
+        "text": "&lpos=lrail:link:featured:11:parisolympics Paris Olympics"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1424",
+        "text": "&lpos=lrail:link:featuredsports:1:kabaddi Kabaddi"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1475",
+        "text": "&lpos=fp:feed:2:eng.1:story Man City have given Maresca everything he needs to challenge this season15hRob Dawson(Photo by Robbie Jay Barratt - AMA/Getty Images)"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_794",
+        "text": "&lpos=sitenavdefault+sitenav_hockey Hockey Hockey"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_814",
+        "text": "&lpos=sitenavdefault+sitenav_badminton Badminton Badminton"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_826",
+        "text": "&lpos=sitenavdefault+sitenav_nba NBA NBA"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1124",
+        "text": "&lpos=sitenavdefault+sitenav_f1 F1 F1"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1077",
+        "text": "Cricket Cricket Cricket Cricket"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1113",
+        "text": "Chess Chess Chess Chess"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1245",
+        "text": "More Sports More Sports More Sports More Sports"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1246",
+        "text": "More Sports More Sports"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1353",
+        "text": "Watch Watch Watch Watch"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1377",
+        "text": "Indian Super League Indian Super League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1378",
+        "text": "Indian Super League Indian Super League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1382",
+        "text": "English Premier League English Premier League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1383",
+        "text": "English Premier League English Premier League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1392",
+        "text": "UEFA Champions League UEFA Champions League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1393",
+        "text": "UEFA Champions League UEFA Champions League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1397",
+        "text": "Europa League Europa League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1398",
+        "text": "Europa League Europa League"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1407",
+        "text": "Bundesliga Bundesliga"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1408",
+        "text": "Bundesliga Bundesliga"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1422",
+        "text": "Paris Olympics Paris Olympics"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1423",
+        "text": "Paris Olympics Paris Olympics"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1468",
+        "text": "Aaditya Narayan Aaditya Narayan"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1473",
+        "text": "Maria Emilianova / FIDE Maria Emilianova / FIDE"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1474",
+        "text": "Maria Emilianova / FIDE Maria Emilianova / FIDE"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1482",
+        "text": "(Photo by Robbie Jay Barratt - AMA/Getty Images) (Photo by Robbie Jay Barratt - AMA/Getty Images)"
+      }
+    ],
+    "regionSummaries": [
+      {
+        "label": "Repeated link controls",
+        "omittedRefCount": 2,
+        "regionId": "region_repeated_1",
+        "representativeRefs": [
+          "v2ref_549"
+        ]
+      }
+    ],
+    "secondaryRefs": [
+      {
+        "kind": "generic",
+        "name": "Indian Super League",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1377",
+        "score": 371,
+        "text": "Indian Super League"
+      },
+      {
+        "kind": "generic",
+        "name": "Indian Super League",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1378",
+        "score": 371,
+        "text": "Indian Super League"
+      },
+      {
+        "kind": "generic",
+        "name": "English Premier League",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1382",
+        "score": 371,
+        "text": "English Premier League"
+      },
+      {
+        "kind": "generic",
+        "name": "English Premier League",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1383",
+        "score": 371,
+        "text": "English Premier League"
+      },
+      {
+        "kind": "generic",
+        "name": "UEFA Champions League",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1392",
+        "score": 371,
+        "text": "UEFA Champions League"
+      },
+      {
+        "kind": "generic",
+        "name": "UEFA Champions League",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1393",
+        "score": 371,
+        "text": "UEFA Champions League"
+      },
+      {
+        "kind": "generic",
+        "name": "Europa League",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1397",
+        "score": 371,
+        "text": "Europa League"
+      },
+      {
+        "kind": "generic",
+        "name": "Europa League",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1398",
+        "score": 371,
+        "text": "Europa League"
+      },
+      {
+        "kind": "generic",
+        "name": "Bundesliga",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1407",
+        "score": 371,
+        "text": "Bundesliga"
+      },
+      {
+        "kind": "generic",
+        "name": "Bundesliga",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1408",
+        "score": 371,
+        "text": "Bundesliga"
+      },
+      {
+        "kind": "generic",
+        "name": "Paris Olympics",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1422",
+        "score": 371,
+        "text": "Paris Olympics"
+      },
+      {
+        "kind": "generic",
+        "name": "Paris Olympics",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1423",
+        "score": 371,
+        "text": "Paris Olympics"
+      },
+      {
+        "kind": "generic",
+        "name": "Aaditya Narayan",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1468",
+        "score": 371,
+        "text": "Aaditya Narayan"
+      },
+      {
+        "kind": "generic",
+        "name": "Maria Emilianova / FIDE",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1473",
+        "score": 371,
+        "text": "Maria Emilianova / FIDE"
+      },
+      {
+        "kind": "generic",
+        "name": "Maria Emilianova / FIDE",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1474",
+        "score": 371,
+        "text": "Maria Emilianova / FIDE"
+      },
+      {
+        "kind": "generic",
+        "name": "(Photo by Robbie Jay Barratt - AMA/Getty Images)",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1482",
+        "score": 371,
+        "text": "(Photo by Robbie Jay Barratt - AMA/Getty Images)"
+      },
+      {
+        "kind": "generic",
+        "name": "(Photo by Robbie Jay Barratt - AMA/Getty Images)",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1483",
+        "score": 371,
+        "text": "(Photo by Robbie Jay Barratt - AMA/Getty Images)"
+      },
+      {
+        "kind": "link",
+        "name": "Log In",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_549",
+        "role": "link",
+        "score": 371,
+        "text": "Log In"
+      },
+      {
+        "kind": "generic",
+        "name": "Hockey Hockey",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_795",
+        "score": 371,
+        "text": "Hockey Hockey"
+      },
+      {
+        "kind": "generic",
+        "name": "Badminton Badminton",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_815",
+        "score": 371,
+        "text": "Badminton Badminton"
+      },
+      {
+        "kind": "generic",
+        "name": "Badminton",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_816",
+        "score": 370,
+        "text": "Badminton"
+      },
+      {
+        "kind": "generic",
+        "name": "IPL 2026",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1372",
+        "score": 369,
+        "text": "IPL 2026"
+      },
+      {
+        "kind": "generic",
+        "name": "IPL 2026",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1373",
+        "score": 369,
+        "text": "IPL 2026"
+      },
+      {
+        "kind": "generic",
+        "name": "I-League",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1417",
+        "score": 369,
+        "text": "I-League"
+      },
+      {
+        "kind": "generic",
+        "name": "I-League",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1418",
+        "score": 369,
+        "text": "I-League"
+      },
+      {
+        "kind": "generic",
+        "name": "Cricket",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1078",
+        "score": 368,
+        "text": "Cricket"
+      },
+      {
+        "kind": "generic",
+        "name": "La Liga",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1387",
+        "score": 368,
+        "text": "La Liga"
+      },
+      {
+        "kind": "generic",
+        "name": "La Liga",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1388",
+        "score": 368,
+        "text": "La Liga"
+      },
+      {
+        "kind": "generic",
+        "name": "Serie A",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1402",
+        "score": 368,
+        "text": "Serie A"
+      },
+      {
+        "kind": "generic",
+        "name": "Serie A",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1403",
+        "score": 368,
+        "text": "Serie A"
+      },
+      {
+        "kind": "generic",
+        "name": "Kabaddi",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1426",
+        "score": 368,
+        "text": "Kabaddi"
+      },
+      {
+        "kind": "generic",
+        "name": "NBA NBA",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_827",
+        "score": 368,
+        "text": "NBA NBA"
+      },
+      {
+        "kind": "generic",
+        "name": "Hockey",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_796",
+        "score": 367,
+        "text": "Hockey"
+      },
+      {
+        "kind": "generic",
+        "name": "Chess",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1114",
+        "score": 365,
+        "text": "Chess"
+      },
+      {
+        "kind": "generic",
+        "name": "F1 F1",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1125",
+        "score": 365,
+        "text": "F1 F1"
+      },
+      {
+        "kind": "generic",
+        "name": "Watch",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1354",
+        "score": 365,
+        "text": "Watch"
+      },
+      {
+        "kind": "generic",
+        "name": "NBA",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_828",
+        "score": 361,
+        "text": "NBA"
+      },
+      {
+        "kind": "generic",
+        "name": "F1",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1126",
+        "score": 359,
+        "text": "F1"
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1370",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1371",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1375",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1376",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1380",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1381",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1385",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1386",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1390",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1391",
+        "score": 355
+      }
+    ]
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {
+      "hidden_low_value": 5,
+      "rank_loss": 1232,
+      "unlabeled_action": 8
+    },
+    "droppedRefCount": 1248,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 1328,
+    "selectedByReason": {
+      "form_candidate": 1,
+      "goal_keyword_match": 56,
+      "navigation_candidate": 289,
+      "recently_appeared": 1185,
+      "recently_changed": 1308,
+      "visible_ready": 123
+    },
+    "selectedRefCount": 80
+  }
+}

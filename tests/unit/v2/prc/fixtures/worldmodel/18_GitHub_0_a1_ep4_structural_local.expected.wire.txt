@@ -1,0 +1,30 @@
+Planner input:
+MISSION
+  goal: Search for an open-source project related to 'climate change data visualization' on GitHub and report the project with the most stars.
+
+STATE
+
+  page: "Repository search results · GitHub" https://github.com/
+
+PLANNER SURFACE
+    [v2ref_1] <link name="Skip to content" tools="c,r" />
+  CONTINUITY: weakened=1 refs carried from before the last action; changed=0
+
+STATE
+  observation: obs_1_5 gen=1 refs=1
+  focus: v2ref_1 highest_operational_score
+
+RECENT EVENTS
+  last: press -> ok (no observable effect)
+  transition: structural_local urlChanged=false appeared=0 disappeared=660 weakened=0 preserved=0
+  history: 3 steps
+
+EVIDENCE COVERAGE
+  state: uncertain reads=1
+  ranking_evidence: uncertain
+
+PROBLEMS
+  uncertainty: medium low_confidence_refs:1, low_confidence_ref:v2ref_1
+
+WORKING SET
+  mode: verify

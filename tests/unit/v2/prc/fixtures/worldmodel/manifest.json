@@ -1,0 +1,382 @@
+{
+ "fixtures": [
+  {
+   "fixture": "18_GitHub_0_a1_ep8_reuse",
+   "source": {
+    "run": "18",
+    "runTs": "1788634111591",
+    "task": "GitHub__0_a1",
+    "episode": 8,
+    "transitionClass": "structural_local",
+    "provenance": "copied verbatim from read-only artifacts; regenerate via %TEMP%/browsegent-wm/wm_r3_fixtures.py"
+   },
+   "pair": {
+    "obsReuse": true,
+    "carried": 0,
+    "carriedPoolUncapped": 0,
+    "capBound": false,
+    "fullLines": 0,
+    "stableRefs": 80,
+    "continuityHeader": true
+   },
+   "bytes": {
+    "expectedFullBytes": 6284,
+    "expectedWireBytes": 5252
+   },
+   "invariants": {
+    "actedRefs": 0,
+    "actedFull": null,
+    "assertions": [
+     "zero displacement",
+     "zero lane loss",
+     "always-full renders full",
+     "acted refs statelessly complete under W2",
+     "off-flag payload byte-identical to expected.full.txt"
+    ],
+    "actedStatelesslyComplete": true,
+    "actedCompleteN": 0
+   }
+  },
+  {
+   "fixture": "19_Google_Flights_0_a1_ep8_reuse",
+   "source": {
+    "run": "19",
+    "runTs": "1788680381229",
+    "task": "Google__Flights__0_a1",
+    "episode": 8,
+    "transitionClass": null,
+    "provenance": "copied verbatim from read-only artifacts; regenerate via %TEMP%/browsegent-wm/wm_r3_fixtures.py"
+   },
+   "pair": {
+    "obsReuse": true,
+    "carried": 0,
+    "carriedPoolUncapped": 0,
+    "capBound": false,
+    "fullLines": 10,
+    "stableRefs": 70,
+    "continuityHeader": false
+   },
+   "bytes": {
+    "expectedFullBytes": 10109,
+    "expectedWireBytes": 7178
+   },
+   "invariants": {
+    "actedRefs": 2,
+    "actedFull": null,
+    "assertions": [
+     "zero displacement",
+     "zero lane loss",
+     "always-full renders full",
+     "acted refs statelessly complete under W2",
+     "off-flag payload byte-identical to expected.full.txt"
+    ],
+    "actedStatelesslyComplete": true,
+    "actedCompleteN": 2
+   }
+  },
+  {
+   "fixture": "18_Google_Map_0_a1_ep9_microstate",
+   "source": {
+    "run": "18",
+    "runTs": "1788634111591",
+    "task": "Google__Map__0_a1",
+    "episode": 9,
+    "transitionClass": "microstate",
+    "provenance": "copied verbatim from read-only artifacts; regenerate via %TEMP%/browsegent-wm/wm_r3_fixtures.py"
+   },
+   "pair": {
+    "obsReuse": false,
+    "carried": 32,
+    "carriedPoolUncapped": 46,
+    "capBound": true,
+    "fullLines": 51,
+    "stableRefs": 57,
+    "continuityHeader": false
+   },
+   "bytes": {
+    "expectedFullBytes": 6293,
+    "expectedWireBytes": 7141
+   },
+   "invariants": {
+    "actedRefs": 2,
+    "actedFull": null,
+    "assertions": [
+     "zero displacement",
+     "zero lane loss",
+     "always-full renders full",
+     "acted refs statelessly complete under W2",
+     "off-flag payload byte-identical to expected.full.txt"
+    ],
+    "actedStatelesslyComplete": true,
+    "actedCompleteN": 2
+   }
+  },
+  {
+   "fixture": "20_Google_Flights_0_a1_ep6_structural_local",
+   "source": {
+    "run": "20",
+    "runTs": "1788683438066",
+    "task": "Google__Flights__0_a1",
+    "episode": 6,
+    "transitionClass": "structural_local",
+    "provenance": "copied verbatim from read-only artifacts; regenerate via %TEMP%/browsegent-wm/wm_r3_fixtures.py"
+   },
+   "pair": {
+    "obsReuse": false,
+    "carried": 32,
+    "carriedPoolUncapped": 48,
+    "capBound": true,
+    "fullLines": 60,
+    "stableRefs": 52,
+    "continuityHeader": false
+   },
+   "bytes": {
+    "expectedFullBytes": 10285,
+    "expectedWireBytes": 11657
+   },
+   "invariants": {
+    "actedRefs": 5,
+    "actedFull": null,
+    "assertions": [
+     "zero displacement",
+     "zero lane loss",
+     "always-full renders full",
+     "acted refs statelessly complete under W2",
+     "off-flag payload byte-identical to expected.full.txt"
+    ],
+    "actedStatelesslyComplete": true,
+    "actedCompleteN": 5
+   }
+  },
+  {
+   "fixture": "18_Wolfram_Alpha_0_a1_ep3_structural_local",
+   "source": {
+    "run": "18",
+    "runTs": "1788634111591",
+    "task": "Wolfram__Alpha__0_a1",
+    "episode": 3,
+    "transitionClass": "structural_local",
+    "provenance": "copied verbatim from read-only artifacts; regenerate via %TEMP%/browsegent-wm/wm_r3_fixtures.py"
+   },
+   "pair": {
+    "obsReuse": false,
+    "carried": 12,
+    "carriedPoolUncapped": 12,
+    "capBound": false,
+    "fullLines": 22,
+    "stableRefs": 70,
+    "continuityHeader": true
+   },
+   "bytes": {
+    "expectedFullBytes": 6371,
+    "expectedWireBytes": 5753
+   },
+   "invariants": {
+    "actedRefs": 1,
+    "actedFull": null,
+    "assertions": [
+     "zero displacement",
+     "zero lane loss",
+     "always-full renders full",
+     "acted refs statelessly complete under W2",
+     "off-flag payload byte-identical to expected.full.txt"
+    ],
+    "actedStatelesslyComplete": true,
+    "actedCompleteN": 1
+   }
+  },
+  {
+   "fixture": "18_GitHub_0_a1_ep4_structural_local",
+   "source": {
+    "run": "18",
+    "runTs": "1788634111591",
+    "task": "GitHub__0_a1",
+    "episode": 4,
+    "transitionClass": "structural_local",
+    "provenance": "copied verbatim from read-only artifacts; regenerate via %TEMP%/browsegent-wm/wm_r3_fixtures.py"
+   },
+   "pair": {
+    "obsReuse": false,
+    "carried": 0,
+    "carriedPoolUncapped": 0,
+    "capBound": false,
+    "fullLines": 1,
+    "stableRefs": 0,
+    "continuityHeader": true
+   },
+   "bytes": {
+    "expectedFullBytes": 808,
+    "expectedWireBytes": 838
+   },
+   "invariants": {
+    "actedRefs": 0,
+    "actedFull": null,
+    "assertions": [
+     "zero displacement",
+     "zero lane loss",
+     "always-full renders full",
+     "acted refs statelessly complete under W2",
+     "off-flag payload byte-identical to expected.full.txt"
+    ],
+    "actedStatelesslyComplete": true,
+    "actedCompleteN": 0
+   }
+  },
+  {
+   "fixture": "21_ESPN_10_a1_ep3_navigation",
+   "source": {
+    "run": "21",
+    "runTs": "1788685822038",
+    "task": "ESPN__10_a1",
+    "episode": 3,
+    "transitionClass": null,
+    "provenance": "copied verbatim from read-only artifacts; regenerate via %TEMP%/browsegent-wm/wm_r3_fixtures.py"
+   },
+   "pair": {
+    "obsReuse": false,
+    "carried": 9,
+    "carriedPoolUncapped": 9,
+    "capBound": false,
+    "fullLines": 18,
+    "stableRefs": 71,
+    "continuityHeader": true
+   },
+   "bytes": {
+    "expectedFullBytes": 8397,
+    "expectedWireBytes": 6048
+   },
+   "invariants": {
+    "actedRefs": 1,
+    "actedFull": null,
+    "assertions": [
+     "zero displacement",
+     "zero lane loss",
+     "always-full renders full",
+     "acted refs statelessly complete under W2",
+     "off-flag payload byte-identical to expected.full.txt"
+    ],
+    "actedStatelesslyComplete": true,
+    "actedCompleteN": 1
+   }
+  },
+  {
+   "fixture": "18_Booking_10_a1_ep2_navigation",
+   "source": {
+    "run": "18",
+    "runTs": "1788634111591",
+    "task": "Booking__10_a1",
+    "episode": 2,
+    "transitionClass": "structural_macrostate",
+    "provenance": "copied verbatim from read-only artifacts; regenerate via %TEMP%/browsegent-wm/wm_r3_fixtures.py"
+   },
+   "pair": {
+    "obsReuse": false,
+    "carried": 0,
+    "carriedPoolUncapped": 0,
+    "capBound": false,
+    "fullLines": 0,
+    "stableRefs": 0,
+    "continuityHeader": false
+   },
+   "bytes": {
+    "expectedFullBytes": 1208,
+    "expectedWireBytes": 1216
+   },
+   "invariants": {
+    "actedRefs": 0,
+    "actedFull": null,
+    "assertions": [
+     "zero displacement",
+     "zero lane loss",
+     "always-full renders full",
+     "acted refs statelessly complete under W2",
+     "off-flag payload byte-identical to expected.full.txt"
+    ],
+    "actedStatelesslyComplete": true,
+    "actedCompleteN": 0
+   }
+  },
+  {
+   "fixture": "21_Google_Map_0_a1_ep2_navigation",
+   "source": {
+    "run": "21",
+    "runTs": "1788685822038",
+    "task": "Google__Map__0_a1",
+    "episode": 2,
+    "transitionClass": "structural_macrostate",
+    "provenance": "copied verbatim from read-only artifacts; regenerate via %TEMP%/browsegent-wm/wm_r3_fixtures.py"
+   },
+   "pair": {
+    "obsReuse": false,
+    "carried": 0,
+    "carriedPoolUncapped": 0,
+    "capBound": false,
+    "fullLines": 20,
+    "stableRefs": 4,
+    "continuityHeader": true
+   },
+   "bytes": {
+    "expectedFullBytes": 2705,
+    "expectedWireBytes": 2406
+   },
+   "invariants": {
+    "actedRefs": 1,
+    "actedFull": null,
+    "assertions": [
+     "zero displacement",
+     "zero lane loss",
+     "always-full renders full",
+     "acted refs statelessly complete under W2",
+     "off-flag payload byte-identical to expected.full.txt"
+    ],
+    "actedStatelesslyComplete": true,
+    "actedCompleteN": 1
+   }
+  },
+  {
+   "fixture": "19_Booking_10_a1_ep4_navigation",
+   "source": {
+    "run": "19",
+    "runTs": "1788680381229",
+    "task": "Booking__10_a1",
+    "episode": 4,
+    "transitionClass": "hard_reset",
+    "provenance": "copied verbatim from read-only artifacts; regenerate via %TEMP%/browsegent-wm/wm_r3_fixtures.py"
+   },
+   "pair": {
+    "obsReuse": false,
+    "carried": 17,
+    "carriedPoolUncapped": 17,
+    "capBound": false,
+    "fullLines": 80,
+    "stableRefs": 17,
+    "continuityHeader": true
+   },
+   "bytes": {
+    "expectedFullBytes": 11255,
+    "expectedWireBytes": 11834
+   },
+   "invariants": {
+    "actedRefs": 1,
+    "actedFull": null,
+    "assertions": [
+     "zero displacement",
+     "zero lane loss",
+     "always-full renders full",
+     "acted refs statelessly complete under W2",
+     "off-flag payload byte-identical to expected.full.txt"
+    ],
+    "actedStatelesslyComplete": true,
+    "actedCompleteN": 1
+   }
+  }
+ ],
+ "invariantChecklist": [
+  "F1 off-path byte identity: render(input, {flags off}) == expected.full.txt byte-exact",
+  "F2 renderer parity: pageModel full render (2a) marker-free surface == full render minus markers plus CONTINUITY header",
+  "F3 H4 invariants: zero displacement, zero lane loss, K=32 cap, carried reason only additive",
+  "F4 wire parity: pageModel+deltaSurface payload == expected.wire.txt byte-exact (W2 stable refs: [id] <kind name=\"..\" />)",
+  "F5 stateless completeness: every plan-step ref of the fixture episode appears with kind+name in expected.wire.txt",
+  "F6 always-full: every input/select/failed/changed ref renders a full line in expected.wire.txt"
+ ]
+}

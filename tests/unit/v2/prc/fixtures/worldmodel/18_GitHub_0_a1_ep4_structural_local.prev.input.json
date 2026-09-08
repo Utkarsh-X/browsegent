@@ -1,0 +1,3242 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "latestTransition": {
+      "strength": "moderate",
+      "transitionClass": "structural_local",
+      "transitionId": "transition_obs_1_3_obs_1_4"
+    },
+    "observationId": "obs_1_4",
+    "presentRefCount": 660,
+    "refCount": 1340,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_4_2",
+    "transitionCount": 2,
+    "url": "https://github.com/"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_1148"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1148"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1151"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_1132"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_1149"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_1150"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_1152"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_1153"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_1025"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_1147"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_655"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_1133"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_1134"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_1135"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_1137"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_1138"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_1139"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_1140"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_201"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_706"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_1026"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_1027"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_1028"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_1029"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_1030"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_1034"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_1035"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_1038"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_1039"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_1079"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_1080"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_1092"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_1093"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_1110"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_1111"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_1121"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_1136"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_1316"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_1317"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_777"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_791"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_1310"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_1313"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_1322"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_1164"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_1165"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_1173"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_1174"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_1178"
+      },
+      {
+        "rank": 49,
+        "refId": "v2ref_1179"
+      },
+      {
+        "rank": 50,
+        "refId": "v2ref_1184"
+      },
+      {
+        "rank": 51,
+        "refId": "v2ref_1185"
+      },
+      {
+        "rank": 52,
+        "refId": "v2ref_1191"
+      },
+      {
+        "rank": 53,
+        "refId": "v2ref_1192"
+      },
+      {
+        "rank": 54,
+        "refId": "v2ref_1198"
+      },
+      {
+        "rank": 55,
+        "refId": "v2ref_1199"
+      },
+      {
+        "rank": 56,
+        "refId": "v2ref_1203"
+      },
+      {
+        "rank": 57,
+        "refId": "v2ref_1204"
+      },
+      {
+        "rank": 58,
+        "refId": "v2ref_1208"
+      },
+      {
+        "rank": 59,
+        "refId": "v2ref_1209"
+      },
+      {
+        "rank": 60,
+        "refId": "v2ref_1218"
+      },
+      {
+        "rank": 61,
+        "refId": "v2ref_1219"
+      },
+      {
+        "rank": 62,
+        "refId": "v2ref_1225"
+      },
+      {
+        "rank": 63,
+        "refId": "v2ref_1226"
+      },
+      {
+        "rank": 64,
+        "refId": "v2ref_1230"
+      },
+      {
+        "rank": 65,
+        "refId": "v2ref_1231"
+      },
+      {
+        "rank": 66,
+        "refId": "v2ref_1237"
+      },
+      {
+        "rank": 67,
+        "refId": "v2ref_1238"
+      },
+      {
+        "rank": 68,
+        "refId": "v2ref_1251"
+      },
+      {
+        "rank": 69,
+        "refId": "v2ref_1252"
+      },
+      {
+        "rank": 70,
+        "refId": "v2ref_1262"
+      },
+      {
+        "rank": 71,
+        "refId": "v2ref_1263"
+      },
+      {
+        "rank": 72,
+        "refId": "v2ref_1274"
+      },
+      {
+        "rank": 73,
+        "refId": "v2ref_1275"
+      },
+      {
+        "rank": 74,
+        "refId": "v2ref_1278"
+      },
+      {
+        "rank": 75,
+        "refId": "v2ref_1281"
+      },
+      {
+        "rank": 76,
+        "refId": "v2ref_1311"
+      },
+      {
+        "rank": 77,
+        "refId": "v2ref_1312"
+      },
+      {
+        "rank": 78,
+        "refId": "v2ref_1223"
+      },
+      {
+        "rank": 79,
+        "refId": "v2ref_1224"
+      },
+      {
+        "rank": 80,
+        "refId": "v2ref_1309"
+      }
+    ],
+    "navigation": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1151"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1132"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_706"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_1313"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_1322"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_1223"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_1224"
+      }
+    ],
+    "observationId": "obs_1_4",
+    "page": {
+      "title": "GitHub · Change is constant. GitHub keeps you ahead. · GitHub",
+      "url": "https://github.com/"
+    },
+    "projectionId": "projection_obs_1_4",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1148"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1151"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_1132"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_1149"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_1150"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_1152"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_1153"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_1025"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_1147"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_655"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_1133"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_1134"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_1135"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_1137"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_1138"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_1139"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_1140"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_201"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_706"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_1310"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_1313"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_1322"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_1164"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_1165"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_1173"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_1174"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_1178"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_1179"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_1184"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_1185"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_1191"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_1192"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_1198"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_1199"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_1203"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_1204"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_1208"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_1209"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_1218"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_1219"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_1225"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_1226"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_1230"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_1231"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_1237"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_1238"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_1251"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_1252"
+      }
+    ],
+    "refs": {
+      "v2ref_1025": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Clear search",
+        "refId": "v2ref_1025",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1026": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1026",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1027": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1027",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1028": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1028",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1029": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1029",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1030": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1030",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1034": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1034",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1035": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1035",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1038": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1038",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1039": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1039",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1079": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1079",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1080": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1080",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1092": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1092",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1093": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1093",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1110": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1110",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1111": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1111",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1121": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1121",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1132": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Pricing",
+        "refId": "v2ref_1132",
+        "role": "link",
+        "score": 112,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1133": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Search/",
+        "refId": "v2ref_1133",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1134": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Search/",
+        "refId": "v2ref_1134",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1135": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Search/",
+        "refId": "v2ref_1135",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1136": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1136",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1137": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign in",
+        "refId": "v2ref_1137",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1138": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign in",
+        "refId": "v2ref_1138",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1139": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign up",
+        "refId": "v2ref_1139",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1140": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign up",
+        "refId": "v2ref_1140",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1147": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "input",
+        "name": "you@domain.com",
+        "placeholder": "you@domain.com",
+        "refId": "v2ref_1147",
+        "role": "textbox",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1148": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Sign up for GitHub",
+        "refId": "v2ref_1148",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1149": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign up for GitHub",
+        "refId": "v2ref_1149",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1150": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign up for GitHub",
+        "refId": "v2ref_1150",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1151": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Download GitHub Copilot app",
+        "refId": "v2ref_1151",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1152": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Download GitHub Copilot app",
+        "refId": "v2ref_1152",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1153": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Download GitHub Copilot app",
+        "refId": "v2ref_1153",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1164": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Copilot",
+        "refId": "v2ref_1164",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1165": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Copilot",
+        "refId": "v2ref_1165",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1173": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Read industry report",
+        "refId": "v2ref_1173",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1174": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Read industry report",
+        "refId": "v2ref_1174",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1178": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Actions",
+        "refId": "v2ref_1178",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1179": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Actions",
+        "refId": "v2ref_1179",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1184": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Codespaces",
+        "refId": "v2ref_1184",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1185": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Codespaces",
+        "refId": "v2ref_1185",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1191": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Mobile",
+        "refId": "v2ref_1191",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1192": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Mobile",
+        "refId": "v2ref_1192",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1198": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Marketplace",
+        "refId": "v2ref_1198",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1199": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Marketplace",
+        "refId": "v2ref_1199",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1203": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Advanced Security",
+        "refId": "v2ref_1203",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1204": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Advanced Security",
+        "refId": "v2ref_1204",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1208": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Learn about GitHub Code Security",
+        "refId": "v2ref_1208",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1209": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Learn about GitHub Code Security",
+        "refId": "v2ref_1209",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1218": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Learn about GitHub Secret Protection",
+        "refId": "v2ref_1218",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1219": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Learn about GitHub Secret Protection",
+        "refId": "v2ref_1219",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1223": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Footnote 1",
+        "refId": "v2ref_1223",
+        "role": "link",
+        "score": 85,
+        "state": "live",
+        "text": "1",
+        "visibility": "offscreen"
+      },
+      "v2ref_1224": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Footnote 1",
+        "refId": "v2ref_1224",
+        "role": "link",
+        "score": 85,
+        "state": "live",
+        "text": "1",
+        "visibility": "offscreen"
+      },
+      "v2ref_1225": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Projects",
+        "refId": "v2ref_1225",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1226": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Projects",
+        "refId": "v2ref_1226",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1230": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Issues",
+        "refId": "v2ref_1230",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1231": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Issues",
+        "refId": "v2ref_1231",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1237": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Discussions",
+        "refId": "v2ref_1237",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1238": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Discussions",
+        "refId": "v2ref_1238",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1251": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Sponsors",
+        "refId": "v2ref_1251",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1252": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Explore GitHub Sponsors",
+        "refId": "v2ref_1252",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1262": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "TechnologyFigma streamlines development and strengthens securityRead customer story",
+        "refId": "v2ref_1262",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1263": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "TechnologyFigma streamlines development and strengthens securityRead customer story",
+        "refId": "v2ref_1263",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1274": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+        "refId": "v2ref_1274",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1275": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+        "refId": "v2ref_1275",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1278": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+        "refId": "v2ref_1278",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1281": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+        "refId": "v2ref_1281",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1309": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "input",
+        "name": "you@domain.com",
+        "placeholder": "you@domain.com",
+        "refId": "v2ref_1309",
+        "role": "textbox",
+        "score": 84,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1310": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Sign up for GitHub",
+        "refId": "v2ref_1310",
+        "role": "button",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1311": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign up for GitHub",
+        "refId": "v2ref_1311",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1312": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign up for GitHub",
+        "refId": "v2ref_1312",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1313": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Download GitHub Copilot app",
+        "refId": "v2ref_1313",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1316": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1316",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1317": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1317",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1322": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Pricing",
+        "refId": "v2ref_1322",
+        "role": "link",
+        "score": 87,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_201": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "Open Source",
+        "refId": "v2ref_201",
+        "role": "button",
+        "score": 101,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_655": {
+        "actionability": "ready",
+        "ariaAutocomplete": "list",
+        "ariaHasPopup": "listbox",
+        "confidence": 1,
+        "kind": "input",
+        "name": "Search or jump to",
+        "placeholder": "Search or jump to...",
+        "refId": "v2ref_655",
+        "role": "combobox",
+        "score": 109,
+        "state": "live",
+        "value": "climate change data visualization",
+        "visibility": "visible"
+      },
+      "v2ref_706": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "link",
+        "name": "Search syntax tips",
+        "refId": "v2ref_706",
+        "role": "link",
+        "score": 101,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_777": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_777",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_791": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_791",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      }
+    },
+    "regions": [],
+    "stats": {
+      "interactionCount": 80,
+      "navigationCount": 7,
+      "readableCount": 59,
+      "regionCount": 0
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_3_obs_1_4",
+  "evidenceCoverage": {
+    "contractKind": "ranked_entity",
+    "readCount": 31,
+    "requirements": [
+      {
+        "key": "ranking_evidence",
+        "status": "uncertain",
+        "supportingReadIndexes": []
+      }
+    ],
+    "status": "uncertain"
+  },
+  "goal": "Search for an open-source project related to 'climate change data visualization' on GitHub and report the project with the most stars.",
+  "lastResult": {
+    "effect": "local",
+    "evidence": {
+      "strength": "moderate",
+      "transitionClass": "structural_local"
+    },
+    "kind": "type",
+    "success": true,
+    "targetRef": "v2ref_655",
+    "traceStepId": "step_2",
+    "valuePreview": "climate change data visualization Search or jump to combobox"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_3",
+        "beforeObservationId": "obs_1_1",
+        "index": 0,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_1",
+        "strength": "none",
+        "targetName": "Search or jump to, type / to search",
+        "targetRef": "v2ref_261",
+        "transitionClass": "microstate"
+      },
+      {
+        "afterObservationId": "obs_1_4",
+        "beforeObservationId": "obs_1_3",
+        "index": 1,
+        "kind": "type",
+        "status": "completed",
+        "stepId": "step_2",
+        "strength": "moderate",
+        "targetName": "Search or jump to",
+        "targetRef": "v2ref_655",
+        "transitionClass": "structural_local",
+        "value": "climate change data visualization"
+      }
+    ],
+    "totalSteps": 2,
+    "truncated": false
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 18798,
+    "totalPlannerInputBytes": 48618,
+    "workingSetBytes": 27053
+  },
+  "transition": {
+    "afterObservationId": "obs_1_4",
+    "beforeObservationId": "obs_1_3",
+    "generationChanged": false,
+    "notes": [
+      "refs_appeared:320",
+      "refs_disappeared:373",
+      "refs_weakened:1",
+      "ref_changed:v2ref_649",
+      "ref_changed:v2ref_706",
+      "ref_changed:v2ref_1043",
+      "ref_changed:v2ref_1044",
+      "ref_changed:v2ref_777"
+    ],
+    "refChangeCounts": {
+      "appeared": 320,
+      "disappeared": 373,
+      "preserved": 16,
+      "weakened": 1
+    },
+    "strength": "moderate",
+    "transitionClass": "structural_local",
+    "urlChanged": false
+  },
+  "uncertainty": {
+    "level": "medium",
+    "signals": [
+      "low_confidence_refs:325",
+      "low_confidence_ref:v2ref_1",
+      "low_confidence_ref:v2ref_2",
+      "low_confidence_ref:v2ref_201",
+      "low_confidence_ref:v2ref_232",
+      "weakened_refs:1"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_1148",
+        "v2ref_1151",
+        "v2ref_1132",
+        "v2ref_1025",
+        "v2ref_655",
+        "v2ref_201",
+        "v2ref_706",
+        "v2ref_1310",
+        "v2ref_1313",
+        "v2ref_1322",
+        "v2ref_1223",
+        "v2ref_1224"
+      ],
+      "readableRefs": [
+        "v2ref_1148",
+        "v2ref_1151",
+        "v2ref_1132",
+        "v2ref_1149",
+        "v2ref_1150",
+        "v2ref_1152",
+        "v2ref_1153",
+        "v2ref_1025",
+        "v2ref_1147",
+        "v2ref_655",
+        "v2ref_1133",
+        "v2ref_1134",
+        "v2ref_1135",
+        "v2ref_1137",
+        "v2ref_1138",
+        "v2ref_1139",
+        "v2ref_1140",
+        "v2ref_201",
+        "v2ref_706",
+        "v2ref_1310",
+        "v2ref_1313",
+        "v2ref_1322",
+        "v2ref_1164",
+        "v2ref_1165",
+        "v2ref_1173",
+        "v2ref_1174",
+        "v2ref_1178",
+        "v2ref_1179",
+        "v2ref_1184",
+        "v2ref_1185",
+        "v2ref_1191",
+        "v2ref_1192",
+        "v2ref_1198",
+        "v2ref_1199",
+        "v2ref_1203",
+        "v2ref_1204",
+        "v2ref_1208",
+        "v2ref_1209",
+        "v2ref_1218",
+        "v2ref_1219",
+        "v2ref_1225",
+        "v2ref_1226",
+        "v2ref_1230",
+        "v2ref_1231",
+        "v2ref_1237",
+        "v2ref_1238",
+        "v2ref_1251",
+        "v2ref_1252",
+        "v2ref_1262",
+        "v2ref_1263",
+        "v2ref_1274",
+        "v2ref_1275",
+        "v2ref_1278",
+        "v2ref_1281",
+        "v2ref_1311",
+        "v2ref_1312",
+        "v2ref_1223",
+        "v2ref_1224",
+        "v2ref_1309"
+      ],
+      "selectableRefs": [],
+      "typeableRefs": [
+        "v2ref_1147",
+        "v2ref_655",
+        "v2ref_1309"
+      ]
+    },
+    "changedRefs": {
+      "appearedCount": 320,
+      "omittedCount": 305,
+      "preservedCount": 16,
+      "topRefs": [
+        {
+          "kind": "link",
+          "name": "Download GitHub Copilot app",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed",
+            "role_relevant_to_goal",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1151",
+          "role": "link",
+          "score": 425,
+          "text": "Download GitHub Copilot app"
+        },
+        {
+          "kind": "button",
+          "name": "Sign up for GitHub",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1148",
+          "role": "button",
+          "score": 395,
+          "text": "Sign up for GitHub"
+        },
+        {
+          "kind": "generic",
+          "name": "Sign up for GitHub",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1149",
+          "score": 391,
+          "text": "Sign up for GitHub"
+        },
+        {
+          "kind": "generic",
+          "name": "Sign up for GitHub",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1150",
+          "score": 391,
+          "text": "Sign up for GitHub"
+        },
+        {
+          "kind": "generic",
+          "name": "Download GitHub Copilot app",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1152",
+          "score": 381,
+          "text": "Download GitHub Copilot app"
+        },
+        {
+          "kind": "generic",
+          "name": "Download GitHub Copilot app",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1153",
+          "score": 381,
+          "text": "Download GitHub Copilot app"
+        },
+        {
+          "kind": "button",
+          "name": "Clear search",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1025",
+          "role": "button",
+          "score": 379
+        },
+        {
+          "kind": "generic",
+          "name": "Search/",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1133",
+          "score": 378,
+          "text": "Search/"
+        },
+        {
+          "kind": "generic",
+          "name": "Search/",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1134",
+          "score": 378,
+          "text": "Search/"
+        },
+        {
+          "kind": "generic",
+          "name": "Search/",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1135",
+          "score": 378,
+          "text": "Search/"
+        },
+        {
+          "kind": "link",
+          "name": "Download GitHub Copilot app",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed",
+            "role_relevant_to_goal"
+          ],
+          "refId": "v2ref_1313",
+          "role": "link",
+          "score": 300,
+          "text": "Download GitHub Copilot app"
+        },
+        {
+          "kind": "button",
+          "name": "Sign up for GitHub",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1310",
+          "role": "button",
+          "score": 270,
+          "text": "Sign up for GitHub"
+        },
+        {
+          "kind": "generic",
+          "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1274",
+          "score": 266,
+          "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+        },
+        {
+          "kind": "generic",
+          "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1275",
+          "score": 266,
+          "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+        },
+        {
+          "kind": "generic",
+          "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1278",
+          "score": 266,
+          "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+        },
+        {
+          "kind": "generic",
+          "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1281",
+          "score": 266,
+          "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+        }
+      ],
+      "weakenedCount": 1
+    },
+    "deltaRefs": {
+      "appeared": [
+        "v2ref_1151",
+        "v2ref_1148",
+        "v2ref_1149",
+        "v2ref_1150",
+        "v2ref_1152",
+        "v2ref_1153",
+        "v2ref_1025",
+        "v2ref_1133"
+      ],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "verify",
+    "modeReason": "recent_value_evidence",
+    "navigationRefs": [
+      {
+        "kind": "link",
+        "name": "Download GitHub Copilot app",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1151",
+        "role": "link",
+        "score": 115,
+        "text": "Download GitHub Copilot app"
+      },
+      {
+        "kind": "link",
+        "name": "Pricing",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1132",
+        "role": "link",
+        "score": 112,
+        "text": "Pricing"
+      },
+      {
+        "kind": "link",
+        "name": "Search syntax tips",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_changed",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_706",
+        "role": "link",
+        "score": 101,
+        "text": "Search syntax tips"
+      },
+      {
+        "kind": "link",
+        "name": "Download GitHub Copilot app",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_1313",
+        "role": "link",
+        "score": 90,
+        "text": "Download GitHub Copilot app"
+      },
+      {
+        "kind": "link",
+        "name": "Pricing",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_1322",
+        "role": "link",
+        "score": 87,
+        "text": "Pricing"
+      },
+      {
+        "kind": "link",
+        "name": "Footnote 1",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_1223",
+        "role": "link",
+        "score": 85,
+        "text": "1"
+      },
+      {
+        "kind": "link",
+        "name": "Footnote 1",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_1224",
+        "role": "link",
+        "score": 85,
+        "text": "1"
+      }
+    ],
+    "omitted": {
+      "droppedByReason": {
+        "generic_low_value": 1,
+        "hidden_low_value": 4,
+        "offscreen_low_value": 72,
+        "rank_loss": 413
+      },
+      "droppedRefCount": 581,
+      "observedRefCount": 661,
+      "selectedRefCount": 80
+    },
+    "primaryRefs": [
+      {
+        "kind": "link",
+        "name": "Download GitHub Copilot app",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1151",
+        "role": "link",
+        "score": 425,
+        "text": "Download GitHub Copilot app"
+      },
+      {
+        "kind": "link",
+        "name": "Pricing",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1132",
+        "role": "link",
+        "score": 412,
+        "text": "Pricing"
+      },
+      {
+        "kind": "input",
+        "name": "you@domain.com",
+        "reasons": [
+          "form_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1147",
+        "role": "textbox",
+        "score": 409
+      },
+      {
+        "kind": "button",
+        "name": "Sign up for GitHub",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1148",
+        "role": "button",
+        "score": 395,
+        "text": "Sign up for GitHub"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign up for GitHub",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1149",
+        "score": 391,
+        "text": "Sign up for GitHub"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign up for GitHub",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1150",
+        "score": 391,
+        "text": "Sign up for GitHub"
+      },
+      {
+        "kind": "generic",
+        "name": "Download GitHub Copilot app",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1152",
+        "score": 381,
+        "text": "Download GitHub Copilot app"
+      },
+      {
+        "kind": "generic",
+        "name": "Download GitHub Copilot app",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1153",
+        "score": 381,
+        "text": "Download GitHub Copilot app"
+      },
+      {
+        "kind": "button",
+        "name": "Clear search",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1025",
+        "role": "button",
+        "score": 379
+      },
+      {
+        "kind": "generic",
+        "name": "Search/",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1133",
+        "score": 378,
+        "text": "Search/"
+      },
+      {
+        "kind": "generic",
+        "name": "Search/",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1134",
+        "score": 378,
+        "text": "Search/"
+      },
+      {
+        "kind": "generic",
+        "name": "Search/",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1135",
+        "score": 378,
+        "text": "Search/"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign in",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1137",
+        "score": 368,
+        "text": "Sign in"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign in",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1138",
+        "score": 368,
+        "text": "Sign in"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign up",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1139",
+        "score": 368,
+        "text": "Sign up"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign up",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1140",
+        "score": 368,
+        "text": "Sign up"
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1026",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1027",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1028",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1029",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1030",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1034",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1035",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1038",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1039",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1079",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1080",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1092",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1093",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1110",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1111",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1121",
+        "score": 355
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1151",
+        "text": "Download GitHub Copilot app Download GitHub Copilot app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1132",
+        "text": "Pricing Pricing"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1147",
+        "text": "you@domain.com"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1148",
+        "text": "Sign up for GitHub Sign up for GitHub"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1149",
+        "text": "Sign up for GitHub Sign up for GitHub"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1150",
+        "text": "Sign up for GitHub Sign up for GitHub"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1152",
+        "text": "Download GitHub Copilot app Download GitHub Copilot app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1153",
+        "text": "Download GitHub Copilot app Download GitHub Copilot app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1025",
+        "text": "Clear search"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1133",
+        "text": "Search/ Search/"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1134",
+        "text": "Search/ Search/"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1135",
+        "text": "Search/ Search/"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1137",
+        "text": "Sign in Sign in"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1138",
+        "text": "Sign in Sign in"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1139",
+        "text": "Sign up Sign up"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1140",
+        "text": "Sign up Sign up"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_706",
+        "text": "Search syntax tips Search syntax tips"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1313",
+        "text": "Download GitHub Copilot app Download GitHub Copilot app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_201",
+        "text": "Open Source Open Source"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1322",
+        "text": "Pricing Pricing"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1223",
+        "text": "Footnote 1 1"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1224",
+        "text": "Footnote 1 1"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1309",
+        "text": "you@domain.com"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1310",
+        "text": "Sign up for GitHub Sign up for GitHub"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1274",
+        "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1275",
+        "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1278",
+        "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1281",
+        "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1311",
+        "text": "Sign up for GitHub Sign up for GitHub"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1312",
+        "text": "Sign up for GitHub Sign up for GitHub"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_655",
+        "text": "Search or jump to"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1164",
+        "text": "Explore GitHub Copilot Explore GitHub Copilot"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1165",
+        "text": "Explore GitHub Copilot Explore GitHub Copilot"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1173",
+        "text": "Read industry report Read industry report"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1174",
+        "text": "Read industry report Read industry report"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1178",
+        "text": "Explore GitHub Actions Explore GitHub Actions"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1179",
+        "text": "Explore GitHub Actions Explore GitHub Actions"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1184",
+        "text": "Explore GitHub Codespaces Explore GitHub Codespaces"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1185",
+        "text": "Explore GitHub Codespaces Explore GitHub Codespaces"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1191",
+        "text": "Explore GitHub Mobile Explore GitHub Mobile"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1192",
+        "text": "Explore GitHub Mobile Explore GitHub Mobile"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1198",
+        "text": "Explore GitHub Marketplace Explore GitHub Marketplace"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1199",
+        "text": "Explore GitHub Marketplace Explore GitHub Marketplace"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1203",
+        "text": "Explore GitHub Advanced Security Explore GitHub Advanced Security"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1204",
+        "text": "Explore GitHub Advanced Security Explore GitHub Advanced Security"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1208",
+        "text": "Learn about GitHub Code Security Learn about GitHub Code Security"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1209",
+        "text": "Learn about GitHub Code Security Learn about GitHub Code Security"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1218",
+        "text": "Learn about GitHub Secret Protection Learn about GitHub Secret Protection"
+      }
+    ],
+    "regionSummaries": [],
+    "secondaryRefs": [
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1136",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1316",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1317",
+        "score": 355
+      },
+      {
+        "kind": "link",
+        "name": "Search syntax tips",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_changed",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_706",
+        "role": "link",
+        "score": 321,
+        "text": "Search syntax tips"
+      },
+      {
+        "kind": "link",
+        "name": "Download GitHub Copilot app",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_1313",
+        "role": "link",
+        "score": 300,
+        "text": "Download GitHub Copilot app"
+      },
+      {
+        "kind": "button",
+        "name": "Open Source",
+        "reasons": [
+          "goal_keyword_match",
+          "goal_phrase_match",
+          "visible_ready"
+        ],
+        "refId": "v2ref_201",
+        "role": "button",
+        "score": 291,
+        "text": "Open Source"
+      },
+      {
+        "kind": "link",
+        "name": "Pricing",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_1322",
+        "role": "link",
+        "score": 287,
+        "text": "Pricing"
+      },
+      {
+        "kind": "link",
+        "name": "Footnote 1",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_1223",
+        "role": "link",
+        "score": 285,
+        "text": "1"
+      },
+      {
+        "kind": "link",
+        "name": "Footnote 1",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_1224",
+        "role": "link",
+        "score": 285,
+        "text": "1"
+      },
+      {
+        "kind": "input",
+        "name": "you@domain.com",
+        "reasons": [
+          "form_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_1309",
+        "role": "textbox",
+        "score": 284
+      },
+      {
+        "kind": "button",
+        "name": "Sign up for GitHub",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1310",
+        "role": "button",
+        "score": 270,
+        "text": "Sign up for GitHub"
+      },
+      {
+        "kind": "generic",
+        "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1274",
+        "score": 266,
+        "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+      },
+      {
+        "kind": "generic",
+        "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1275",
+        "score": 266,
+        "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+      },
+      {
+        "kind": "generic",
+        "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1278",
+        "score": 266,
+        "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+      },
+      {
+        "kind": "generic",
+        "name": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1281",
+        "score": 266,
+        "text": "AutomotiveMercedes-Benz standardizes source code and automates onboardingRead customer story"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign up for GitHub",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1311",
+        "score": 266,
+        "text": "Sign up for GitHub"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign up for GitHub",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1312",
+        "score": 266,
+        "text": "Sign up for GitHub"
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_777",
+        "score": 265
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_791",
+        "score": 265
+      },
+      {
+        "kind": "input",
+        "name": "Search or jump to",
+        "reasons": [
+          "form_candidate",
+          "goal_keyword_match",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_655",
+        "role": "combobox",
+        "score": 259
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Copilot",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1164",
+        "score": 256,
+        "text": "Explore GitHub Copilot"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Copilot",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1165",
+        "score": 256,
+        "text": "Explore GitHub Copilot"
+      },
+      {
+        "kind": "generic",
+        "name": "Read industry report",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1173",
+        "score": 256,
+        "text": "Read industry report"
+      },
+      {
+        "kind": "generic",
+        "name": "Read industry report",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1174",
+        "score": 256,
+        "text": "Read industry report"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Actions",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1178",
+        "score": 256,
+        "text": "Explore GitHub Actions"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Actions",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1179",
+        "score": 256,
+        "text": "Explore GitHub Actions"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Codespaces",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1184",
+        "score": 256,
+        "text": "Explore GitHub Codespaces"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Codespaces",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1185",
+        "score": 256,
+        "text": "Explore GitHub Codespaces"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Mobile",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1191",
+        "score": 256,
+        "text": "Explore GitHub Mobile"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Mobile",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1192",
+        "score": 256,
+        "text": "Explore GitHub Mobile"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Marketplace",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1198",
+        "score": 256,
+        "text": "Explore GitHub Marketplace"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Marketplace",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1199",
+        "score": 256,
+        "text": "Explore GitHub Marketplace"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Advanced Security",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1203",
+        "score": 256,
+        "text": "Explore GitHub Advanced Security"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Advanced Security",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1204",
+        "score": 256,
+        "text": "Explore GitHub Advanced Security"
+      },
+      {
+        "kind": "generic",
+        "name": "Learn about GitHub Code Security",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1208",
+        "score": 256,
+        "text": "Learn about GitHub Code Security"
+      },
+      {
+        "kind": "generic",
+        "name": "Learn about GitHub Code Security",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1209",
+        "score": 256,
+        "text": "Learn about GitHub Code Security"
+      },
+      {
+        "kind": "generic",
+        "name": "Learn about GitHub Secret Protection",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1218",
+        "score": 256,
+        "text": "Learn about GitHub Secret Protection"
+      },
+      {
+        "kind": "generic",
+        "name": "Learn about GitHub Secret Protection",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1219",
+        "score": 256,
+        "text": "Learn about GitHub Secret Protection"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Projects",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1225",
+        "score": 256,
+        "text": "Explore GitHub Projects"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Projects",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1226",
+        "score": 256,
+        "text": "Explore GitHub Projects"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Issues",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1230",
+        "score": 256,
+        "text": "Explore GitHub Issues"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Issues",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1231",
+        "score": 256,
+        "text": "Explore GitHub Issues"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Discussions",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1237",
+        "score": 256,
+        "text": "Explore GitHub Discussions"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Discussions",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1238",
+        "score": 256,
+        "text": "Explore GitHub Discussions"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Sponsors",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1251",
+        "score": 256,
+        "text": "Explore GitHub Sponsors"
+      },
+      {
+        "kind": "generic",
+        "name": "Explore GitHub Sponsors",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1252",
+        "score": 256,
+        "text": "Explore GitHub Sponsors"
+      },
+      {
+        "kind": "generic",
+        "name": "TechnologyFigma streamlines development and strengthens securityRead customer story",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1262",
+        "score": 256,
+        "text": "TechnologyFigma streamlines development and strengthens securityRead customer story"
+      },
+      {
+        "kind": "generic",
+        "name": "TechnologyFigma streamlines development and strengthens securityRead customer story",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1263",
+        "score": 256,
+        "text": "TechnologyFigma streamlines development and strengthens securityRead customer story"
+      }
+    ]
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {
+      "generic_low_value": 1,
+      "hidden_low_value": 4,
+      "offscreen_low_value": 72,
+      "rank_loss": 413
+    },
+    "droppedRefCount": 581,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 661,
+    "selectedByReason": {
+      "form_candidate": 5,
+      "goal_keyword_match": 124,
+      "goal_phrase_match": 5,
+      "navigation_candidate": 146,
+      "recently_appeared": 320,
+      "recently_changed": 328,
+      "role_relevant_to_goal": 151,
+      "visible_ready": 52
+    },
+    "selectedRefCount": 80
+  }
+}

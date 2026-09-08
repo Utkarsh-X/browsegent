@@ -1,0 +1,217 @@
+{
+  "continuity": {
+    "generationId": 2,
+    "latestTransition": {
+      "strength": "strong",
+      "transitionClass": "structural_macrostate",
+      "transitionId": "transition_obs_1_1_obs_2_2"
+    },
+    "observationId": "obs_2_2",
+    "presentRefCount": 0,
+    "refCount": 0,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_2_2_1",
+    "transitionCount": 1,
+    "url": "https://www.booking.com/?chal_t=1788634996846&force_referer="
+  },
+  "current": {
+    "generationId": 2,
+    "interactions": [],
+    "navigation": [],
+    "observationId": "obs_2_2",
+    "page": {
+      "title": "502 Bad Gateway",
+      "url": "https://www.booking.com/?chal_t=1788634996846&force_referer="
+    },
+    "projectionId": "projection_obs_2_2",
+    "readables": [],
+    "refs": {},
+    "regions": [],
+    "stats": {
+      "interactionCount": 0,
+      "navigationCount": 0,
+      "readableCount": 0,
+      "regionCount": 0
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_2_obs_2_2",
+  "evidenceCoverage": {
+    "contractKind": "unknown",
+    "readCount": 0,
+    "requirements": [],
+    "status": "ready"
+  },
+  "goal": "Find a well-reviewed hotel in Paris with available bookings suitable for a couple (2 adults) on Valentine's Day week, February 14-21, 2027, that offers free cancellation options.",
+  "goalProgress": {
+    "entries": [
+      {
+        "key": "destination",
+        "state": "NOT_SET"
+      },
+      {
+        "key": "dates",
+        "state": "NOT_SET"
+      },
+      {
+        "key": "guests",
+        "state": "unverified"
+      },
+      {
+        "key": "free cancellation",
+        "state": "unverified"
+      },
+      {
+        "key": "well-reviewed",
+        "state": "unverified"
+      }
+    ],
+    "focus": "destination"
+  },
+  "lastResult": {
+    "effect": "page",
+    "evidence": {
+      "strength": "strong",
+      "transitionClass": "structural_macrostate"
+    },
+    "kind": "navigate",
+    "success": true,
+    "traceStepId": "step_1",
+    "valuePreview": "https://www.booking.com/"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_2_2",
+        "beforeObservationId": "obs_1_1",
+        "index": 0,
+        "kind": "navigate",
+        "status": "completed",
+        "stepId": "step_1",
+        "strength": "strong",
+        "transitionClass": "structural_macrostate",
+        "value": "https://www.booking.com/"
+      }
+    ],
+    "totalSteps": 1,
+    "truncated": false
+  },
+  "recovery": {
+    "nextMechanisms": [
+      "wait_for_hydration",
+      "reobserve_current_surface",
+      "avoid_navigation_churn",
+      "escalate_if_surface_remains_empty"
+    ],
+    "severity": "warning",
+    "signals": [
+      "empty_interactions",
+      "graph_present_refs:0",
+      "successful_navigation_empty_surface"
+    ],
+    "state": "empty_navigation_surface"
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 355,
+    "totalPlannerInputBytes": 3635,
+    "workingSetBytes": 542
+  },
+  "taskProgress": {
+    "items": [
+      {
+        "key": "destination",
+        "requested": "Paris",
+        "status": "pending"
+      },
+      {
+        "key": "date_range",
+        "requested": "February 14-21, 2027",
+        "status": "pending"
+      },
+      {
+        "key": "traveler_count",
+        "requested": "2 adults",
+        "status": "pending"
+      },
+      {
+        "key": "filter:free_cancellation",
+        "requested": "free cancellation",
+        "status": "pending"
+      }
+    ],
+    "status": "incomplete"
+  },
+  "transition": {
+    "afterObservationId": "obs_2_2",
+    "beforeObservationId": "obs_1_1",
+    "generationChanged": true,
+    "notes": [
+      "url_changed",
+      "generation_changed"
+    ],
+    "refChangeCounts": {
+      "appeared": 0,
+      "disappeared": 0,
+      "preserved": 0,
+      "weakened": 0
+    },
+    "strength": "strong",
+    "transitionClass": "structural_macrostate",
+    "urlChanged": true
+  },
+  "uncertainty": {
+    "level": "high",
+    "signals": [
+      "empty_interactions",
+      "graph_present_refs:0"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [],
+      "readableRefs": [],
+      "selectableRefs": [],
+      "typeableRefs": []
+    },
+    "changedRefs": {
+      "appearedCount": 0,
+      "omittedCount": 0,
+      "preservedCount": 0,
+      "topRefs": [],
+      "weakenedCount": 0
+    },
+    "deltaRefs": {
+      "appeared": [],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "verify",
+    "modeReason": "recent_value_evidence",
+    "navigationRefs": [],
+    "omitted": {
+      "droppedByReason": {},
+      "droppedRefCount": 0,
+      "observedRefCount": 0,
+      "selectedRefCount": 0
+    },
+    "primaryRefs": [],
+    "quarantinedActions": [],
+    "readableEvidence": [],
+    "regionSummaries": [],
+    "secondaryRefs": []
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {},
+    "droppedRefCount": 0,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 0,
+    "selectedByReason": {},
+    "selectedRefCount": 0
+  }
+}

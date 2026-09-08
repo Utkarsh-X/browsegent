@@ -1,0 +1,257 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "latestTransition": {
+      "strength": "moderate",
+      "transitionClass": "structural_local",
+      "transitionId": "transition_obs_1_4_obs_1_5"
+    },
+    "observationId": "obs_1_5",
+    "presentRefCount": 1,
+    "refCount": 1340,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_5_3",
+    "transitionCount": 3,
+    "url": "https://github.com/"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_1"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1"
+      }
+    ],
+    "navigation": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1"
+      }
+    ],
+    "observationId": "obs_1_5",
+    "page": {
+      "title": "Repository search results · GitHub",
+      "url": "https://github.com/"
+    },
+    "projectionId": "projection_obs_1_5",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1"
+      }
+    ],
+    "refs": {
+      "v2ref_1": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "link",
+        "name": "Skip to content",
+        "refId": "v2ref_1",
+        "role": "link",
+        "score": 101,
+        "state": "weakened",
+        "visibility": "visible"
+      }
+    },
+    "regions": [],
+    "stats": {
+      "interactionCount": 1,
+      "navigationCount": 1,
+      "readableCount": 1,
+      "regionCount": 0
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_4_obs_1_5",
+  "evidenceCoverage": {
+    "contractKind": "ranked_entity",
+    "readCount": 1,
+    "requirements": [
+      {
+        "key": "ranking_evidence",
+        "status": "uncertain",
+        "supportingReadIndexes": []
+      }
+    ],
+    "status": "uncertain"
+  },
+  "goal": "Search for an open-source project related to 'climate change data visualization' on GitHub and report the project with the most stars.",
+  "lastResult": {
+    "effect": "none",
+    "evidence": {
+      "strength": "moderate",
+      "transitionClass": "structural_local"
+    },
+    "kind": "press",
+    "success": true,
+    "traceStepId": "step_3",
+    "valuePreview": "{\"key\":\"Enter\"}"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_3",
+        "beforeObservationId": "obs_1_1",
+        "index": 0,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_1",
+        "strength": "none",
+        "targetName": "Search or jump to, type / to search",
+        "targetRef": "v2ref_261",
+        "transitionClass": "microstate"
+      },
+      {
+        "afterObservationId": "obs_1_4",
+        "beforeObservationId": "obs_1_3",
+        "index": 1,
+        "kind": "type",
+        "status": "completed",
+        "stepId": "step_2",
+        "strength": "moderate",
+        "targetName": "Search or jump to",
+        "targetRef": "v2ref_655",
+        "transitionClass": "structural_local",
+        "value": "climate change data visualization"
+      },
+      {
+        "afterObservationId": "obs_1_5",
+        "beforeObservationId": "obs_1_4",
+        "index": 2,
+        "kind": "press",
+        "status": "completed",
+        "stepId": "step_3",
+        "strength": "moderate",
+        "transitionClass": "structural_local"
+      }
+    ],
+    "totalSteps": 3,
+    "truncated": false
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 661,
+    "totalPlannerInputBytes": 4109,
+    "workingSetBytes": 1019
+  },
+  "transition": {
+    "afterObservationId": "obs_1_5",
+    "beforeObservationId": "obs_1_4",
+    "generationChanged": false,
+    "notes": [
+      "refs_disappeared:660",
+      "box_changed:v2ref_1"
+    ],
+    "refChangeCounts": {
+      "appeared": 0,
+      "disappeared": 660,
+      "preserved": 0,
+      "weakened": 0
+    },
+    "strength": "moderate",
+    "transitionClass": "structural_local",
+    "urlChanged": false
+  },
+  "uncertainty": {
+    "level": "medium",
+    "signals": [
+      "low_confidence_refs:1",
+      "low_confidence_ref:v2ref_1"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_1"
+      ],
+      "readableRefs": [
+        "v2ref_1"
+      ],
+      "selectableRefs": [],
+      "typeableRefs": []
+    },
+    "changedRefs": {
+      "appearedCount": 0,
+      "omittedCount": 0,
+      "preservedCount": 0,
+      "topRefs": [],
+      "weakenedCount": 0
+    },
+    "deltaRefs": {
+      "appeared": [],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "verify",
+    "modeReason": "recent_value_evidence",
+    "navigationRefs": [
+      {
+        "kind": "link",
+        "name": "Skip to content",
+        "reasons": [
+          "navigation_candidate",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1",
+        "role": "link",
+        "score": 101,
+        "text": "Skip to content"
+      }
+    ],
+    "omitted": {
+      "droppedByReason": {},
+      "droppedRefCount": 0,
+      "observedRefCount": 1,
+      "selectedRefCount": 1
+    },
+    "primaryRefs": [
+      {
+        "kind": "link",
+        "name": "Skip to content",
+        "reasons": [
+          "navigation_candidate",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1",
+        "role": "link",
+        "score": 241,
+        "text": "Skip to content"
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1",
+        "text": "Skip to content Skip to content"
+      }
+    ],
+    "regionSummaries": [],
+    "secondaryRefs": []
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {},
+    "droppedRefCount": 0,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 1,
+    "selectedByReason": {
+      "navigation_candidate": 1,
+      "role_relevant_to_goal": 1,
+      "visible_ready": 1
+    },
+    "selectedRefCount": 1
+  }
+}

@@ -1,0 +1,327 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "observationId": "obs_1_1",
+    "presentRefCount": 8,
+    "refCount": 8,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_1_0",
+    "transitionCount": 0,
+    "url": "https://www.google.com/maps/"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_5"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_5"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_3"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_2"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_4"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_6"
+      }
+    ],
+    "navigation": [],
+    "observationId": "obs_1_1",
+    "page": {
+      "title": "Google Maps",
+      "url": "https://www.google.com/maps/"
+    },
+    "projectionId": "projection_obs_1_1",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_5"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_3"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_2"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_4"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_6"
+      }
+    ],
+    "refs": {
+      "v2ref_2": {
+        "actionability": "ready",
+        "ariaHasPopup": "grid",
+        "confidence": 1,
+        "kind": "input",
+        "name": "q",
+        "refId": "v2ref_2",
+        "role": "combobox",
+        "score": 100,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_3": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Search",
+        "refId": "v2ref_3",
+        "role": "button",
+        "score": 106,
+        "state": "live",
+        "text": "",
+        "visibility": "visible"
+      },
+      "v2ref_4": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_4",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_5": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Directions",
+        "refId": "v2ref_5",
+        "role": "button",
+        "score": 110,
+        "state": "live",
+        "text": "",
+        "visibility": "visible"
+      },
+      "v2ref_6": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_6",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      }
+    },
+    "regions": [],
+    "stats": {
+      "interactionCount": 5,
+      "navigationCount": 0,
+      "readableCount": 5,
+      "regionCount": 0
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_1_obs_1_1",
+  "evidenceCoverage": {
+    "contractKind": "unknown",
+    "readCount": 6,
+    "requirements": [],
+    "status": "ready"
+  },
+  "goal": "Find 5 beauty salons with ratings greater than 4.8 in Seattle, WA.",
+  "goalProgress": {
+    "entries": [
+      {
+        "key": "destination",
+        "state": "NOT_SET"
+      }
+    ],
+    "focus": "destination"
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 1516,
+    "totalPlannerInputBytes": 4099,
+    "workingSetBytes": 1573
+  },
+  "taskProgress": {
+    "items": [
+      {
+        "key": "destination",
+        "requested": "Seattle",
+        "status": "pending"
+      }
+    ],
+    "status": "incomplete"
+  },
+  "uncertainty": {
+    "level": "none",
+    "signals": []
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_5",
+        "v2ref_3",
+        "v2ref_2"
+      ],
+      "readableRefs": [
+        "v2ref_5",
+        "v2ref_3",
+        "v2ref_2",
+        "v2ref_4",
+        "v2ref_6"
+      ],
+      "selectableRefs": [],
+      "typeableRefs": [
+        "v2ref_2"
+      ]
+    },
+    "changedRefs": {
+      "appearedCount": 0,
+      "omittedCount": 0,
+      "preservedCount": 0,
+      "topRefs": [],
+      "weakenedCount": 0
+    },
+    "deltaRefs": {
+      "appeared": [],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "extract",
+    "modeReason": "goal_requests_information",
+    "navigationRefs": [],
+    "omitted": {
+      "droppedByReason": {},
+      "droppedRefCount": 3,
+      "observedRefCount": 8,
+      "selectedRefCount": 5
+    },
+    "primaryRefs": [
+      {
+        "kind": "input",
+        "name": "q",
+        "reasons": [
+          "form_candidate",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2",
+        "role": "combobox",
+        "score": 240
+      },
+      {
+        "kind": "button",
+        "name": "Directions",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_5",
+        "role": "button",
+        "score": 210,
+        "text": ""
+      },
+      {
+        "kind": "button",
+        "name": "Search",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_3",
+        "role": "button",
+        "score": 206,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_4",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_6",
+        "score": 197,
+        "text": ""
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2",
+        "text": "q"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_5",
+        "text": "Directions "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_3",
+        "text": "Search "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4",
+        "text": " "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6",
+        "text": " "
+      }
+    ],
+    "regionSummaries": [],
+    "secondaryRefs": []
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {},
+    "droppedRefCount": 3,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 8,
+    "selectedByReason": {
+      "form_candidate": 1,
+      "role_relevant_to_goal": 1,
+      "visible_ready": 5
+    },
+    "selectedRefCount": 5
+  }
+}

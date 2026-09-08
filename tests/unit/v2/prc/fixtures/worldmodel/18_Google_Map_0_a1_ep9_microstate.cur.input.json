@@ -1,0 +1,2980 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "latestTransition": {
+      "strength": "none",
+      "transitionClass": "microstate",
+      "transitionId": "transition_obs_1_8_obs_1_9"
+    },
+    "observationId": "obs_1_10",
+    "presentRefCount": 218,
+    "refCount": 1260,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_10_7",
+    "transitionCount": 7,
+    "url": "https://www.google.com/maps/search/beauty+salons+in+Seattle,+WA/@47.6120211,-122.4170668,12z?entry=ttu&g_ep=EgoyMDI2MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_1130"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1130"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1133"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_1137"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_1141"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_1174"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_193"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_102"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_111"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_192"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_1131"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_1142"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_1144"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_1175"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_1176"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_120"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_95"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_115"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_689"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_107"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_1126"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_1134"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_1136"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_1138"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_1140"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_137"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_145"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_190"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_191"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_29"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_1145"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_1238"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_1239"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_132"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_1128"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_1178"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_1187"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_1196"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_1205"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_1214"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_122"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_1223"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_719"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_1127"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_1177"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_1186"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_1195"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_1204"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_1213"
+      },
+      {
+        "rank": 49,
+        "refId": "v2ref_1222"
+      },
+      {
+        "rank": 50,
+        "refId": "v2ref_1236"
+      },
+      {
+        "rank": 51,
+        "refId": "v2ref_1237"
+      },
+      {
+        "rank": 52,
+        "refId": "v2ref_152"
+      },
+      {
+        "rank": 53,
+        "refId": "v2ref_1124"
+      },
+      {
+        "rank": 54,
+        "refId": "v2ref_91"
+      },
+      {
+        "rank": 55,
+        "refId": "v2ref_1129"
+      },
+      {
+        "rank": 56,
+        "refId": "v2ref_1179"
+      },
+      {
+        "rank": 57,
+        "refId": "v2ref_1188"
+      },
+      {
+        "rank": 58,
+        "refId": "v2ref_1197"
+      },
+      {
+        "rank": 59,
+        "refId": "v2ref_1206"
+      },
+      {
+        "rank": 60,
+        "refId": "v2ref_1215"
+      },
+      {
+        "rank": 61,
+        "refId": "v2ref_1224"
+      },
+      {
+        "rank": 62,
+        "refId": "v2ref_136"
+      },
+      {
+        "rank": 63,
+        "refId": "v2ref_103"
+      },
+      {
+        "rank": 64,
+        "refId": "v2ref_104"
+      },
+      {
+        "rank": 65,
+        "refId": "v2ref_1125"
+      },
+      {
+        "rank": 66,
+        "refId": "v2ref_1132"
+      },
+      {
+        "rank": 67,
+        "refId": "v2ref_117"
+      },
+      {
+        "rank": 68,
+        "refId": "v2ref_124"
+      },
+      {
+        "rank": 69,
+        "refId": "v2ref_134"
+      },
+      {
+        "rank": 70,
+        "refId": "v2ref_146"
+      },
+      {
+        "rank": 71,
+        "refId": "v2ref_690"
+      },
+      {
+        "rank": 72,
+        "refId": "v2ref_92"
+      },
+      {
+        "rank": 73,
+        "refId": "v2ref_94"
+      },
+      {
+        "rank": 74,
+        "refId": "v2ref_96"
+      },
+      {
+        "rank": 75,
+        "refId": "v2ref_98"
+      },
+      {
+        "rank": 76,
+        "refId": "v2ref_722"
+      }
+    ],
+    "navigation": [
+      {
+        "rank": 1,
+        "refId": "v2ref_111"
+      }
+    ],
+    "observationId": "obs_1_10",
+    "page": {
+      "title": "beauty salons in Seattle, WA - Google Maps",
+      "url": "https://www.google.com/maps/search/beauty+salons+in+Seattle,+WA/@47.6120211,-122.4170668,12z?entry=ttu&g_ep=EgoyMDI2MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+    },
+    "projectionId": "projection_obs_1_10",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1130"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1133"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_1137"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_1141"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_1174"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_193"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_102"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_111"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_192"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_1131"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_1142"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_1144"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_1175"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_1176"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_120"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_95"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_115"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_689"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_107"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_1126"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_1134"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_1136"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_1138"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_1140"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_137"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_145"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_190"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_191"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_29"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_1145"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_1238"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_1239"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_132"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_1128"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_1178"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_1187"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_1196"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_1205"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_1214"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_122"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_1223"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_719"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_1127"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_1177"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_1186"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_1195"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_1204"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_1213"
+      }
+    ],
+    "refs": {
+      "v2ref_102": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Get app",
+        "refId": "v2ref_102",
+        "role": "button",
+        "score": 113,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_103": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_103",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_104": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_104",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_107": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Google apps",
+        "refId": "v2ref_107",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_111": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Sign in",
+        "refId": "v2ref_111",
+        "role": "link",
+        "score": 112,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1124": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Back",
+        "refId": "v2ref_1124",
+        "role": "button",
+        "score": 104,
+        "state": "live",
+        "text": "",
+        "visibility": "visible"
+      },
+      "v2ref_1125": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_1125",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1126": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Clear",
+        "refId": "v2ref_1126",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1127": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Clear",
+        "refId": "v2ref_1127",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1128": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Done",
+        "refId": "v2ref_1128",
+        "role": "button",
+        "score": 107,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1129": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Done",
+        "refId": "v2ref_1129",
+        "score": 103,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1130": {
+        "actionability": "ready",
+        "ariaHasPopup": "true",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Any rating ",
+        "refId": "v2ref_1130",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1131": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Any rating ",
+        "refId": "v2ref_1131",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1132": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_1132",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1133": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "openHoursFilter",
+        "refId": "v2ref_1133",
+        "regionId": "region_repeated_1",
+        "role": "radio",
+        "score": 115,
+        "state": "live",
+        "text": "Any time",
+        "visibility": "visible"
+      },
+      "v2ref_1134": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Any time",
+        "refId": "v2ref_1134",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1136": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Any time",
+        "refId": "v2ref_1136",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1137": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "openHoursFilter",
+        "refId": "v2ref_1137",
+        "regionId": "region_repeated_1",
+        "role": "radio",
+        "score": 115,
+        "state": "live",
+        "text": "Open now",
+        "visibility": "visible"
+      },
+      "v2ref_1138": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Open now",
+        "refId": "v2ref_1138",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1140": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Open now",
+        "refId": "v2ref_1140",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1141": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "openHoursFilter",
+        "refId": "v2ref_1141",
+        "regionId": "region_repeated_1",
+        "role": "radio",
+        "score": 115,
+        "state": "live",
+        "text": "Open 24 hours",
+        "visibility": "visible"
+      },
+      "v2ref_1142": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Open 24 hours",
+        "refId": "v2ref_1142",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1144": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Open 24 hours",
+        "refId": "v2ref_1144",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1145": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign in",
+        "refId": "v2ref_1145",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_115": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Show Your Location",
+        "refId": "v2ref_115",
+        "role": "button",
+        "score": 110,
+        "state": "live",
+        "text": "",
+        "visibility": "visible"
+      },
+      "v2ref_117": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_117",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1174": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Any rating",
+        "refId": "v2ref_1174",
+        "role": "menuitemradio",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1175": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Any rating",
+        "refId": "v2ref_1175",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1176": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Any rating",
+        "refId": "v2ref_1176",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1177": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "2.0",
+        "refId": "v2ref_1177",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1178": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "2.0 stars",
+        "refId": "v2ref_1178",
+        "score": 107,
+        "state": "live",
+        "text": "2.0",
+        "visibility": "visible"
+      },
+      "v2ref_1179": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "2.0",
+        "refId": "v2ref_1179",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1186": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "2.5",
+        "refId": "v2ref_1186",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1187": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "2.5 stars",
+        "refId": "v2ref_1187",
+        "score": 107,
+        "state": "live",
+        "text": "2.5",
+        "visibility": "visible"
+      },
+      "v2ref_1188": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "2.5",
+        "refId": "v2ref_1188",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1195": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "3.0",
+        "refId": "v2ref_1195",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1196": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "3.0 stars",
+        "refId": "v2ref_1196",
+        "score": 107,
+        "state": "live",
+        "text": "3.0",
+        "visibility": "visible"
+      },
+      "v2ref_1197": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "3.0",
+        "refId": "v2ref_1197",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_120": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "ZoomShow sliderHide slider",
+        "refId": "v2ref_120",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1204": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "3.5",
+        "refId": "v2ref_1204",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1205": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "3.5 stars",
+        "refId": "v2ref_1205",
+        "score": 107,
+        "state": "live",
+        "text": "3.5",
+        "visibility": "visible"
+      },
+      "v2ref_1206": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "3.5",
+        "refId": "v2ref_1206",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1213": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "4.0",
+        "refId": "v2ref_1213",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1214": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "4.0 stars",
+        "refId": "v2ref_1214",
+        "score": 107,
+        "state": "live",
+        "text": "4.0",
+        "visibility": "visible"
+      },
+      "v2ref_1215": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "4.0",
+        "refId": "v2ref_1215",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_122": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Zoom in",
+        "refId": "v2ref_122",
+        "role": "button",
+        "score": 107,
+        "state": "live",
+        "text": "",
+        "visibility": "visible"
+      },
+      "v2ref_1222": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "4.5",
+        "refId": "v2ref_1222",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1223": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "4.5 stars",
+        "refId": "v2ref_1223",
+        "score": 107,
+        "state": "live",
+        "text": "4.5",
+        "visibility": "visible"
+      },
+      "v2ref_1224": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "4.5",
+        "refId": "v2ref_1224",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1236": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Saved",
+        "refId": "v2ref_1236",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1237": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Saved",
+        "refId": "v2ref_1237",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1238": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Get app",
+        "refId": "v2ref_1238",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1239": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Get app",
+        "refId": "v2ref_1239",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_124": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_124",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_132": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Zoom out",
+        "refId": "v2ref_132",
+        "role": "button",
+        "score": 108,
+        "state": "live",
+        "text": "",
+        "visibility": "visible"
+      },
+      "v2ref_134": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_134",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_136": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_136",
+        "score": 99,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_137": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Browse Street View images",
+        "refId": "v2ref_137",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_145": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": " Layers",
+        "refId": "v2ref_145",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_146": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_146",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_152": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Layers",
+        "refId": "v2ref_152",
+        "role": "button",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_190": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "India",
+        "refId": "v2ref_190",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_191": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Terms",
+        "refId": "v2ref_191",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_192": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Privacy",
+        "refId": "v2ref_192",
+        "role": "button",
+        "score": 112,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_193": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Send Product Feedback",
+        "refId": "v2ref_193",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_29": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key.",
+        "refId": "v2ref_29",
+        "role": "application",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_689": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Collapse side panel",
+        "refId": "v2ref_689",
+        "role": "button",
+        "score": 110,
+        "state": "live",
+        "text": "",
+        "visibility": "visible"
+      },
+      "v2ref_690": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_690",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_719": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "2 km",
+        "refId": "v2ref_719",
+        "role": "button",
+        "score": 107,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_722": {
+        "actionability": "blocked",
+        "ariaHasPopup": "grid",
+        "confidence": 1,
+        "kind": "input",
+        "name": "q",
+        "refId": "v2ref_722",
+        "role": "combobox",
+        "score": 30,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_91": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Menu",
+        "refId": "v2ref_91",
+        "role": "button",
+        "score": 104,
+        "state": "live",
+        "text": "",
+        "visibility": "visible"
+      },
+      "v2ref_92": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_92",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_94": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_94",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_95": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Saved",
+        "refId": "v2ref_95",
+        "role": "button",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_96": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_96",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_98": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_98",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      }
+    },
+    "regions": [
+      {
+        "kind": "repeated_list",
+        "label": "Repeated radio controls",
+        "refIds": [
+          "v2ref_1133",
+          "v2ref_1137",
+          "v2ref_1141"
+        ],
+        "regionId": "region_repeated_1",
+        "score": 100
+      }
+    ],
+    "stats": {
+      "interactionCount": 76,
+      "navigationCount": 1,
+      "readableCount": 76,
+      "regionCount": 1
+    },
+    "warnings": []
+  },
+  "deadState": {
+    "deadState": true,
+    "evidenceId": "dead_state_obs_1_10",
+    "failureKinds": [
+      "target_blocked"
+    ],
+    "observationId": "obs_1_10",
+    "reasons": [
+      "high_uncertainty"
+    ],
+    "severity": "warning",
+    "signals": [
+      "reason:high_uncertainty",
+      "transition_strength:none",
+      "failure:target_blocked",
+      "repeated_no_progress_transition:click:v2ref_1130:2"
+    ]
+  },
+  "episodeId": "episode_9_obs_1_10",
+  "evidenceCoverage": {
+    "contractKind": "unknown",
+    "readCount": 82,
+    "requirements": [],
+    "status": "ready"
+  },
+  "evidenceSnapshot": {
+    "cards": [
+      {
+        "entity": "WAXON",
+        "metrics": {},
+        "position": 0,
+        "refIds": []
+      },
+      {
+        "entity": "Sponsored",
+        "metrics": {
+          "rating": 4.7
+        },
+        "position": 1,
+        "refIds": []
+      },
+      {
+        "entity": "Sky Barbershop & Salon",
+        "metrics": {},
+        "position": 2,
+        "refIds": []
+      },
+      {
+        "entity": "Sponsored",
+        "metrics": {
+          "price": 30,
+          "rating": 4.8
+        },
+        "position": 3,
+        "refIds": []
+      },
+      {
+        "entity": "Liana Hair Salon",
+        "metrics": {
+          "rating": 4.7
+        },
+        "position": 4,
+        "refIds": []
+      },
+      {
+        "entity": "Vann Studio Salon",
+        "metrics": {
+          "rating": 4.8
+        },
+        "position": 5,
+        "provenRank": 1,
+        "refIds": [
+          "v2ref_104"
+        ]
+      }
+    ]
+  },
+  "failures": [
+    {
+      "category": "target",
+      "failureId": "failure_target_blocked_obs_1_10",
+      "kind": "target_blocked",
+      "observationId": "obs_1_10",
+      "persistence": "persistent",
+      "retryable": false,
+      "severity": "warning",
+      "signals": [
+        "error:target_blocked"
+      ],
+      "targetRef": "v2ref_1130"
+    }
+  ],
+  "goal": "Find 5 beauty salons with ratings greater than 4.8 in Seattle, WA.",
+  "goalProgress": {
+    "entries": [
+      {
+        "key": "destination",
+        "state": "typed:\"Seattle\""
+      }
+    ]
+  },
+  "lastResult": {
+    "error": {
+      "code": "target_blocked",
+      "diagnostics": {
+        "blockerClassList": [
+          "fxNQSd"
+        ],
+        "blockerCoversFullViewport": false,
+        "blockerDescription": "div.fxNQSd",
+        "blockerIsFixedOrSticky": false,
+        "blockerIsNativeDialog": false,
+        "blockerIsTransparent": false,
+        "blockerTagName": "div",
+        "hitTestOutcome": "hard_blocker",
+        "probePointsTested": 7,
+        "refResolutionAuditId": "obs_1_8-v2ref_1130-click-audit"
+      },
+      "retryable": false
+    },
+    "evidence": {
+      "strength": "none",
+      "transitionClass": "microstate"
+    },
+    "kind": "click",
+    "success": false,
+    "targetRef": "v2ref_1130",
+    "traceStepId": "step_8"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_5",
+        "beforeObservationId": "obs_1_4",
+        "index": 3,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_4",
+        "strength": "strong",
+        "targetName": "All filters",
+        "targetRef": "v2ref_272",
+        "transitionClass": "structural_macrostate"
+      },
+      {
+        "afterObservationId": "obs_1_6",
+        "beforeObservationId": "obs_1_5",
+        "index": 4,
+        "kind": "scroll",
+        "status": "completed",
+        "stepId": "step_5",
+        "strength": "strong",
+        "transitionClass": "structural_macrostate"
+      },
+      {
+        "afterObservationId": "obs_1_7",
+        "beforeObservationId": "obs_1_6",
+        "index": 5,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_6",
+        "strength": "moderate",
+        "targetName": "Any rating ",
+        "targetRef": "v2ref_1130",
+        "transitionClass": "structural_local"
+      },
+      {
+        "afterObservationId": "obs_1_8",
+        "beforeObservationId": "obs_1_7",
+        "index": 6,
+        "kind": "search_page",
+        "status": "completed",
+        "stepId": "step_7"
+      },
+      {
+        "afterObservationId": "obs_1_10",
+        "beforeObservationId": "obs_1_8",
+        "errorCode": "target_blocked",
+        "index": 7,
+        "kind": "click",
+        "status": "failed",
+        "stepId": "step_8",
+        "strength": "none",
+        "targetRef": "v2ref_1130",
+        "transitionClass": "microstate"
+      }
+    ],
+    "totalSteps": 8,
+    "truncated": true
+  },
+  "recovery": {
+    "blockedAction": {
+      "ref": "v2ref_1130",
+      "tool": "click"
+    },
+    "nextMechanisms": [
+      "avoid_repeating_blocked_action",
+      "find_dismiss_or_close_control",
+      "reobserve_current_surface",
+      "choose_alternative_ref",
+      "expand_or_reobserve"
+    ],
+    "severity": "warning",
+    "signals": [
+      "last_error:target_blocked",
+      "failure:target_blocked",
+      "transition_strength:none",
+      "dead_state_evidence",
+      "repeated_no_progress_transition:click:v2ref_1130:2",
+      "navigation_oscillation"
+    ],
+    "state": "wrong_target_type"
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 17738,
+    "totalPlannerInputBytes": 38540,
+    "workingSetBytes": 15839
+  },
+  "taskProgress": {
+    "items": [
+      {
+        "key": "destination",
+        "requested": "Seattle",
+        "status": "pending"
+      }
+    ],
+    "status": "incomplete"
+  },
+  "transition": {
+    "afterObservationId": "obs_1_9",
+    "beforeObservationId": "obs_1_8",
+    "generationChanged": false,
+    "notes": [],
+    "refChangeCounts": {
+      "appeared": 0,
+      "disappeared": 0,
+      "preserved": 218,
+      "weakened": 0
+    },
+    "strength": "none",
+    "transitionClass": "microstate",
+    "urlChanged": false
+  },
+  "uncertainty": {
+    "level": "high",
+    "signals": [
+      "transition_strength:none",
+      "failure:target_blocked",
+      "dead_state_evidence",
+      "repeated_no_progress_transition:click:v2ref_1130:2",
+      "navigation_oscillation"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_1133",
+        "v2ref_1137",
+        "v2ref_1141",
+        "v2ref_1174",
+        "v2ref_193",
+        "v2ref_102",
+        "v2ref_111",
+        "v2ref_192",
+        "v2ref_95",
+        "v2ref_115",
+        "v2ref_689",
+        "v2ref_107",
+        "v2ref_1126",
+        "v2ref_137",
+        "v2ref_190",
+        "v2ref_191",
+        "v2ref_132",
+        "v2ref_1128",
+        "v2ref_122",
+        "v2ref_719",
+        "v2ref_1177",
+        "v2ref_1186",
+        "v2ref_1195",
+        "v2ref_1204",
+        "v2ref_1213",
+        "v2ref_1222",
+        "v2ref_152",
+        "v2ref_1124",
+        "v2ref_91"
+      ],
+      "readableRefs": [
+        "v2ref_1130",
+        "v2ref_1133",
+        "v2ref_1137",
+        "v2ref_1141",
+        "v2ref_1174",
+        "v2ref_193",
+        "v2ref_102",
+        "v2ref_111",
+        "v2ref_192",
+        "v2ref_1131",
+        "v2ref_1142",
+        "v2ref_1144",
+        "v2ref_1175",
+        "v2ref_1176",
+        "v2ref_120",
+        "v2ref_95",
+        "v2ref_115",
+        "v2ref_689",
+        "v2ref_107",
+        "v2ref_1126",
+        "v2ref_1134",
+        "v2ref_1136",
+        "v2ref_1138",
+        "v2ref_1140",
+        "v2ref_137",
+        "v2ref_145",
+        "v2ref_190",
+        "v2ref_191",
+        "v2ref_29",
+        "v2ref_1145",
+        "v2ref_1238",
+        "v2ref_1239",
+        "v2ref_132",
+        "v2ref_1128",
+        "v2ref_1178",
+        "v2ref_1187",
+        "v2ref_1196",
+        "v2ref_1205",
+        "v2ref_1214",
+        "v2ref_122",
+        "v2ref_1223",
+        "v2ref_719",
+        "v2ref_1127",
+        "v2ref_1177",
+        "v2ref_1186",
+        "v2ref_1195",
+        "v2ref_1204",
+        "v2ref_1213",
+        "v2ref_1222",
+        "v2ref_1236",
+        "v2ref_1237",
+        "v2ref_152",
+        "v2ref_1124",
+        "v2ref_91",
+        "v2ref_1129",
+        "v2ref_1179",
+        "v2ref_1188",
+        "v2ref_1197",
+        "v2ref_1206",
+        "v2ref_1215",
+        "v2ref_1224",
+        "v2ref_136",
+        "v2ref_103",
+        "v2ref_104",
+        "v2ref_1125",
+        "v2ref_1132",
+        "v2ref_117",
+        "v2ref_124",
+        "v2ref_134",
+        "v2ref_146",
+        "v2ref_690",
+        "v2ref_92",
+        "v2ref_94",
+        "v2ref_96",
+        "v2ref_98",
+        "v2ref_722"
+      ],
+      "selectableRefs": [],
+      "typeableRefs": []
+    },
+    "changedRefs": {
+      "appearedCount": 0,
+      "omittedCount": 0,
+      "preservedCount": 218,
+      "topRefs": [
+        {
+          "kind": "button",
+          "name": "Any rating ",
+          "reasons": [
+            "last_failure",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1130",
+          "role": "button",
+          "score": 215,
+          "text": "Any rating "
+        }
+      ],
+      "weakenedCount": 0
+    },
+    "deltaRefs": {
+      "appeared": [],
+      "changed": [
+        "v2ref_1130"
+      ]
+    },
+    "failedRefs": [
+      {
+        "kind": "button",
+        "name": "Any rating ",
+        "reasons": [
+          "last_failure",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1130",
+        "role": "button",
+        "score": 215,
+        "text": "Any rating "
+      }
+    ],
+    "mode": "recover",
+    "modeReason": "recent_failure_evidence",
+    "navigationRefs": [
+      {
+        "kind": "link",
+        "name": "Sign in",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_111",
+        "role": "link",
+        "score": 112,
+        "text": "Sign in"
+      }
+    ],
+    "omitted": {
+      "droppedByReason": {
+        "generic_low_value": 49,
+        "hidden_low_value": 39
+      },
+      "droppedRefCount": 142,
+      "observedRefCount": 218,
+      "selectedRefCount": 76
+    },
+    "primaryRefs": [
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "answer_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_104",
+        "score": 317,
+        "text": ""
+      },
+      {
+        "kind": "button",
+        "name": "Any rating ",
+        "reasons": [
+          "last_failure",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1130",
+        "role": "button",
+        "score": 215,
+        "text": "Any rating "
+      },
+      {
+        "kind": "button",
+        "name": "openHoursFilter",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1133",
+        "role": "radio",
+        "score": 215,
+        "text": "Any time"
+      },
+      {
+        "kind": "button",
+        "name": "openHoursFilter",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1137",
+        "role": "radio",
+        "score": 215,
+        "text": "Open now"
+      },
+      {
+        "kind": "button",
+        "name": "openHoursFilter",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1141",
+        "role": "radio",
+        "score": 215,
+        "text": "Open 24 hours"
+      },
+      {
+        "kind": "button",
+        "name": "Any rating",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1174",
+        "role": "menuitemradio",
+        "score": 215,
+        "text": "Any rating"
+      },
+      {
+        "kind": "button",
+        "name": "Send Product Feedback",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_193",
+        "role": "button",
+        "score": 215,
+        "text": "Send Product Feedback"
+      },
+      {
+        "kind": "button",
+        "name": "Get app",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_102",
+        "role": "button",
+        "score": 213,
+        "text": "Get app"
+      },
+      {
+        "kind": "link",
+        "name": "Sign in",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_111",
+        "role": "link",
+        "score": 212,
+        "text": "Sign in"
+      },
+      {
+        "kind": "button",
+        "name": "Privacy",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_192",
+        "role": "button",
+        "score": 212,
+        "text": "Privacy"
+      },
+      {
+        "kind": "generic",
+        "name": "Any rating ",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1131",
+        "score": 211,
+        "text": "Any rating "
+      },
+      {
+        "kind": "generic",
+        "name": "Open 24 hours",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1142",
+        "score": 211,
+        "text": "Open 24 hours"
+      },
+      {
+        "kind": "generic",
+        "name": "Open 24 hours",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1144",
+        "score": 211,
+        "text": "Open 24 hours"
+      },
+      {
+        "kind": "generic",
+        "name": "Any rating",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1175",
+        "score": 211,
+        "text": "Any rating"
+      },
+      {
+        "kind": "generic",
+        "name": "Any rating",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1176",
+        "score": 211,
+        "text": "Any rating"
+      },
+      {
+        "kind": "generic",
+        "name": "ZoomShow sliderHide slider",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_120",
+        "score": 211,
+        "text": "ZoomShow sliderHide slider"
+      },
+      {
+        "kind": "button",
+        "name": "Saved",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_95",
+        "role": "button",
+        "score": 211,
+        "text": "Saved"
+      },
+      {
+        "kind": "button",
+        "name": "Show Your Location",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_115",
+        "role": "button",
+        "score": 210,
+        "text": ""
+      },
+      {
+        "kind": "button",
+        "name": "Collapse side panel",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_689",
+        "role": "button",
+        "score": 210,
+        "text": ""
+      },
+      {
+        "kind": "button",
+        "name": "Google apps",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_107",
+        "role": "button",
+        "score": 209
+      },
+      {
+        "kind": "button",
+        "name": "Clear",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1126",
+        "role": "button",
+        "score": 209,
+        "text": "Clear"
+      },
+      {
+        "kind": "generic",
+        "name": "Any time",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1134",
+        "score": 209,
+        "text": "Any time"
+      },
+      {
+        "kind": "generic",
+        "name": "Any time",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1136",
+        "score": 209,
+        "text": "Any time"
+      },
+      {
+        "kind": "generic",
+        "name": "Open now",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1138",
+        "score": 209,
+        "text": "Open now"
+      },
+      {
+        "kind": "generic",
+        "name": "Open now",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1140",
+        "score": 209,
+        "text": "Open now"
+      },
+      {
+        "kind": "button",
+        "name": "Browse Street View images",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_137",
+        "role": "button",
+        "score": 209
+      },
+      {
+        "kind": "generic",
+        "name": " Layers",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_145",
+        "score": 209,
+        "text": " Layers"
+      },
+      {
+        "kind": "button",
+        "name": "India",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_190",
+        "role": "button",
+        "score": 209,
+        "text": "India"
+      },
+      {
+        "kind": "button",
+        "name": "Terms",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_191",
+        "role": "button",
+        "score": 209,
+        "text": "Terms"
+      },
+      {
+        "kind": "generic",
+        "name": "Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key.",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_29",
+        "role": "application",
+        "score": 209
+      },
+      {
+        "kind": "generic",
+        "name": "Sign in",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1145",
+        "score": 208,
+        "text": "Sign in"
+      },
+      {
+        "kind": "generic",
+        "name": "Get app",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1238",
+        "score": 208,
+        "text": "Get app"
+      }
+    ],
+    "quarantinedActions": [
+      {
+        "failureKind": "target_blocked",
+        "persistence": "persistent",
+        "refId": "v2ref_1130",
+        "retryable": false,
+        "tool": "click"
+      }
+    ],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_104",
+        "text": " "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1130",
+        "text": "Any rating  Any rating "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1133",
+        "text": "openHoursFilter Any time"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1137",
+        "text": "openHoursFilter Open now"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1141",
+        "text": "openHoursFilter Open 24 hours"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1174",
+        "text": "Any rating Any rating"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_193",
+        "text": "Send Product Feedback Send Product Feedback"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_102",
+        "text": "Get app Get app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_111",
+        "text": "Sign in Sign in"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_192",
+        "text": "Privacy Privacy"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1131",
+        "text": "Any rating  Any rating "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1142",
+        "text": "Open 24 hours Open 24 hours"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1144",
+        "text": "Open 24 hours Open 24 hours"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1175",
+        "text": "Any rating Any rating"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1176",
+        "text": "Any rating Any rating"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_120",
+        "text": "ZoomShow sliderHide slider ZoomShow sliderHide slider"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_95",
+        "text": "Saved Saved"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_115",
+        "text": "Show Your Location "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_689",
+        "text": "Collapse side panel "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_107",
+        "text": "Google apps"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1126",
+        "text": "Clear Clear"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1134",
+        "text": "Any time Any time"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1136",
+        "text": "Any time Any time"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1138",
+        "text": "Open now Open now"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1140",
+        "text": "Open now Open now"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_137",
+        "text": "Browse Street View images"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_145",
+        "text": " Layers  Layers"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_190",
+        "text": "India India"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_191",
+        "text": "Terms Terms"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_29",
+        "text": "Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1145",
+        "text": "Sign in Sign in"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1238",
+        "text": "Get app Get app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1239",
+        "text": "Get app Get app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_132",
+        "text": "Zoom out "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1128",
+        "text": "Done Done"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1178",
+        "text": "2.0 stars 2.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1187",
+        "text": "2.5 stars 2.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1196",
+        "text": "3.0 stars 3.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1205",
+        "text": "3.5 stars 3.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1214",
+        "text": "4.0 stars 4.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_122",
+        "text": "Zoom in "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1223",
+        "text": "4.5 stars 4.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_719",
+        "text": "2 km 2 km"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1127",
+        "text": "Clear Clear"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1177",
+        "text": "2.0 2.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1186",
+        "text": "2.5 2.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1195",
+        "text": "3.0 3.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1204",
+        "text": "3.5 3.5"
+      }
+    ],
+    "regionSummaries": [
+      {
+        "label": "Repeated radio controls",
+        "omittedRefCount": 0,
+        "regionId": "region_repeated_1",
+        "representativeRefs": [
+          "v2ref_1133",
+          "v2ref_1137",
+          "v2ref_1141"
+        ]
+      }
+    ],
+    "secondaryRefs": [
+      {
+        "kind": "generic",
+        "name": "Get app",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1239",
+        "score": 208,
+        "text": "Get app"
+      },
+      {
+        "kind": "button",
+        "name": "Zoom out",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_132",
+        "role": "button",
+        "score": 208,
+        "text": ""
+      },
+      {
+        "kind": "button",
+        "name": "Done",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1128",
+        "role": "button",
+        "score": 207,
+        "text": "Done"
+      },
+      {
+        "kind": "generic",
+        "name": "2.0 stars",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1178",
+        "score": 207,
+        "text": "2.0"
+      },
+      {
+        "kind": "generic",
+        "name": "2.5 stars",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1187",
+        "score": 207,
+        "text": "2.5"
+      },
+      {
+        "kind": "generic",
+        "name": "3.0 stars",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1196",
+        "score": 207,
+        "text": "3.0"
+      },
+      {
+        "kind": "generic",
+        "name": "3.5 stars",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1205",
+        "score": 207,
+        "text": "3.5"
+      },
+      {
+        "kind": "generic",
+        "name": "4.0 stars",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1214",
+        "score": 207,
+        "text": "4.0"
+      },
+      {
+        "kind": "button",
+        "name": "Zoom in",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_122",
+        "role": "button",
+        "score": 207,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "4.5 stars",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1223",
+        "score": 207,
+        "text": "4.5"
+      },
+      {
+        "kind": "button",
+        "name": "2 km",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_719",
+        "role": "button",
+        "score": 207,
+        "text": "2 km"
+      },
+      {
+        "kind": "generic",
+        "name": "Clear",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1127",
+        "score": 205,
+        "text": "Clear"
+      },
+      {
+        "kind": "button",
+        "name": "2.0",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1177",
+        "role": "menuitemradio",
+        "score": 205,
+        "text": "2.0"
+      },
+      {
+        "kind": "button",
+        "name": "2.5",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1186",
+        "role": "menuitemradio",
+        "score": 205,
+        "text": "2.5"
+      },
+      {
+        "kind": "button",
+        "name": "3.0",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1195",
+        "role": "menuitemradio",
+        "score": 205,
+        "text": "3.0"
+      },
+      {
+        "kind": "button",
+        "name": "3.5",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1204",
+        "role": "menuitemradio",
+        "score": 205,
+        "text": "3.5"
+      },
+      {
+        "kind": "button",
+        "name": "4.0",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1213",
+        "role": "menuitemradio",
+        "score": 205,
+        "text": "4.0"
+      },
+      {
+        "kind": "button",
+        "name": "4.5",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1222",
+        "role": "menuitemradio",
+        "score": 205,
+        "text": "4.5"
+      },
+      {
+        "kind": "generic",
+        "name": "Saved",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1236",
+        "score": 205,
+        "text": "Saved"
+      },
+      {
+        "kind": "generic",
+        "name": "Saved",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1237",
+        "score": 205,
+        "text": "Saved"
+      },
+      {
+        "kind": "button",
+        "name": "Layers",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_152",
+        "role": "button",
+        "score": 205
+      },
+      {
+        "kind": "button",
+        "name": "Back",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1124",
+        "role": "button",
+        "score": 204,
+        "text": ""
+      },
+      {
+        "kind": "button",
+        "name": "Menu",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_91",
+        "role": "button",
+        "score": 204,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "Done",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1129",
+        "score": 203,
+        "text": "Done"
+      },
+      {
+        "kind": "generic",
+        "name": "2.0",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1179",
+        "score": 201,
+        "text": "2.0"
+      },
+      {
+        "kind": "generic",
+        "name": "2.5",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1188",
+        "score": 201,
+        "text": "2.5"
+      },
+      {
+        "kind": "generic",
+        "name": "3.0",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1197",
+        "score": 201,
+        "text": "3.0"
+      },
+      {
+        "kind": "generic",
+        "name": "3.5",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1206",
+        "score": 201,
+        "text": "3.5"
+      },
+      {
+        "kind": "generic",
+        "name": "4.0",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1215",
+        "score": 201,
+        "text": "4.0"
+      },
+      {
+        "kind": "generic",
+        "name": "4.5",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1224",
+        "score": 201,
+        "text": "4.5"
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_136",
+        "score": 199,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_103",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1125",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1132",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_117",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_124",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_134",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_146",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_690",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_92",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_94",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_96",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_98",
+        "score": 197,
+        "text": ""
+      },
+      {
+        "kind": "input",
+        "name": "q",
+        "reasons": [
+          "form_candidate",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_722",
+        "role": "combobox",
+        "score": 70
+      }
+    ]
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {
+      "generic_low_value": 49,
+      "hidden_low_value": 39
+    },
+    "droppedRefCount": 142,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 218,
+    "selectedByReason": {
+      "answer_candidate": 1,
+      "form_candidate": 1,
+      "last_failure": 1,
+      "navigation_candidate": 1,
+      "role_relevant_to_goal": 1,
+      "visible_ready": 75
+    },
+    "selectedRefCount": 76
+  }
+}

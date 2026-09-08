@@ -1,0 +1,156 @@
+Planner input:
+MISSION
+  goal: Book a journey with return option on same day from Edinburg to Manchester on December 28th and show me the lowest price option available.
+
+STATE
+
+  page: "Find Cheap Flights Worldwide & Book Your Ticket - Google Flights" https://www.google.com/travel/flights?tfs=CBwQARodag0IAhIJL20vMDIydHE0cgwIAxIIL20vMDUyYncaHWoMCAMSCC9tLzA1MmJ3cg0IAhIJL20vMDIydHE0QAFIAXABggELCP___________wGYAQE&tfu=KgIIAw
+
+PLANNER SURFACE
+    [v2ref_12] <link name="Google" tools="c,r" />
+    [v2ref_139] <select name="Round trip" role="combobox" aria-autocomplete="none" aria-haspopup="listbox" tools="c,s,r" />
+    [v2ref_14] <button name="Skip to main content" tools="c,r" />
+    [v2ref_15] <button name="Accessibility feedback" aria-haspopup="dialog" tools="c,r" />
+    [v2ref_1573] <generic name="Economy" tools="r" />
+    [v2ref_1574] <generic name="Economy" tools="r" />
+    [v2ref_16] <link name="Explore" tools="c,r" />
+    [v2ref_17] <link name="Flights" tools="c,r" />
+    [v2ref_18] <link name="Hotels" tools="c,r" />
+    [v2ref_180] <select name="Economy" role="combobox" aria-autocomplete="none" aria-haspopup="listbox" tools="c,s,r" />
+    [v2ref_19] <link name="Vacation rentals" tools="c,r" />
+    [v2ref_20] <button name="Change appearance" aria-haspopup="menu" tools="c,r" />
+    [v2ref_21] <button name="Google apps" tools="c,r" />
+    [v2ref_216] <input name="Where from?" role="combobox" aria-autocomplete="inline" aria-haspopup="true" tools="c,t,r" />
+    [v2ref_236] <input name="Where to?" role="combobox" aria-autocomplete="inline" aria-haspopup="true" value="Manchester" tools="c,t,r" />
+    [v2ref_25] <link name="Sign in" tools="c,r" />
+    [v2ref_253] <input name="Departure" role="textbox" tools="t,r" />
+    [v2ref_256] <input name="Return" role="textbox" tools="t,r" />
+    [v2ref_26] <generic name="Sign in" tools="r" />
+    [v2ref_298] <button name="Explore deals with AI" tools="c,r" />
+    [v2ref_3] <button name="Main menu" tools="c,r" />
+    [v2ref_310] <button name="Find flights from Lucknow (LKO) to New Delhi (DEL) from ₹8,600. Operated by IndiGo. Nov 5 to Nov 12. 1 stop" state="visibility=offscreen" tools="c,r" />
+    [v2ref_323] <generic name="₹8,600" state="visibility=offscreen" tools="r" />
+    [v2ref_327] <button name="Find flights from Lucknow (LKO) to Mumbai (BOM) from ₹12,271. Operated by IndiGo. Sep 17 to Sep 24. Nonstop" state="visibility=offscreen" tools="c,r" />
+    [v2ref_340] <generic name="₹12,271" state="visibility=offscreen" tools="r" />
+    [v2ref_344] <button name="Find flights from Lucknow (LKO) to Bengaluru (BLR) from ₹13,121. Operated by IndiGo. Dec 4 to Dec 10. Nonstop" state="visibility=offscreen" tools="c,r" />
+    [v2ref_357] <generic name="₹13,121" state="visibility=offscreen" tools="r" />
+    [v2ref_361] <button name="Find flights from New Delhi (DEL) to Mumbai (BOM) from ₹11,860. Operated by IndiGo. Sep 24 to Oct 3. 1 stop" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_374] <generic name="₹11,860" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_378] <button name="Find flights from New Delhi (DEL) to Bengaluru (BLR) from ₹16,241. Operated by IndiGo. Sep 24 to Oct 3. 1 stop" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_391] <generic name="₹16,241" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_395] <button name="Find flights from New Delhi (DEL) to Kolkata (CCU) from ₹13,772. Operated by IndiGo. Sep 19 to Sep 28. 1 stop" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_408] <generic name="₹13,772" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_412] <button name="Find flights from Mumbai (BOM) to New Delhi (DEL) from ₹12,300. Operated by IndiGo. Sep 7 to Sep 13. 1 stop" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_425] <generic name="₹12,300" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_429] <button name="Find flights from Mumbai (BOM) to Bengaluru (BLR) from ₹9,308. Operated by IndiGo. Sep 17 to Sep 23. Nonstop" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_4380] <button name="1 passenger" aria-haspopup="dialog" tools="c,r" />
+    [v2ref_4398] <input name="Where else?" role="combobox" aria-autocomplete="both" aria-haspopup="true" value="Edinburgh, United Kingdom" tools="c,t,r" />
+    [v2ref_4409] <generic name="Edinburgh, United Kingdom" role="option" tools="c,r" />
+    [v2ref_4415] <generic name="Edinburgh Airport (EDI)" role="option" tools="c,r" />
+    [v2ref_4416] <generic name="Edinburg, Texas, USA" role="option" tools="c,r" />
+    [v2ref_442] <generic name="₹9,308" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_4424] <generic name="Edinburgh of the Seven Seas, St. Helena" role="option" tools="c,r" />
+    [v2ref_4431] <generic name="Edinburg, Virginia, USA" role="option" tools="c,r" />
+    [v2ref_446] <button name="Find flights from Mumbai (BOM) to Kolkata (CCU) from ₹16,261. Operated by Akasa Air. Sep 7 to Sep 15. Nonstop" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_459] <generic name="₹16,261" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_463] <button name="Find flights from Bengaluru (BLR) to New Delhi (DEL) from ₹16,451. Operated by IndiGo. Sep 24 to Oct 3. 1 stop" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_476] <generic name="₹16,451" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_480] <button name="Find flights from Bengaluru (BLR) to Mumbai (BOM) from ₹9,181. Operated by IndiGo. Sep 24 to Oct 3. Nonstop" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_493] <generic name="₹9,181" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_497] <button name="Find flights from Bengaluru (BLR) to Hyderabad (HYD) from ₹8,612. Operated by IndiGo. Sep 17 to Sep 23. Nonstop" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_510] <generic name="₹8,612" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_523] <button name="Know when to book with price insightsPrice history and trend data show you the best time to book your airline ticket ..." role="tab" state="visibility=offscreen" tools="c,r" />
+    [v2ref_529] <generic name="Price history and trend data show you the best time to book your airline ticket to get the cheapest price for your fl..." state="visibility=offscreen" tools="r" />
+    [v2ref_553] <generic name="Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals" role="tabpanel" state="visibility=offscreen" tools="r" />
+    [v2ref_6322] <generic name="from ₹8,600" state="visibility=offscreen" tools="r" />
+    [v2ref_6323] <generic name="from ₹8,600" state="visibility=offscreen" tools="r" />
+    [v2ref_6334] <generic name="from ₹12,271" state="visibility=offscreen" tools="r" />
+    [v2ref_838] <generic name="Round trip" tools="r" />
+    [v2ref_839] <generic name="Round trip" tools="r" />
+  [v2ref_235] <button name="Swap origin and destination." />
+  [v2ref_4399] <button name="Origin, Select multiple airports" />
+  [v2ref_4410] <button name="Toggle nearby airports for Edinburgh, United Kingdom" />
+  [v2ref_4417] <button name="Toggle nearby airports for Edinburg, Texas, USA" />
+  [v2ref_4425] <button name="Toggle nearby airports for Edinburgh of the Seven Seas, St. Helena" />
+  [v2ref_4432] <button name="Toggle nearby airports for Edinburg, Virginia, USA" />
+  [v2ref_6310] <button name="Search" />
+  [v2ref_6335] <generic name="from ₹12,271" />
+  [v2ref_6346] <generic name="from ₹13,121" />
+  [v2ref_6347] <generic name="from ₹13,121" />
+  [v2ref_6360] <generic name="from ₹11,860" />
+  [v2ref_6361] <generic name="from ₹11,860" />
+  [v2ref_6374] <generic name="from ₹16,241" />
+  [v2ref_6375] <generic name="from ₹16,241" />
+  [v2ref_6386] <generic name="from ₹13,772" />
+  [v2ref_6387] <generic name="from ₹13,772" />
+  [v2ref_6398] <generic name="from ₹12,300" />
+  [v2ref_6399] <generic name="from ₹12,300" />
+  [v2ref_6412] <generic name="from ₹9,308" />
+  [v2ref_6413] <generic name="from ₹9,308" />
+  [v2ref_1241] <generic name="v2ref_1241" />
+  [v2ref_1243] <generic name="v2ref_1243" />
+  [v2ref_1244] <generic name="v2ref_1244" />
+  [v2ref_4400] <generic name="v2ref_4400" />
+  [v2ref_4402] <generic name="v2ref_4402" />
+  [v2ref_4403] <generic name="v2ref_4403" />
+  [v2ref_4411] <generic name="v2ref_4411" />
+  [v2ref_4413] <generic name="v2ref_4413" />
+  [v2ref_4414] <generic name="v2ref_4414" />
+  [v2ref_4418] <generic name="v2ref_4418" />
+  [v2ref_4420] <generic name="v2ref_4420" />
+  [v2ref_4421] <generic name="v2ref_4421" />
+  [v2ref_4426] <generic name="v2ref_4426" />
+  [v2ref_4428] <generic name="v2ref_4428" />
+  [v2ref_4429] <generic name="v2ref_4429" />
+  [v2ref_4433] <generic name="v2ref_4433" />
+  [v2ref_4440] <generic name="Edinburgh, Indiana, USA" />
+  [v2ref_6424] <generic name="from ₹16,261" />
+  [v2ref_6425] <generic name="from ₹16,261" />
+  [v2ref_6438] <generic name="from ₹16,451" />
+  [v2ref_6439] <generic name="from ₹16,451" />
+  [v2ref_6450] <generic name="from ₹9,181" />
+  [v2ref_6451] <generic name="from ₹9,181" />
+  [v2ref_6463] <generic name="from ₹8,612" />
+  [v2ref_6464] <generic name="from ₹8,612" />
+  [v2ref_6468] <generic name="Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals" />
+  [v2ref_6471] <generic name="Find the cheapest days to flyThe Date grid and Price graph make it easy to find the best flight deals" />
+  [v2ref_6472] <generic name="Know when to book with price insightsPrice history and trend data show you the best time to book your airline ticket ..." />
+  [v2ref_6475] <generic name="Know when to book with price insightsPrice history and trend data show you the best time to book your airline ticket ..." />
+  [v2ref_6476] <generic name="Track flight prices for a tripNot ready to book yet? Observe price changes for a route or flight and get notified whe..." />
+  [v2ref_6481] <generic name="Track flight prices for a tripNot ready to book yet? Observe price changes for a route or flight and get notified whe..." />
+  [v2ref_6482] <generic name="Explore the best flight deals with AIDescribe your ideal trip and let Google Flights find you the best deals" />
+
+STATE
+  observation: obs_1_6 gen=1 refs=3225
+  focus: v2ref_139 highest_operational_score
+
+RECENT EVENTS
+  last: type v2ref_216 -> ok (no observable effect)
+  transition: structural_local urlChanged=false appeared=0 disappeared=0 weakened=0 preserved=3225
+  history: 5 steps
+
+EVIDENCE COVERAGE
+  state: uncertain reads=37
+  ranking_evidence: uncertain
+
+GOAL PROGRESS
+  destination: typed:"Edinburg"
+  destinationTo: typed:"Manchester"
+  dates: NOT_SET
+  cheapest: unverified
+  focus: dates
+
+TASK PROGRESS
+  state: conflicting
+  destination: conflicting requested="Manchester" evidence=v2ref_4398,v2ref_236
+
+PROBLEMS
+  recovery: repeated_type_same_value blocked=type:v2ref_216
+    BLOCKED: Do NOT repeat the blocked action. Try: use_pick_option_primitive, confirm_combobox_selection, click_matching_suggestion_option, avoid_retyping_committed_values, choose_alternative_ref.
+  uncertainty: medium repeated_value_preview:type:v2ref_216:2
+
+WORKING SET
+  mode: verify
+
+DECISION SIGNALS
+  suppressed: 3145 generic_low_value=32 hidden_low_value=1649 offscreen_low_value=114 rank_loss=538 unlabeled_action=8

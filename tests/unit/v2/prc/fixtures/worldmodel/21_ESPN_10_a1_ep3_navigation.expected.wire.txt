@@ -1,0 +1,116 @@
+Planner input:
+MISSION
+  goal: Check ESPN for the score and a brief recap of the latest college football championship game.
+
+STATE
+
+  page: "ESPN India - Serving Sports Fans. Anytime. Anywhere." https://www.espn.in/
+
+PLANNER SURFACE
+    [v2ref_1425] <generic name="v2ref_1425" />
+    [v2ref_1469] <generic name="v2ref_1469" />
+    [v2ref_1472] <generic name="v2ref_1472" />
+    [v2ref_1478] <generic name="v2ref_1478" />
+    [v2ref_1481] <generic name="v2ref_1481" />
+    [v2ref_156] <generic name="The crown lies heavy: Gukesh leans on Anand's experience and wisdom amid poor formIs there such a thing as the World ..." tools="r" />
+    [v2ref_159] <generic name="The crown lies heavy: Gukesh leans on Anand's experience and wisdom amid poor formIs there such a thing as the World ..." tools="r" />
+    [v2ref_160] <generic name="The crown lies heavy: Gukesh leans on Anand's experience and wisdom amid poor form" tools="r" />
+    [v2ref_161] <generic name="Is there such a thing as the World Championship crown weighing too heavily on its holders?" tools="r" />
+    [v2ref_1979] <generic name="v2ref_1979" />
+    [v2ref_1980] <generic name="v2ref_1980" />
+    [v2ref_1981] <generic name="v2ref_1981" />
+    [v2ref_1982] <generic name="v2ref_1982" />
+    [v2ref_1983] <generic name="v2ref_1983" />
+    [v2ref_2005] <generic name="Maria Emilianova / FIDE" tools="r" />
+    [v2ref_2006] <generic name="Maria Emilianova / FIDE" tools="r" />
+    [v2ref_1831] <generic name="Hockey" tools="r" />
+    [v2ref_1840] <generic name="Badminton" tools="r" />
+  [v2ref_1076] <link name="&amp;lpos=sitenavdefault+sitenav_cricket" />
+  [v2ref_1077] <generic name="Cricket Cricket" />
+  [v2ref_1078] <generic name="Cricket" />
+  [v2ref_1112] <link name="&amp;lpos=sitenavdefault+sitenav_chess" />
+  [v2ref_1113] <generic name="Chess Chess" />
+  [v2ref_1114] <generic name="Chess" />
+  [v2ref_1124] <link name="&amp;lpos=sitenavdefault+sitenav_f1" />
+  [v2ref_1125] <generic name="F1 F1" />
+  [v2ref_1126] <generic name="F1" />
+  [v2ref_1244] <link name="More Sports More Sports" />
+  [v2ref_1245] <generic name="More Sports More Sports" />
+  [v2ref_1246] <generic name="More Sports" />
+  [v2ref_1352] <link name="&amp;lpos=sitenavdefault+sitenav_watch" />
+  [v2ref_1353] <generic name="Watch Watch" />
+  [v2ref_1354] <generic name="Watch" />
+  [v2ref_1369] <link name="&amp;lpos=lrail:link:featured:1:ipl2026" />
+  [v2ref_1371] <generic name="v2ref_1371" />
+  [v2ref_1372] <generic name="IPL 2026" />
+  [v2ref_1373] <generic name="IPL 2026" />
+  [v2ref_1374] <link name="&amp;lpos=lrail:link:featured:2:indiansuperleague" />
+  [v2ref_1376] <generic name="v2ref_1376" />
+  [v2ref_1377] <generic name="Indian Super League" />
+  [v2ref_1378] <generic name="Indian Super League" />
+  [v2ref_1379] <link name="&amp;lpos=lrail:link:featured:3:premierleague" />
+  [v2ref_1380] <generic name="v2ref_1380" />
+  [v2ref_1381] <generic name="v2ref_1381" />
+  [v2ref_1382] <generic name="English Premier League" />
+  [v2ref_1383] <generic name="English Premier League" />
+  [v2ref_1384] <link name="&amp;lpos=lrail:link:featured:4:laliga" />
+  [v2ref_1386] <generic name="v2ref_1386" />
+  [v2ref_1387] <generic name="La Liga" />
+  [v2ref_1388] <generic name="La Liga" />
+  [v2ref_1389] <link name="&amp;lpos=lrail:link:featured:5:championsleague" />
+  [v2ref_1392] <generic name="UEFA Champions League" />
+  [v2ref_1393] <generic name="UEFA Champions League" />
+  [v2ref_1394] <link name="&amp;lpos=lrail:link:featured:6:europaleague" />
+  [v2ref_1397] <generic name="Europa League" />
+  [v2ref_1398] <generic name="Europa League" />
+  [v2ref_1399] <link name="&amp;lpos=lrail:link:featured:7:seriea" />
+  [v2ref_1402] <generic name="Serie A" />
+  [v2ref_1403] <generic name="Serie A" />
+  [v2ref_1404] <link name="&amp;lpos=lrail:link:featured:8:bundesliga" />
+  [v2ref_1407] <generic name="Bundesliga" />
+  [v2ref_1408] <generic name="Bundesliga" />
+  [v2ref_1409] <link name="&amp;lpos=lrail:link:featured:9:ufc" />
+  [v2ref_1412] <generic name="Ultimate Fighting Championship" />
+  [v2ref_1413] <generic name="Ultimate Fighting Championship" />
+  [v2ref_1414] <link name="&amp;lpos=lrail:link:featured:10:ileague" />
+  [v2ref_1417] <generic name="I-League" />
+  [v2ref_1418] <generic name="I-League" />
+  [v2ref_1419] <link name="&amp;lpos=lrail:link:featured:11:parisolympics" />
+  [v2ref_1422] <generic name="Paris Olympics" />
+  [v2ref_1423] <generic name="Paris Olympics" />
+  [v2ref_1424] <link name="&amp;lpos=lrail:link:featuredsports:1:kabaddi" />
+  [v2ref_1426] <generic name="Kabaddi" />
+  [v2ref_1465] <link name="&amp;lpos=fp:feed:1:story" />
+  [v2ref_1468] <generic name="Aaditya Narayan" />
+  [v2ref_1475] <link name="&amp;lpos=fp:feed:2:eng.1:story" />
+  [v2ref_1482] <generic name="(Photo by Robbie Jay Barratt - AMA/Getty Images)" />
+  [v2ref_1483] <generic name="(Photo by Robbie Jay Barratt - AMA/Getty Images)" />
+  [v2ref_549] <link name="Log In" />
+  [v2ref_554] <link name="&amp;lpos=sitenavdefault+sitenav_soccer" />
+  [v2ref_555] <generic name="Football Football" />
+  [v2ref_556] <generic name="Football" />
+  [v2ref_794] <link name="&amp;lpos=sitenavdefault+sitenav_hockey" />
+  [v2ref_795] <generic name="Hockey Hockey" />
+  [v2ref_814] <link name="&amp;lpos=sitenavdefault+sitenav_badminton" />
+  [v2ref_815] <generic name="Badminton Badminton" />
+  [v2ref_826] <link name="&amp;lpos=sitenavdefault+sitenav_nba" />
+  [v2ref_827] <generic name="NBA NBA" />
+  [v2ref_828] <generic name="NBA" />
+  CONTINUITY: weakened=41 refs carried from before the last action; changed=0
+
+STATE
+  observation: obs_1_3 gen=1 refs=1326
+  focus: v2ref_1112 highest_operational_score
+
+RECENT EVENTS
+  last: search_page -> ok (no observable effect)
+  history: 2 steps
+
+PROBLEMS
+  uncertainty: medium low_confidence_refs:324, low_confidence_ref:v2ref_1076, low_confidence_ref:v2ref_1369, low_confidence_ref:v2ref_1389, low_confidence_ref:v2ref_1394
+
+WORKING SET
+  mode: verify
+
+DECISION SIGNALS
+  suppressed: 1248 hidden_low_value=5 rank_loss=1232 unlabeled_action=8
