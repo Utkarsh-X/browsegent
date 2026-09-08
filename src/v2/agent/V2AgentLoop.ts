@@ -354,7 +354,7 @@ export class V2AgentLoop {
                 const revisedValidation = validateAnswerAgainstContract(revised, answerContract, {
                   evidenceText: buildAnswerValidationEvidence(readEvidenceHistory, surfaceEvidence, evidenceLedger),
                 });
-                if (revisedValidation.ok && revised !== acceptedValue) {
+                if (revisedValidation.ok && revised !== acceptedValue && !retractsGroundedValues(acceptedValue, revised)) {
                   acceptedValue = revised;
                 }
               }
@@ -1936,6 +1936,24 @@ export function normalizeAnswerValue(value: string, goal: string): string {
   }
 
   return sanitized;
+}
+
+/**
+ * Answer-quality round 3 (D1 retract-guard): a checklist re-ask may fix or
+ * enrich the original answer, but it must never RETRACT a concrete value the
+ * original grounded. The measured failure shape (validated run 27): the
+ * original numeric answer was replaced by a confident-sounding give-up
+ * ("not explicitly provided…"), accepted because the re-ask returned done —
+ * and the judge pass was lost. The guard is structural: any numeric
+ * measurement in the original answer must survive into the revision. Reworded
+ * answers that keep the values still pass; escalation remains untouched (the
+ * original answer is never swapped for an escalation in either direction).
+ */
+export function retractsGroundedValues(original: string, revised: string): boolean {
+  const numbersInOriginal = original.match(/\d+(?:\.\d+)?/g) ?? [];
+  if (numbersInOriginal.length === 0) return false;
+  // Every numeric measurement of the original must still be present.
+  return !numbersInOriginal.every(n => revised.includes(n));
 }
 
 /**
