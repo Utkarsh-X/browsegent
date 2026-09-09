@@ -1,4 +1,4 @@
-import { countTokens } from '../brain1/serializer';
+import { countTokens } from '../utils/tokens';
 import type { LlmProvider } from '../config/runtime';
 
 export type ProviderCallStatus = 'success' | 'error' | 'blocked';

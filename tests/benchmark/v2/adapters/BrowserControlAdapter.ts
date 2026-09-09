@@ -139,17 +139,17 @@ export class BrowserControlAdapter implements BenchmarkAdapter {
       secrets,
     );
 
-    if (processResult.exitCode !== 0) {
+    if (processResult.exitCode !== 0 && !runnerResult) {
       return {
         adapterId: this.adapterId,
         taskId: task.taskId,
         attempt: options.attempt,
         success: false,
-        value: runnerResult?.value ?? '',
+        value: '',
         artifactPath,
         tracePath: artifactPath,
         failureReason: `browser-control runner exited with code ${processResult.exitCode}: ${sanitizedFailureReason}`.trim(),
-        failureType: runnerResult?.failureType ?? 'runtime_crash',
+        failureType: 'runtime_crash',
         metrics: metrics(startedAt, runnerResult),
       };
     }
@@ -162,10 +162,13 @@ export class BrowserControlAdapter implements BenchmarkAdapter {
       value: runnerResult?.value ?? '',
       artifactPath,
       tracePath: artifactPath,
-      failureReason: runnerResult?.failureReason ? redactSecrets(runnerResult.failureReason, secrets) : undefined,
-      failureType: runnerResult?.failureType,
+      failureReason: runnerResult?.failureReason
+        ? redactSecrets(runnerResult.failureReason, secrets)
+        : (processResult.exitCode !== 0 ? `browser-control runner exited with code ${processResult.exitCode}: ${sanitizedFailureReason}`.trim() : undefined),
+      failureType: runnerResult?.failureType ?? (processResult.exitCode !== 0 ? 'runtime_crash' : undefined),
       metrics: metrics(startedAt, runnerResult),
     };
+
   }
 }
 

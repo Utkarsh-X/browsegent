@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 
-import { countTokens } from '../brain1/serializer';
+import { countTokens } from '../utils/tokens';
 import { getRuntimeConfig, resolveLlmSelection, type LlmProvider } from '../config/runtime';
-import { buildGeminiResponseSchema } from '../executor/catalog';
+import { buildGeminiResponseSchema } from './responseSchema';
 import { logger } from '../logger';
 import {
   ProviderBudgetExceededError,

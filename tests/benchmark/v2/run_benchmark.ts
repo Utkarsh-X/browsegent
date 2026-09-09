@@ -368,32 +368,38 @@ function readPartitionArg(): BenchmarkPartitionSelection | undefined {
 
 function readPlannerSerializationArg(): NonNullable<BenchmarkRunMetadata['plannerSerialization']>['mode'] | undefined {
   const value = readFlag('--planner-serialization');
-  if (value === undefined || value === 'json' || value === 'prc') {
-    return value;
+  if (value === undefined || value === 'json' || value === 'prc' || value === 'prc-unified') {
+    return value === 'prc-unified' ? 'prc' : value;
   }
-  throw new Error(`Unsupported --planner-serialization "${value}". Use json or prc.`);
+  throw new Error(`Unsupported --planner-serialization "${value}". Use json, prc, or prc-unified.`);
 }
 
 function readPlannerSerializationConfig(
   mode: NonNullable<BenchmarkRunMetadata['plannerSerialization']>['mode'] | undefined,
 ): BenchmarkRunMetadata['plannerSerialization'] {
+  const rawArg = readFlag('--planner-serialization');
+  const prcUnified = hasFlag('--prc-unified') || rawArg === 'prc-unified';
+  const effectiveMode = prcUnified ? 'prc' : mode;
+
   const prcTierOmitted = hasFlag('--prc-tier-omitted');
   const compactDataPlane = hasFlag('--compact-data-plane');
-  if (prcTierOmitted || compactDataPlane) {
-    if (mode !== 'prc') {
+  if (prcUnified || prcTierOmitted || compactDataPlane) {
+    if (effectiveMode !== 'prc') {
       const flags = [
+        ...(prcUnified ? ['--prc-unified'] : []),
         ...(prcTierOmitted ? ['--prc-tier-omitted'] : []),
         ...(compactDataPlane ? ['--compact-data-plane'] : []),
       ];
       throw new Error(`${flags.join(' and ')} require --planner-serialization prc.`);
     }
     return {
-      mode,
+      mode: 'prc',
+      ...(prcUnified ? { prcUnified: true } : {}),
       ...(prcTierOmitted ? { prcTierOmitted: true } : {}),
       ...(compactDataPlane ? { compactDataPlane: true } : {}),
     };
   }
-  return mode === undefined ? undefined : { mode };
+  return effectiveMode === undefined ? undefined : { mode: effectiveMode };
 }
 
 function readWorkingSetOptions(): PlannerWorkingSetOptions | undefined {

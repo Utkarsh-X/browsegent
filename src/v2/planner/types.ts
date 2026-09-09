@@ -325,4 +325,30 @@ export interface PlannerSerializationConfig {
    *  0 parse failures across 422 calls without it; robustJsonParse covers
    *  malformed output. Default off until validated on a full run. */
   omitResponseJsonSchema?: boolean;
+  /** Unified PRC production stack: bundles prcLeanPlane, conditionalSystemPrompt,
+   *  composedPrompt, pageModel, doneCandidateChecklist, and deltaSurface into
+   *  a single proven operational plane. */
+  prcUnified?: boolean;
+}
+
+export function resolvePlannerSerializationConfig(
+  config?: PlannerSerializationConfig,
+): PlannerSerializationConfig {
+  if (!config) {
+    return { mode: 'json' };
+  }
+  if (config.prcUnified === true) {
+    return {
+      ...config,
+      mode: 'prc',
+      prcLeanPlane: config.prcLeanPlane ?? true,
+      conditionalSystemPrompt: config.conditionalSystemPrompt ?? true,
+      composedPrompt: config.composedPrompt ?? true,
+      pageModel: config.pageModel ?? true,
+      doneCandidateChecklist: config.doneCandidateChecklist ?? true,
+      deltaSurface: config.deltaSurface ?? true,
+      prcUnified: true,
+    };
+  }
+  return config;
 }

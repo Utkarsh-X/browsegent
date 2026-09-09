@@ -342,8 +342,24 @@ def run_browser_control(input_path: Path, output_path: Path) -> int:
             print(f"[browser-control] Step {step_idx}: {action} -> {action_data}", file=sys.stderr)
 
             if action == "done":
-                final_answer = str(action_data.get("answer") or action_data.get("value") or "")
-                success = bool(final_answer.strip())
+                final_answer = str(action_data.get("answer") or action_data.get("value") or "").strip()
+                bot_match = re.search(
+                    r"(?:cloudflare|turnstile|captcha|bot detection|access denied|security check|security verification|just a moment)",
+                    f"{final_answer} {thought}",
+                    re.IGNORECASE,
+                )
+                if not final_answer:
+                    success = False
+                    failure_type = "validation_error"
+                    failure_reason = "Agent executed done action with empty answer"
+                elif bot_match:
+                    success = False
+                    failure_type = "captcha_wall"
+                    failure_reason = f"Bot verification / access block: {final_answer[:120]}"
+                else:
+                    success = True
+                    failure_type = None
+                    failure_reason = None
                 history.append(f"Step {step_idx}: Done. Answer: {final_answer[:100]}")
                 break
 
@@ -379,24 +395,28 @@ def run_browser_control(input_path: Path, output_path: Path) -> int:
             history.append(f"Step {step_idx}: {action} {cmd_args[1:] if len(cmd_args) > 1 else ''} -> {outcome_snippet}")
             time.sleep(1.5)
 
-        if not success and not final_answer:
-            # Step budget exhausted; run one final extraction step
-            code, text_out, _ = run_bc_cmd(bc_bin, ["text"], env, timeout=30)
-            final_messages = [
-                {"role": "system", "content": 'Extract the final answer to the user goal from the current visible webpage text. Output only JSON: {"answer": "..."}'},
-                {"role": "user", "content": f"GOAL: {goal}\n\nVISIBLE TEXT:\n{text_out[:8000]}"},
-            ]
-            content, in_tok, out_tok, rl_wait = call_model(final_messages, model, api_key, gemini_api_key)
-            total_in_tokens += in_tok
-            total_out_tokens += out_tok
-            total_rate_limit_wait_ms += rl_wait
-            try:
-                ext_data = json.loads(extract_json_block(content))
-                final_answer = ext_data.get("answer", "")
-                success = bool(final_answer.strip())
-            except Exception:
-                final_answer = content
-                success = bool(final_answer.strip())
+        if not success:
+            if not failure_type:
+                failure_type = "budget_exceeded"
+            if not failure_reason:
+                failure_reason = "v2_max_steps_exhausted"
+            if not final_answer:
+                # Step budget exhausted; run one final extraction step for diagnostic inspection
+                code, text_out, _ = run_bc_cmd(bc_bin, ["text"], env, timeout=30)
+                final_messages = [
+                    {"role": "system", "content": 'Extract the final answer to the user goal from the current visible webpage text. Output only JSON: {"answer": "..."}'},
+                    {"role": "user", "content": f"GOAL: {goal}\n\nVISIBLE TEXT:\n{text_out[:8000]}"},
+                ]
+                content, in_tok, out_tok, rl_wait = call_model(final_messages, model, api_key, gemini_api_key)
+                total_in_tokens += in_tok
+                total_out_tokens += out_tok
+                total_rate_limit_wait_ms += rl_wait
+                try:
+                    ext_data = json.loads(extract_json_block(content))
+                    final_answer = ext_data.get("answer", "")
+                except Exception:
+                    final_answer = content
+                # success remains False because max_steps budget was exhausted without achieving goal
 
     except Exception as e:
         failure_reason = str(e)
@@ -431,7 +451,8 @@ def run_browser_control(input_path: Path, output_path: Path) -> int:
     }
 
     write_json(output_path, result_payload)
-    return 0 if success else 1
+    return 0
+
 
 
 def main() -> int:

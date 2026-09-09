@@ -19,7 +19,14 @@ import { BrowseGentV2Harness } from '../harness/BrowseGentV2Harness';
 import { PlannerInputComposer } from '../planner/PlannerInputComposer';
 import { buildPreviousSurfaceLines } from '../planner/prc/PromptLayoutEngine';
 import { V2PlannerClient } from '../planner/V2PlannerClient';
-import type { PlannerAnswerFeedback, PlannerInput, PlannerOutput, PlannerSerializationConfig, PlannerOutputStep } from '../planner/types';
+import {
+  type PlannerAnswerFeedback,
+  type PlannerInput,
+  type PlannerOutput,
+  type PlannerSerializationConfig,
+  type PlannerOutputStep,
+  resolvePlannerSerializationConfig,
+} from '../planner/types';
 import type { PlannerWorkingSetOptions } from '../planner/workingSetTypes';
 import { DeadStateDetector, type DeadStateEvidence } from '../runtime/DeadStateDetector';
 import { createDateSeekStop } from './SeekPolicy';
@@ -49,8 +56,9 @@ export class V2AgentLoop {
   constructor(private readonly options: V2AgentLoopOptions = {}) {}
 
   async run(input: V2AgentLoopInput): Promise<V2AgentLoopResult> {
+    const plannerSerialization = resolvePlannerSerializationConfig(input.plannerSerialization);
     const harness = this.createHarness();
-    const plannerClient = this.createPlannerClient(harness, input.plannerSerialization);
+    const plannerClient = this.createPlannerClient(harness, plannerSerialization);
     const dispatcher = this.options.dispatcherFactory?.(harness) ?? new V2ToolDispatcher(harness);
     const seekStop = createDateSeekStop(input.goal);
     const graph = new ContinuityGraph();
@@ -151,14 +159,14 @@ export class V2AgentLoop {
           trace: plannerTraceSteps.length > 0 ? plannerTraceSteps : undefined,
           maxLineageSteps: 5,
           previousRenderedRefs: buildPreviousRenderedRefs(
-            input.plannerSerialization?.deltaSurface === true,
+            plannerSerialization?.deltaSurface === true,
             previousPlannerInput,
             previousObservation,
           ),
         });
         // W2 wire input: the previous payload's surface element lines (the
         // changed class is a line-diff against them). Only when the wire is on.
-        const wireSurfaceLines = input.plannerSerialization?.deltaSurface === true && previousPlannerInput
+        const wireSurfaceLines = plannerSerialization?.deltaSurface === true && previousPlannerInput
           ? buildPreviousSurfaceLines(previousPlannerInput)
           : undefined;
         previousObservation = observation;
@@ -326,7 +334,7 @@ export class V2AgentLoop {
           // escalation).
           let acceptedValue = value;
           const checklistNote = advisoryReasons.length > 0 ? advisoryReasons.join('|') : undefined;
-          if (input.plannerSerialization?.doneCandidateChecklist === true && !doneChecklistUsed) {
+          if (plannerSerialization?.doneCandidateChecklist === true && !doneChecklistUsed) {
             doneChecklistUsed = true;
             const checklistInput: typeof plannerInput = {
               ...plannerInput,

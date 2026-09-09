@@ -80,7 +80,7 @@ test('v2 boundary checker accepts approved runtime dependency directions', async
       content: "import { TraceStore } from '../trace/TraceStore';\n",
     },
     {
-      path: 'src/v2/adapter/V1CompatibilityAdapter.ts',
+      path: 'src/v2/public/BrowserAgentRunner.ts',
       content: "import { PlannerInputComposer } from '../planner/PlannerInputComposer';\n",
     },
   ]);

@@ -32,5 +32,7 @@ tests/benchmark/v2/webarena/auth/
 agy-gateway/
 .browser-control/
 .claude/
+.freebuff/
+.opencodego-gateway/
 scratch/
 

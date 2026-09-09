@@ -279,30 +279,35 @@ function readTaskSliceArg(): WebVoyagerTaskSlice | undefined {
   throw new Error(`Unsupported WebVoyager slice "${value}". Use balanced30, mvr5, mvr5-stable, fresh50, or fresh50-stable.`);
 }
 
-function readPlannerSerializationArg(): NonNullable<RunBenchmarkOptions['plannerSerialization']>['mode'] | undefined {
+export function readPlannerSerializationArg(): NonNullable<RunBenchmarkOptions['plannerSerialization']>['mode'] | undefined {
   const value = readFlag('--planner-serialization');
-  if (value === undefined || value === 'json' || value === 'prc') {
-    return value;
+  if (value === undefined || value === 'json' || value === 'prc' || value === 'prc-unified') {
+    return value === 'prc-unified' ? 'prc' : value;
   }
-  throw new Error(`Unsupported --planner-serialization "${value}". Use json or prc.`);
+  throw new Error(`Unsupported --planner-serialization "${value}". Use json, prc, or prc-unified.`);
 }
 
-function readPlannerSerializationConfig(
+export function readPlannerSerializationConfig(
   mode: NonNullable<RunBenchmarkOptions['plannerSerialization']>['mode'] | undefined,
 ): RunBenchmarkOptions['plannerSerialization'] {
+  const rawArg = readFlag('--planner-serialization');
+  const prcUnified = hasFlag('--prc-unified') || rawArg === 'prc-unified';
+  const effectiveMode = prcUnified ? 'prc' : mode;
+
   const prcTierOmitted = hasFlag('--prc-tier-omitted');
   const compactDataPlane = hasFlag('--compact-data-plane');
-  const prcLeanPlane = hasFlag('--prc-lean-plane');
-  const conditionalPrompt = hasFlag('--planner-conditional-prompt');
+  const prcLeanPlane = hasFlag('--prc-lean-plane') || prcUnified;
+  const conditionalPrompt = hasFlag('--planner-conditional-prompt') || prcUnified;
   const stableOrder = hasFlag('--prc-stable-order');
-  const composedPrompt = hasFlag('--planner-composed-prompt');
-  const pageModel = hasFlag('--prc-page-model');
-  const doneChecklist = hasFlag('--done-candidate-checklist');
-  const deltaSurface = hasFlag('--prc-delta-surface');
+  const composedPrompt = hasFlag('--planner-composed-prompt') || prcUnified;
+  const pageModel = hasFlag('--prc-page-model') || prcUnified;
+  const doneChecklist = hasFlag('--done-candidate-checklist') || prcUnified;
+  const deltaSurface = hasFlag('--prc-delta-surface') || prcUnified;
   const noJsonSchema = hasFlag('--planner-no-json-schema');
-  if (prcTierOmitted || compactDataPlane || prcLeanPlane || conditionalPrompt || stableOrder || composedPrompt || pageModel || doneChecklist || deltaSurface) {
-    if (mode !== 'prc') {
+  if (prcUnified || prcTierOmitted || compactDataPlane || prcLeanPlane || conditionalPrompt || stableOrder || composedPrompt || pageModel || doneChecklist || deltaSurface) {
+    if (effectiveMode !== 'prc') {
       const flags = [
+        ...(prcUnified ? ['--prc-unified'] : []),
         ...(prcTierOmitted ? ['--prc-tier-omitted'] : []),
         ...(compactDataPlane ? ['--compact-data-plane'] : []),
         ...(prcLeanPlane ? ['--prc-lean-plane'] : []),
@@ -316,7 +321,8 @@ function readPlannerSerializationConfig(
       throw new Error(`${flags.join(' and ')} require --planner-serialization prc.`);
     }
     return {
-      mode,
+      mode: 'prc',
+      ...(prcUnified ? { prcUnified: true } : {}),
       ...(prcTierOmitted ? { prcTierOmitted: true } : {}),
       ...(compactDataPlane ? { compactDataPlane: true } : {}),
       ...(prcLeanPlane ? { prcLeanPlane: true } : {}),
@@ -326,15 +332,16 @@ function readPlannerSerializationConfig(
       ...(pageModel ? { pageModel: true } : {}),
       ...(doneChecklist ? { doneCandidateChecklist: true } : {}),
       ...(deltaSurface ? { deltaSurface: true } : {}),
+      ...(noJsonSchema ? { omitResponseJsonSchema: true } : {}),
     };
   }
   if (noJsonSchema) {
-    if (mode === undefined) {
+    if (effectiveMode === undefined) {
       throw new Error('--planner-no-json-schema requires --planner-serialization (json or prc).');
     }
-    return { mode, ...(noJsonSchema ? { omitResponseJsonSchema: true } : {}) };
+    return { mode: effectiveMode, ...(noJsonSchema ? { omitResponseJsonSchema: true } : {}) };
   }
-  return mode === undefined ? undefined : { mode };
+  return effectiveMode === undefined ? undefined : { mode: effectiveMode };
 }
 
 function readWorkingSetOptions(): RunBenchmarkOptions['workingSetOptions'] {

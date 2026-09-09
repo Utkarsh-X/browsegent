@@ -8,7 +8,7 @@ import {
   buildV2PlannerValidationFeedback,
 } from './PlannerPrompt';
 import { buildV2PlannerResponseSchema } from './V2PlannerResponseSchema';
-import type { PlannerInput, PlannerOutput, PlannerSerializationConfig } from './types';
+import { type PlannerInput, type PlannerOutput, type PlannerSerializationConfig, resolvePlannerSerializationConfig } from './types';
 
 export interface V2PlannerProviderResult {
   text: string;
@@ -86,7 +86,7 @@ export class V2PlannerClient {
     this.provider = options.provider ?? callProvider;
     this.schema = options.schema ?? new PlannerOutputSchema();
     this.traceStore = options.traceStore;
-    this.plannerSerialization = options.plannerSerialization ?? { mode: 'json' };
+    this.plannerSerialization = resolvePlannerSerializationConfig(options.plannerSerialization);
   }
 
   async call(input: V2PlannerCallInput): Promise<V2PlannerCallResult> {

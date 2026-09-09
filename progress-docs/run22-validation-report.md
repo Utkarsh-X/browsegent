@@ -6,6 +6,11 @@ Run `webvoyager_lite_1788689024341`, balanced30, same flags. First run with the 
 
 **GitHub__0: STRICT**, with the answer naming `resource-watch` — the metric-best card (73 stars) that sat below the fold and invisible to the evidence ledger in every prior run. The superlative steering fired zero times because the model now *sees* the winner in its own evidence snapshot and picks it. Verification-by-data-visibility succeeded: the ledger, the working-set pins, and the model all read the same below-fold-inclusive view.
 
+### Task Rosters
+
+* **Strict Passes (7 Tasks)**: `Amazon__0`, `Coursera__10`, `ESPN__0`, `ESPN__10`, `GitHub__0` (below-fold winner), `Google__Map__10`, `Wolfram__Alpha__0`.
+* **Judge Approvals (6 Tasks)**: `BBC__News__0`, `Booking__10` (3rd consecutive pass), `Coursera__0`, `Huggingface__0`, `Huggingface__10`, `Wolfram__Alpha__10` (4th consecutive pass).
+
 ## Band status (post-stack, balanced30)
 
 | | r18 | r19 | r20 | r21 | r22 | band |
