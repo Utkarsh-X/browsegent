@@ -12,6 +12,12 @@ import {
   recordProviderCall,
   type ProviderFailureType,
 } from './apiBudget';
+import {
+  collectGeminiFailoverKeyPool,
+  createGeminiQuotaKeyRotator,
+  numberedKeyIndex,
+  type GeminiQuotaKeyRotator,
+} from './geminiKeyFailover';
 import { waitForGeminiRequestSlot } from './requestPacer';
 
 export interface ProviderResult {
@@ -120,8 +126,10 @@ async function callGemini(system: string, user: string, model: string, options: 
   const startedAt = Date.now();
   const estimatedInputTokens = estimateProviderInputTokens(system, user);
   const keyMetadata = readActiveGeminiKeyMetadata();
-  const apiKey = getRuntimeConfig().llm.geminiApiKey;
+  let apiKey = getRuntimeConfig().llm.geminiApiKey;
   if (!apiKey) throw new Error('GEMINI_API_KEY not set in .env');
+  let activeKeyEnvName = keyMetadata?.envName;
+  let activeKeyIndex = keyMetadata?.keyIndex;
 
   try {
     assertProviderInputWithinBudget({
@@ -130,7 +138,7 @@ async function callGemini(system: string, user: string, model: string, options: 
       inputTokens: estimatedInputTokens,
     });
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
     const responseSchema = options.responseSchema ?? buildGeminiResponseSchema();
     const body = JSON.stringify({
       system_instruction: { parts: [{ text: system }] },
@@ -148,9 +156,9 @@ async function callGemini(system: string, user: string, model: string, options: 
           },
     });
 
-    const retries = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRIES', 6);
+    const retries = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRIES', 11);
     const retryBaseMs = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRY_BASE_MS', 4000);
-    const retryMaxMs = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRY_MAX_MS', 45000);
+    const retryMaxMs = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRY_MAX_MS', 30000);
     const retryCodes = new Set([429, 500, 502, 503]);
 
     for (let attempt = 1; attempt <= retries; attempt++) {
@@ -158,7 +166,7 @@ async function callGemini(system: string, user: string, model: string, options: 
       if (pacingWaitMs > 0) options.onPacingWait?.(pacingWaitMs);
       let response: Response;
       try {
-        response = await fetch(url, {
+        response = await fetch(`${url}?key=${encodeURIComponent(apiKey)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body,
@@ -193,8 +201,8 @@ async function callGemini(system: string, user: string, model: string, options: 
           inputTokens: result.inputTokens,
           outputTokens: result.outputTokens,
           durationMs: Date.now() - startedAt,
-          keyIndex: keyMetadata?.keyIndex,
-          keyEnvName: keyMetadata?.envName,
+          keyIndex: activeKeyIndex,
+          keyEnvName: activeKeyEnvName,
         });
         return result;
       }
@@ -202,6 +210,19 @@ async function callGemini(system: string, user: string, model: string, options: 
       if (response.status === 429) {
         const errorBody = await response.text().catch(() => '');
         if (errorBody.includes('quota') || errorBody.includes('RESOURCE_EXHAUSTED') || errorBody.includes('rate')) {
+          const rotator = getGeminiQuotaKeyRotator();
+          if (rotator.poolSize() > 0) {
+            rotator.markBlocked(apiKey, errorBody);
+            const failover = rotator.nextKey(apiKey);
+            if (failover) {
+              logger.warn('providers', `Gemini quota on active key (${activeKeyEnvName ?? 'GEMINI_API_KEY'}); failing over to ${failover.envName}`);
+              apiKey = failover.value;
+              activeKeyEnvName = failover.envName;
+              activeKeyIndex = numberedKeyIndex(failover.envName);
+              continue;
+            }
+            logger.warn('providers', `Gemini quota exhausted on all ${rotator.poolSize() + 1} configured keys; failing the request`);
+          }
           throw formatGeminiQuotaError();
         }
       }
@@ -227,11 +248,25 @@ async function callGemini(system: string, user: string, model: string, options: 
       inputTokens: estimatedInputTokens,
       outputTokens: 0,
       durationMs: Date.now() - startedAt,
-      keyIndex: keyMetadata?.keyIndex,
-      keyEnvName: keyMetadata?.envName,
+      keyIndex: activeKeyIndex,
+      keyEnvName: activeKeyEnvName,
     });
     throw error;
   }
+}
+
+let geminiQuotaKeyRotator: GeminiQuotaKeyRotator | undefined;
+
+function getGeminiQuotaKeyRotator(): GeminiQuotaKeyRotator {
+  if (!geminiQuotaKeyRotator) {
+    geminiQuotaKeyRotator = createGeminiQuotaKeyRotator(collectGeminiFailoverKeyPool());
+  }
+  return geminiQuotaKeyRotator;
+}
+
+/** Test seam: clears the lazily-initialized failover pool and blocked-key state. */
+export function resetGeminiKeyFailoverState(): void {
+  geminiQuotaKeyRotator = undefined;
 }
 
 function isTransientNetworkError(error: unknown): boolean {
