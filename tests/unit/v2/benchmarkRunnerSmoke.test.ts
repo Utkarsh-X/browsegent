@@ -260,6 +260,141 @@ test('runBenchmark filters tasks by benchmark partition before applying count', 
   assert.deepEqual(seenTaskIds, ['holdout_one']);
 });
 
+test('runBenchmark records planner serialization and working set options in metadata and summary', async () => {
+  const outputRoot = join(process.cwd(), 'logs', 'benchmark-runner-config-metadata-unit');
+  await rm(outputRoot, { recursive: true, force: true });
+  const seenPlannerSerialization: unknown[] = [];
+  const seenWorkingSetOptions: unknown[] = [];
+
+  const fakeAdapter: BenchmarkAdapter = {
+    adapterId: 'fake',
+    run: async (task, options) => {
+      seenPlannerSerialization.push(options.plannerSerialization);
+      seenWorkingSetOptions.push(options.workingSetOptions);
+      return {
+        adapterId: 'fake',
+        taskId: task.taskId,
+        attempt: options.attempt,
+        success: true,
+        value: 'Fixture page is visible',
+        tracePath: undefined,
+        metrics: { plannerCalls: 1, toolExecutions: 0, durationMs: 5 },
+      };
+    },
+  };
+
+  const plannerSerialization = { mode: 'prc' as const, prcTierOmitted: true, compactDataPlane: false };
+  const report = await runBenchmark({
+    runId: 'benchmark_config_metadata_unit',
+    outputRoot,
+    adapter: fakeAdapter,
+    tasks: [benchmarkTask('config_visible', 'dev')],
+    repeat: 1,
+    plannerSerialization,
+    workingSetOptions: { readablePhraseBonus: 60 },
+    traceAudit: async () => ({ ok: true, errors: [] }),
+  });
+
+  assert.deepEqual(seenPlannerSerialization, [plannerSerialization]);
+  assert.deepEqual(seenWorkingSetOptions, [{ readablePhraseBonus: 60 }]);
+  assert.deepEqual(report.runMetadata?.plannerSerialization, plannerSerialization);
+  assert.deepEqual(report.runMetadata?.workingSetOptions, { readablePhraseBonus: 60 });
+
+  const persisted = JSON.parse(
+    await readFile(join(outputRoot, 'benchmark_config_metadata_unit', 'report.json'), 'utf8'),
+  );
+  assert.deepEqual(persisted.runMetadata?.plannerSerialization, plannerSerialization);
+  assert.deepEqual(persisted.runMetadata?.workingSetOptions, { readablePhraseBonus: 60 });
+
+  const summary = await readFile(join(outputRoot, 'benchmark_config_metadata_unit', 'summary.md'), 'utf8');
+  assert.match(summary, /Planner serialization: mode=prc prcTierOmitted=true compactDataPlane=false/);
+  assert.match(summary, /Working set options: readablePhraseBonus=60/);
+});
+
+test('runBenchmark annotates unset prc serialization booleans and omits unset working set options', async () => {
+  const outputRoot = join(process.cwd(), 'logs', 'benchmark-runner-prc-partial-unit');
+  await rm(outputRoot, { recursive: true, force: true });
+
+  const fakeAdapter: BenchmarkAdapter = {
+    adapterId: 'fake',
+    run: async (task, options) => ({
+      adapterId: 'fake',
+      taskId: task.taskId,
+      attempt: options.attempt,
+      success: true,
+      value: 'Fixture page is visible',
+      tracePath: undefined,
+      metrics: { plannerCalls: 1, toolExecutions: 0, durationMs: 5 },
+    }),
+  };
+
+  const report = await runBenchmark({
+    runId: 'benchmark_prc_partial_unit',
+    outputRoot,
+    adapter: fakeAdapter,
+    tasks: [benchmarkTask('prc_partial_visible', 'dev')],
+    repeat: 1,
+    plannerSerialization: { mode: 'prc', prcTierOmitted: true },
+    traceAudit: async () => ({ ok: true, errors: [] }),
+  });
+
+  assert.deepEqual(report.runMetadata?.plannerSerialization, { mode: 'prc', prcTierOmitted: true });
+  assert.equal(report.runMetadata?.workingSetOptions, undefined);
+  assert.equal('workingSetOptions' in (report.runMetadata ?? {}), false);
+
+  const summary = await readFile(join(outputRoot, 'benchmark_prc_partial_unit', 'summary.md'), 'utf8');
+  assert.match(summary, /Planner serialization: mode=prc prcTierOmitted=true compactDataPlane=not-set/);
+  assert.match(summary, /Working set options: none/);
+});
+
+test('runBenchmark keeps default planner metadata shape when no planner configuration is passed', async () => {
+  const outputRoot = join(process.cwd(), 'logs', 'benchmark-runner-default-planner-unit');
+  await rm(outputRoot, { recursive: true, force: true });
+  const seenPlannerSerialization: unknown[] = [];
+  const seenWorkingSetOptions: unknown[] = [];
+
+  const fakeAdapter: BenchmarkAdapter = {
+    adapterId: 'fake',
+    run: async (task, options) => {
+      seenPlannerSerialization.push(options.plannerSerialization);
+      seenWorkingSetOptions.push(options.workingSetOptions);
+      return {
+        adapterId: 'fake',
+        taskId: task.taskId,
+        attempt: options.attempt,
+        success: true,
+        value: 'Fixture page is visible',
+        tracePath: undefined,
+        metrics: { plannerCalls: 1, toolExecutions: 0, durationMs: 5 },
+      };
+    },
+  };
+
+  const report = await runBenchmark({
+    runId: 'benchmark_default_planner_unit',
+    outputRoot,
+    adapter: fakeAdapter,
+    tasks: [benchmarkTask('default_planner_visible', 'dev')],
+    repeat: 1,
+    traceAudit: async () => ({ ok: true, errors: [] }),
+  });
+
+  assert.equal(seenPlannerSerialization[0], undefined);
+  assert.equal(seenWorkingSetOptions[0], undefined);
+  assert.equal(report.runMetadata?.plannerSerialization, undefined);
+  assert.equal('workingSetOptions' in (report.runMetadata ?? {}), false);
+
+  const persisted = JSON.parse(
+    await readFile(join(outputRoot, 'benchmark_default_planner_unit', 'report.json'), 'utf8'),
+  );
+  assert.equal('plannerSerialization' in persisted.runMetadata, false);
+  assert.equal('workingSetOptions' in persisted.runMetadata, false);
+
+  const summary = await readFile(join(outputRoot, 'benchmark_default_planner_unit', 'summary.md'), 'utf8');
+  assert.match(summary, /Planner serialization: mode=json/);
+  assert.match(summary, /Working set options: none/);
+});
+
 function benchmarkTask(taskId: string, partition: 'dev' | 'holdout') {
   return {
     taskId,

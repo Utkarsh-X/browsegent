@@ -8,6 +8,7 @@ export type WorkingSetMode = 'explore' | 'act' | 'verify' | 'recover' | 'extract
 export type WorkingSetIncludeReason =
   | 'visible_ready'
   | 'goal_keyword_match'
+  | 'goal_phrase_match'
   | 'role_relevant_to_goal'
   | 'near_focus'
   | 'recently_appeared'
@@ -15,22 +16,31 @@ export type WorkingSetIncludeReason =
   | 'last_target'
   | 'last_success'
   | 'last_failure'
+  | 'recovery_control'
+  | 'horizon_control'
+  | 'target_value'
+  | 'submit_control'
   | 'dead_state_evidence'
   | 'answer_candidate'
+  | 'suggestion_option'
+  | 'result_row'
   | 'navigation_candidate'
   | 'form_candidate'
-  | 'region_representative';
+  | 'region_representative'
+  | 'carried';
 
 export type WorkingSetDropReason =
   | 'hidden_low_value'
   | 'offscreen_low_value'
   | 'generic_low_value'
+  | 'unlabeled_action'
   | 'duplicate_region_member'
   | 'navigation_overflow'
   | 'readable_overflow'
   | 'stale_unrelated'
   | 'low_confidence_unrelated'
-  | 'token_budget_exceeded';
+  | 'token_budget_exceeded'
+  | 'rank_loss';
 
 export interface PlannerWorkingSetOptions {
   maxPrimaryRefs?: number;
@@ -40,6 +50,8 @@ export interface PlannerWorkingSetOptions {
   maxRegionSummaries?: number;
   maxTextLengthPerRef?: number;
   maxChangedRefs?: number;
+  /** Optional opt-in goal-phrase boost for refs in the projection readable lane. */
+  readablePhraseBonus?: number;
 }
 
 export interface PlannerWorkingSetRef {
@@ -105,6 +117,9 @@ export interface PlannerWorkingSet {
   navigationRefs: PlannerWorkingSetRef[];
   actionSurface: PlannerActionSurface;
   changedRefs: PlannerChangedRefsSummary;
+  /** Selected refs that appeared or changed since the previous action
+   *  (diff-first markers for the lean render). */
+  deltaRefs: { appeared: string[]; changed: string[] };
   failedRefs: PlannerWorkingSetRef[];
   quarantinedActions: PlannerQuarantinedAction[];
   regionSummaries: PlannerWorkingSetRegionSummary[];

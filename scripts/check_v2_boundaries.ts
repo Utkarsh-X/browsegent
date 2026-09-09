@@ -195,6 +195,16 @@ export function checkV2Boundaries(files: SourceFileInput[]): BoundaryCheckResult
           'runtime source must not import evaluation code',
         );
       }
+
+      if (isWithin(filePath, 'src/v2') && isV1ModuleTarget(target)) {
+        addViolation(
+          violations,
+          filePath,
+          importReference,
+          'v2-no-v1-imports',
+          'v2 must not import the retired V1 system (src/agent, src/brain1, src/brain2, src/graph, src/executor, src/adapters)',
+        );
+      }
     }
   }
 
@@ -202,6 +212,19 @@ export function checkV2Boundaries(files: SourceFileInput[]): BoundaryCheckResult
     ok: violations.length === 0,
     violations,
   };
+}
+
+const V1_MODULE_ROOTS = [
+  'src/agent',
+  'src/brain1',
+  'src/brain2',
+  'src/graph',
+  'src/executor',
+  'src/adapters',
+];
+
+function isV1ModuleTarget(target: string): boolean {
+  return V1_MODULE_ROOTS.some(root => isWithin(target, root)) || target === 'src/BrowseGent.ts';
 }
 
 function collectProjectFiles(projectRoot: string, directories: string[]): SourceFileInput[] {

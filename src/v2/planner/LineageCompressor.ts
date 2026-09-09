@@ -21,6 +21,7 @@ function compressStep(step: TraceStep): CompressedLineageStep {
   const result = asRecord(step.result);
   const error = asRecord(result?.error);
   const evidence = asRecord(result?.evidence);
+  const target = asRecord(result?.target);
 
   return {
     stepId: step.stepId,
@@ -28,12 +29,44 @@ function compressStep(step: TraceStep): CompressedLineageStep {
     kind: step.kind,
     status: step.status,
     targetRef: step.targetRef ?? stringValue(result?.targetRef),
+    targetName: boundedTargetName(target),
+    value: extractStepValue(step),
     beforeObservationId: step.beforeObservationId,
     afterObservationId: step.afterObservationId,
     errorCode: stringValue(error?.code),
     transitionClass: transitionClassValue(evidence?.transitionClass),
     strength: transitionStrengthValue(evidence?.strength),
   };
+}
+
+function boundedTargetName(target: Record<string, TraceJsonValue> | undefined): string | undefined {
+  const raw = target?.name ?? target?.text;
+  if (typeof raw === 'string' && raw.trim().length > 0) {
+    return raw.trim().slice(0, 80);
+  }
+  return undefined;
+}
+
+function extractStepValue(step: TraceStep): string | undefined {
+  const input = asRecord(step.input);
+  const result = asRecord(step.result);
+  const resultVal = asRecord(result?.value);
+  let raw: unknown;
+
+  if (step.kind === 'type') {
+    raw = input?.text ?? input?.value ?? resultVal?.inputValue ?? resultVal?.text ?? (typeof result?.value === 'string' ? result.value : undefined);
+  } else if (step.kind === 'select') {
+    raw = input?.value ?? input?.option ?? input?.text ?? resultVal?.value ?? (typeof result?.value === 'string' ? result.value : undefined);
+  } else if (step.kind === 'navigate') {
+    raw = input?.url ?? resultVal?.url ?? (typeof result?.value === 'string' ? result.value : undefined);
+  } else if (step.kind === 'press') {
+    raw = input?.key ?? resultVal?.key ?? (typeof result?.value === 'string' ? result.value : undefined);
+  }
+
+  if (typeof raw === 'string' && raw.trim().length > 0) {
+    return raw.trim().slice(0, 120);
+  }
+  return undefined;
 }
 
 function asRecord(value: TraceJsonValue | undefined): Record<string, TraceJsonValue> | undefined {

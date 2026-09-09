@@ -1,13 +1,19 @@
 import type { TransitionClass, TransitionEvidence, TransitionStrength, V2ToolResult } from '../runtime/types';
 import type { SerializedProjection } from '../brain1/projectionTypes';
 import type { ContinuityGraphSnapshot } from '../graph/types';
-import type { TraceManifest } from '../trace/types';
+import type { TraceManifest, TraceStep } from '../trace/types';
 import type { DeadStateEvidence } from '../runtime/DeadStateDetector';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { RuntimeUncertainty } from '../runtime/UncertaintySignals';
 import type { PlannerRecoveryState } from '../runtime/RecoveryState';
-import type { PlannerWorkingSet, PlannerWorkingSetDiagnostics } from './workingSetTypes';
+import type {
+  PlannerWorkingSet,
+  PlannerWorkingSetDiagnostics,
+  PlannerWorkingSetOptions,
+} from './workingSetTypes';
 import type { ProjectionSizeDiagnostics } from './ProjectionSizeDiagnostics';
+import type { PlannerGoalProgress } from './GoalProgressTracker';
+import type { SurfaceHorizon } from './HorizonDetector';
 
 export type PlannerOutputTool =
   | 'click'
@@ -20,9 +26,12 @@ export type PlannerOutputTool =
   | 'close'
   | 'select'
   | 'search_page'
+  | 'seek'
   | 'find_elements'
   | 'count_elements'
-  | 'inspect_region';
+  | 'inspect_region'
+  | 'pick_option'
+  | 'submit_form';
 
 export type PlannerConfidence = 'high' | 'medium' | 'low';
 export type PlannerEscalation = 'user_needed' | 'captcha' | 'dead_end';
@@ -37,12 +46,20 @@ export interface PlannerInputComposerInput {
   graphSnapshot?: ContinuityGraphSnapshot;
   transitionEvidence?: TransitionEvidence;
   lastResult?: V2ToolResult;
-  trace?: TraceManifest;
+  trace?: TraceManifest | TraceStep[];
   maxLineageSteps?: number;
   failureEvidence?: FailureEvidence[];
   deadStateEvidence?: DeadStateEvidence;
   runtimeUncertainty?: RuntimeUncertainty;
   answerFeedback?: PlannerAnswerFeedback;
+  evidenceCoverage?: PlannerEvidenceCoverage;
+  evidenceSnapshot?: PlannerEvidenceSnapshot;
+  workingSetOptions?: PlannerWorkingSetOptions;
+  goalProgress?: PlannerGoalProgress;
+  /** Page-model 2b (H4): the previous episode's rendered refs with the
+   *  targetIds they had then; still-alive matches join the working set
+   *  additively. Undefined = carry disabled (off-path). */
+  previousRenderedRefs?: ReadonlyArray<{ refId: string; targetId?: string }>;
 }
 
 export interface PlannerInput {
@@ -59,15 +76,82 @@ export interface PlannerInput {
   deadState?: PlannerDeadStateSummary;
   recovery?: PlannerRecoveryState;
   answerFeedback?: PlannerAnswerFeedback;
+  evidenceCoverage?: PlannerEvidenceCoverage;
+  taskProgress?: PlannerTaskProgress;
+  evidenceSnapshot?: PlannerEvidenceSnapshot;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
+  goalProgress?: PlannerGoalProgress;
+  horizon?: SurfaceHorizon;
   sizeDiagnostics?: ProjectionSizeDiagnostics;
+}
+
+export type PlannerTaskProgressItemStatus = 'pending' | 'observed' | 'applied' | 'conflicting';
+export type PlannerTaskProgressState = 'unknown' | 'incomplete' | 'ready' | 'conflicting';
+
+export interface PlannerTaskProgressItem {
+  key: string;
+  requested: string;
+  status: PlannerTaskProgressItemStatus;
+  evidence?: string[];
+}
+
+/** Advisory state for explicit operational constraints found in the user goal. */
+export interface PlannerTaskProgress {
+  status: PlannerTaskProgressState;
+  items: PlannerTaskProgressItem[];
 }
 
 export interface PlannerAnswerFeedback {
   previousAnswer: string;
   missingDetails: string[];
   instruction: string;
+}
+
+export type PlannerEvidenceCoverageKey =
+  | 'pronunciation'
+  | 'definition'
+  | 'concrete_basic_information'
+  | 'ranking_evidence';
+export type PlannerEvidenceCoverageStatus = 'proven' | 'missing' | 'uncertain' | 'conflicting';
+export type PlannerEvidenceCoverageState = 'ready' | 'incomplete' | 'uncertain';
+
+export interface PlannerEvidenceCoverageRequirement {
+  key: PlannerEvidenceCoverageKey;
+  status: PlannerEvidenceCoverageStatus;
+  supportingReadIndexes: number[];
+}
+
+export interface PlannerEvidenceCoverage {
+  contractKind: string;
+  status: PlannerEvidenceCoverageState;
+  readCount: number;
+  requirements: PlannerEvidenceCoverageRequirement[];
+}
+
+/** Bounded, relation-preserving facts extracted from the evidence ledger. */
+export interface PlannerEvidenceSnapshot {
+  activeSort?: {
+    dimension: 'stars' | 'date' | 'price' | 'rating' | 'relevance';
+    direction: 'asc' | 'desc';
+    source: 'url_query' | 'active_control' | 'action_lineage';
+  };
+  cards: PlannerEvidenceSnapshotCard[];
+}
+
+export interface PlannerEvidenceSnapshotCard {
+  position: number;
+  entity?: string;
+  provenRank?: number;
+  metrics: {
+    stars?: number;
+    rating?: number;
+    reviewCount?: number;
+    price?: number;
+    citations?: number;
+  };
+  temporal?: string[];
+  refIds: string[];
 }
 
 export interface PlannerContinuitySummary {
@@ -108,6 +192,9 @@ export interface PlannerLastResultSummary {
   traceStepId: string;
   targetRef?: string;
   valuePreview?: string;
+  /** Deterministic post-action verdict from the transition evidence; rendered
+   *  only when 'none' (the surprising value the planner must react to). */
+  effect?: 'page' | 'local' | 'none';
   error?: {
     code: string;
     retryable: boolean;
@@ -158,6 +245,9 @@ export interface CompressedLineageStep {
   kind: string;
   status: string;
   targetRef?: string;
+  /** Bounded accessible name of the acted-on element; enables value-level lineage matching. */
+  targetName?: string;
+  value?: string;
   beforeObservationId?: string;
   afterObservationId?: string;
   errorCode?: string;
@@ -199,4 +289,66 @@ export type PlannerSerializationMode = 'json' | 'prc';
 export interface PlannerSerializationConfig {
   /** @default 'json' */
   mode: PlannerSerializationMode;
+  /** Omit per-element score tiers in the opt-in PRC representation. */
+  prcTierOmitted?: boolean;
+  /** Render the compact PRC data-plane layout. */
+  compactDataPlane?: boolean;
+  /** Lean plane: strip element metadata, omit the working-set narrative, cap the payload. */
+  prcLeanPlane?: boolean;
+  /** Inject guidance blocks only when their subject is present in the episode input. */
+  conditionalSystemPrompt?: boolean;
+  /** Canonical deterministic surface order (O1): region members, region groups
+   *  (by min member), and the remainder all ordered by numeric refId — the
+   *  append-only first-appearance order. Zero byte delta; makes consecutive-
+   *  episode element lines diffable (the T-C prerequisite). */
+  prcStableOrder?: boolean;
+  /** Composed system prompt (T-B): stable fixed head + conditional tail in
+   *  engagement order, compressed per the token-round-1 block audit. */
+  composedPrompt?: boolean;
+  /** Page-model stage 2a (world-model contract C1/C3): L1 section split —
+   *  volatile observation/focus lines move after PLANNER SURFACE — plus
+   *  continuity-marker normalization (state=weakened / confidence / +new / +chg
+   *  leave element lines, render once as a CONTINUITY header). Lean-plane only;
+   *  off-path byte-identical. */
+  pageModel?: boolean;
+  /** Answer-quality D1: one done-candidate verification re-ask at the answer
+   *  acceptance point (steer-once, hard-capped). Off-path byte-identical. */
+  doneCandidateChecklist?: boolean;
+  /** Page-model stage 2b (world-model contract C2/C3): H4 additive carry of
+   *  previously-rendered still-alive refs plus the W2 delta-surface wire
+   *  (stable refs render as minimal kind+name lines; the changed class is a
+   *  line-diff against the previous payload's element lines, supplied per
+   *  call by the agent loop). Additive only — nothing is ever displaced
+   *  (measured zero starvation). */
+  deltaSurface?: boolean;
+  /** Drop responseJsonSchema from the provider call (887 B/call). Measured
+   *  0 parse failures across 422 calls without it; robustJsonParse covers
+   *  malformed output. Default off until validated on a full run. */
+  omitResponseJsonSchema?: boolean;
+  /** Unified PRC production stack: bundles prcLeanPlane, conditionalSystemPrompt,
+   *  composedPrompt, pageModel, doneCandidateChecklist, and deltaSurface into
+   *  a single proven operational plane. */
+  prcUnified?: boolean;
+}
+
+export function resolvePlannerSerializationConfig(
+  config?: PlannerSerializationConfig,
+): PlannerSerializationConfig {
+  if (!config) {
+    return { mode: 'json' };
+  }
+  if (config.prcUnified === true) {
+    return {
+      ...config,
+      mode: 'prc',
+      prcLeanPlane: config.prcLeanPlane ?? true,
+      conditionalSystemPrompt: config.conditionalSystemPrompt ?? true,
+      composedPrompt: config.composedPrompt ?? true,
+      pageModel: config.pageModel ?? true,
+      doneCandidateChecklist: config.doneCandidateChecklist ?? true,
+      deltaSurface: config.deltaSurface ?? true,
+      prcUnified: true,
+    };
+  }
+  return config;
 }

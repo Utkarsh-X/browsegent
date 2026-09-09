@@ -1,11 +1,35 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { inferAnswerContract, validateAnswerAgainstContract } from '../../../src/v2/agent/AnswerContract';
+import {
+  findListPageOnlyAnswerSignal,
+  findUnverifiedSuperlativeAnswer,
+  parseRankingDimension,
+  inferAnswerContract,
+  isSearchOrListingUrl,
+  parseRequestedDetailCategories,
+  parseRequestedItemCount,
+  partitionAnswerContractReasons,
+  validateAnswerAgainstContract,
+} from '../../../src/v2/agent/AnswerContract';
 
-test('inferAnswerContract requires non-url text for named entity goals', () => {
+test('inferAnswerContract treats temporal latest lookup as a named entity goal', () => {
   const contract = inferAnswerContract('Find the latest paper about quantum computing on arXiv');
-  assert.equal(contract.kind, 'ranked_entity');
+  assert.equal(contract.kind, 'entity');
   assert.equal(contract.requiresNonUrlText, true);
+  assert.equal(contract.requiresRankingEvidence, false);
+});
+
+test('inferAnswerContract does not require ranking evidence for latest product details', () => {
+  const contract = inferAnswerContract('Find information about the latest MacBook model and its features');
+  assert.notEqual(contract.kind, 'ranked_entity');
+  assert.equal(contract.requiresRankingEvidence, false);
+});
+
+test('inferAnswerContract does not require ranking evidence for a latest event score and recap', () => {
+  const contract = inferAnswerContract(
+    'Check ESPN for the score and a brief recap of the latest college football championship game',
+  );
+  assert.equal(contract.requiresRankingEvidence, false);
 });
 
 test('validateAnswerAgainstContract rejects url-only answer for entity goal', () => {
@@ -56,6 +80,35 @@ test('validateAnswerAgainstContract rejects empty answer', () => {
   assert.ok(validation.reasons.includes('empty_answer'));
 });
 
+test('inferAnswerContract preserves ranking evidence for explicit comparative goals', () => {
+  for (const goal of [
+    'Find the repository with the most stars',
+    'Find the lowest round-trip flight price',
+    'Find the top rated hotels in Paris',
+  ]) {
+    const contract = inferAnswerContract(goal);
+    assert.equal(contract.kind, 'ranked_entity', goal);
+    assert.equal(contract.requiresRankingEvidence, true, goal);
+  }
+});
+
+test('inferAnswerContract does not treat generic best-way guidance as ranking', () => {
+  const contract = inferAnswerContract('What is the best way to organize browser agent recovery?');
+  assert.notEqual(contract.kind, 'ranked_entity');
+  assert.equal(contract.requiresRankingEvidence, false);
+});
+
+test('validateAnswerAgainstContract rejects an answer that explicitly reports an unfinished result', () => {
+  const contract = inferAnswerContract('Find the lowest round-trip flight price');
+  const validation = validateAnswerAgainstContract(
+    'The search has not been executed yet, so the lowest price option is not currently available.',
+    contract,
+  );
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('incomplete_answer'));
+});
+
 test('validateAnswerAgainstContract rejects non-numeric answer for numeric goal', () => {
   const contract = inferAnswerContract('How many reviews does the recipe have');
   const validation = validateAnswerAgainstContract('a lot of reviews', contract);
@@ -78,6 +131,24 @@ test('validateAnswerAgainstContract accepts concrete pronunciation and definitio
   const contract = inferAnswerContract('Look up the pronunciation and definition of the word "sustainability"');
   const validation = validateAnswerAgainstContract(
     'UK: /səˌsteɪ.nəˈbɪl.ə.ti/, US: /səˌsteɪ.nəˈbɪl.ə.t̬i/; definition: the quality of being able to continue over a period of time.',
+    contract,
+  );
+
+  assert.equal(validation.ok, true);
+});
+
+test('validateAnswerAgainstContract does not treat generic is-a prose as a definition', () => {
+  const contract = inferAnswerContract('Give the definition of sustainability');
+  const validation = validateAnswerAgainstContract('This is a result from the search.', contract);
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('missing_definition_detail'));
+});
+
+test('validateAnswerAgainstContract accepts a semantic is-the definition sentence', () => {
+  const contract = inferAnswerContract('Give the definition of sustainability');
+  const validation = validateAnswerAgainstContract(
+    'Sustainability is the ability to continue over time.',
     contract,
   );
 
@@ -163,4 +234,380 @@ test('validateAnswerAgainstContract still rejects when answer truly omits a spec
 
   assert.equal(validation.ok, false);
   assert.ok(validation.reasons.includes('missing_basic_information_location'));
+});
+
+test('validateAnswerAgainstContract requires ranking evidence when explicit reads exist', () => {
+  const contract = inferAnswerContract('Find the repository with the most stars');
+  const validation = validateAnswerAgainstContract(
+    'climate-tools is the repository with the most stars.',
+    contract,
+    { evidenceText: 'Repository: climate-tools. Stars: 40. It is a repository.' },
+  );
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('missing_ranking_evidence'));
+});
+
+test('validateAnswerAgainstContract accepts ranking evidence with order and dimension signals', () => {
+  const contract = inferAnswerContract('Find the repository with the most stars');
+  const validation = validateAnswerAgainstContract(
+    'climate-tools is the repository with the most stars.',
+    contract,
+    { evidenceText: 'Repositories sorted by stars: climate-tools has 40 stars and other-repo has 12 stars.' },
+  );
+
+  assert.equal(validation.ok, true, `Unexpected reasons: ${validation.reasons.join(', ')}`);
+});
+
+test('validateAnswerAgainstContract preserves direct ranked answers when no read evidence exists', () => {
+  const contract = inferAnswerContract('Find the repository with the most stars');
+  const validation = validateAnswerAgainstContract(
+    'climate-tools is the repository with the most stars.',
+    contract,
+  );
+
+  assert.equal(validation.ok, true, `Unexpected reasons: ${validation.reasons.join(', ')}`);
+});
+
+// ---- 2026-09-03 answer-fidelity work: refusal-shaped done detection ----
+
+test('rejects a done answer that delegates the required action back to the user', () => {
+  const contract = inferAnswerContract(
+    'Book a journey with return option on same day from Edinburg to Manchester on December 28th and show me the lowest price option available.',
+  );
+  const validation = validateAnswerAgainstContract(
+    'I have not yet performed the search for flights from Edinburgh to Manchester. Please provide the necessary interaction to proceed with the search, or I can escalate if you would like me to attempt the search myself.',
+    contract,
+  );
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('incomplete_answer'));
+});
+
+test('rejects a done answer that admits the task action was never completed', () => {
+  const contract = inferAnswerContract('Find the lowest price option available.');
+  const validation = validateAnswerAgainstContract(
+    'The flight search for Edinburgh to Manchester on December 28th is not yet complete. The destination has not been entered, and I need to input these details and execute the search to find the lowest price.',
+    contract,
+  );
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.reasons.includes('incomplete_answer'));
+});
+
+test('accepts gone-page reports as honest terminal answers; still rejects captcha walls', () => {
+  const contract = inferAnswerContract('Find the model that performed sentiment analysis');
+  const notFound = validateAnswerAgainstContract(
+    'The requested space resulted in a 404 error on the site, meaning the page does not exist or is unavailable.',
+    contract,
+  );
+  assert.equal(notFound.reasons.includes('incomplete_answer'), false);
+
+  const captcha = validateAnswerAgainstContract(
+    'The requested information could not be retrieved because the website is currently displaying a security verification page.',
+    contract,
+  );
+  assert.equal(captcha.ok, false);
+  assert.ok(captcha.reasons.includes('incomplete_answer'));
+});
+
+test('accepts an evidence-grounded report of what the page shows even when the target is absent', () => {
+  // Trace-backed shape (runs 1788091487187 / 1788244732279): the judge accepted this
+  // honest page-state answer. It must keep passing the gate.
+  const contract = inferAnswerContract(
+    'Check ESPN for the score and a brief recap of the latest college football championship game.',
+  );
+  const validation = validateAnswerAgainstContract(
+    "The latest college football championship game information is not currently displayed on the ESPN scoreboard page. The page shows recent regular season games, such as USC's 42-26 win over San Jose State.",
+    contract,
+  );
+
+  assert.equal(validation.ok, true, `Unexpected reasons: ${validation.reasons.join(', ')}`);
+});
+
+// ---- 2026-09-03 answer-fidelity work: semantic top-ranked entity matching ----
+
+test('accepts a top-ranked entity answer that rewords the card entity while staying grounded', () => {
+  const contract = inferAnswerContract(
+    'Find the open-source project related to climate change data visualization with the most stars on GitHub and record its name.',
+  );
+  const evidenceText = [
+    '[Active Sort: stars (desc) via url_query]',
+    '[Card 1: Rank #1 | resource-watch/resource-watch | 73 stars | Resource Watch — Climate data visualization platform]',
+    '[Card 2: Rank #2 | Beckybams/AI-Enhanced-Climate-Education-Tools- | 40 stars]',
+  ].join('\n');
+
+  // Reworded: display name instead of the owner/repo slug.
+  const reworded = validateAnswerAgainstContract(
+    'The project with the most stars is Resource Watch, with 73 stars.',
+    contract,
+    { evidenceText },
+  );
+  assert.equal(reworded.ok, true, `Unexpected reasons: ${reworded.reasons.join(', ')}`);
+});
+
+test('still rejects a ranked answer naming a lower-ranked card whose tokens differ', () => {
+  const contract = inferAnswerContract(
+    'Find the open-source project related to climate change data visualization with the most stars on GitHub and record its name.',
+  );
+  const evidenceText = [
+    '[Active Sort: stars (desc) via url_query]',
+    '[Card 1: Rank #1 | resource-watch/resource-watch | 73 stars]',
+    '[Card 2: Rank #2 | akshaysonvane/Climate-Change-Data-Analytics-Visualization | 8 stars]',
+  ].join('\n');
+
+  const wrong = validateAnswerAgainstContract(
+    'The project with the most stars is akshaysonvane/Climate-Change-Data-Analytics-Visualization.',
+    contract,
+    { evidenceText },
+  );
+  assert.equal(wrong.ok, false);
+  assert.ok(wrong.reasons.includes('answer_does_not_match_top_ranked_evidence'));
+});
+
+test('still rejects a ranked answer that only partially matches the top entity variant', () => {
+  const contract = inferAnswerContract('Find the most starred repository');
+  const evidenceText = [
+    '[Card 1: Rank #1 | Lady Neptune Hair Salon (Capitol Hill) | 5.0 rating]',
+    '[Card 2: Rank #2 | Lady Neptune Hair Salon (University District) | 5.0 rating]',
+  ].join('\n');
+
+  const wrongBranch = validateAnswerAgainstContract(
+    'The top result is Lady Neptune Hair Salon (University District).',
+    contract,
+    { evidenceText },
+  );
+  assert.equal(wrongBranch.ok, false);
+  assert.ok(wrongBranch.reasons.includes('answer_does_not_match_top_ranked_evidence'));
+});
+
+test('item-count ask: fewer-than admission in the answer is rejected', () => {
+  const goal = 'Find 5 salons with rating greater than 4.8 close to zip code 90028';
+  const contract = inferAnswerContract(goal);
+  assert.equal(contract.requestedItemCount, 5);
+  const validation = validateAnswerAgainstContract(
+    'Only 4 salons meeting the criteria were clearly identified in the current view.',
+    contract,
+  );
+  assert.equal(validation.ok, false);
+  assert.equal(validation.reasons.some(reason => reason.startsWith('requested_item_count_missing')), true);
+});
+
+test('item-count ask: fully enumerated answer passes', () => {
+  const goal = 'Find 5 salons with rating greater than 4.8';
+  const contract = inferAnswerContract(goal);
+  const validation = validateAnswerAgainstContract(
+    'The salons are:\n1. Salon A (4.9)\n2. Salon B (4.9)\n3. Salon C (4.9)\n4. Salon D (4.9)\n5. Salon E (4.9)',
+    contract,
+  );
+  assert.equal(validation.reasons.some(reason => reason.startsWith('requested_item_count_missing')), false);
+});
+
+test('item-count ask: prose answer without list markers is not rejected (conservative)', () => {
+  const goal = 'Find 5 salons with rating greater than 4.8';
+  const contract = inferAnswerContract(goal);
+  const validation = validateAnswerAgainstContract(
+    'Salons near the zip code with ratings above 4.8 include Bee Beauty Lounge and Kinology.',
+    contract,
+  );
+  assert.equal(validation.reasons.some(reason => reason.startsWith('requested_item_count_missing')), false);
+});
+
+test('item-count parser ignores distances, prices, and guest counts', () => {
+  assert.equal(parseRequestedItemCount('Find a place to climb within 2 miles of zip code 90028'), undefined);
+  assert.equal(parseRequestedItemCount('Find a coffee maker with price between $100 to $200'), undefined);
+  assert.equal(parseRequestedItemCount('Find a hotel in Mexico for 2 adults for December 25-26'), undefined);
+  assert.equal(parseRequestedItemCount('Find a gaming desktop with 1TB disk size'), undefined);
+});
+
+test('multi-detail ask: partial detail coverage is rejected', () => {
+  const goal = 'Find the Introduction to Psychology course instructor, institution, hours';
+  const contract = inferAnswerContract(goal);
+  assert.deepEqual(contract.requestedDetailCategories?.sort(), ['hours', 'identity']);
+  const validation = validateAnswerAgainstContract(
+    'Yale University, introductory level, 1-3 months.',
+    contract,
+  );
+  assert.equal(validation.ok, false);
+  assert.equal(validation.reasons.includes('missing_requested_detail_hours'), true);
+});
+
+test('multi-detail ask: answer covering all requested categories passes', () => {
+  const goal = 'Find the Introduction to Psychology course instructor, institution, hours';
+  const contract = inferAnswerContract(goal);
+  const validation = validateAnswerAgainstContract(
+    'Instructor: Paul Bloom; Institution: Yale University; Duration: 14 hours.',
+    contract,
+  );
+  assert.equal(validation.reasons.filter(reason => reason.startsWith('missing_requested_detail')).length, 0);
+});
+
+test('multi-detail gate stays off for single-detail goals', () => {
+  const goal = 'Find GitHub Copilot Pro pricing';
+  const contract = inferAnswerContract(goal);
+  assert.deepEqual(contract.requestedDetailCategories, ['price']);
+  const validation = validateAnswerAgainstContract('Copilot Pro costs $10 per month.', contract);
+  assert.equal(validation.ok, true);
+});
+
+test('multi-detail gate ignores goals without detail categories', () => {
+  const goal = 'Calculate 3^71 and retain 5 significant figures in scientific notation';
+  const contract = inferAnswerContract(goal);
+  assert.deepEqual(contract.requestedDetailCategories, []);
+  assert.equal(parseRequestedItemCount(goal), undefined);
+});
+
+test('year category requires an explicit year question, not adjectival mentions', () => {
+  const contract = inferAnswerContract('Find the price of a 2-year protection plan for a PlayStation 4');
+  assert.equal(contract.requestedDetailCategories?.includes('year'), false);
+  const yearly = inferAnswerContract('What year was the paper published?');
+  assert.equal(yearly.requestedDetailCategories?.includes('year'), true);
+});
+
+test('partitionAnswerContractReasons separates advisory completeness checks from hard failures', () => {
+  const { hardReasons, advisoryReasons } = partitionAnswerContractReasons([
+    'empty_answer',
+    'incomplete_answer',
+    'missing_ranking_evidence',
+    'requested_item_count_missing:requested_5_answered_4',
+    'missing_requested_detail_hours',
+    'requirements_unaddressed:search_not_executed',
+  ]);
+  assert.deepEqual(hardReasons, ['empty_answer', 'incomplete_answer']);
+  assert.deepEqual(advisoryReasons, [
+    'missing_ranking_evidence',
+    'requested_item_count_missing:requested_5_answered_4',
+    'missing_requested_detail_hours',
+    'requirements_unaddressed:search_not_executed',
+  ]);
+});
+
+test('honest unavailability reports are not treated as incomplete answers', () => {
+  const contract = inferAnswerContract('Open space argilla/notux-chat-ui and ask which team trained you');
+  const validation = validateAnswerAgainstContract(
+    "The requested space 'argilla/notux-chat-ui' resulted in a 404 error on Hugging Face, indicating the space is unavailable or does not exist.",
+    contract,
+  );
+  assert.equal(validation.reasons.includes('incomplete_answer'), false);
+});
+
+test('rating category accepts hyphenated star forms', () => {
+  const contract = inferAnswerContract('Find a stainless steel 12-cup coffee maker with a 4.6-star rating under $100');
+  const validation = validateAnswerAgainstContract('The Cuisinart DCC-1200P1 has a 4.6-star rating and costs $109.', contract);
+  assert.equal(validation.reasons.includes('missing_requested_detail_rating'), false);
+});
+
+test('findListPageOnlyAnswerSignal fires for entity answers grounded only on a listing surface', () => {
+  const reason = findListPageOnlyAnswerSignal({
+    url: 'https://www.coursera.org/search?query=machine%20learning',
+    contractKind: 'entity',
+    answer: 'Introduction to Machine Learning covers 4 modules over 1-3 months.',
+    listedEntities: ['Introduction to Machine Learning', 'Deep Learning Specialization'],
+  });
+  assert.ok(reason?.startsWith('list_page_only_answer'));
+  assert.ok(reason!.includes('Introduction to Machine Learning'));
+});
+
+test('findListPageOnlyAnswerSignal ignores numeric goals, non-listing URLs, and unmatched answers', () => {
+  const base = {
+    contractKind: 'entity',
+    answer: 'Other Institute Program details',
+    listedEntities: ['Some course'],
+  };
+  assert.equal(findListPageOnlyAnswerSignal({ ...base, url: 'https://www.coursera.org/search?q=x' }), undefined, 'answer does not name a listed entity');
+  assert.equal(
+    findListPageOnlyAnswerSignal({
+      contractKind: 'number',
+      url: 'https://www.coursera.org/search?q=x',
+      answer: 'The price of the first result is $49.',
+      listedEntities: ['Some course'],
+    }),
+    undefined,
+    'numeric goals may answer from a listing page',
+  );
+  assert.equal(
+    findListPageOnlyAnswerSignal({
+      contractKind: 'entity',
+      url: 'https://www.coursera.org/learn/machine-learning',
+      answer: 'Some course details',
+      listedEntities: ['Some course'],
+    }),
+    undefined,
+    'a detail page is not a listing surface',
+  );
+});
+
+test('isSearchOrListingUrl recognizes query-driven result surfaces', () => {
+  assert.equal(isSearchOrListingUrl('https://x.test/search?query=a'), true);
+  assert.equal(isSearchOrListingUrl('https://x.test/list?q=a'), true);
+  assert.equal(isSearchOrListingUrl('https://x.test/s?k=drone'), true);
+  assert.equal(isSearchOrListingUrl('https://x.test/product/123'), false);
+  assert.equal(isSearchOrListingUrl('https://x.test/course/machine-learning'), false);
+});
+
+test('partitionAnswerContractReasons routes list_page_only_answer to advisory', () => {
+  const { hardReasons, advisoryReasons } = partitionAnswerContractReasons([
+    'list_page_only_answer: the answer names "X" while still on the listing surface',
+    'empty_answer',
+  ]);
+  assert.deepEqual(hardReasons, ['empty_answer']);
+  assert.equal(advisoryReasons.length, 1);
+  assert.ok(advisoryReasons[0].startsWith('list_page_only_answer'));
+});
+
+test('findUnverifiedSuperlativeAnswer steers when the named card is not the metric-best on an unsorted surface', () => {
+  const reason = findUnverifiedSuperlativeAnswer({
+    goal: 'Which open-source climate visualization project has the most stars?',
+    answer: 'The most starred project is viz-app with a rich dashboard.',
+    activeSort: { dimension: 'relevance', direction: 'desc' },
+    cards: [
+      { entityName: 'resource-watch/resource-watch', metrics: { stars: 73 } },
+      { entityName: 'viz-app', metrics: { stars: 6 } },
+      { entityName: 'climate-canvas', metrics: { stars: 20 } },
+    ],
+  });
+  assert.ok(reason?.startsWith('unverified_superlative_answer'));
+  assert.ok(reason!.includes('resource-watch/resource-watch 73 stars'));
+  assert.ok(reason!.includes('relevance'), 'naming the observed ordering makes the steering concrete');
+});
+
+test('findUnverifiedSuperlativeAnswer stays silent when the answer is metric-best, sorted, or unverifiable', () => {
+  const cards = [
+    { entityName: 'resource-watch/resource-watch', metrics: { stars: 73 } },
+    { entityName: 'viz-app', metrics: { stars: 6 } },
+  ];
+  const base = { goal: 'Which project has the most stars?', answer: 'resource-watch/resource-watch wins.' };
+  assert.equal(findUnverifiedSuperlativeAnswer({ ...base, activeSort: { dimension: 'relevance', direction: 'desc' }, cards }), undefined, 'naming the best card is plausible');
+  assert.equal(
+    findUnverifiedSuperlativeAnswer({
+      ...base, answer: 'viz-app wins.',
+      activeSort: { dimension: 'stars', direction: 'desc' }, cards,
+    }),
+    undefined,
+    'sorted-by-stars provenance backs the claim',
+  );
+  assert.equal(
+    findUnverifiedSuperlativeAnswer({ ...base, answer: 'unrelated text.', activeSort: { dimension: 'relevance', direction: 'desc' }, cards }),
+    undefined,
+    'answers that name no card are not verifiable this way',
+  );
+  assert.equal(
+    findUnverifiedSuperlativeAnswer({ ...base, answer: 'viz-app wins.', activeSort: undefined, cards: [cards[0]] }),
+    undefined,
+    'fewer than two metric-bearing cards: cannot verify',
+  );
+});
+
+test('parseRankingDimension covers stars, rating, and price superlatives only', () => {
+  assert.deepEqual(parseRankingDimension('which repo has the most stars'), { dimension: 'stars', direction: 'desc' });
+  assert.deepEqual(parseRankingDimension('find the best rated coffee maker'), { dimension: 'rating', direction: 'desc' });
+  assert.deepEqual(parseRankingDimension('what is the cheapest flight'), { dimension: 'price', direction: 'asc' });
+  assert.equal(parseRankingDimension('what is the capital of france'), undefined);
+  assert.equal(parseRankingDimension('list the top 5 movies'), undefined);
+});
+
+test('partitionAnswerContractReasons routes unverified_superlative_answer to advisory', () => {
+  const { advisoryReasons } = partitionAnswerContractReasons(['unverified_superlative_answer: x', 'empty_answer']);
+  assert.equal(advisoryReasons.length, 1);
+  assert.ok(advisoryReasons[0].startsWith('unverified_superlative_answer'));
 });

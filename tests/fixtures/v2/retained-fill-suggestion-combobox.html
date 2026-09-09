@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Retained Fill Suggestion Combobox Fixture</title>
+</head>
+<body>
+  <label for="destination">Destination</label>
+  <input id="destination" type="text" role="combobox" aria-label="Destination"
+    aria-autocomplete="list" aria-haspopup="listbox" aria-controls="destinations">
+  <ul id="destinations" role="listbox" hidden>
+    <li role="option">Paris</li>
+  </ul>
+  <script>
+    const input = document.querySelector('#destination');
+    const list = document.querySelector('#destinations');
+
+    input.addEventListener('keydown', event => {
+      if (event.key === 'ArrowDown') list.hidden = false;
+    });
+
+    input.addEventListener('input', () => {
+      // This widget retains fill() values but requires its popup to be opened
+      // before the value can be committed by selecting an option.
+    });
+  </script>
+</body>
+</html>

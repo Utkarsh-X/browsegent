@@ -110,3 +110,93 @@ test('callProvider lets callers override the Gemini response schema', async () =
     properties: { done: { type: 'boolean' } },
   });
 });
+
+test('callProvider retries on transient fetch failed error and succeeds on second attempt', async () => {
+  let fetchCalls = 0;
+  globalThis.fetch = (async (_url, _init) => {
+    fetchCalls++;
+    if (fetchCalls === 1) {
+      throw new TypeError('fetch failed');
+    }
+    return new Response(JSON.stringify({
+      candidates: [{ content: { parts: [{ text: '{"done":true}' }] } }],
+      usageMetadata: { promptTokenCount: 11, candidatesTokenCount: 4 },
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  }) as typeof fetch;
+
+  process.env.GEMINI_API_KEY = 'secret-current-value';
+  process.env.BROWSEGENT_GEMINI_MAX_INPUT_TOKENS = '100000';
+  process.env.BROWSEGENT_GEMINI_RETRY_BASE_MS = '1';
+  process.env.BROWSEGENT_GEMINI_RETRIES = '3';
+
+  const result = await callProvider('system', 'user', 'gemini/gemini-3.1-flash-lite');
+  assert.equal(fetchCalls, 2);
+  assert.equal(result.text, '{"done":true}');
+});
+
+test('callProvider retries on transient ECONNRESET error and succeeds on second attempt', async () => {
+  let fetchCalls = 0;
+  globalThis.fetch = (async (_url, _init) => {
+    fetchCalls++;
+    if (fetchCalls === 1) {
+      throw new Error('request failed: ECONNRESET');
+    }
+    return new Response(JSON.stringify({
+      candidates: [{ content: { parts: [{ text: '{"done":true}' }] } }],
+      usageMetadata: { promptTokenCount: 11, candidatesTokenCount: 4 },
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  }) as typeof fetch;
+
+  process.env.GEMINI_API_KEY = 'secret-current-value';
+  process.env.BROWSEGENT_GEMINI_MAX_INPUT_TOKENS = '100000';
+  process.env.BROWSEGENT_GEMINI_RETRY_BASE_MS = '1';
+  process.env.BROWSEGENT_GEMINI_RETRIES = '3';
+
+  const result = await callProvider('system', 'user', 'gemini/gemini-3.1-flash-lite');
+  assert.equal(fetchCalls, 2);
+  assert.equal(result.text, '{"done":true}');
+});
+
+test('callProvider throws the original error if all retries of a transient error fail', async () => {
+  let fetchCalls = 0;
+  globalThis.fetch = (async (_url, _init) => {
+    fetchCalls++;
+    throw new TypeError('fetch failed');
+  }) as typeof fetch;
+
+  process.env.GEMINI_API_KEY = 'secret-current-value';
+  process.env.BROWSEGENT_GEMINI_MAX_INPUT_TOKENS = '100000';
+  process.env.BROWSEGENT_GEMINI_RETRY_BASE_MS = '1';
+  process.env.BROWSEGENT_GEMINI_RETRIES = '3';
+
+  await assert.rejects(
+    () => callProvider('system', 'user', 'gemini/gemini-3.1-flash-lite'),
+    (err: any) => {
+      assert.equal(err.message, 'fetch failed');
+      return true;
+    }
+  );
+  assert.equal(fetchCalls, 3);
+});
+
+test('callProvider throws non-transient error immediately without retrying', async () => {
+  let fetchCalls = 0;
+  globalThis.fetch = (async (_url, _init) => {
+    fetchCalls++;
+    throw new Error('Some non-transient API key error or custom error');
+  }) as typeof fetch;
+
+  process.env.GEMINI_API_KEY = 'secret-current-value';
+  process.env.BROWSEGENT_GEMINI_MAX_INPUT_TOKENS = '100000';
+  process.env.BROWSEGENT_GEMINI_RETRY_BASE_MS = '1';
+  process.env.BROWSEGENT_GEMINI_RETRIES = '3';
+
+  await assert.rejects(
+    () => callProvider('system', 'user', 'gemini/gemini-3.1-flash-lite'),
+    (err: any) => {
+      assert.equal(err.message, 'Some non-transient API key error or custom error');
+      return true;
+    }
+  );
+  assert.equal(fetchCalls, 1);
+});

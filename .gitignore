@@ -16,3 +16,23 @@ skills/
 skills-lock.json
 discussion/
 new-keys.yaml
+
+# Temporary & Runtime files
+.alumnium/
+*.pid
+docs/
+
+# WebArena: official dataset download + login storage states stay local;
+# manifests record their sha256 provenance instead.
+tests/benchmark/v2/webarena/source/
+tests/benchmark/v2/webarena/auth/
+
+# Internal stateless AGY adapter and gateway
+.agy-gateway/
+agy-gateway/
+.browser-control/
+.claude/
+.freebuff/
+.opencodego-gateway/
+scratch/
+

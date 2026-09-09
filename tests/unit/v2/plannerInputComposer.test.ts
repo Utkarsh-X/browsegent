@@ -11,6 +11,7 @@ import { ContinuityInterpreter } from '../../../src/v2/brain2/ContinuityInterpre
 import { TraceStore } from '../../../src/v2/trace/TraceStore';
 import { buildBrowserObservation } from '../../../src/v2/substrate/ObservationService';
 import type { BrowserObservation, TransitionEvidence, V2Ref, V2ToolResult } from '../../../src/v2';
+import type { FailureEvidence } from '../../../src/v2/runtime/FailureClassifier';
 import type { TraceJsonValue, TraceManifest, TraceStep } from '../../../src/v2/trace/types';
 
 function makeRef(overrides: Partial<V2Ref> = {}): V2Ref {
@@ -37,6 +38,7 @@ function makeObservation(overrides: {
   warnings?: BrowserObservation['warnings'];
   generationId?: number;
   url?: string;
+  lang?: string;
 }): BrowserObservation {
   const generationId = overrides.generationId ?? 1;
   return buildBrowserObservation({
@@ -45,6 +47,7 @@ function makeObservation(overrides: {
     generationId,
     url: overrides.url ?? 'https://example.test/app',
     title: 'Planner Fixture',
+    lang: overrides.lang,
     timestamp: generationId,
     durationMs: 2,
     refs: overrides.refs ?? [makeRef({ generationId })],
@@ -190,6 +193,79 @@ test('PlannerInputComposer emits canonical refs with lightweight ranked projecti
   assert.equal('role' in input.current.navigation[0], false);
 });
 
+test('PlannerInputComposer preserves generic combobox metadata in selected refs', () => {
+  const observation = makeObservation({
+    observationId: 'obs_combobox_metadata',
+    refs: [makeRef({
+      refId: 'ref_destination',
+      targetId: 'target_destination',
+      role: 'combobox',
+      name: 'Destination',
+      text: 'Destination',
+      value: 'Paris',
+      placeholder: 'Where are you going?',
+      ariaAutocomplete: 'list',
+      ariaHasPopup: 'listbox',
+      capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
+    })],
+  });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_combobox_metadata',
+    goal: 'Search for a destination',
+    projection,
+  });
+
+  const ref = input.current.refs.ref_destination;
+  assert.ok(ref);
+  assert.equal(ref.ariaAutocomplete, 'list');
+  assert.equal(ref.ariaHasPopup, 'listbox');
+  assert.equal(ref.value, 'Paris');
+  assert.equal(ref.placeholder, 'Where are you going?');
+});
+
+test('PlannerInputComposer keeps only current interaction refs actionable in evidence snapshots', () => {
+  const observation = makeObservation({
+    observationId: 'obs_evidence_ref_scope',
+    refs: [
+      makeRef({
+        refId: 'ref_result',
+        role: 'link',
+        name: 'owner/repository',
+        text: 'owner/repository',
+      }),
+      makeRef({
+        refId: 'ref_distractor',
+        role: 'button',
+        name: 'Account menu',
+        text: 'Account menu',
+      }),
+    ],
+  });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_evidence_ref_scope',
+    goal: 'Find the repository with the most stars',
+    projection,
+    evidenceSnapshot: {
+      activeSort: { dimension: 'stars', direction: 'desc', source: 'url_query' },
+      cards: [{
+        position: 0,
+        entity: 'owner/repository',
+        provenRank: 1,
+        metrics: { stars: 73 },
+        refIds: ['ref_result', 'ref_historical'],
+      }],
+    },
+    workingSetOptions: { maxPrimaryRefs: 1, maxSecondaryRefs: 0 },
+  });
+
+  assert.deepEqual(input.evidenceSnapshot?.cards[0]?.refIds, ['ref_result']);
+  assert.ok(input.current.refs.ref_result);
+  assert.equal(input.current.refs.ref_historical, undefined);
+  assert.ok(input.workingSet?.actionSurface.clickableRefs.includes('ref_result'));
+});
+
 test('PlannerInputComposer includes transition summary and uncertainty signals', () => {
   const { after, evidence, graph } = makeTransition();
   const projection = new ProjectionService().project(after, graph.snapshot());
@@ -316,6 +392,68 @@ test('PlannerInputComposer includes compact recovery state from runtime signals'
   assert.ok(input.recovery?.nextMechanisms.includes('choose_typeable_ref'));
 });
 
+test('PlannerInputComposer promotes repeated same-blocker evidence into persistent recovery', () => {
+  const observation = makeObservation({ observationId: 'obs_persistent_blocker' });
+  const projection = new ProjectionService().project(observation);
+  const blocker = {
+    blockerDescription: 'div#consent-overlay',
+    blockerTagName: 'div',
+    hitTestOutcome: 'hard_blocker',
+    blockerIsFixedOrSticky: true,
+  };
+  const failureEvidence: FailureEvidence[] = [
+    {
+      failureId: 'failure_ref_a',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'Target was blocked.',
+      source: 'test',
+      observationId: 'obs_persistent_blocker_1',
+      generationId: 1,
+      url: 'https://example.test/app',
+      targetRef: 'ref_a',
+      signals: ['error:target_blocked'],
+      diagnostics: blocker,
+    },
+    {
+      failureId: 'failure_ref_b',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'Target was blocked.',
+      source: 'test',
+      observationId: 'obs_persistent_blocker_2',
+      generationId: 1,
+      url: 'https://example.test/app',
+      targetRef: 'ref_b',
+      signals: ['error:target_blocked'],
+      diagnostics: blocker,
+    },
+  ];
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_persistent_blocker',
+    goal: 'Submit the form',
+    projection,
+    failureEvidence,
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_b',
+      error: { code: 'target_blocked', message: 'Target was blocked.', retryable: false, diagnostics: blocker },
+      traceStepId: 'step_blocked_b',
+    },
+  });
+
+  assert.equal(input.recovery?.state, 'persistent_target_blocker');
+  assert.equal(input.recovery?.blockedAction?.ref, 'ref_b');
+  assert.ok(input.recovery?.nextMechanisms.includes('find_dismiss_or_close_control'));
+});
+
 test('LineageCompressor keeps bounded recent execution lineage without raw result payloads', () => {
   const manifest = makeTraceManifest([
     makeTraceStep('step_1', 'click', 'completed', 'ref_a'),
@@ -332,6 +470,25 @@ test('LineageCompressor keeps bounded recent execution lineage without raw resul
   assert.doesNotMatch(json, /backendNodeId/);
   assert.doesNotMatch(json, /playwright/);
   assert.doesNotMatch(json, /cdp/i);
+});
+
+test('PlannerInputComposer accepts bounded live action lineage for the next planner call', () => {
+  const { after, graph } = makeTransition();
+  const projection = new ProjectionService().project(after, graph.snapshot());
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_live_lineage',
+    goal: 'Continue the task',
+    projection,
+    graphSnapshot: graph.snapshot(),
+    trace: [
+      makeTraceStep('step_live_1', 'click', 'completed', 'ref_primary'),
+      makeTraceStep('step_live_2', 'type', 'failed', 'ref_secondary', 'input_not_applied'),
+    ],
+  });
+
+  assert.equal(input.lineage?.totalSteps, 2);
+  assert.deepEqual(input.lineage?.steps.map(step => step.stepId), ['step_live_1', 'step_live_2']);
+  assert.equal(input.lineage?.steps[1].errorCode, 'input_not_applied');
 });
 
 test('TraceStore writes planner input and output replay artifacts passively', async () => {
@@ -521,4 +678,414 @@ test('PlannerInputComposer passes repeated no-progress uncertainty into working 
   ));
   assert.equal(input.workingSet.actionSurface.clickableRefs.includes('ref_compute'), false);
   assert.ok(input.workingSet.actionSurface.typeableRefs.includes('ref_input'));
+});
+
+test('PlannerInputComposer carries compact task evidence coverage without raw read text', () => {
+  const observation = makeObservation({ observationId: 'obs_coverage' });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_coverage',
+    goal: 'Give the pronunciation and definition',
+    projection,
+    evidenceCoverage: {
+      contractKind: 'description',
+      status: 'incomplete',
+      readCount: 1,
+      requirements: [{ key: 'definition', status: 'missing', supportingReadIndexes: [] }],
+    },
+  });
+
+  assert.deepEqual(input.evidenceCoverage, {
+    contractKind: 'description',
+    status: 'incomplete',
+    readCount: 1,
+    requirements: [{ key: 'definition', status: 'missing', supportingReadIndexes: [] }],
+  });
+  assert.equal(JSON.stringify(input).includes('raw read text'), false);
+});
+
+test('PlannerInputComposer applies working-set options per call without changing the shared default', () => {
+  const observation = makeObservation({
+    observationId: 'obs_working_set_options',
+    refs: [
+      makeRef({ refId: 'ref_primary', name: 'Primary', text: 'Primary' }),
+      makeRef({ refId: 'ref_secondary', targetId: 'target_secondary', name: 'Secondary', text: 'Secondary' }),
+    ],
+  });
+  const projection = new ProjectionService().project(observation);
+  const composer = new PlannerInputComposer();
+
+  const defaultInput = composer.compose({
+    episodeId: 'episode_working_set_default',
+    goal: 'Inspect controls',
+    projection,
+  });
+  const boundedInput = composer.compose({
+    episodeId: 'episode_working_set_bounded',
+    goal: 'Inspect controls',
+    projection,
+    workingSetOptions: { maxPrimaryRefs: 1, maxSecondaryRefs: 0 },
+  });
+
+  assert.equal(defaultInput.workingSetDiagnostics?.selectedRefCount, 2);
+  assert.equal(boundedInput.workingSetDiagnostics?.selectedRefCount, 1);
+});
+
+test('LineageCompressor populates bounded value for type, select, navigate, and press', () => {
+  const compressor = new LineageCompressor();
+  const stepType: TraceStep = {
+    stepId: 'step_type',
+    index: 0,
+    kind: 'type',
+    status: 'completed',
+    startedAt: 1000,
+    input: { text: '  Paris  ' },
+    warnings: [],
+  };
+  const stepSelect: TraceStep = {
+    stepId: 'step_select',
+    index: 1,
+    kind: 'select',
+    status: 'completed',
+    startedAt: 1001,
+    input: { value: '2' },
+    warnings: [],
+  };
+  const stepNav: TraceStep = {
+    stepId: 'step_nav',
+    index: 2,
+    kind: 'navigate',
+    status: 'completed',
+    startedAt: 1002,
+    input: { url: 'https://example.test/' + 'a'.repeat(200) },
+    warnings: [],
+  };
+  const stepPress: TraceStep = {
+    stepId: 'step_press',
+    index: 3,
+    kind: 'press',
+    status: 'completed',
+    startedAt: 1003,
+    input: { key: 'Enter' },
+    warnings: [],
+  };
+  const stepClick: TraceStep = {
+    stepId: 'step_click',
+    index: 4,
+    kind: 'click',
+    status: 'completed',
+    startedAt: 1004,
+    warnings: [],
+  };
+
+  const lineage = compressor.compress([stepType, stepSelect, stepNav, stepPress, stepClick]);
+  assert.equal(lineage.steps[0].value, 'Paris');
+  assert.equal(lineage.steps[1].value, '2');
+  assert.equal(lineage.steps[2].value?.length, 120);
+  assert.equal(lineage.steps[3].value, 'Enter');
+  assert.equal(lineage.steps[4].value, undefined);
+});
+
+test('PlannerInputComposer sets goalProgress for parsing goals and guarantees byte-identical absence for non-parsing goals', () => {  const observation = makeObservation({ observationId: 'obs_gp' });
+  const projection = new ProjectionService().project(observation);
+  const composer = new PlannerInputComposer();
+
+  // Parsing goal
+  const parsingInput = composer.compose({
+    episodeId: 'ep_gp_1',
+    goal: 'Find a hotel in Paris for February 14-21, 2027',
+    projection,
+  });
+  assert.ok(parsingInput.goalProgress);
+  assert.equal(parsingInput.goalProgress.entries[0].key, 'destination');
+  assert.equal(parsingInput.goalProgress.entries[0].state, 'NOT_SET');
+
+  // Non-parsing goal
+  const nonParsingInput = composer.compose({
+    episodeId: 'ep_gp_2',
+    goal: 'Click the submit button',
+    projection,
+  });
+  // Must NOT have the goalProgress property on the object
+  assert.equal('goalProgress' in nonParsingInput, false);
+  assert.equal(Object.prototype.hasOwnProperty.call(nonParsingInput, 'goalProgress'), false);
+
+  // Byte identity check against keys without goalProgress
+  const expectedKeys = Object.keys(parsingInput).filter(k => k !== 'goalProgress');
+  assert.deepEqual(Object.keys(nonParsingInput), expectedKeys);
+});
+
+
+const HORIZON_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+function makeCalendarRef(
+  refId: string,
+  label: string,
+  position: number,
+  overrides: Partial<V2Ref> = {},
+): V2Ref {
+  return makeRef({
+    refId,
+    targetId: `target_${refId}`,
+    role: 'checkbox',
+    name: label,
+    text: label,
+    box: {
+      x: 100 + (position % 30) * 40,
+      y: 500 + Math.floor(position / 30) * 40,
+      width: 40,
+      height: 40,
+    },
+    ...overrides,
+  });
+}
+
+function makeCalendarObservation(): BrowserObservation {
+  const refs: V2Ref[] = [];
+  let position = 0;
+  for (const [monthIndex, monthCount] of [[8, 30], [9, 31]] as Array<[number, number]>) {
+    for (let day = 1; day <= monthCount; day += 1) {
+      refs.push(makeCalendarRef(`ref_cell_${monthIndex}_${day}`, `${day} ${HORIZON_MONTHS[monthIndex]} 2026`, position));
+      position += 1;
+    }
+  }
+  refs.push(makeRef({
+    refId: 'ref_prev_month',
+    targetId: 'target_prev_month',
+    name: 'Previous month',
+    text: 'Previous month',
+    box: { x: 60, y: 505, width: 30, height: 30 },
+  }));
+  refs.push(makeRef({
+    refId: 'ref_next_month',
+    targetId: 'target_next_month',
+    name: 'Next month',
+    text: 'Next month',
+    box: { x: 1240, y: 505, width: 30, height: 30 },
+  }));
+  // High-score filler competition: pushes the nav controls out of the top slice
+  for (let index = 0; index < 40; index += 1) {
+    refs.push(makeRef({
+      refId: `ref_filler_${index}`,
+      targetId: `target_filler_${index}`,
+      name: `Operational control ${index}`,
+      text: `Operational control ${index}`,
+      box: { x: 1600, y: 800 + index * 20, width: 80, height: 20 },
+    }));
+  }
+
+  return {
+    ...makeObservation({ observationId: 'obs_horizon', refs }),
+    lang: 'en',
+  };
+}
+
+const HORIZON_GOAL = 'Find a hotel in Paris for February 14-21, 2027';
+const HORIZON_TRACE: TraceStep[] = [{
+  stepId: 'step_type_paris',
+  index: 0,
+  kind: 'type',
+  status: 'completed',
+  startedAt: 1000,
+  warnings: [],
+  targetRef: 'ref_destination',
+  input: { text: 'Paris' },
+  result: { success: true },
+}];
+
+test('PlannerInputComposer attaches a horizon when the focused dates target is outside the visible window', () => {
+  const projection = new ProjectionService().project(makeCalendarObservation());
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_horizon',
+    goal: HORIZON_GOAL,
+    projection,
+    trace: HORIZON_TRACE,
+  });
+
+  assert.ok(input.goalProgress);
+  assert.equal(input.goalProgress.focus, 'dates');
+  assert.ok(input.horizon);
+  assert.deepEqual(input.horizon.visibleMonths, ['September 2026', 'October 2026']);
+  assert.deepEqual(input.horizon.targetMonths, ['February 2027']);
+  assert.ok(input.horizon.navControls.some(control => control.refId === 'ref_next_month'));
+});
+
+test('PlannerInputComposer force-selects horizon nav controls into the working set', () => {
+  const projection = new ProjectionService().project(makeCalendarObservation());
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_horizon_force',
+    goal: HORIZON_GOAL,
+    projection,
+    trace: HORIZON_TRACE,
+  });
+
+  const workingSet = input.workingSet;
+  assert.ok(workingSet);
+  const laneRefs = [...workingSet.primaryRefs, ...workingSet.secondaryRefs];
+  const nextRef = laneRefs.find(ref => ref.refId === 'ref_next_month');
+  assert.ok(nextRef);
+  assert.ok(nextRef.reasons.includes('horizon_control'));
+  assert.ok(input.current.refs.ref_next_month);
+  assert.ok(input.current.refs.ref_prev_month);
+});
+
+test('PlannerInputComposer omits horizon for non-date goals and non-calendar surfaces', () => {
+  const composer = new PlannerInputComposer();
+  const calendarProjection = new ProjectionService().project(makeCalendarObservation());
+  const plainProjection = new ProjectionService().project(makeObservation({ observationId: 'obs_plain' }));
+
+  const nonTravel = composer.compose({
+    episodeId: 'episode_horizon_non_travel',
+    goal: 'Find wireless noise-cancelling headphones under $50',
+    projection: calendarProjection,
+    trace: HORIZON_TRACE,
+  });
+  assert.equal('horizon' in nonTravel, false);
+
+  const noWidget = composer.compose({
+    episodeId: 'episode_horizon_no_widget',
+    goal: HORIZON_GOAL,
+    projection: plainProjection,
+    trace: HORIZON_TRACE,
+  });
+  assert.equal('horizon' in noWidget, false);
+  assert.equal('horizon' in composer.compose({
+    episodeId: 'episode_horizon_non_parsing',
+    goal: 'Click the submit button',
+    projection: calendarProjection,
+  }), false);
+});
+
+test('LineageCompressor carries the bounded target name for click evidence', () => {
+  const manifest = makeTraceManifest([]);
+  manifest.steps = [{
+    stepId: 'step_click_day',
+    index: 0,
+    kind: 'click',
+    status: 'completed',
+    startedAt: 1000,
+    warnings: [],
+    targetRef: 'ref_day',
+    result: {
+      success: true,
+      target: { refId: 'ref_day', name: 'Friday, 25 December 2026', text: '25', role: 'checkbox' },
+    },
+  } as unknown as TraceStep];
+
+  const lineage = new LineageCompressor().compress(manifest, { maxSteps: 5 });
+  assert.equal(lineage.steps[0].targetName, 'Friday, 25 December 2026');
+});
+
+test('PlannerInputComposer keeps dismissal controls prioritized while a blocker at the current URL is unresolved', () => {
+  const blocker = {
+    blockerDescription: 'div#promo-overlay',
+    blockerTagName: 'div',
+    hitTestOutcome: 'hard_blocker',
+  };
+  const dismissRef = makeRef({
+    refId: 'ref_dismiss',
+    targetId: 'target_dismiss',
+    name: 'Dismiss sign in information.',
+    text: 'Dismiss sign in information.',
+  });
+  const fillers = Array.from({ length: 40 }, (_, index) => makeRef({
+    refId: `ref_comp_${index}`,
+    targetId: `target_comp_${index}`,
+    name: `Page control ${index}`,
+    text: `Page control ${index}`,
+  }));
+  const observation = makeObservation({
+    observationId: 'obs_unresolved_blocker',
+    refs: [dismissRef, ...fillers],
+  });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_unresolved_blocker',
+    goal: 'Search for docs',
+    projection,
+    failureEvidence: [{
+      failureId: 'failure_blocked',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'Target was blocked.',
+      source: 'test',
+      observationId: 'obs_blocked',
+      generationId: 1,
+      url: projection.url,
+      targetRef: 'ref_search_input',
+      signals: ['error:target_blocked'],
+      diagnostics: blocker,
+    }],
+    // Last action succeeded (a navigation back to the same surface), but the
+    // blocker was never dismissed.
+    lastResult: {
+      success: true,
+      kind: 'navigate',
+      traceStepId: 'step_navigate',
+    },
+  });
+
+  const lanes = [...(input.workingSet?.primaryRefs ?? []), ...(input.workingSet?.secondaryRefs ?? [])];
+  const dismiss = lanes.find(ref => ref.refId === 'ref_dismiss');
+  assert.ok(dismiss);
+  assert.ok(dismiss.reasons.includes('recovery_control'));
+});
+
+test('PlannerInputComposer promotes the form submit control during the commit phase', () => {
+  // Reproduces webvoyager_lite_1788469342994: both goal dates selected, the
+  // खोजें submit button existed in the observation but was cut from the
+  // working set — the model never saw the way to confirm the entry.
+  const observation = makeObservation({
+    observationId: 'obs_commit_phase',
+    lang: 'hi',
+    refs: [
+      makeRef({ refId: 'ref_dest', targetId: 'target_dest', role: 'textbox', name: 'Enter destination', text: 'Enter destination' }),
+      makeRef({
+        refId: 'ref_search_btn',
+        targetId: 'target_search_btn',
+        name: 'खोजें',
+        text: 'खोजें',
+        inputType: 'submit',
+        box: { x: 1096, y: 500, width: 93, height: 51 },
+      }),
+      makeRef({ refId: 'ref_plain_btn', targetId: 'target_plain_btn', name: 'Plain', text: 'Plain' }),
+    ],
+  });
+  const projection = new ProjectionService().project(observation);
+  const input = new PlannerInputComposer().compose({
+    episodeId: 'episode_commit_phase',
+    goal: 'Find hotel deals for December 25-26',
+    projection,
+    trace: [
+      {
+        stepId: 's1', index: 0, kind: 'type', status: 'completed', startedAt: 1,
+        warnings: [], targetRef: 'ref_dest', input: { text: 'Mexico' }, result: { success: true },
+      },
+      {
+        stepId: 's2', index: 1, kind: 'click', status: 'completed', startedAt: 2,
+        warnings: [], targetRef: 'ref_cell',
+        result: { success: true, target: { refId: 'ref_cell', name: 'शुक्रवार, 25 दिसंबर 2026', text: '25', role: 'checkbox' } },
+      },
+      {
+        stepId: 's3', index: 2, kind: 'click', status: 'completed', startedAt: 3,
+        warnings: [], targetRef: 'ref_cell2',
+        result: { success: true, target: { refId: 'ref_cell2', name: 'शनिवार, 26 दिसंबर 2026', text: '26', role: 'checkbox' } },
+      },
+    ],
+  });
+
+  assert.ok(input.goalProgress);
+  assert.equal(input.goalProgress.focus, undefined, 'all parsed requirements are addressed');
+  const lanes = [...(input.workingSet?.primaryRefs ?? []), ...(input.workingSet?.secondaryRefs ?? [])];
+  const submit = lanes.find(ref => ref.refId === 'ref_search_btn');
+  assert.ok(submit, 'submit control must be force-selected');
+  assert.ok(submit.reasons.includes('submit_control'));
+  assert.equal(
+    lanes.find(ref => ref.refId === 'ref_plain_btn')?.reasons.includes('submit_control'),
+    false,
+    'non-submit buttons must not carry the submit_control reason',
+  );
 });

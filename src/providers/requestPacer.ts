@@ -14,8 +14,10 @@ export class RequestPacer {
     sleep: ms => new Promise(resolve => setTimeout(resolve, ms)),
   }) {}
 
-  async wait(minIntervalMs: number): Promise<void> {
-    if (minIntervalMs <= 0) return;
+  async wait(minIntervalMs: number): Promise<number> {
+    if (minIntervalMs <= 0) return 0;
+
+    const waitStartedAt = this.clock.now();
 
     const waitTurn = this.queue.then(async () => {
       const now = this.clock.now();
@@ -31,6 +33,7 @@ export class RequestPacer {
 
     this.queue = waitTurn.catch(() => undefined);
     await waitTurn;
+    return Math.max(0, this.clock.now() - waitStartedAt);
   }
 }
 
@@ -44,6 +47,6 @@ export function readRequestMinIntervalMs(env: RequestPacerEnv = process.env): nu
 
 const geminiRequestPacer = new RequestPacer();
 
-export async function waitForGeminiRequestSlot(env: RequestPacerEnv = process.env): Promise<void> {
-  await geminiRequestPacer.wait(readRequestMinIntervalMs(env));
+export async function waitForGeminiRequestSlot(env: RequestPacerEnv = process.env): Promise<number> {
+  return geminiRequestPacer.wait(readRequestMinIntervalMs(env));
 }

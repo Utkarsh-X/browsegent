@@ -53,6 +53,7 @@ test('v2 public error code set is operational and non-strategic', () => {
       'target_disabled',
       'target_blocked',
       'target_not_editable',
+      'input_not_applied',
       'target_not_clickable',
       'target_not_selectable',
       'stale_ref',
@@ -65,6 +66,11 @@ test('v2 public error code set is operational and non-strategic', () => {
       'navigation_blocked',
       'captcha_or_access_block',
       'trace_write_failed',
+      'invalid_action_payload',
+      'action_blocked_by_loop_detector',
+      'suggestion_surface_did_not_open',
+      'no_matching_option',
+      'ambiguous_match',
     ],
   );
 });

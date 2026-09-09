@@ -1,0 +1,1678 @@
+{
+  "version": 1,
+  "preset": "core50",
+  "pinnedAt": "2026-08-24T13:01:01.683Z",
+  "source": {
+    "file": "tests/benchmark/v2/webarena/source/test.raw.json",
+    "sha256": "7b50386fd69163dbc05d615d834df4c6ed2c35596e97a1b10d17451c02537652",
+    "totalTasks": 812
+  },
+  "counts": {
+    "shopping": 12,
+    "reddit": 10,
+    "gitlab": 13,
+    "shopping_admin": 6,
+    "map": 11,
+    "wikipedia": 6
+  },
+  "shortfalls": [],
+  "tasks": [
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 21,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__/6s-wireless-headphones-over-ear-noise-canceling-hi-fi-bass-foldable-stereo-wireless-kid-headsets-earbuds-with-built-in-mic-micro-sd-tf-fm-for-iphone-samsung-ipad-pc-black-gold.html",
+      "geolocation": null,
+      "intent_template": "List out reviewers, if exist, who mention about {{description}}",
+      "instantiation_dict": {
+        "description": "ear cups being small"
+      },
+      "intent": "List out reviewers, if exist, who mention about ear cups being small",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "Joseph Brzezinski",
+            "Catso",
+            "Dibbins",
+            "Anglebert Dinkherhump",
+            "Michelle Davis"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "Joseph Brzezinski, Catso, Dibbins, Anglebert Dinkherhump, Michelle Davis"
+      },
+      "intent_template_id": 222
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 47,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "Today is 6/12/2023. Tell me how many fulfilled orders I have {{period}}, and the total amount of money I spent.",
+      "instantiation_dict": {
+        "period": "over the past month"
+      },
+      "intent": "Today is 6/12/2023. Tell me how many fulfilled orders I have over the past month, and the total amount of money I spent.",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "fuzzy_match": [
+            "0 order",
+            "$0 total spend"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "0 order, $0 total spend"
+      },
+      "intent_template_id": 197
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 96,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "Tell me the status of my latest order and when will it arrive",
+      "instantiation_dict": {},
+      "intent": "Tell me the status of my latest order and when will it arrive",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "fuzzy_match": [
+            "The last order was canceled. It will never arrive."
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "reference_answer_raw_annotation": "The last order was canceled. It will never arrive.",
+        "string_note": ""
+      },
+      "intent_template_id": 193
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 117,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "What is the date when I made my first purchase on this site?",
+      "instantiation_dict": {},
+      "intent": "What is the date when I made my first purchase on this site?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "fuzzy_match": [
+            "3/2/22"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "3/2/22"
+      },
+      "intent_template_id": 161
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 118,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "I have jaw bruxism problem, show me something that could alleviate the problem.",
+      "instantiation_dict": {},
+      "intent": "I have jaw bruxism problem, show me something that could alleviate the problem.",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": null,
+        "program_html": [
+          {
+            "url": "last",
+            "locator": "",
+            "required_contents": {
+              "must_include": [
+                "jaw bruxism",
+                "mouth guard"
+              ]
+            }
+          }
+        ]
+      },
+      "intent_template_id": 151
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 124,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "What is the price range of {{product}} in the One Stop Market?",
+      "instantiation_dict": {
+        "product": "wireless earphone"
+      },
+      "intent": "What is the price range of wireless earphone in the One Stop Market?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "0.14",
+            "745.00"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "$0.14 - $745.00"
+      },
+      "intent_template_id": 159
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 141,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "How much I spent on {{category}} shopping during {{time}}",
+      "instantiation_dict": {
+        "category": "food-related",
+        "time": "March 2023"
+      },
+      "intent": "How much I spent on food-related shopping during March 2023",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "47.41"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "$47.41"
+      },
+      "intent_template_id": 162
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 146,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "What is the {{option}} configuration of the {{product}} I bought {{time}}",
+      "instantiation_dict": {
+        "option": "size",
+        "product": "picture frame",
+        "time": "Sep 2022"
+      },
+      "intent": "What is the size configuration of the picture frame I bought Sep 2022",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "16x24"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "16x24"
+      },
+      "intent_template_id": 155
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 158,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "I have a lot of Nintendo Switch game cards now, help me find the best storage option to fit all {{num}} cards",
+      "instantiation_dict": {
+        "num": 11
+      },
+      "intent": "I have a lot of Nintendo Switch game cards now, help me find the best storage option to fit all 11 cards",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "url_match"
+        ],
+        "reference_answers": null,
+        "reference_url": "__SHOPPING__/heiying-game-card-case-for-nintendo-switch-switch-oled-game-card-or-micro-sd-memory-cards-portable-switch-game-memory-card-storage-with-24-game-card-slots-and-24-micro-sd-card-slots-black.html",
+        "program_html": [],
+        "url_note": "GOLD in PRED"
+      },
+      "intent_template_id": 171
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 163,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__/ostent-16gb-memory-card-stick-storage-for-sony-ps-vita-psv1000-2000-pch-z081-z161-z321-z641.html",
+      "geolocation": null,
+      "intent_template": "What are the main criticisms of this product? Please extract the relevant sentences.",
+      "instantiation_dict": {},
+      "intent": "What are the main criticisms of this product? Please extract the relevant sentences.",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "I ordered the 16gb but I only got 14 gigs even though I formatted the card",
+            "The memory card is kind of slow on games and downloads",
+            "No original packaging It's used and the previous owners data has not been erased",
+            "The product is a legit sony hardware that have been owned by someone else before",
+            "The media could not be loaded",
+            "I could not format the card so I wasn’t able to use it for my VITA"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "I ordered the 16gb but I only got 14 gigs even though I formatted the card. The memory card is kind of slow on games and downloads. No original packaging It's used and the previous owners data has not been erased. The product is a legit sony hardware that have been owned by someone else before The media could not be loaded.  I could not format the card so I wasn’t able to use it for my VITA"
+      },
+      "intent_template_id": 136
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 188,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "Tell me the total cost of my latest {{status}} order?",
+      "instantiation_dict": {
+        "status": "cancelled"
+      },
+      "intent": "Tell me the total cost of my latest cancelled order?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "365.42"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "365.42"
+      },
+      "intent_template_id": 214
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 225,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "What do customers say about {{product_type}} from {{manufature}}",
+      "instantiation_dict": {
+        "product_type": "brush",
+        "manufature": "sephora"
+      },
+      "intent": "What do customers say about brush from sephora",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "fuzzy_match": "N/A"
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "The sephora brushes don't have reviews",
+        "reference_answer_raw_annotation": "N/A"
+      },
+      "intent_template_id": 135
+    },
+    {
+      "sites": [
+        "reddit"
+      ],
+      "task_id": 27,
+      "require_login": true,
+      "storage_state": "./.auth/reddit_state.json",
+      "start_url": "__REDDIT__",
+      "geolocation": null,
+      "intent_template": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the {{forum}} forum.",
+      "instantiation_dict": {
+        "forum": "Showerthoughts"
+      },
+      "intent": "Tell me the count of comments that have received more downvotes than upvotes for the user who made the latest post on the Showerthoughts forum.",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "0"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "0"
+      },
+      "intent_template_id": 33
+    },
+    {
+      "sites": [
+        "reddit"
+      ],
+      "task_id": 66,
+      "require_login": true,
+      "storage_state": "./.auth/reddit_state.json",
+      "start_url": "__REDDIT__",
+      "geolocation": null,
+      "intent_template": "Among the top {{number}} post in \"{{subreddit}}\" forum, {{description}}",
+      "instantiation_dict": {
+        "number": 10,
+        "subreddit": "books",
+        "description": "show me the post URLs that recommand a single book"
+      },
+      "intent": "Among the top 10 post in \"books\" forum, show me the post URLs that recommand a single book",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "http://www.reddit.com/f/books/59396/apple-books-has-a-free-audiobook-of-a-christmas-carol",
+            "http://www.reddit.com/f/books/17445/i-just-finished-reading-the-hobbit-to-my-6-year-old-daughter"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "__REDDIT__/f/books/59396/apple-books-has-a-free-audiobook-of-a-christmas-carol, __REDDIT__/f/books/17445/i-just-finished-reading-the-hobbit-to-my-6-year-old-daughter"
+      },
+      "intent_template_id": 17
+    },
+    {
+      "sites": [
+        "reddit"
+      ],
+      "task_id": 399,
+      "require_login": true,
+      "storage_state": "./.auth/reddit_state.json",
+      "start_url": "__REDDIT__",
+      "geolocation": null,
+      "intent_template": "Change my reddit bio to \"{{content}}\"",
+      "instantiation_dict": {
+        "content": "I am a robot"
+      },
+      "intent": "Change my reddit bio to \"I am a robot\"",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": "",
+        "program_html": [
+          {
+            "url": "__REDDIT__/user/MarvelsGrantMan136",
+            "locator": "document.querySelector(\".user-bio__biography\").outerText",
+            "required_contents": {
+              "exact_match": "I am a robot"
+            }
+          }
+        ]
+      },
+      "intent_template_id": 6
+    },
+    {
+      "sites": [
+        "reddit"
+      ],
+      "task_id": 404,
+      "require_login": true,
+      "storage_state": "./.auth/reddit_state.json",
+      "start_url": "__REDDIT__",
+      "geolocation": null,
+      "intent_template": "Upvote the newest post in {{subreddit}} subreddit",
+      "instantiation_dict": {
+        "subreddit": "books"
+      },
+      "intent": "Upvote the newest post in books subreddit",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": "",
+        "program_html": [
+          {
+            "url": "__REDDIT__/f/books/124260/adults-reading-to-each-other-out-loud",
+            "locator": "document.querySelector('div.submission__vote').querySelector('form').getAttribute('class')",
+            "required_contents": {
+              "must_include": [
+                "vote vote--user-upvoted"
+              ]
+            }
+          }
+        ]
+      },
+      "intent_template_id": 22
+    },
+    {
+      "sites": [
+        "reddit"
+      ],
+      "task_id": 409,
+      "require_login": true,
+      "storage_state": "./.auth/reddit_state.json",
+      "start_url": "__REDDIT__/f/books/59421/friendly-reminder-bookshop-org-exists",
+      "geolocation": null,
+      "intent_template": "Reply to {{position_description}} in this post with \"{{content_description}}\"",
+      "instantiation_dict": {
+        "position_description": "the manager of the website",
+        "content_description": "thanks! I am a big fan of your website."
+      },
+      "intent": "Reply to the manager of the website in this post with \"thanks! I am a big fan of your website.\"",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": "",
+        "program_html": [
+          {
+            "url": "__REDDIT__/f/books/59421/-/comment/1235250",
+            "locator": "",
+            "required_contents": {
+              "must_include": [
+                "thanks! I am a big fan of your website."
+              ]
+            }
+          }
+        ]
+      },
+      "intent_template_id": 23
+    },
+    {
+      "sites": [
+        "gitlab",
+        "reddit"
+      ],
+      "task_id": 552,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab.reddit_state.json",
+      "start_url": "__GITLAB__",
+      "geolocation": null,
+      "intent_template": "Create a folder named {{directory}} in {{gitlab_repo}} repo. Within it, create a file named urls.txt that contains the URLs of the 5 most recent posts from the {{subreddit}}?",
+      "instantiation_dict": {
+        "directory": "real_space",
+        "subreddit": "space",
+        "gitlab_repo": "gimmiethat.space"
+      },
+      "intent": "Create a folder named real_space in gimmiethat.space repo. Within it, create a file named urls.txt that contains the URLs of the 5 most recent posts from the space?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": "",
+        "program_html": [
+          {
+            "url": "__GITLAB__/byteblaze/gimmiethat.space/-/raw/main/real_space/urls.txt",
+            "locator": "",
+            "required_contents": {
+              "must_include": [
+                "__REDDIT__/f/space/134164/scientists-erupt-at-nasa-gutting-funding-for-crucial-venus",
+                "__REDDIT__/f/space/134163/virgin-orbit-fails-to-secure-funding-will-cease-operations",
+                "__REDDIT__/f/space/134162/nasa-to-name-artemis-2-crew-next-week-the-first-moon",
+                "__REDDIT__/f/space/134161/bent-light-in-deep-space-reveals-one-of-the-biggest-black",
+                "__REDDIT__/f/space/134160/seti-s-new-machine-learning-algorithm-works-like-google-s"
+              ]
+            }
+          }
+        ]
+      },
+      "intent_template_id": 84
+    },
+    {
+      "sites": [
+        "gitlab",
+        "reddit"
+      ],
+      "task_id": 562,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab.reddit_state.json",
+      "start_url": "__GITLAB__",
+      "geolocation": null,
+      "intent_template": "create a repository named {{name}} that includes a README file with the links to the most active {{num}} DIY ideas on DIY subreddit?",
+      "instantiation_dict": {
+        "name": "Awesome_DIY_ideas",
+        "num": 6
+      },
+      "intent": "create a repository named Awesome_DIY_ideas that includes a README file with the links to the most active 6 DIY ideas on DIY subreddit?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": "",
+        "program_html": [
+          {
+            "url": "__GITLAB__/byteblaze/Awesome_DIY_ideas/-/raw/main/README.md",
+            "locator": "",
+            "required_contents": {
+              "must_include": [
+                "__REDDIT__/f/DIY/118903/separate-glued-plastic-parts",
+                "__REDDIT__/f/DIY/118923/how-would-you-fix-this-dryer-vent-mess",
+                "__REDDIT__/f/DIY/118935/basement-bulkhead-soffit-wall-framing",
+                "__REDDIT__/f/DIY/118904/ge-water-heater-pilot-light-won-t-stay-lit",
+                "__REDDIT__/f/DIY/118960/attempting-to-move-a-wall-outlet-in-my-basement-a-few-inches",
+                "__REDDIT__/f/DIY/118931/afci-outlet-question"
+              ]
+            }
+          }
+        ]
+      },
+      "intent_template_id": 88
+    },
+    {
+      "sites": [
+        "reddit"
+      ],
+      "task_id": 580,
+      "require_login": true,
+      "storage_state": "./.auth/reddit_state.json",
+      "start_url": "__REDDIT__",
+      "geolocation": null,
+      "intent_template": "Create a new forum named {{name}}, with a description of {{description}}, and include {{sidebar_list}} in the sidebar?",
+      "instantiation_dict": {
+        "name": "sci_fi",
+        "description": "A wild place for sci-fi enthusiasts",
+        "sidebar_list": [
+          "New",
+          "Classic",
+          "Movies",
+          "Post my novel",
+          "Random"
+        ]
+      },
+      "intent": "Create a new forum named sci_fi, with a description of A wild place for sci-fi enthusiasts, and include ['New', 'Classic', 'Movies', 'Post my novel', 'Random'] in the sidebar?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": "",
+        "program_html": [
+          {
+            "url": "__REDDIT__/f/sci_fi/edit",
+            "locator": "document.querySelector(\"#forum_description\").value",
+            "required_contents": {
+              "must_include": [
+                "A wild place for sci-fi enthusiasts"
+              ]
+            }
+          },
+          {
+            "url": "__REDDIT__/f/sci_fi/edit",
+            "locator": "document.querySelector(\"#forum_sidebar\").value",
+            "required_contents": {
+              "must_include": [
+                "New",
+                "Classic",
+                "Movies",
+                "Post my novel",
+                "Random"
+              ]
+            }
+          }
+        ]
+      },
+      "intent_template_id": 7
+    },
+    {
+      "sites": [
+        "reddit"
+      ],
+      "task_id": 595,
+      "require_login": true,
+      "storage_state": "./.auth/reddit_state.json",
+      "start_url": "__REDDIT__",
+      "geolocation": null,
+      "intent_template": "Open the thread of a trending post on the forum \"{{subreddit}}\" and subscribe.",
+      "instantiation_dict": {
+        "subreddit": "space"
+      },
+      "intent": "Open the thread of a trending post on the forum \"space\" and subscribe.",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "url_match",
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": "__REDDIT__/f/space",
+        "program_html": [
+          {
+            "url": "__REDDIT__/",
+            "locator": "document.querySelector(\"#sidebar > section\").outerText",
+            "required_contents": {
+              "must_include": [
+                "space"
+              ]
+            }
+          }
+        ],
+        "url_note": "GOLD in PRED"
+      },
+      "intent_template_id": 4
+    },
+    {
+      "sites": [
+        "reddit"
+      ],
+      "task_id": 600,
+      "require_login": true,
+      "storage_state": "./.auth/reddit_state.json",
+      "start_url": "__REDDIT__",
+      "geolocation": null,
+      "intent_template": "Post my question, \"{{question}}\", in a subreddit where I'm likely to get an answer",
+      "instantiation_dict": {
+        "question": "what is the recommended console to buy these days"
+      },
+      "intent": "Post my question, \"what is the recommended console to buy these days\", in a subreddit where I'm likely to get an answer",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "url_match",
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": "__REDDIT__/f/consoles",
+        "program_html": [
+          {
+            "url": "func:reddit_get_post_url('__last_url__')",
+            "locator": "document.querySelector('.submission__inner').outerText",
+            "required_contents": {
+              "must_include": [
+                "what is the recommended console to buy these days"
+              ]
+            }
+          }
+        ],
+        "url_note": "GOLD in PRED"
+      },
+      "intent_template_id": 3765
+    },
+    {
+      "sites": [
+        "gitlab"
+      ],
+      "task_id": 44,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab_state.json",
+      "start_url": "__GITLAB__",
+      "geolocation": null,
+      "intent_template": "Check out my todos",
+      "instantiation_dict": {},
+      "intent": "Check out my todos",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "url_match"
+        ],
+        "reference_answers": null,
+        "reference_url": "__GITLAB__/dashboard/todos",
+        "program_html": [],
+        "url_note": "GOLD in PRED"
+      },
+      "intent_template_id": 303
+    },
+    {
+      "sites": [
+        "gitlab"
+      ],
+      "task_id": 45,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab_state.json",
+      "start_url": "__GITLAB__/a11yproject/a11yproject.com",
+      "geolocation": null,
+      "intent_template": "Check out the most recent open issues",
+      "instantiation_dict": {},
+      "intent": "Check out the most recent open issues",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "url_match"
+        ],
+        "reference_answers": null,
+        "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/?sort=created_asc&state=opened",
+        "program_html": [],
+        "url_note": "GOLD in PRED"
+      },
+      "intent_template_id": 300
+    },
+    {
+      "sites": [
+        "gitlab"
+      ],
+      "task_id": 102,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab_state.json",
+      "start_url": "__GITLAB__",
+      "geolocation": null,
+      "intent_template": "Display the list of issues in the {{repo}} repository that have labels related to {{label}}",
+      "instantiation_dict": {
+        "label": "help needed",
+        "repo": "a11yproject/a11yproject.com"
+      },
+      "intent": "Display the list of issues in the a11yproject/a11yproject.com repository that have labels related to help needed",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "url_match"
+        ],
+        "reference_answers": null,
+        "reference_url": "__GITLAB__/byteblaze/a11y-syntax-highlighting/-/issues/?label_name%5B%5D=help%20wanted",
+        "program_html": [],
+        "url_note": "GOLD in PRED"
+      },
+      "intent_template_id": 349
+    },
+    {
+      "sites": [
+        "gitlab"
+      ],
+      "task_id": 132,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab_state.json",
+      "start_url": "__GITLAB__",
+      "geolocation": null,
+      "intent_template": "How many commits did {{user}} make to {{repo}} on {{date}}?",
+      "instantiation_dict": {
+        "user": "kilian",
+        "repo": "a11yproject",
+        "date": "3/5/2023"
+      },
+      "intent": "How many commits did kilian make to a11yproject on 3/5/2023?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "1"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "1"
+      },
+      "intent_template_id": 322
+    },
+    {
+      "sites": [
+        "gitlab"
+      ],
+      "task_id": 156,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab_state.json",
+      "start_url": "__GITLAB__",
+      "geolocation": null,
+      "intent_template": "Checkout merge requests assigned to me",
+      "instantiation_dict": {},
+      "intent": "Checkout merge requests assigned to me",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "url_match"
+        ],
+        "reference_answers": null,
+        "reference_url": "__GITLAB__/dashboard/merge_requests?assignee_username=byteblaze",
+        "program_html": [],
+        "url_note": "GOLD in PRED"
+      },
+      "intent_template_id": 290
+    },
+    {
+      "sites": [
+        "gitlab"
+      ],
+      "task_id": 168,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab_state.json",
+      "start_url": "__GITLAB__",
+      "geolocation": null,
+      "intent_template": "Tell me the full names of the repositories where I made contributions and they got {{description}} stars?",
+      "instantiation_dict": {
+        "description": "more than 100"
+      },
+      "intent": "Tell me the full names of the repositories where I made contributions and they got more than 100 stars?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "fuzzy_match": "N/A"
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "No repo found",
+        "reference_answer_raw_annotation": "No repo found"
+      },
+      "intent_template_id": 289
+    },
+    {
+      "sites": [
+        "gitlab"
+      ],
+      "task_id": 173,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab_state.json",
+      "start_url": "__GITLAB__",
+      "geolocation": null,
+      "intent_template": "Open my latest updated issue that has keyword \"{{keyword}}\" in its title to check if it is closed",
+      "instantiation_dict": {
+        "keyword": "better"
+      },
+      "intent": "Open my latest updated issue that has keyword \"better\" in its title to check if it is closed",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match",
+          "url_match"
+        ],
+        "reference_answers": {
+          "fuzzy_match": [
+            "No, it is open"
+          ]
+        },
+        "reference_url": "__GITLAB__/byteblaze/empathy-prompts/-/issues/8",
+        "program_html": [],
+        "reference_answer_raw_annotation": "Not closed",
+        "string_note": "",
+        "url_note": "GOLD in PRED"
+      },
+      "intent_template_id": 310
+    },
+    {
+      "sites": [
+        "gitlab"
+      ],
+      "task_id": 178,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab_state.json",
+      "start_url": "__GITLAB__",
+      "geolocation": null,
+      "intent_template": "Open my latest created issue that has {{keyword}} in its title to check if it is closed",
+      "instantiation_dict": {
+        "keyword": "better"
+      },
+      "intent": "Open my latest created issue that has better in its title to check if it is closed",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match",
+          "url_match"
+        ],
+        "reference_answers": {
+          "exact_match": "Yes"
+        },
+        "reference_url": "__GITLAB__/a11yproject/a11yproject.com/-/issues/566",
+        "program_html": [],
+        "reference_answer_raw_annotation": "Closed",
+        "string_note": ""
+      },
+      "intent_template_id": 500
+    },
+    {
+      "sites": [
+        "gitlab"
+      ],
+      "task_id": 205,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab_state.json",
+      "start_url": "__GITLAB__/a11yproject/a11yproject.com",
+      "geolocation": null,
+      "intent_template": "How many commits did {{user}} make on {{date}}?",
+      "instantiation_dict": {
+        "user": "kilian",
+        "date": "3/5/2023"
+      },
+      "intent": "How many commits did kilian make on 3/5/2023?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "1"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "1"
+      },
+      "intent_template_id": 320
+    },
+    {
+      "sites": [
+        "gitlab"
+      ],
+      "task_id": 258,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab_state.json",
+      "start_url": "__GITLAB__",
+      "geolocation": null,
+      "intent_template": "See all public projects",
+      "instantiation_dict": {},
+      "intent": "See all public projects",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "url_match"
+        ],
+        "reference_answers": null,
+        "reference_url": "__GITLAB__/explore",
+        "program_html": [],
+        "url_note": "GOLD in PRED"
+      },
+      "intent_template_id": 325
+    },
+    {
+      "sites": [
+        "shopping_admin"
+      ],
+      "task_id": 0,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_admin_state.json",
+      "start_url": "__SHOPPING_ADMIN__",
+      "geolocation": null,
+      "intent_template": "What is the top-{{n}} best-selling product in {{year}}",
+      "instantiation_dict": {
+        "n": 1,
+        "year": 2022
+      },
+      "intent": "What is the top-1 best-selling product in 2022",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "exact_match": "Quest Lumaflex™ Band"
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "Quest Lumaflex™ Band"
+      },
+      "intent_template_id": 279
+    },
+    {
+      "sites": [
+        "shopping_admin"
+      ],
+      "task_id": 11,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_admin_state.json",
+      "start_url": "__SHOPPING_ADMIN__",
+      "geolocation": null,
+      "intent_template": "Tell me the the number of reviews that our store received by far that mention term \"{{term}}\"",
+      "instantiation_dict": {
+        "term": "disappointed"
+      },
+      "intent": "Tell me the the number of reviews that our store received by far that mention term \"disappointed\"",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "6"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "6"
+      },
+      "intent_template_id": 288
+    },
+    {
+      "sites": [
+        "shopping_admin"
+      ],
+      "task_id": 41,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_admin_state.json",
+      "start_url": "__SHOPPING_ADMIN__",
+      "geolocation": null,
+      "intent_template": "List the top {{n}} search terms in my store",
+      "instantiation_dict": {
+        "n": "1"
+      },
+      "intent": "List the top 1 search terms in my store",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "exact_match": "hollister"
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "hollister"
+      },
+      "intent_template_id": 285
+    },
+    {
+      "sites": [
+        "shopping_admin"
+      ],
+      "task_id": 62,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_admin_state.json",
+      "start_url": "__SHOPPING_ADMIN__",
+      "geolocation": null,
+      "intent_template": "Which customer has completed the {{quantifier}} number of orders in the entire history?",
+      "instantiation_dict": {
+        "quantifier": "most"
+      },
+      "intent": "Which customer has completed the most number of orders in the entire history?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "Jane Smith"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "Jane Smith"
+      },
+      "intent_template_id": 276
+    },
+    {
+      "sites": [
+        "shopping_admin"
+      ],
+      "task_id": 77,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_admin_state.json",
+      "start_url": "__SHOPPING_ADMIN__",
+      "geolocation": null,
+      "intent_template": "What is the total count of {{status}} reviews amongst all the reviews?",
+      "instantiation_dict": {
+        "status": "Pending"
+      },
+      "intent": "What is the total count of Pending reviews amongst all the reviews?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "5"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "5"
+      },
+      "intent_template_id": 277
+    },
+    {
+      "sites": [
+        "shopping_admin"
+      ],
+      "task_id": 94,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_admin_state.json",
+      "start_url": "__SHOPPING_ADMIN__",
+      "geolocation": null,
+      "intent_template": "Telll me the grand total of invoice {{id}}.",
+      "instantiation_dict": {
+        "id": "000000001"
+      },
+      "intent": "Telll me the grand total of invoice 000000001.",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "36.39"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "$36.39"
+      },
+      "intent_template_id": 274
+    },
+    {
+      "sites": [
+        "map"
+      ],
+      "task_id": 7,
+      "require_login": true,
+      "storage_state": null,
+      "start_url": "__MAP__",
+      "geolocation": null,
+      "intent_template": "Tell me the full address of all {{airport_type}} that are within a driving distance of {{radius}} to {{start}}",
+      "instantiation_dict": {
+        "airport_type": "international airports",
+        "start": "Carnegie Mellon University",
+        "radius": "50 km"
+      },
+      "intent": "Tell me the full address of all international airports that are within a driving distance of 50 km to Carnegie Mellon University",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "exact_match": "Pittsburgh International Airport, Southern Beltway, Findlay Township, Allegheny County, 15231, United States"
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "Pittsburgh International Airport People Movers, Airport Boulevard, Findlay Township, Allegheny County, Pennsylvania, 15231, United States"
+      },
+      "intent_template_id": 79
+    },
+    {
+      "sites": [
+        "map"
+      ],
+      "task_id": 16,
+      "require_login": true,
+      "storage_state": null,
+      "start_url": "__MAP__",
+      "geolocation": null,
+      "intent_template": "Compare the time for walking and driving route from {{start}} to {{end}}",
+      "instantiation_dict": {
+        "start": "5000 Fifth Avenue, Pittsburgh",
+        "end": "UPMC family health center"
+      },
+      "intent": "Compare the time for walking and driving route from 5000 Fifth Avenue, Pittsburgh to UPMC family health center",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "fuzzy_match": [
+            "driving: 2min",
+            "walking: 16min"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "Driving: 2min. Walking: 16min."
+      },
+      "intent_template_id": 73
+    },
+    {
+      "sites": [
+        "map"
+      ],
+      "task_id": 32,
+      "require_login": true,
+      "storage_state": null,
+      "start_url": "__MAP__",
+      "geolocation": null,
+      "intent_template": "I will arrive {{place}} soon. Provide the name of a {{target1}} in the vicinity, if available. Then, tell me the {{information}} to {{target2}} from the hotel.",
+      "instantiation_dict": {
+        "place": "Pittsburgh Airport",
+        "information": "the walking distance",
+        "target1": "Hilton hotel",
+        "target2": "the nearest supermarket own by a local company"
+      },
+      "intent": "I will arrive Pittsburgh Airport soon. Provide the name of a Hilton hotel in the vicinity, if available. Then, tell me the the walking distance to the nearest supermarket own by a local company from the hotel.",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "DoubleTree by Hilton Hotel Pittsburgh Airport",
+            "2.0km"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "DoubleTree by Hilton Hotel Pittsburgh Airport Distance: 2.0km"
+      },
+      "intent_template_id": 78
+    },
+    {
+      "sites": [
+        "map"
+      ],
+      "task_id": 36,
+      "require_login": true,
+      "storage_state": null,
+      "start_url": "__MAP__",
+      "geolocation": null,
+      "intent_template": "Check if the {{place}} in pittsburgh can be reached in one hour by car from {{location}}",
+      "instantiation_dict": {
+        "place": "social security administration",
+        "location": "Carnegie Mellon University"
+      },
+      "intent": "Check if the social security administration in pittsburgh can be reached in one hour by car from Carnegie Mellon University",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "Yes"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "Yes"
+      },
+      "intent_template_id": 77
+    },
+    {
+      "sites": [
+        "map"
+      ],
+      "task_id": 52,
+      "require_login": true,
+      "storage_state": null,
+      "start_url": "__MAP__",
+      "geolocation": null,
+      "intent_template": "How long does it take to walk from {{start}} to {{end}}?",
+      "instantiation_dict": {
+        "start": "Carnegie Mellon University",
+        "end": "starbucks on Craig Street"
+      },
+      "intent": "How long does it take to walk from Carnegie Mellon University to starbucks on Craig Street?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "fuzzy_match": [
+            "7 min"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "7 min"
+      },
+      "intent_template_id": 68
+    },
+    {
+      "sites": [
+        "map"
+      ],
+      "task_id": 57,
+      "require_login": true,
+      "storage_state": null,
+      "start_url": "__MAP__",
+      "geolocation": null,
+      "intent_template": "Tell me the closest {{place1}}(s) to {{place2}}",
+      "instantiation_dict": {
+        "place1": "restaurant",
+        "place2": "university center at Carnegie Mellon University"
+      },
+      "intent": "Tell me the closest restaurant(s) to university center at Carnegie Mellon University",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "El Gallo de Oro",
+            "Back Bar Grill",
+            "Grano",
+            "Beefsteak",
+            "Nourish",
+            "Schatz Dining Room",
+            "Au Bon Pain"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "El Gallo de Oro, Back Bar Grill, Grano, Beefsteak, Nourish, Schatz Dining Room, Au Bon Pain"
+      },
+      "intent_template_id": 69
+    },
+    {
+      "sites": [
+        "map",
+        "wikipedia"
+      ],
+      "task_id": 97,
+      "require_login": true,
+      "storage_state": null,
+      "start_url": "__MAP__",
+      "geolocation": null,
+      "intent_template": "Tell me the distance to drive from Carnegie Mellon University to the top computer science school in massachusetts",
+      "instantiation_dict": {},
+      "intent": "Tell me the distance to drive from Carnegie Mellon University to the top computer science school in massachusetts",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "914km"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "914 km"
+      },
+      "intent_template_id": 120
+    },
+    {
+      "sites": [
+        "wikipedia",
+        "map"
+      ],
+      "task_id": 265,
+      "require_login": true,
+      "storage_state": null,
+      "start_url": "__MAP__",
+      "geolocation": null,
+      "intent_template": "What's the closest national park to {{city}}? How far is it to drive there?",
+      "instantiation_dict": {
+        "city": "Boston"
+      },
+      "intent": "What's the closest national park to Boston? How far is it to drive there?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "Acadia National Park",
+            "457km"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "Acadia National Park\n457km"
+      },
+      "intent_template_id": 85
+    },
+    {
+      "sites": [
+        "wikipedia",
+        "map"
+      ],
+      "task_id": 424,
+      "require_login": true,
+      "storage_state": null,
+      "start_url": "__MAP__",
+      "geolocation": null,
+      "intent_template": "Find the page of {{description}} on the map.",
+      "instantiation_dict": {
+        "description": "the place where Mr. Rogers was filmed"
+      },
+      "intent": "Find the page of the place where Mr. Rogers was filmed on the map.",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": "",
+        "program_html": [
+          {
+            "url": "last",
+            "locator": "document.querySelector('[id=\"sidebar_content\"').outerText",
+            "required_contents": {
+              "must_include": [
+                "Pittsburgh"
+              ]
+            }
+          }
+        ]
+      },
+      "intent_template_id": 371
+    },
+    {
+      "sites": [
+        "gitlab",
+        "wikipedia"
+      ],
+      "task_id": 556,
+      "require_login": true,
+      "storage_state": "./.auth/gitlab_state.json",
+      "start_url": "__GITLAB__",
+      "geolocation": null,
+      "intent_template": "Create a repo named {{name}} with {{topics}} in a README file",
+      "instantiation_dict": {
+        "name": "nolan_honest_fans",
+        "topics": "movies directed by Christopher Nolan"
+      },
+      "intent": "Create a repo named nolan_honest_fans with movies directed by Christopher Nolan in a README file",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": "",
+        "program_html": [
+          {
+            "url": "__GITLAB__/byteblaze/nolan_honest_fans/-/raw/main/README.md",
+            "locator": "",
+            "required_contents": {
+              "must_include": [
+                "Following",
+                "Memento",
+                "Insomnia",
+                "Batman Begins",
+                "The Prestige",
+                "The Dark Knight",
+                "Inception",
+                "The Dark Knight Rises",
+                "Interstellar",
+                "Dunkirk",
+                "Tenet",
+                "Oppenheimer"
+              ]
+            }
+          }
+        ]
+      },
+      "intent_template_id": 87
+    },
+    {
+      "sites": [
+        "wikipedia",
+        "map"
+      ],
+      "task_id": 737,
+      "require_login": true,
+      "storage_state": null,
+      "start_url": "__MAP__",
+      "geolocation": null,
+      "intent_template": "Show me the way from {{location}} to the home stadium of {{sport_team}} {{time}}",
+      "instantiation_dict": {
+        "location": "Carnegie Mellon University",
+        "sport_team": "Philadelphia 76ers",
+        "time": ""
+      },
+      "intent": "Show me the way from Carnegie Mellon University to the home stadium of Philadelphia 76ers ",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": "",
+        "program_html": [
+          {
+            "url": "last",
+            "locator": "document.querySelector('[name=\"route_from\"').value",
+            "required_contents": {
+              "must_include": [
+                "Carnegie Mellon University",
+                "Pittsburgh"
+              ]
+            }
+          },
+          {
+            "url": "last",
+            "locator": "document.querySelector('[name=\"route_to\"').value",
+            "required_contents": {
+              "must_include": [
+                "Wells Fargo Center",
+                "South Philadelphia Sports Complex"
+              ]
+            }
+          },
+          {
+            "url": "last",
+            "locator": "document.querySelector(\"div#content select.routing_engines\").selectedIndex",
+            "required_contents": {
+              "exact_match": "1"
+            }
+          }
+        ]
+      },
+      "intent_template_id": 94
+    },
+    {
+      "sites": [
+        "wikipedia",
+        "map"
+      ],
+      "task_id": 266,
+      "require_login": true,
+      "storage_state": null,
+      "start_url": "__MAP__",
+      "geolocation": null,
+      "intent_template": "What's the closest national park to {{city}}?",
+      "instantiation_dict": {
+        "city": "the largest city in Maine"
+      },
+      "intent": "What's the closest national park to the largest city in Maine?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "exact_match": "Acadia National Park"
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "Acadia National Park"
+      },
+      "intent_template_id": 85
+    }
+  ]
+}

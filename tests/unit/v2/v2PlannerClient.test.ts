@@ -135,6 +135,26 @@ test('V2PlannerClient passes the V2 planner response schema to provider', async 
   assert.doesNotMatch(JSON.stringify(providerCalls[0].options?.responseSchema), /"sel"|"selector"/);
 });
 
+test('V2PlannerClient omits the response schema when omitResponseJsonSchema is set', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const providerCalls: Array<{ options?: { responseSchema?: unknown } }> = [];
+  const client = new V2PlannerClient({
+    provider: async (_system, _user, _model, options) => {
+      providerCalls.push({ options });
+      return {
+        text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+    plannerSerialization: { mode: 'json', omitResponseJsonSchema: true },
+  });
+
+  await client.call({ plannerInput: makePlannerInput('episode_v2_no_schema') });
+
+  assert.equal(providerCalls[0].options?.responseSchema, undefined);
+});
+
 test('V2PlannerClient accepts refs from canonical current refs when views contain no full item facts', async () => {
   const { V2PlannerClient } = await loadPlannerClientModule();
   const plannerInput = makePlannerInput('episode_canonical_refs');
@@ -225,6 +245,7 @@ test('V2PlannerClient rejects high-confidence type actions against known non-typ
   const plannerInput = makePlannerInput('episode_wrong_lane');
   plannerInput.version = 'v2.planner_input.v2';
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -274,6 +295,7 @@ test('V2PlannerClient allows ambiguous refs through action compatibility validat
   const plannerInput = makePlannerInput('episode_ambiguous_lane');
   plannerInput.version = 'v2.planner_input.v2';
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -447,6 +469,67 @@ test('V2PlannerClient fails deterministically after bounded validation retry is 
   assert.match(outputJson.rawText, /evaluate_js/);
 });
 
+test('V2PlannerClient recovers an empty observation from repeated observation-id reads', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_empty_observation');
+  plannerInput.current.page = {
+    url: 'https://example.test/booking',
+    title: '',
+  };
+  plannerInput.current.observationId = 'obs_3_10';
+  plannerInput.current.refs = {};
+  plannerInput.current.interactions = [];
+  plannerInput.current.readables = [];
+  plannerInput.current.navigation = [];
+  plannerInput.current.regions = [];
+  plannerInput.current.stats = {
+    interactionCount: 0,
+    readableCount: 0,
+    navigationCount: 0,
+    regionCount: 0,
+  };
+  plannerInput.lastResult = {
+    success: true,
+    kind: 'navigate',
+    traceStepId: 'step_navigate',
+  };
+  plannerInput.transition = {
+    beforeObservationId: 'obs_2_9',
+    afterObservationId: 'obs_3_10',
+    transitionClass: 'structural_macrostate',
+    strength: 'strong',
+    generationChanged: true,
+    urlChanged: true,
+    refChangeCounts: {
+      appeared: 0,
+      disappeared: 1,
+      weakened: 0,
+      preserved: 0,
+    },
+    notes: [],
+  };
+
+  let providerCalls = 0;
+  const client = new V2PlannerClient({
+    provider: async () => {
+      providerCalls += 1;
+      return {
+        text: '{"plan":[{"tool":"get","ref":"obs_3_10"}],"confidence":"high"}',
+        inputTokens: 4,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.equal(providerCalls, 2);
+  assert.deepEqual(result.output, {
+    plan: [{ tool: 'wait', timeout: 1000 }],
+    confidence: 'low',
+  });
+});
+
 test('V2PlannerClient records provider failures as planner replay artifacts', async () => {
   const { V2PlannerClient, V2PlannerClientError } = await loadPlannerClientModule();
   const { traceDir, store } = await freshTraceStore('planner_client_provider_error');
@@ -511,6 +594,7 @@ test('V2PlannerClient includes action-compatible ref alternatives in retry feedb
     { refId: 'ref_input', rank: 2 },
   ];
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -541,6 +625,16 @@ test('V2PlannerClient includes action-compatible ref alternatives in retry feedb
       droppedByReason: {},
     },
   };
+  plannerInput.lastResult = {
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_button',
+    evidence: {
+      transitionClass: 'microstate',
+      strength: 'none',
+    },
+    traceStepId: 'step_no_effect_click',
+  };
 
   const providerUsers: string[] = [];
   const responses = [
@@ -564,6 +658,167 @@ test('V2PlannerClient includes action-compatible ref alternatives in retry feedb
   assert.equal(providerUsers.length, 2);
   assert.match(providerUsers[1], /not compatible with tool "type"/);
   assert.match(providerUsers[1], /ref_input/);
+  assert.match(providerUsers[1], /previous click on ref_button produced no observable transition/i);
+  assert.match(providerUsers[1], /do not assume the button became a text field/i);
+});
+
+test('V2PlannerClient explains ref versus observation identity after an unknown ref', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_unknown_ref_guidance');
+  plannerInput.current.refs = {
+    ref_submit: {
+      ...plannerInput.current.refs.ref_submit,
+      refId: 'ref_submit',
+      kind: 'button',
+      role: 'button',
+      name: 'Submit',
+    },
+  };
+  plannerInput.current.interactions = [{ refId: 'ref_submit', rank: 1 }];
+  plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
+    mode: 'act',
+    modeReason: 'test',
+    primaryRefs: [],
+    secondaryRefs: [],
+    readableEvidence: [],
+    navigationRefs: [],
+    actionSurface: {
+      clickableRefs: ['ref_submit'],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+    changedRefs: {
+      appearedCount: 0,
+      weakenedCount: 0,
+      preservedCount: 0,
+      topRefs: [],
+      omittedCount: 0,
+    },
+    failedRefs: [],
+    quarantinedActions: [],
+    regionSummaries: [],
+    omitted: {
+      observedRefCount: 1,
+      selectedRefCount: 1,
+      droppedRefCount: 0,
+      droppedByReason: {},
+    },
+  };
+
+  const providerUsers: string[] = [];
+  const responses = [
+    '{"plan":[{"tool":"click","ref":"obs_1_5"}],"confidence":"high"}',
+    '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+  ];
+  const client = new V2PlannerClient({
+    provider: async (_system, user) => {
+      providerUsers.push(user);
+      return {
+        text: responses.shift() ?? '{}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.equal(result.output.plan?.[0].ref, 'ref_submit');
+  assert.equal(providerUsers.length, 2);
+  assert.match(providerUsers[1], /ref "obs_1_5" is not present/i);
+  assert.match(providerUsers[1], /tool "click"/i);
+  assert.match(providerUsers[1], /observation id.*not.*ref/i);
+  assert.match(providerUsers[1], /ref_submit/);
+});
+
+test('V2PlannerClient forwards provider pacing telemetry without changing the plan', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  let pacingWaitMs = 0;
+  const client = new V2PlannerClient({
+    provider: async (_system, _user, _model, options) => {
+      options?.onPacingWait?.(37);
+      return {
+        text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({
+    plannerInput: makePlannerInput('episode_pacing_telemetry'),
+    onPacingWait: durationMs => { pacingWaitMs += durationMs; },
+  });
+
+  assert.equal(result.output.plan?.[0].ref, 'ref_submit');
+  assert.equal(pacingWaitMs, 37);
+});
+
+test('V2PlannerClient tells the planner to open a launcher and reobserve when no typeable refs exist', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const plannerInput = makePlannerInput('episode_no_typeable_refs');
+  plannerInput.version = 'v2.planner_input.v2';
+  plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
+    mode: 'act',
+    modeReason: 'test',
+    primaryRefs: [],
+    secondaryRefs: [],
+    readableEvidence: [],
+    navigationRefs: [],
+    actionSurface: {
+      clickableRefs: ['ref_submit'],
+      typeableRefs: [],
+      selectableRefs: [],
+      readableRefs: [],
+      ambiguousRefs: [],
+    },
+    changedRefs: {
+      appearedCount: 0,
+      weakenedCount: 0,
+      preservedCount: 0,
+      topRefs: [],
+      omittedCount: 0,
+    },
+    failedRefs: [],
+    quarantinedActions: [],
+    regionSummaries: [],
+    omitted: {
+      observedRefCount: 1,
+      selectedRefCount: 1,
+      droppedRefCount: 0,
+      droppedByReason: {},
+    },
+  };
+
+  const providerUsers: string[] = [];
+  const responses = [
+    '{"plan":[{"tool":"type","ref":"ref_submit","text":"hello"}],"confidence":"high"}',
+    '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"medium"}',
+  ];
+  const client = new V2PlannerClient({
+    provider: async (_system, user) => {
+      providerUsers.push(user);
+      return {
+        text: responses.shift() ?? '{}',
+        inputTokens: 5,
+        outputTokens: 3,
+      };
+    },
+  });
+
+  const result = await client.call({ plannerInput });
+
+  assert.equal(result.output.plan?.[0].tool, 'click');
+  assert.equal(providerUsers.length, 2);
+  assert.match(providerUsers[1], /no typeable refs are currently available/i);
+  assert.match(providerUsers[1], /click a compatible launcher and reobserve/i);
+  assert.match(providerUsers[1], /clickable launcher candidates/i);
+  assert.match(providerUsers[1], /ref_submit/);
+  assert.match(providerUsers[1], /do not type into a button/i);
 });
 
 test('V2PlannerClient gives labeled recovery guidance for click-on-readable-only evidence', async () => {
@@ -618,6 +873,7 @@ test('V2PlannerClient gives labeled recovery guidance for click-on-readable-only
     { refId: 'ref_search_box', rank: 2 },
   ];
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -704,6 +960,7 @@ test('V2PlannerClient rescues repeated click-on-readable-only output as safe get
   plannerInput.current.interactions = [{ refId: 'ref_result_row', rank: 1 }];
   plannerInput.current.readables = [{ refId: 'ref_result_row', rank: 1 }];
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -779,6 +1036,7 @@ test('V2PlannerClient accepts queued launcher plan when first step is compatible
   plannerInput.current.readables = [];
   plannerInput.current.navigation = [];
   plannerInput.workingSet = {
+    deltaRefs: { appeared: [], changed: [] },
     mode: 'act',
     modeReason: 'test',
     primaryRefs: [],
@@ -874,12 +1132,37 @@ test('V2PlannerClient uses JSON serialization by default and switches to PRC whe
   );
 });
 
+test('V2PlannerClient forwards compact PRC serialization to both prompt builders', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  let capturedSystem = '';
+  let capturedUser = '';
+  const client = new V2PlannerClient({
+    plannerSerialization: { mode: 'prc', prcTierOmitted: true, compactDataPlane: true },
+    provider: async (system, user) => {
+      capturedSystem = system;
+      capturedUser = user;
+      return {
+        text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
+        inputTokens: 1,
+        outputTokens: 1,
+      };
+    },
+  });
+
+  await client.call({ plannerInput: makePlannerInput('episode_compact_prc') });
+
+  assert.match(capturedSystem, /compact data-plane notation/i);
+  assert.match(capturedUser, /^Planner input:\nS:/);
+  assert.doesNotMatch(capturedUser, /tier="/);
+  assert.match(capturedUser, /s=10/);
+});
+
 test('V2PlannerClient records provider payload byte summaries without raw prompts', async () => {
   const { V2PlannerClient } = await loadPlannerClientModule();
   const { traceDir, store } = await freshTraceStore('planner_client_provider_payload');
   const client = new V2PlannerClient({
     traceStore: store,
-    plannerSerialization: { mode: 'prc' },
+    plannerSerialization: { mode: 'prc', prcTierOmitted: true, compactDataPlane: false },
     provider: async (_system, _user) => ({
       text: '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}',
       inputTokens: 5,
@@ -896,6 +1179,14 @@ test('V2PlannerClient records provider payload byte summaries without raw prompt
   ));
 
   assert.equal(outputJson.providerPayload.serializationMode, 'prc');
+  assert.deepEqual(outputJson.providerPayload.serialization, {
+    mode: 'prc',
+    prcTierOmitted: true,
+    compactDataPlane: false,
+    prcLeanPlane: false,
+    conditionalSystemPrompt: false,
+    omitResponseJsonSchema: false,
+  });
   assert.equal(outputJson.providerPayload.attempts.length, 1);
   assert.equal(outputJson.providerPayload.attempts[0].attempt, 1);
   assert.equal(typeof outputJson.providerPayload.attempts[0].systemBytes, 'number');
@@ -942,4 +1233,66 @@ test('V2PlannerClient accepts done output in finalization mode', async () => {
 
   assert.equal(result.output.done, true);
   assert.equal(result.output.plan, undefined);
+});
+
+// --- Truncated navigate URL detection tests ---
+
+test('isTruncatedNavigateOutput detects truncated navigate URL', async () => {
+  const { isTruncatedNavigateOutput } = await loadPlannerClientModule();
+
+  // Truncated: navigate + url + long unfinished string, no closing braces
+  const truncated = '{"plan":[{"tool":"navigate","url":"https://www.amazon.com/s?k=foo' + '%2B'.repeat(500);
+  assert.equal(isTruncatedNavigateOutput(truncated), true);
+});
+
+test('isTruncatedNavigateOutput rejects non-truncated valid JSON', async () => {
+  const { isTruncatedNavigateOutput } = await loadPlannerClientModule();
+
+  // Valid JSON — ends with structural close
+  const valid = '{"plan":[{"tool":"navigate","url":"https://example.com"}]}';
+  assert.equal(isTruncatedNavigateOutput(valid), false);
+});
+
+test('isTruncatedNavigateOutput rejects non-navigate truncated JSON', async () => {
+  const { isTruncatedNavigateOutput } = await loadPlannerClientModule();
+
+  // Truncated, but no navigate/url — should not trigger
+  const noNavigate = '{"plan":[{"tool":"click","ref":"v2ref_' + 'a'.repeat(600);
+  assert.equal(isTruncatedNavigateOutput(noNavigate), false);
+});
+
+test('isTruncatedNavigateOutput rejects short truncated navigate', async () => {
+  const { isTruncatedNavigateOutput } = await loadPlannerClientModule();
+
+  // Has navigate + url but URL is short (< 500 chars) — not truncation, just malformed
+  const shortTrunc = '{"plan":[{"tool":"navigate","url":"https://example.com/short';
+  assert.equal(isTruncatedNavigateOutput(shortTrunc), false);
+});
+
+test('isTruncatedNavigateOutput rejects non-JSON garbage', async () => {
+  const { isTruncatedNavigateOutput } = await loadPlannerClientModule();
+  assert.equal(isTruncatedNavigateOutput('not json at all'), false);
+});
+
+test('V2PlannerClient returns url_truncated error for truncated navigate and retries with feedback', async () => {
+  const { V2PlannerClient } = await loadPlannerClientModule();
+  const truncatedText = '{"plan":[{"tool":"navigate","url":"https://www.amazon.com/s?k=' + 'x'.repeat(600);
+  const validText = '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"high"}';
+
+  let callCount = 0;
+  const client = new V2PlannerClient({
+    provider: async (_system, user) => {
+      callCount += 1;
+      if (callCount === 1) {
+        return { text: truncatedText, inputTokens: 5, outputTokens: 3 };
+      }
+      // Verify retry feedback contains url_truncated guidance
+      assert.match(user, /url_truncated/);
+      return { text: validText, inputTokens: 5, outputTokens: 3 };
+    },
+  });
+
+  const result = await client.call({ plannerInput: makePlannerInput('episode_truncated') });
+  assert.equal(callCount, 2);
+  assert.equal(result.output.plan?.[0].tool, 'click');
 });

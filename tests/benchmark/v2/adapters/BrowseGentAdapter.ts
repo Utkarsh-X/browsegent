@@ -30,6 +30,7 @@ export class BrowseGentBenchmarkAdapter implements BenchmarkAdapter {
         output: 'text',
         ...(options.plannerMode !== undefined ? { plannerMode: options.plannerMode } : {}),
         ...(options.plannerSerialization !== undefined ? { plannerSerialization: options.plannerSerialization } : {}),
+        ...(options.workingSetOptions !== undefined ? { workingSetOptions: options.workingSetOptions } : {}),
       });
 
       return {
@@ -40,12 +41,15 @@ export class BrowseGentBenchmarkAdapter implements BenchmarkAdapter {
         value: result.value,
         tracePath: result.tracePath,
         failureReason: result.failureReason,
+        advisoryNotes: result.advisoryNotes,
         metrics: {
           plannerCalls: result.metrics.plannerCalls,
           toolExecutions: result.metrics.toolExecutions,
           durationMs: Date.now() - startedAt,
           inputTokens: result.metrics.inputTokens,
           outputTokens: result.metrics.outputTokens,
+          postActionObservationReuseCount: result.metrics.postActionObservationReuseCount,
+          postActionObservationRecaptureCount: result.metrics.postActionObservationRecaptureCount,
         },
       };
     } catch (error) {

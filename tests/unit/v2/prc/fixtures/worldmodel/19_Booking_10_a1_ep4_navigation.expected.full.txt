@@ -1,0 +1,121 @@
+Planner input:
+MISSION
+  goal: Find a well-reviewed hotel in Paris with available bookings suitable for a couple (2 adults) on Valentine's Day week, February 14-21, 2027, that offers free cancellation options.
+
+STATE
+  page: "Booking.com | आधिकारिक साइट | सबसे बेहतरीन होटल, फ़्लाइटें, किराये की कार और प्रॉपर्टी" https://www.booking.com/index.hi.html
+  observation: obs_2_4 gen=2 refs=1076
+  focus: v2ref_21 highest_operational_score
+
+RECENT EVENTS
+  last: navigate -> ok
+  transition: hard_reset urlChanged=false appeared=694 disappeared=3281 weakened=280 preserved=102
+  history: 3 steps
+
+GOAL PROGRESS
+  destination: NOT_SET
+  dates: NOT_SET
+  guests: unverified
+  free cancellation: unverified
+  well-reviewed: unverified
+  focus: destination
+
+TASK PROGRESS
+  state: incomplete
+  destination: pending requested="Paris"
+  date_range: pending requested="February 14-21, 2027"
+  traveler_count: pending requested="2 adults"
+  filter:free_cancellation: pending requested="free cancellation"
+
+PROBLEMS
+  uncertainty: medium low_confidence_refs:280, low_confidence_ref:v2ref_21, low_confidence_ref:v2ref_39, low_confidence_ref:v2ref_53, low_confidence_ref:v2ref_60, weakened_refs:280, transition_class:hard_reset, no_op_navigation
+
+PLANNER SURFACE
+  Page Elements
+    [v2ref_14] <link name="ग्राहक सहायता" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_21] <link name="अकाउंट रजिस्टर करें" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_23] <link name="साइन इन" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_25] <button name="स्टे" role="menuitem" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_30] <generic name="स्टे" state="state=weakened,confidence=0.55" tools="r" />
+    [v2ref_32] <button name="फ़्लाइट" role="menuitem" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_37] <generic name="फ़्लाइट" state="state=weakened,confidence=0.55" tools="r" />
+    [v2ref_39] <button name="फ़्लाइट + होटल" role="menuitem" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_4] <link name="Booking.com" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_44] <generic name="फ़्लाइट + होटल" state="state=weakened,confidence=0.55" tools="r" />
+    [v2ref_4441] <generic name="साइन इन करें" state="visibility=offscreen" tools="r" />
+    [v2ref_4442] <generic name="रजिस्टर करें" state="visibility=offscreen" tools="r" />
+    [v2ref_4443] <button name="घरेलू शहर" state="visibility=offscreen" tools="c,r" +new />
+    [v2ref_4446] <button name="अंतरराष्ट्रीय शहर" state="visibility=offscreen" tools="c,r" +new />
+    [v2ref_4447] <generic name="अंतरराष्ट्रीय शहर" state="visibility=offscreen" tools="r" />
+    [v2ref_4448] <generic name="अंतरराष्ट्रीय शहर" state="visibility=offscreen" tools="r" />
+    [v2ref_4456] <button name="स्टे के लिए जगहें" state="visibility=offscreen" tools="c,r" +new />
+    [v2ref_4457] <generic name="स्टे के लिए जगहें" state="visibility=offscreen" tools="r" />
+    [v2ref_4458] <generic name="स्टे के लिए जगहें" state="visibility=offscreen" tools="r" />
+    [v2ref_4459] <generic name="Ooty में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4460] <generic name="Ooty में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4461] <generic name="Ooty में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4462] <generic name="Ooty में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4463] <generic name="हैदराबाद में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4464] <generic name="हैदराबाद में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4465] <generic name="हैदराबाद में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4466] <generic name="हैदराबाद में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4467] <generic name="जयपुर में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4468] <generic name="जयपुर में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4469] <generic name="जयपुर में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4470] <generic name="जयपुर में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4471] <generic name="Puri में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4472] <generic name="Puri में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4473] <generic name="Puri में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4474] <generic name="Puri में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4475] <generic name="Cochin में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4476] <generic name="Cochin में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4477] <generic name="Cochin में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4478] <generic name="Cochin में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4479] <generic name="Munnar में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4480] <generic name="Munnar में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4481] <generic name="Munnar में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4482] <generic name="Munnar में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4483] <generic name="Mumbai में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4484] <generic name="Mumbai में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4485] <generic name="Mumbai में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4486] <generic name="Mumbai में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4487] <generic name="बंगलुरू में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4488] <generic name="बंगलुरू में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4489] <generic name="बंगलुरू में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4490] <generic name="बंगलुरू में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4491] <generic name="Udaipur में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4492] <generic name="Udaipur में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4493] <generic name="Udaipur में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4494] <generic name="Udaipur में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4495] <generic name="वाराणसी में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4496] <generic name="वाराणसी में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4497] <generic name="वाराणसी में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4498] <generic name="वाराणसी में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4499] <generic name="Srinagar में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4500] <generic name="Srinagar में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4501] <generic name="Srinagar में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4502] <generic name="Srinagar में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4503] <generic name="Rishīkesh में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4504] <generic name="Rishīkesh में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_4505] <generic name="Rishīkesh में होटल" state="visibility=offscreen" tools="r" />
+    [v2ref_46] <button name="कार रेंटल" role="menuitem" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_5017] <link name="हॉलिडे होम" state="visibility=offscreen" tools="c,r" +new />
+    [v2ref_5019] <link name="अपार्टमेंट" state="visibility=offscreen" tools="c,r" +new />
+    [v2ref_5021] <link name="रिज़ॉर्ट" state="visibility=offscreen" tools="c,r" />
+    [v2ref_5027] <link name="बेड एंड ब्रेकफ़ास्ट" state="visibility=offscreen" tools="c,r" +new />
+    [v2ref_5029] <link name="गेस्ट हाउस" state="visibility=offscreen" tools="c,r" +new />
+    [v2ref_5071] <link name="अपनी प्रॉपर्टी रजिस्टर करें" state="visibility=offscreen" tools="c,r" +new />
+    [v2ref_51] <generic name="कार रेंटल" state="state=weakened,confidence=0.55" tools="r" />
+    [v2ref_53] <button name="खास जगहें और गतिविधियां" role="menuitem" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_58] <generic name="खास जगहें और गतिविधियां" state="state=weakened,confidence=0.55" tools="r" />
+    [v2ref_60] <button name="एयरपोर्ट टैक्सी" role="menuitem" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_65] <generic name="एयरपोर्ट टैक्सी" state="state=weakened,confidence=0.55" tools="r" />
+    [v2ref_67] <input name="जगह डालें" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" state="state=weakened,confidence=0.55" tools="c,t,r" />
+    [v2ref_7] <button name="भारतीय रुपया में कीमतें, INR" aria-haspopup="dialog" state="state=weakened,confidence=0.55" tools="c,r" />
+  NEW SINCE LAST ACTION: v2ref_4446 "अंतरराष्ट्रीय शहर" | v2ref_4456 "स्टे के लिए जगहें" | v2ref_5017 "हॉलिडे होम" | v2ref_5019 "अपार्टमेंट" | v2ref_5027 "बेड एंड ब्रेकफ़ास्ट" | v2ref_5029 "गेस्ट हाउस" | v2ref_5071 "अपनी प्रॉपर्टी रजिस्टर करें" | v2ref_4443 "घरेलू शहर"
+
+WORKING SET
+  mode: verify
+
+DECISION SIGNALS
+  suppressed: 996 generic_low_value=43 hidden_low_value=6 offscreen_low_value=9 rank_loss=936

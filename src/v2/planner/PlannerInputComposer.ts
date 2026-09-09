@@ -4,9 +4,17 @@ import { LineageCompressor } from './LineageCompressor';
 import { measureProjectionSize } from './ProjectionSizeDiagnostics';
 import { PlannerWorkingSetSelector } from './PlannerWorkingSetSelector';
 import { RecoveryStateBuilder } from '../runtime/RecoveryState';
+import { buildTaskProgress } from '../agent/TaskProgress';
+import { evaluateGoalProgress, parseGoalRequirements } from './GoalProgressTracker';
+import { commitPhaseReady } from './CommitPhase';
+import { detectDateHorizon, findSubmitControls, findTargetDateCells } from './HorizonDetector';
+import type { PlannerGoalProgress } from './GoalProgressTracker';
+import type { SurfaceHorizon } from './HorizonDetector';
+import type { CompressedLineage } from './types';
 import type {
   PlannerContinuitySummary,
   PlannerDeadStateSummary,
+  PlannerEvidenceSnapshot,
   PlannerFailureSummary,
   PlannerInput,
   PlannerInputComposerInput,
@@ -18,6 +26,12 @@ import type {
 
 const DEFAULT_RESULT_PREVIEW_LIMIT = 240;
 const READ_RESULT_PREVIEW_LIMIT = 1_500;
+/**
+ * Requirement evidence (e.g. a destination typed several steps ago) is
+ * long-horizon state; the rendered lineage stays a short recent window but the
+ * checklist must not forget it just because the window slid past it.
+ */
+const GOAL_PROGRESS_LINEAGE_HORIZON_STEPS = 48;
 
 export class PlannerInputComposer {
   private readonly lineageCompressor = new LineageCompressor();
@@ -25,20 +39,56 @@ export class PlannerInputComposer {
   private readonly recoveryStateBuilder = new RecoveryStateBuilder();
 
   compose(input: PlannerInputComposerInput): PlannerInput {
-    const workingSetSelection = this.workingSetSelector.select({
+    const workingSetSelector = input.workingSetOptions
+      ? new PlannerWorkingSetSelector(input.workingSetOptions)
+      : this.workingSetSelector;
+    const evidenceSnapshot = restrictEvidenceSnapshotToCurrentInteractions(input.evidenceSnapshot, input.projection);
+    const evidenceRefIds = evidenceSnapshot
+      ? [...new Set(evidenceSnapshot.cards.flatMap(card => card.refIds))].slice(0, 16)
+      : undefined;
+    const lineage = input.trace
+      ? this.lineageCompressor.compress(input.trace, { maxSteps: input.maxLineageSteps })
+      : undefined;
+    const goalLineage = input.trace
+      ? this.lineageCompressor.compress(input.trace, { maxSteps: GOAL_PROGRESS_LINEAGE_HORIZON_STEPS })
+      : undefined;
+    const goalProgress = input.goalProgress ?? evaluateGoalProgress(input.goal, {
+      url: input.graphSnapshot?.url,
+      lineage: goalLineage,
+      lang: input.projection.lang,
+    });
+    const horizon = detectHorizonForFocus(input.projection, input.goal, goalProgress);
+    const targetValueRefs = horizon
+      ? undefined
+      : findTargetValueRefs(input.projection, input.goal, goalProgress);
+    const submitControlRefs = findSubmitControlRefs(input.projection, goalProgress, goalLineage);
+    const workingSetSelection = workingSetSelector.select({
       goal: input.goal,
       projection: input.projection,
+      evidenceRefIds,
+      horizonControlRefs: horizon?.navControls.map(control => control.refId),
+      targetValueRefs,
+      submitControlRefs,
       graphSnapshot: input.graphSnapshot,
       transitionEvidence: input.transitionEvidence,
       lastResult: input.lastResult,
       failureEvidence: input.failureEvidence,
       uncertaintySignals: input.runtimeUncertainty?.signals,
+      previousRenderedRefs: input.previousRenderedRefs,
     });
     const current = workingSetSelection.current;
+    const taskProgress = buildTaskProgress({
+      goal: input.goal,
+      projection: input.projection,
+      lastResult: input.lastResult,
+      trace: input.trace,
+    });
     const recovery = this.recoveryStateBuilder.build({
+      projection: input.projection,
       lastResult: input.lastResult,
       failures: input.failureEvidence,
       uncertaintySignals: input.runtimeUncertainty?.signals,
+      evidenceCoverageStatus: input.evidenceCoverage?.status,
     });
 
     const plannerInput: PlannerInput = {
@@ -55,11 +105,19 @@ export class PlannerInputComposer {
       deadState: input.deadStateEvidence ? summarizeDeadState(input.deadStateEvidence) : undefined,
       recovery,
       answerFeedback: input.answerFeedback,
+      evidenceCoverage: input.evidenceCoverage,
+      taskProgress: taskProgress.items.length > 0 ? taskProgress : undefined,
+      evidenceSnapshot,
       uncertainty: buildUncertainty(input),
-      lineage: input.trace
-        ? this.lineageCompressor.compress(input.trace, { maxSteps: input.maxLineageSteps })
-        : undefined,
+      lineage,
     };
+
+    if (goalProgress !== undefined) {
+      plannerInput.goalProgress = goalProgress;
+    }
+    if (horizon !== undefined) {
+      plannerInput.horizon = horizon;
+    }
 
     plannerInput.sizeDiagnostics = measureProjectionSize({
       current: plannerInput.current,
@@ -69,6 +127,82 @@ export class PlannerInputComposer {
 
     return plannerInput;
   }
+}
+
+function restrictEvidenceSnapshotToCurrentInteractions(
+  snapshot: PlannerEvidenceSnapshot | undefined,
+  projection: PlannerInputComposerInput['projection'],
+): PlannerEvidenceSnapshot | undefined {
+  if (!snapshot) return undefined;
+
+  const currentInteractionRefs = new Set(projection.interactions.map(item => item.refId));
+  return {
+    ...snapshot,
+    cards: snapshot.cards.map(card => ({
+      ...card,
+      refIds: card.refIds.filter(refId => currentInteractionRefs.has(refId)),
+    })),
+  };
+}
+
+/**
+ * Runs the horizon detector only while the focused requirement is a concrete,
+ * unsatisfied dates target. Detection is deterministic; failure degrades to no
+ * annotation, never to invented facts. When the target month IS visible, the
+ * detector's matched target-date cells are force-selected instead so the
+ * planner can act on the exact value it needs.
+ */
+function detectHorizonForFocus(
+  projection: PlannerInputComposerInput['projection'],
+  goal: string,
+  goalProgress: PlannerGoalProgress | undefined,
+): SurfaceHorizon | undefined {
+  if (!goalProgress || goalProgress.focus !== 'dates') return undefined;
+
+  const datesEntry = goalProgress.entries.find(entry => entry.key === 'dates');
+  if (!datesEntry || !(datesEntry.state === 'NOT_SET' || datesEntry.state.startsWith('partial:'))) return undefined;
+
+  const requirements = parseGoalRequirements(goal);
+  if (!requirements) return undefined;
+
+  const horizon = detectDateHorizon(projection, requirements);
+  if (!horizon || horizon.covered || horizon.navControls.length === 0) return undefined;
+
+  return horizon;
+}
+
+/**
+ * Commit phase: every parsed requirement is addressed (no focus remains) and
+ * no submission has been attempted in the goal lineage — the form's submit
+ * control must stay visible so the planner can confirm the entry.
+ */
+function findSubmitControlRefs(
+  projection: PlannerInputComposerInput['projection'],
+  goalProgress: PlannerGoalProgress | undefined,
+  goalLineage: CompressedLineage | undefined,
+): string[] | undefined {
+  // Same predicate the submit_form refusal guard uses: promotion and refusal
+  // can never disagree about when the commit phase is open.
+  if (!commitPhaseReady(goalProgress, goalLineage)) return undefined;
+  const submits = findSubmitControls(projection);
+  return submits.length > 0 ? submits.map(control => control.refId) : undefined;
+}
+
+function findTargetValueRefs(
+  projection: PlannerInputComposerInput['projection'],
+  goal: string,
+  goalProgress: PlannerGoalProgress | undefined,
+): string[] | undefined {
+  if (!goalProgress || goalProgress.focus !== 'dates') return undefined;
+
+  const datesEntry = goalProgress.entries.find(entry => entry.key === 'dates');
+  if (!datesEntry || !(datesEntry.state === 'NOT_SET' || datesEntry.state.startsWith('partial:'))) return undefined;
+
+  const requirements = parseGoalRequirements(goal);
+  if (!requirements) return undefined;
+
+  const matched = findTargetDateCells(projection, requirements);
+  return matched.length > 0 ? matched.map(cell => cell.refId) : undefined;
 }
 
 function summarizeContinuity(snapshot: ContinuityGraphSnapshot): PlannerContinuitySummary {
@@ -118,6 +252,7 @@ function summarizeLastResult(result: V2ToolResult): PlannerLastResultSummary {
     traceStepId: result.traceStepId,
     targetRef: result.targetRef,
     valuePreview: previewResultEvidence(result),
+    effect: result.success ? summarizeActionEffect(result.evidence) : undefined,
     error: result.error
       ? {
           code: result.error.code,
@@ -132,6 +267,18 @@ function summarizeLastResult(result: V2ToolResult): PlannerLastResultSummary {
         }
       : undefined,
   };
+}
+
+/**
+ * Deterministic post-action verdict: did the action change the page at all?
+ * 'page' = URL moved, 'local' = same-page structural change, 'none' = the
+ * runtime measured no observable change (the planner must not repeat it).
+ */
+function summarizeActionEffect(evidence: TransitionEvidence | undefined): 'page' | 'local' | 'none' {
+  if (!evidence) return 'none';
+  if (evidence.urlChanged) return 'page';
+  if (evidence.generationChanged || evidence.refChanges.appeared.length > 0) return 'local';
+  return 'none';
 }
 
 function summarizeFailure(failure: NonNullable<PlannerInputComposerInput['failureEvidence']>[number]): PlannerFailureSummary {

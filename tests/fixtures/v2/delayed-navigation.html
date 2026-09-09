@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Delayed Navigation Fixture</title>
+</head>
+<body>
+  <button id="open-results">Open results</button>
+  <script>
+    document.querySelector('#open-results').addEventListener('click', () => {
+      document.title = 'Delayed Results Fixture';
+      document.body.innerHTML = '<main id="results"><p>Loading results...</p></main>';
+      setTimeout(() => {
+        document.querySelector('#results').innerHTML = '<button id="result-action">Result action</button>';
+      }, 3000);
+    });
+  </script>
+</body>
+</html>

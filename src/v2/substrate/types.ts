@@ -1,3 +1,4 @@
+import type { ProseRef } from '../runtime/types';
 import type { Page } from 'playwright';
 
 import type { ActionabilityState, EditableKind, Rect, RuntimeWarning, V2Ref, VisibilityState } from '../runtime/types';
@@ -14,6 +15,7 @@ export interface ObservationCaptureInput {
   sessionId: string;
   generationId: number;
   page: Page;
+  retryEmptyNavigationCapture?: boolean;
 }
 
 export interface BuildObservationInput {
@@ -22,18 +24,28 @@ export interface BuildObservationInput {
   generationId: number;
   url: string;
   title: string;
+  lang?: string;
   timestamp: number;
   durationMs: number;
   refs: V2Ref[];
+  prose?: ProseRef[];
+  /** Page body text length from the readiness probe (F11 ratio form). */
+  bodyTextLength?: number;
   warnings: RuntimeWarning[];
 }
 
 export interface CapturedElement {
+  /** Position of this element in the document-order walk (D4 batched identity join). */
+  walkIndex?: number;
   targetId: string;
   frameId?: string;
   selectorCandidates: string[];
   tagName: string;
   inputType?: string;
+  /** True when a <button> belongs to a <form> (spec default type is submit). */
+  inForm?: boolean;
+  value?: string;
+  placeholder?: string;
   editableKind?: EditableKind;
   ariaAutocomplete?: string;
   ariaHasPopup?: string;

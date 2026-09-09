@@ -1,0 +1,3009 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "latestTransition": {
+      "strength": "moderate",
+      "transitionClass": "structural_local",
+      "transitionId": "transition_obs_1_9_obs_1_10"
+    },
+    "observationId": "obs_1_10",
+    "presentRefCount": 384,
+    "refCount": 2752,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_10_6",
+    "transitionCount": 6,
+    "url": "https://github.com/search?q=climate+change+data+visualization&type=repositories"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_2701"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_2701"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_2758"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_2759"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_2682"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_2683"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_2684"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_2687"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_2688"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_2689"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_2690"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_2706"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_2714"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_2723"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_2731"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_2739"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_2747"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_2720"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_2721"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_2722"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_2728"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_2729"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_2730"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_2752"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_2753"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_1"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_1551"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_1918"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_2711"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_2712"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_2713"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_2736"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_2737"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_2738"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_2744"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_2745"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_2746"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_1506"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_1584"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_2581"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_2582"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_2590"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_2591"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_2631"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_2632"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_2644"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_2661"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_2662"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_2671"
+      },
+      {
+        "rank": 49,
+        "refId": "v2ref_2685"
+      },
+      {
+        "rank": 50,
+        "refId": "v2ref_2686"
+      },
+      {
+        "rank": 51,
+        "refId": "v2ref_2691"
+      },
+      {
+        "rank": 52,
+        "refId": "v2ref_2692"
+      },
+      {
+        "rank": 53,
+        "refId": "v2ref_2693"
+      },
+      {
+        "rank": 54,
+        "refId": "v2ref_2703"
+      },
+      {
+        "rank": 55,
+        "refId": "v2ref_2704"
+      },
+      {
+        "rank": 56,
+        "refId": "v2ref_2705"
+      },
+      {
+        "rank": 57,
+        "refId": "v2ref_2708"
+      },
+      {
+        "rank": 58,
+        "refId": "v2ref_2709"
+      },
+      {
+        "rank": 59,
+        "refId": "v2ref_2710"
+      },
+      {
+        "rank": 60,
+        "refId": "v2ref_2716"
+      },
+      {
+        "rank": 61,
+        "refId": "v2ref_2717"
+      },
+      {
+        "rank": 62,
+        "refId": "v2ref_2718"
+      },
+      {
+        "rank": 63,
+        "refId": "v2ref_2719"
+      },
+      {
+        "rank": 64,
+        "refId": "v2ref_2725"
+      },
+      {
+        "rank": 65,
+        "refId": "v2ref_2726"
+      },
+      {
+        "rank": 66,
+        "refId": "v2ref_2727"
+      },
+      {
+        "rank": 67,
+        "refId": "v2ref_2733"
+      },
+      {
+        "rank": 68,
+        "refId": "v2ref_2734"
+      },
+      {
+        "rank": 69,
+        "refId": "v2ref_2735"
+      },
+      {
+        "rank": 70,
+        "refId": "v2ref_2741"
+      },
+      {
+        "rank": 71,
+        "refId": "v2ref_2742"
+      },
+      {
+        "rank": 72,
+        "refId": "v2ref_2743"
+      },
+      {
+        "rank": 73,
+        "refId": "v2ref_2749"
+      },
+      {
+        "rank": 74,
+        "refId": "v2ref_2750"
+      },
+      {
+        "rank": 75,
+        "refId": "v2ref_2751"
+      },
+      {
+        "rank": 76,
+        "refId": "v2ref_2755"
+      },
+      {
+        "rank": 77,
+        "refId": "v2ref_2756"
+      },
+      {
+        "rank": 78,
+        "refId": "v2ref_2757"
+      },
+      {
+        "rank": 79,
+        "refId": "v2ref_2620"
+      },
+      {
+        "rank": 80,
+        "refId": "v2ref_2652"
+      }
+    ],
+    "navigation": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1918"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_2620"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_2652"
+      }
+    ],
+    "observationId": "obs_1_10",
+    "page": {
+      "title": "Repository search results · GitHub",
+      "url": "https://github.com/search?q=climate+change+data+visualization&type=repositories"
+    },
+    "projectionId": "projection_obs_1_10",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_2701"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_2758"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_2759"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_2682"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_2683"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_2684"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_2687"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_2688"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_2689"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_2690"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_2706"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_2714"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_2723"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_2731"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_2739"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_2747"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_2720"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_2721"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_2722"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_2728"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_2729"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_2730"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_2752"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_2753"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_1"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_1551"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_1918"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_2711"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_2712"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_2713"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_2736"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_2737"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_2738"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_2744"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_2745"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_2746"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_2620"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_2652"
+      }
+    ],
+    "refs": {
+      "v2ref_1": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "link",
+        "name": "Skip to content",
+        "refId": "v2ref_1",
+        "role": "link",
+        "score": 101,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_1506": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1506",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1551": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "Open Source",
+        "refId": "v2ref_1551",
+        "role": "button",
+        "score": 101,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_1584": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1584",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1918": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "link",
+        "name": "Advanced search",
+        "refId": "v2ref_1918",
+        "role": "link",
+        "score": 101,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_2581": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2581",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2582": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2582",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2590": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2590",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2591": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2591",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2620": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Documentation",
+        "refId": "v2ref_2620",
+        "role": "link",
+        "score": 45,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_2631": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2631",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2632": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2632",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2644": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2644",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2652": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Documentation",
+        "refId": "v2ref_2652",
+        "role": "link",
+        "score": 45,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_2661": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2661",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2662": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2662",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2671": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2671",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2682": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Search/",
+        "refId": "v2ref_2682",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2683": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Search/",
+        "refId": "v2ref_2683",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2684": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Search/",
+        "refId": "v2ref_2684",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2685": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2685",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2686": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2686",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2687": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign in",
+        "refId": "v2ref_2687",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2688": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign in",
+        "refId": "v2ref_2688",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2689": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign up",
+        "refId": "v2ref_2689",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2690": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign up",
+        "refId": "v2ref_2690",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2691": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2691",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2692": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2692",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2693": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2693",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2701": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Filter byCode... (...)resultsRepositories535 (535)resultsIssues1.4k (1.4k)resultsPull requests1.3k (1.3k)resultsDiscussions152 (152)resultsUsers6 (6)resultsMoreAdvanced search",
+        "refId": "v2ref_2701",
+        "role": "region",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2703": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2703",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2704": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2704",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2705": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2705",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2706": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "results",
+        "refId": "v2ref_2706",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2708": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2708",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2709": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2709",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2710": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2710",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2711": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "535",
+        "refId": "v2ref_2711",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2712": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "535",
+        "refId": "v2ref_2712",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2713": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "535",
+        "refId": "v2ref_2713",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2714": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "results",
+        "refId": "v2ref_2714",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2716": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2716",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2717": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2717",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2718": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2718",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2719": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2719",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2720": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "1.4k",
+        "refId": "v2ref_2720",
+        "score": 103,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2721": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "1.4k",
+        "refId": "v2ref_2721",
+        "score": 103,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2722": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "1.4k",
+        "refId": "v2ref_2722",
+        "score": 103,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2723": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "results",
+        "refId": "v2ref_2723",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2725": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2725",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2726": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2726",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2727": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2727",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2728": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "1.3k",
+        "refId": "v2ref_2728",
+        "score": 103,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2729": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "1.3k",
+        "refId": "v2ref_2729",
+        "score": 103,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2730": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "1.3k",
+        "refId": "v2ref_2730",
+        "score": 103,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2731": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "results",
+        "refId": "v2ref_2731",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2733": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2733",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2734": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2734",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2735": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2735",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2736": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "152",
+        "refId": "v2ref_2736",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2737": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "152",
+        "refId": "v2ref_2737",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2738": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "152",
+        "refId": "v2ref_2738",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2739": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "results",
+        "refId": "v2ref_2739",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2741": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2741",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2742": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2742",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2743": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2743",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2744": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "6",
+        "refId": "v2ref_2744",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2745": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "6",
+        "refId": "v2ref_2745",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2746": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "6",
+        "refId": "v2ref_2746",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2747": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "results",
+        "refId": "v2ref_2747",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2749": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2749",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2750": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2750",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2751": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2751",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2752": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "More",
+        "refId": "v2ref_2752",
+        "score": 103,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2753": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "More",
+        "refId": "v2ref_2753",
+        "score": 103,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2755": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2755",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2756": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2756",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2757": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_2757",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2758": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Advanced search",
+        "refId": "v2ref_2758",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_2759": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Advanced search",
+        "refId": "v2ref_2759",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      }
+    },
+    "regions": [],
+    "stats": {
+      "interactionCount": 80,
+      "navigationCount": 4,
+      "readableCount": 38,
+      "regionCount": 0
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_7_obs_1_10",
+  "evidenceCoverage": {
+    "contractKind": "ranked_entity",
+    "readCount": 88,
+    "requirements": [
+      {
+        "key": "ranking_evidence",
+        "status": "uncertain",
+        "supportingReadIndexes": []
+      }
+    ],
+    "status": "uncertain"
+  },
+  "evidenceSnapshot": {
+    "activeSort": {
+      "dimension": "relevance",
+      "direction": "desc",
+      "source": "active_control"
+    },
+    "cards": [
+      {
+        "entity": "moriahtaylor1/climate-change-analysis",
+        "metrics": {
+          "stars": 6
+        },
+        "position": 0,
+        "refIds": []
+      },
+      {
+        "entity": "WorldWindLabs/AgroSphere",
+        "metrics": {
+          "stars": 20
+        },
+        "position": 1,
+        "refIds": []
+      },
+      {
+        "entity": "akshaysonvane/Climate-Change-Data-Analytics-Visualization",
+        "metrics": {
+          "stars": 11
+        },
+        "position": 2,
+        "refIds": []
+      },
+      {
+        "entity": "AndreasPrein/Thunderstorm_Downbursts_Climate_Change",
+        "metrics": {},
+        "position": 3,
+        "refIds": []
+      }
+    ]
+  },
+  "goal": "Search for an open-source project related to 'climate change data visualization' on GitHub and report the project with the most stars.",
+  "lastResult": {
+    "effect": "local",
+    "evidence": {
+      "strength": "moderate",
+      "transitionClass": "structural_local"
+    },
+    "kind": "click",
+    "success": true,
+    "targetRef": "v2ref_2133",
+    "traceStepId": "step_7",
+    "valuePreview": "Most stars menuitemradio"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_5",
+        "beforeObservationId": "obs_1_4",
+        "index": 2,
+        "kind": "press",
+        "status": "completed",
+        "stepId": "step_3",
+        "strength": "moderate",
+        "transitionClass": "structural_local"
+      },
+      {
+        "afterObservationId": "obs_1_6",
+        "beforeObservationId": "obs_1_5",
+        "index": 3,
+        "kind": "search_page",
+        "status": "completed",
+        "stepId": "step_4"
+      },
+      {
+        "afterObservationId": "obs_1_8",
+        "beforeObservationId": "obs_1_6",
+        "index": 4,
+        "kind": "press",
+        "status": "completed",
+        "stepId": "step_5",
+        "strength": "none",
+        "transitionClass": "microstate"
+      },
+      {
+        "afterObservationId": "obs_1_9",
+        "beforeObservationId": "obs_1_8",
+        "index": 5,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_6",
+        "strength": "moderate",
+        "targetName": "Sort by: Best match",
+        "targetRef": "v2ref_1937",
+        "transitionClass": "structural_local"
+      },
+      {
+        "afterObservationId": "obs_1_10",
+        "beforeObservationId": "obs_1_9",
+        "index": 6,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_7",
+        "strength": "moderate",
+        "targetName": "Most stars",
+        "targetRef": "v2ref_2133",
+        "transitionClass": "structural_local"
+      }
+    ],
+    "totalSteps": 7,
+    "truncated": true
+  },
+  "recovery": {
+    "nextMechanisms": [
+      "avoid_navigation_churn",
+      "commit_to_current_surface_until_progress",
+      "act_on_visible_controls",
+      "reobserve_current_surface"
+    ],
+    "severity": "warning",
+    "signals": [
+      "low_confidence_refs:196",
+      "low_confidence_ref:v2ref_1",
+      "low_confidence_ref:v2ref_1551",
+      "low_confidence_ref:v2ref_1582",
+      "low_confidence_ref:v2ref_1611",
+      "navigation_oscillation"
+    ],
+    "state": "navigation_oscillation"
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 16658,
+    "totalPlannerInputBytes": 40407,
+    "workingSetBytes": 19634
+  },
+  "transition": {
+    "afterObservationId": "obs_1_10",
+    "beforeObservationId": "obs_1_9",
+    "generationChanged": false,
+    "notes": [
+      "refs_appeared:184",
+      "refs_disappeared:591",
+      "ref_changed:v2ref_1506",
+      "ref_changed:v2ref_1584",
+      "ref_changed:v2ref_1918",
+      "box_changed:v2ref_1506",
+      "box_changed:v2ref_1558",
+      "box_changed:v2ref_1567"
+    ],
+    "refChangeCounts": {
+      "appeared": 184,
+      "disappeared": 591,
+      "preserved": 4,
+      "weakened": 0
+    },
+    "strength": "moderate",
+    "transitionClass": "structural_local",
+    "urlChanged": false
+  },
+  "uncertainty": {
+    "level": "medium",
+    "signals": [
+      "low_confidence_refs:196",
+      "low_confidence_ref:v2ref_1",
+      "low_confidence_ref:v2ref_1551",
+      "low_confidence_ref:v2ref_1582",
+      "low_confidence_ref:v2ref_1611",
+      "navigation_oscillation"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_1",
+        "v2ref_1551",
+        "v2ref_1918"
+      ],
+      "readableRefs": [
+        "v2ref_2701",
+        "v2ref_2758",
+        "v2ref_2759",
+        "v2ref_2682",
+        "v2ref_2683",
+        "v2ref_2684",
+        "v2ref_2687",
+        "v2ref_2688",
+        "v2ref_2689",
+        "v2ref_2690",
+        "v2ref_2706",
+        "v2ref_2714",
+        "v2ref_2723",
+        "v2ref_2731",
+        "v2ref_2739",
+        "v2ref_2747",
+        "v2ref_2720",
+        "v2ref_2721",
+        "v2ref_2722",
+        "v2ref_2728",
+        "v2ref_2729",
+        "v2ref_2730",
+        "v2ref_2752",
+        "v2ref_2753",
+        "v2ref_1",
+        "v2ref_1551",
+        "v2ref_1918",
+        "v2ref_2711",
+        "v2ref_2712",
+        "v2ref_2713",
+        "v2ref_2736",
+        "v2ref_2737",
+        "v2ref_2738",
+        "v2ref_2744",
+        "v2ref_2745",
+        "v2ref_2746",
+        "v2ref_2620",
+        "v2ref_2652"
+      ],
+      "selectableRefs": [],
+      "typeableRefs": []
+    },
+    "changedRefs": {
+      "appearedCount": 184,
+      "omittedCount": 168,
+      "preservedCount": 4,
+      "topRefs": [
+        {
+          "kind": "generic",
+          "name": "Filter byCode... (...)resultsRepositories535 (535)resultsIssues1.4k (1.4k)resultsPull requests1.3k (1.3k)resultsDiscussions152 (152)resultsUsers6 (6)resultsMoreAdvanced search",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2701",
+          "role": "region",
+          "score": 385,
+          "text": "Filter byCode... (...)resultsRepositories535 (535)resultsIssues1.4k (1.4k)resultsPull requests1.3k (1.3k)resultsDiscussions152 (152)resultsUsers6 (6)resultsMoreAdvanced search"
+        },
+        {
+          "kind": "generic",
+          "name": "Advanced search",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2758",
+          "score": 381,
+          "text": "Advanced search"
+        },
+        {
+          "kind": "generic",
+          "name": "Advanced search",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2759",
+          "score": 381,
+          "text": "Advanced search"
+        },
+        {
+          "kind": "generic",
+          "name": "Search/",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2682",
+          "score": 378,
+          "text": "Search/"
+        },
+        {
+          "kind": "generic",
+          "name": "Search/",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2683",
+          "score": 378,
+          "text": "Search/"
+        },
+        {
+          "kind": "generic",
+          "name": "Search/",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2684",
+          "score": 378,
+          "text": "Search/"
+        },
+        {
+          "kind": "generic",
+          "name": "GitHub Advanced Security",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_2613",
+          "score": 211,
+          "text": "GitHub Advanced Security"
+        },
+        {
+          "kind": "generic",
+          "name": "GitHub Advanced Security",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_2674",
+          "score": 211,
+          "text": "GitHub Advanced Security"
+        },
+        {
+          "kind": "generic",
+          "name": "Sign in",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2687",
+          "score": 368,
+          "text": "Sign in"
+        },
+        {
+          "kind": "generic",
+          "name": "Sign in",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2688",
+          "score": 368,
+          "text": "Sign in"
+        },
+        {
+          "kind": "generic",
+          "name": "Sign up",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2689",
+          "score": 368,
+          "text": "Sign up"
+        },
+        {
+          "kind": "generic",
+          "name": "Sign up",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2690",
+          "score": 368,
+          "text": "Sign up"
+        },
+        {
+          "kind": "generic",
+          "name": "results",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2706",
+          "score": 368,
+          "text": "results"
+        },
+        {
+          "kind": "generic",
+          "name": "results",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2714",
+          "score": 368,
+          "text": "results"
+        },
+        {
+          "kind": "generic",
+          "name": "results",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2723",
+          "score": 368,
+          "text": "results"
+        },
+        {
+          "kind": "generic",
+          "name": "results",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_2731",
+          "score": 368,
+          "text": "results"
+        }
+      ],
+      "weakenedCount": 0
+    },
+    "deltaRefs": {
+      "appeared": [
+        "v2ref_2701",
+        "v2ref_2758",
+        "v2ref_2759",
+        "v2ref_2682",
+        "v2ref_2683",
+        "v2ref_2684",
+        "v2ref_2613",
+        "v2ref_2674"
+      ],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "extract",
+    "modeReason": "goal_requests_information",
+    "navigationRefs": [
+      {
+        "kind": "link",
+        "name": "Skip to content",
+        "reasons": [
+          "navigation_candidate",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1",
+        "role": "link",
+        "score": 101,
+        "text": "Skip to content"
+      },
+      {
+        "kind": "link",
+        "name": "Advanced search",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_changed",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1918",
+        "role": "link",
+        "score": 101,
+        "text": "Advanced search"
+      },
+      {
+        "kind": "link",
+        "name": "Documentation",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_2620",
+        "role": "link",
+        "score": 45,
+        "text": "Documentation"
+      },
+      {
+        "kind": "link",
+        "name": "Documentation",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_2652",
+        "role": "link",
+        "score": 45,
+        "text": "Documentation"
+      }
+    ],
+    "omitted": {
+      "droppedByReason": {
+        "hidden_low_value": 2,
+        "rank_loss": 229
+      },
+      "droppedRefCount": 304,
+      "observedRefCount": 384,
+      "selectedRefCount": 80
+    },
+    "primaryRefs": [
+      {
+        "kind": "generic",
+        "name": "Filter byCode... (...)resultsRepositories535 (535)resultsIssues1.4k (1.4k)resultsPull requests1.3k (1.3k)resultsDiscussions152 (152)resultsUsers6 (6)resultsMoreAdvanced search",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2701",
+        "role": "region",
+        "score": 385,
+        "text": "Filter byCode... (...)resultsRepositories535 (535)resultsIssues1.4k (1.4k)resultsPull requests1.3k (1.3k)resultsDiscussions152 (152)resultsUsers6 (6)resultsMoreAdvanced search"
+      },
+      {
+        "kind": "generic",
+        "name": "Advanced search",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2758",
+        "score": 381,
+        "text": "Advanced search"
+      },
+      {
+        "kind": "generic",
+        "name": "Advanced search",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2759",
+        "score": 381,
+        "text": "Advanced search"
+      },
+      {
+        "kind": "generic",
+        "name": "Search/",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2682",
+        "score": 378,
+        "text": "Search/"
+      },
+      {
+        "kind": "generic",
+        "name": "Search/",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2683",
+        "score": 378,
+        "text": "Search/"
+      },
+      {
+        "kind": "generic",
+        "name": "Search/",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2684",
+        "score": 378,
+        "text": "Search/"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign in",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2687",
+        "score": 368,
+        "text": "Sign in"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign in",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2688",
+        "score": 368,
+        "text": "Sign in"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign up",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2689",
+        "score": 368,
+        "text": "Sign up"
+      },
+      {
+        "kind": "generic",
+        "name": "Sign up",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2690",
+        "score": 368,
+        "text": "Sign up"
+      },
+      {
+        "kind": "generic",
+        "name": "results",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2706",
+        "score": 368,
+        "text": "results"
+      },
+      {
+        "kind": "generic",
+        "name": "results",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2714",
+        "score": 368,
+        "text": "results"
+      },
+      {
+        "kind": "generic",
+        "name": "results",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2723",
+        "score": 368,
+        "text": "results"
+      },
+      {
+        "kind": "generic",
+        "name": "results",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2731",
+        "score": 368,
+        "text": "results"
+      },
+      {
+        "kind": "generic",
+        "name": "results",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2739",
+        "score": 368,
+        "text": "results"
+      },
+      {
+        "kind": "generic",
+        "name": "results",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2747",
+        "score": 368,
+        "text": "results"
+      },
+      {
+        "kind": "generic",
+        "name": "1.4k",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2720",
+        "score": 363,
+        "text": "1.4k"
+      },
+      {
+        "kind": "generic",
+        "name": "1.4k",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2721",
+        "score": 363,
+        "text": "1.4k"
+      },
+      {
+        "kind": "generic",
+        "name": "1.4k",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2722",
+        "score": 363,
+        "text": "1.4k"
+      },
+      {
+        "kind": "generic",
+        "name": "1.3k",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2728",
+        "score": 363,
+        "text": "1.3k"
+      },
+      {
+        "kind": "generic",
+        "name": "1.3k",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2729",
+        "score": 363,
+        "text": "1.3k"
+      },
+      {
+        "kind": "generic",
+        "name": "1.3k",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2730",
+        "score": 363,
+        "text": "1.3k"
+      },
+      {
+        "kind": "generic",
+        "name": "More",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2752",
+        "score": 363,
+        "text": "More"
+      },
+      {
+        "kind": "generic",
+        "name": "More",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2753",
+        "score": 363,
+        "text": "More"
+      },
+      {
+        "kind": "generic",
+        "name": "535",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2711",
+        "score": 361,
+        "text": "535"
+      },
+      {
+        "kind": "generic",
+        "name": "535",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2712",
+        "score": 361,
+        "text": "535"
+      },
+      {
+        "kind": "generic",
+        "name": "535",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2713",
+        "score": 361,
+        "text": "535"
+      },
+      {
+        "kind": "generic",
+        "name": "152",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2736",
+        "score": 361,
+        "text": "152"
+      },
+      {
+        "kind": "generic",
+        "name": "152",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2737",
+        "score": 361,
+        "text": "152"
+      },
+      {
+        "kind": "generic",
+        "name": "152",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2738",
+        "score": 361,
+        "text": "152"
+      },
+      {
+        "kind": "generic",
+        "name": "6",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2744",
+        "score": 357,
+        "text": "6"
+      },
+      {
+        "kind": "generic",
+        "name": "6",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2745",
+        "score": 357,
+        "text": "6"
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2701",
+        "text": "Filter byCode... (...)resultsRepositories535 (535)resultsIssues1.4k (1.4k)resultsPull requests1.3k (1.3k)resultsDiscussions152 (152)resultsUsers6 (6)resultsMoreAdvanced search Filter byCode... (...)resultsRepositories..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2758",
+        "text": "Advanced search Advanced search"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2759",
+        "text": "Advanced search Advanced search"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2682",
+        "text": "Search/ Search/"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2683",
+        "text": "Search/ Search/"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2684",
+        "text": "Search/ Search/"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2687",
+        "text": "Sign in Sign in"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2688",
+        "text": "Sign in Sign in"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2689",
+        "text": "Sign up Sign up"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2690",
+        "text": "Sign up Sign up"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2706",
+        "text": "results results"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2714",
+        "text": "results results"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2723",
+        "text": "results results"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2731",
+        "text": "results results"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2739",
+        "text": "results results"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2747",
+        "text": "results results"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2720",
+        "text": "1.4k 1.4k"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2721",
+        "text": "1.4k 1.4k"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2722",
+        "text": "1.4k 1.4k"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2728",
+        "text": "1.3k 1.3k"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2729",
+        "text": "1.3k 1.3k"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2730",
+        "text": "1.3k 1.3k"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2752",
+        "text": "More More"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2753",
+        "text": "More More"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2711",
+        "text": "535 535"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2712",
+        "text": "535 535"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2713",
+        "text": "535 535"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2736",
+        "text": "152 152"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2737",
+        "text": "152 152"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2738",
+        "text": "152 152"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2744",
+        "text": "6 6"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2745",
+        "text": "6 6"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2746",
+        "text": "6 6"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1918",
+        "text": "Advanced search Advanced search"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1551",
+        "text": "Open Source Open Source"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2620",
+        "text": "Documentation Documentation"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_2652",
+        "text": "Documentation Documentation"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1",
+        "text": "Skip to content Skip to content"
+      }
+    ],
+    "regionSummaries": [],
+    "secondaryRefs": [
+      {
+        "kind": "generic",
+        "name": "6",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2746",
+        "score": 357,
+        "text": "6"
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2581",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2582",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2590",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2591",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2631",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2632",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2644",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2661",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2662",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2671",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2685",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2686",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2691",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2692",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2693",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2703",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2704",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2705",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2708",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2709",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2710",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2716",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2717",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2718",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2719",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2725",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2726",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2727",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2733",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2734",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2735",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2741",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2742",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2743",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2749",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2750",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2751",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2755",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2756",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_2757",
+        "score": 355
+      },
+      {
+        "kind": "link",
+        "name": "Advanced search",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_changed",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1918",
+        "role": "link",
+        "score": 321,
+        "text": "Advanced search"
+      },
+      {
+        "kind": "button",
+        "name": "Open Source",
+        "reasons": [
+          "goal_keyword_match",
+          "goal_phrase_match",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1551",
+        "role": "button",
+        "score": 291,
+        "text": "Open Source"
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1506",
+        "score": 265
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1584",
+        "score": 265
+      },
+      {
+        "kind": "link",
+        "name": "Documentation",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_2620",
+        "role": "link",
+        "score": 245,
+        "text": "Documentation"
+      },
+      {
+        "kind": "link",
+        "name": "Documentation",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "role_relevant_to_goal"
+        ],
+        "refId": "v2ref_2652",
+        "role": "link",
+        "score": 245,
+        "text": "Documentation"
+      },
+      {
+        "kind": "link",
+        "name": "Skip to content",
+        "reasons": [
+          "navigation_candidate",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1",
+        "role": "link",
+        "score": 241,
+        "text": "Skip to content"
+      }
+    ]
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {
+      "hidden_low_value": 2,
+      "rank_loss": 229
+    },
+    "droppedRefCount": 304,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 384,
+    "selectedByReason": {
+      "goal_keyword_match": 42,
+      "goal_phrase_match": 4,
+      "navigation_candidate": 76,
+      "recently_appeared": 184,
+      "recently_changed": 187,
+      "role_relevant_to_goal": 76,
+      "visible_ready": 121
+    },
+    "selectedRefCount": 80
+  }
+}

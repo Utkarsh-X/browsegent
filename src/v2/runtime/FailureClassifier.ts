@@ -19,6 +19,8 @@ export type FailureEvidenceCategory =
 
 export interface FailureClassificationContext {
   observationId?: string;
+  generationId?: number;
+  url?: string;
   projection?: OperationalProjection;
   targetRef?: string;
   source?: string;
@@ -34,6 +36,8 @@ export interface FailureEvidence {
   message: string;
   source: string;
   observationId?: string;
+  generationId?: number;
+  url?: string;
   targetRef?: string;
   signals: string[];
   diagnostics?: Record<string, unknown>;
@@ -101,6 +105,8 @@ function createFailureEvidence(
     message: input.message,
     source: input.source,
     observationId: input.context.observationId,
+    generationId: input.context.generationId,
+    url: input.context.url,
     targetRef: input.context.targetRef,
     signals: input.signals,
     ...(input.diagnostics ? { diagnostics: input.diagnostics } : {}),
@@ -147,6 +153,7 @@ function toFailureKind(code: string | undefined): FailureEvidenceKind {
     case 'target_disabled':
     case 'target_blocked':
     case 'target_not_editable':
+    case 'input_not_applied':
     case 'target_not_clickable':
     case 'target_not_selectable':
     case 'stale_ref':
@@ -159,6 +166,8 @@ function toFailureKind(code: string | undefined): FailureEvidenceKind {
     case 'navigation_blocked':
     case 'captcha_or_access_block':
     case 'trace_write_failed':
+    case 'invalid_action_payload':
+    case 'action_blocked_by_loop_detector':
       return code;
     default:
       return 'unknown_failure';
@@ -187,6 +196,7 @@ function categoryFor(kind: FailureEvidenceKind): FailureEvidenceCategory {
     case 'target_disabled':
     case 'target_blocked':
     case 'target_not_editable':
+    case 'input_not_applied':
     case 'target_not_clickable':
     case 'target_not_selectable':
     case 'ambiguous_ref_resolution':
@@ -206,6 +216,9 @@ function categoryFor(kind: FailureEvidenceKind): FailureEvidenceCategory {
     case 'environment_block':
     case 'captcha_or_access_block':
       return 'environment';
+    case 'invalid_action_payload':
+    case 'action_blocked_by_loop_detector':
+      return 'target';
     default:
       return 'unknown';
   }
@@ -224,6 +237,7 @@ function persistenceFor(kind: FailureEvidenceKind, retryable: boolean): FailureE
     || kind === 'target_disabled'
     || kind === 'target_blocked'
     || kind === 'target_not_editable'
+    || kind === 'input_not_applied'
     || kind === 'target_not_clickable'
     || kind === 'target_not_selectable'
     || kind === 'ambiguous_ref_resolution'
@@ -248,6 +262,8 @@ function messageFor(kind: FailureEvidenceKind): string {
       return 'Target ref center point is blocked by another element.';
     case 'target_not_editable':
       return 'Target ref is not editable for text entry.';
+    case 'input_not_applied':
+      return 'Target ref accepted input but did not retain the requested value.';
     case 'target_not_clickable':
       return 'Target ref is not clickable at execution time.';
     case 'target_not_selectable':

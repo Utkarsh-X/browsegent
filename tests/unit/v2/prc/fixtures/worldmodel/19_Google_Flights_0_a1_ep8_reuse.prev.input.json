@@ -1,0 +1,3120 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "latestTransition": {
+      "strength": "none",
+      "transitionClass": "microstate",
+      "transitionId": "transition_obs_1_6_obs_1_7"
+    },
+    "observationId": "obs_1_7",
+    "presentRefCount": 3212,
+    "refCount": 6593,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_7_6",
+    "transitionCount": 6,
+    "url": "https://www.google.com/travel/flights?tfs=CBwQARodag0IAhIJL20vMDIydHE0cgwIAxIIL20vMDUyYncaHWoMCAMSCC9tLzA1MmJ3cg0IAhIJL20vMDIydHE0QAFIAXABggELCP___________wGYAQE&tfu=KgIIAw"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_139"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_139"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_14"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_15"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_19"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_298"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_4409"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_4415"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_4416"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_4425"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_16"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_17"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_180"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_25"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_18"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_6567"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_838"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_839"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_4380"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_20"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_21"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_216"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_235"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_4398"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_4399"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_4410"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_4417"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_4426"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_1573"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_1574"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_236"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_253"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_26"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_3"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_12"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_256"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_310"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_327"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_344"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_6579"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_6580"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_6591"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_6592"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_6603"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_6604"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_340"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_357"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_323"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_361"
+      },
+      {
+        "rank": 49,
+        "refId": "v2ref_378"
+      },
+      {
+        "rank": 50,
+        "refId": "v2ref_395"
+      },
+      {
+        "rank": 51,
+        "refId": "v2ref_412"
+      },
+      {
+        "rank": 52,
+        "refId": "v2ref_429"
+      },
+      {
+        "rank": 53,
+        "refId": "v2ref_446"
+      },
+      {
+        "rank": 54,
+        "refId": "v2ref_463"
+      },
+      {
+        "rank": 55,
+        "refId": "v2ref_480"
+      },
+      {
+        "rank": 56,
+        "refId": "v2ref_497"
+      },
+      {
+        "rank": 57,
+        "refId": "v2ref_6617"
+      },
+      {
+        "rank": 58,
+        "refId": "v2ref_6618"
+      },
+      {
+        "rank": 59,
+        "refId": "v2ref_6631"
+      },
+      {
+        "rank": 60,
+        "refId": "v2ref_6632"
+      },
+      {
+        "rank": 61,
+        "refId": "v2ref_6643"
+      },
+      {
+        "rank": 62,
+        "refId": "v2ref_6644"
+      },
+      {
+        "rank": 63,
+        "refId": "v2ref_6655"
+      },
+      {
+        "rank": 64,
+        "refId": "v2ref_6656"
+      },
+      {
+        "rank": 65,
+        "refId": "v2ref_6669"
+      },
+      {
+        "rank": 66,
+        "refId": "v2ref_6670"
+      },
+      {
+        "rank": 67,
+        "refId": "v2ref_6681"
+      },
+      {
+        "rank": 68,
+        "refId": "v2ref_6682"
+      },
+      {
+        "rank": 69,
+        "refId": "v2ref_6695"
+      },
+      {
+        "rank": 70,
+        "refId": "v2ref_6696"
+      },
+      {
+        "rank": 71,
+        "refId": "v2ref_6708"
+      },
+      {
+        "rank": 72,
+        "refId": "v2ref_6709"
+      },
+      {
+        "rank": 73,
+        "refId": "v2ref_6721"
+      },
+      {
+        "rank": 74,
+        "refId": "v2ref_6722"
+      },
+      {
+        "rank": 75,
+        "refId": "v2ref_374"
+      },
+      {
+        "rank": 76,
+        "refId": "v2ref_391"
+      },
+      {
+        "rank": 77,
+        "refId": "v2ref_408"
+      },
+      {
+        "rank": 78,
+        "refId": "v2ref_425"
+      },
+      {
+        "rank": 79,
+        "refId": "v2ref_459"
+      },
+      {
+        "rank": 80,
+        "refId": "v2ref_476"
+      }
+    ],
+    "navigation": [
+      {
+        "rank": 1,
+        "refId": "v2ref_19"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_16"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_17"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_25"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_18"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_12"
+      }
+    ],
+    "observationId": "obs_1_7",
+    "page": {
+      "title": "Find Cheap Flights Worldwide & Book Your Ticket - Google Flights",
+      "url": "https://www.google.com/travel/flights?tfs=CBwQARodag0IAhIJL20vMDIydHE0cgwIAxIIL20vMDUyYncaHWoMCAMSCC9tLzA1MmJ3cg0IAhIJL20vMDIydHE0QAFIAXABggELCP___________wGYAQE&tfu=KgIIAw"
+    },
+    "projectionId": "projection_obs_1_7",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_139"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_14"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_15"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_19"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_298"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_4409"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_4415"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_4416"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_4425"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_16"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_17"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_180"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_25"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_18"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_6567"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_838"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_839"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_4380"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_20"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_21"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_216"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_235"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_4398"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_4399"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_4410"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_4417"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_4426"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_1573"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_1574"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_236"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_253"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_26"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_3"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_12"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_256"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_310"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_327"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_344"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_6579"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_6580"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_6591"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_6592"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_6603"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_6604"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_340"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_357"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_323"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_361"
+      }
+    ],
+    "refs": {
+      "v2ref_12": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Google",
+        "refId": "v2ref_12",
+        "role": "link",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_139": {
+        "actionability": "ready",
+        "ariaAutocomplete": "none",
+        "ariaHasPopup": "listbox",
+        "confidence": 1,
+        "kind": "select",
+        "name": "Round trip",
+        "refId": "v2ref_139",
+        "role": "combobox",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_14": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Skip to main content",
+        "refId": "v2ref_14",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_15": {
+        "actionability": "ready",
+        "ariaHasPopup": "dialog",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Accessibility feedback",
+        "refId": "v2ref_15",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1573": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Economy",
+        "refId": "v2ref_1573",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1574": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Economy",
+        "refId": "v2ref_1574",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_16": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Explore",
+        "refId": "v2ref_16",
+        "role": "link",
+        "score": 112,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_17": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Flights",
+        "refId": "v2ref_17",
+        "role": "link",
+        "score": 112,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_18": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Hotels",
+        "refId": "v2ref_18",
+        "role": "link",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_180": {
+        "actionability": "ready",
+        "ariaAutocomplete": "none",
+        "ariaHasPopup": "listbox",
+        "confidence": 1,
+        "kind": "select",
+        "name": "Economy",
+        "refId": "v2ref_180",
+        "role": "combobox",
+        "score": 112,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_19": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Vacation rentals",
+        "refId": "v2ref_19",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_20": {
+        "actionability": "ready",
+        "ariaHasPopup": "menu",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Change appearance",
+        "refId": "v2ref_20",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_21": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Google apps",
+        "refId": "v2ref_21",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_216": {
+        "actionability": "ready",
+        "ariaAutocomplete": "inline",
+        "ariaHasPopup": "true",
+        "confidence": 1,
+        "kind": "input",
+        "name": "Where from?",
+        "refId": "v2ref_216",
+        "role": "combobox",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_235": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Swap origin and destination.",
+        "refId": "v2ref_235",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_236": {
+        "actionability": "ready",
+        "ariaAutocomplete": "inline",
+        "ariaHasPopup": "true",
+        "confidence": 1,
+        "kind": "input",
+        "name": "Where to?",
+        "refId": "v2ref_236",
+        "role": "combobox",
+        "score": 108,
+        "state": "live",
+        "value": "Manchester",
+        "visibility": "visible"
+      },
+      "v2ref_25": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Sign in",
+        "refId": "v2ref_25",
+        "role": "link",
+        "score": 112,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_253": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "input",
+        "name": "Departure",
+        "placeholder": "Departure",
+        "refId": "v2ref_253",
+        "role": "textbox",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_256": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "input",
+        "name": "Return",
+        "placeholder": "Return",
+        "refId": "v2ref_256",
+        "role": "textbox",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_26": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Sign in",
+        "refId": "v2ref_26",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_298": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Explore deals with AI",
+        "refId": "v2ref_298",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_3": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Main menu",
+        "refId": "v2ref_3",
+        "role": "button",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_310": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from Lucknow (LKO) to New Delhi (DEL) from ₹8,600. Operated by IndiGo. Nov 5 to Nov 12. 1 stop",
+        "refId": "v2ref_310",
+        "role": "button",
+        "score": 90,
+        "state": "live",
+        "text": "LucknowNew DelhiNov 5 — Nov 121 stopfrom ₹8,600",
+        "visibility": "offscreen"
+      },
+      "v2ref_323": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "₹8,600",
+        "refId": "v2ref_323",
+        "score": 82,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_327": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from Lucknow (LKO) to Mumbai (BOM) from ₹12,271. Operated by IndiGo. Sep 17 to Sep 24. Nonstop",
+        "refId": "v2ref_327",
+        "role": "button",
+        "score": 90,
+        "state": "live",
+        "text": "LucknowMumbaiSep 17 — Sep 24Nonstopfrom ₹12,271",
+        "visibility": "offscreen"
+      },
+      "v2ref_340": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "₹12,271",
+        "refId": "v2ref_340",
+        "score": 83,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_344": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from Lucknow (LKO) to Bengaluru (BLR) from ₹13,121. Operated by IndiGo. Dec 4 to Dec 10. Nonstop",
+        "refId": "v2ref_344",
+        "role": "button",
+        "score": 90,
+        "state": "live",
+        "text": "LucknowBengaluruDec 4 — Dec 10Nonstopfrom ₹13,121",
+        "visibility": "offscreen"
+      },
+      "v2ref_357": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "₹13,121",
+        "refId": "v2ref_357",
+        "score": 83,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_361": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from New Delhi (DEL) to Mumbai (BOM) from ₹11,860. Operated by IndiGo. Sep 24 to Oct 3. 1 stop",
+        "refId": "v2ref_361",
+        "role": "button",
+        "score": 45,
+        "state": "live",
+        "text": "New DelhiMumbaiSep 24 — Oct 31 stopfrom ₹11,860",
+        "visibility": "hidden"
+      },
+      "v2ref_374": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "₹11,860",
+        "refId": "v2ref_374",
+        "score": 38,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_378": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from New Delhi (DEL) to Bengaluru (BLR) from ₹16,241. Operated by IndiGo. Sep 24 to Oct 3. 1 stop",
+        "refId": "v2ref_378",
+        "role": "button",
+        "score": 45,
+        "state": "live",
+        "text": "New DelhiBengaluruSep 24 — Oct 31 stopfrom ₹16,241",
+        "visibility": "hidden"
+      },
+      "v2ref_391": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "₹16,241",
+        "refId": "v2ref_391",
+        "score": 38,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_395": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from New Delhi (DEL) to Kolkata (CCU) from ₹14,417. Operated by IndiGo. Sep 17 to Sep 24. 1 stop",
+        "refId": "v2ref_395",
+        "role": "button",
+        "score": 45,
+        "state": "live",
+        "text": "New DelhiKolkataSep 17 — Sep 241 stopfrom ₹14,417",
+        "visibility": "hidden"
+      },
+      "v2ref_408": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "₹14,417",
+        "refId": "v2ref_408",
+        "score": 38,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_412": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from Mumbai (BOM) to New Delhi (DEL) from ₹12,300. Operated by IndiGo. Sep 7 to Sep 13. 1 stop",
+        "refId": "v2ref_412",
+        "role": "button",
+        "score": 45,
+        "state": "live",
+        "text": "MumbaiNew DelhiSep 7 — Sep 131 stopfrom ₹12,300",
+        "visibility": "hidden"
+      },
+      "v2ref_425": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "₹12,300",
+        "refId": "v2ref_425",
+        "score": 38,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_429": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from Mumbai (BOM) to Bengaluru (BLR) from ₹9,308. Operated by IndiGo. Sep 17 to Sep 23. Nonstop",
+        "refId": "v2ref_429",
+        "role": "button",
+        "score": 45,
+        "state": "live",
+        "text": "MumbaiBengaluruSep 17 — Sep 23Nonstopfrom ₹9,308",
+        "visibility": "hidden"
+      },
+      "v2ref_4380": {
+        "actionability": "ready",
+        "ariaHasPopup": "dialog",
+        "confidence": 1,
+        "kind": "button",
+        "name": "1 passenger",
+        "refId": "v2ref_4380",
+        "role": "button",
+        "score": 110,
+        "state": "live",
+        "text": "1",
+        "visibility": "visible"
+      },
+      "v2ref_4398": {
+        "actionability": "ready",
+        "ariaAutocomplete": "both",
+        "ariaHasPopup": "true",
+        "confidence": 1,
+        "kind": "input",
+        "name": "Where else?",
+        "refId": "v2ref_4398",
+        "role": "combobox",
+        "score": 109,
+        "state": "live",
+        "value": "Lucknow",
+        "visibility": "visible"
+      },
+      "v2ref_4399": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Origin, Select multiple airports",
+        "refId": "v2ref_4399",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4409": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Lucknow, Uttar Pradesh",
+        "refId": "v2ref_4409",
+        "role": "option",
+        "score": 115,
+        "state": "live",
+        "text": "Lucknow, Uttar PradeshCity in India.Showing 1 nearby location.",
+        "visibility": "visible"
+      },
+      "v2ref_4410": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Toggle nearby airports for Lucknow, Uttar Pradesh",
+        "refId": "v2ref_4410",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4415": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Chaudhary Charan Singh International Airport, Terminal 3 (LKO)",
+        "refId": "v2ref_4415",
+        "role": "option",
+        "score": 115,
+        "state": "live",
+        "text": "Chaudhary Charan Singh International Airport, Terminal 3LKO11 km to destination.Sub-item 1 of 1",
+        "visibility": "visible"
+      },
+      "v2ref_4416": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Lucknow, Australia",
+        "refId": "v2ref_4416",
+        "role": "option",
+        "score": 115,
+        "state": "live",
+        "text": "Lucknow, AustraliaCity in Australia.Nearby locations are hidden.",
+        "visibility": "visible"
+      },
+      "v2ref_4417": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Toggle nearby airports for Lucknow, Australia",
+        "refId": "v2ref_4417",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4425": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Lucknow, Australia",
+        "refId": "v2ref_4425",
+        "role": "option",
+        "score": 115,
+        "state": "live",
+        "text": "Lucknow, AustraliaSuburb in Australia.Nearby locations are hidden.",
+        "visibility": "visible"
+      },
+      "v2ref_4426": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Toggle nearby airports for Lucknow, Australia",
+        "refId": "v2ref_4426",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_446": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from Mumbai (BOM) to Kolkata (CCU) from ₹16,261. Operated by Akasa Air. Sep 7 to Sep 15. Nonstop",
+        "refId": "v2ref_446",
+        "role": "button",
+        "score": 45,
+        "state": "live",
+        "text": "MumbaiKolkataSep 7 — Sep 15Nonstopfrom ₹16,261",
+        "visibility": "hidden"
+      },
+      "v2ref_459": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "₹16,261",
+        "refId": "v2ref_459",
+        "score": 38,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_463": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from Bengaluru (BLR) to New Delhi (DEL) from ₹16,451. Operated by IndiGo. Sep 24 to Oct 3. 1 stop",
+        "refId": "v2ref_463",
+        "role": "button",
+        "score": 45,
+        "state": "live",
+        "text": "BengaluruNew DelhiSep 24 — Oct 31 stopfrom ₹16,451",
+        "visibility": "hidden"
+      },
+      "v2ref_476": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "₹16,451",
+        "refId": "v2ref_476",
+        "score": 38,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_480": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from Bengaluru (BLR) to Mumbai (BOM) from ₹9,181. Operated by IndiGo. Sep 24 to Oct 3. Nonstop",
+        "refId": "v2ref_480",
+        "role": "button",
+        "score": 45,
+        "state": "live",
+        "text": "BengaluruMumbaiSep 24 — Oct 3Nonstopfrom ₹9,181",
+        "visibility": "hidden"
+      },
+      "v2ref_497": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Find flights from Bengaluru (BLR) to Hyderabad (HYD) from ₹8,612. Operated by IndiGo. Sep 17 to Sep 23. Nonstop",
+        "refId": "v2ref_497",
+        "role": "button",
+        "score": 45,
+        "state": "live",
+        "text": "BengaluruHyderabadSep 17 — Sep 23Nonstopfrom ₹8,612",
+        "visibility": "hidden"
+      },
+      "v2ref_6567": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Search",
+        "refId": "v2ref_6567",
+        "role": "button",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_6579": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹8,600",
+        "refId": "v2ref_6579",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6580": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹8,600",
+        "refId": "v2ref_6580",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6591": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹12,271",
+        "refId": "v2ref_6591",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6592": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹12,271",
+        "refId": "v2ref_6592",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6603": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹13,121",
+        "refId": "v2ref_6603",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6604": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹13,121",
+        "refId": "v2ref_6604",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_6617": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹11,860",
+        "refId": "v2ref_6617",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6618": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹11,860",
+        "refId": "v2ref_6618",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6631": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,241",
+        "refId": "v2ref_6631",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6632": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,241",
+        "refId": "v2ref_6632",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6643": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹14,417",
+        "refId": "v2ref_6643",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6644": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹14,417",
+        "refId": "v2ref_6644",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6655": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹12,300",
+        "refId": "v2ref_6655",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6656": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹12,300",
+        "refId": "v2ref_6656",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6669": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹9,308",
+        "refId": "v2ref_6669",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6670": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹9,308",
+        "refId": "v2ref_6670",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6681": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,261",
+        "refId": "v2ref_6681",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6682": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,261",
+        "refId": "v2ref_6682",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6695": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,451",
+        "refId": "v2ref_6695",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6696": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹16,451",
+        "refId": "v2ref_6696",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6708": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹9,181",
+        "refId": "v2ref_6708",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6709": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹9,181",
+        "refId": "v2ref_6709",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6721": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹8,612",
+        "refId": "v2ref_6721",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_6722": {
+        "actionability": "blocked",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "from ₹8,612",
+        "refId": "v2ref_6722",
+        "score": 41,
+        "state": "live",
+        "visibility": "hidden"
+      },
+      "v2ref_838": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Round trip",
+        "refId": "v2ref_838",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_839": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Round trip",
+        "refId": "v2ref_839",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      }
+    },
+    "regions": [],
+    "stats": {
+      "interactionCount": 80,
+      "navigationCount": 6,
+      "readableCount": 80,
+      "regionCount": 0
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_7_obs_1_7",
+  "evidenceCoverage": {
+    "contractKind": "ranked_entity",
+    "readCount": 35,
+    "requirements": [
+      {
+        "key": "ranking_evidence",
+        "status": "uncertain",
+        "supportingReadIndexes": []
+      }
+    ],
+    "status": "uncertain"
+  },
+  "goal": "Book a journey with return option on same day from Edinburg to Manchester on December 28th and show me the lowest price option available.",
+  "goalProgress": {
+    "entries": [
+      {
+        "key": "destination",
+        "state": "typed:\"Edinburg\""
+      },
+      {
+        "key": "destinationTo",
+        "state": "typed:\"Manchester\""
+      },
+      {
+        "key": "dates",
+        "state": "NOT_SET"
+      },
+      {
+        "key": "cheapest",
+        "state": "unverified"
+      }
+    ],
+    "focus": "dates"
+  },
+  "lastResult": {
+    "effect": "none",
+    "evidence": {
+      "strength": "none",
+      "transitionClass": "microstate"
+    },
+    "kind": "type",
+    "success": true,
+    "targetRef": "v2ref_216",
+    "traceStepId": "step_6",
+    "valuePreview": "Edinburgh Where from? combobox"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_3",
+        "beforeObservationId": "obs_1_2",
+        "index": 1,
+        "kind": "type",
+        "status": "completed",
+        "stepId": "step_2",
+        "strength": "moderate",
+        "targetName": "Where to?",
+        "targetRef": "v2ref_236",
+        "transitionClass": "structural_local",
+        "value": "Manchester"
+      },
+      {
+        "afterObservationId": "obs_1_4",
+        "beforeObservationId": "obs_1_3",
+        "index": 2,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_3",
+        "strength": "moderate",
+        "targetName": "Manchester, United Kingdom",
+        "targetRef": "v2ref_1260",
+        "transitionClass": "structural_local"
+      },
+      {
+        "afterObservationId": "obs_1_5",
+        "beforeObservationId": "obs_1_4",
+        "index": 3,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_4",
+        "strength": "strong",
+        "targetName": "Where from?",
+        "targetRef": "v2ref_216",
+        "transitionClass": "structural_macrostate"
+      },
+      {
+        "afterObservationId": "obs_1_6",
+        "beforeObservationId": "obs_1_5",
+        "index": 4,
+        "kind": "type",
+        "status": "completed",
+        "stepId": "step_5",
+        "strength": "moderate",
+        "targetName": "Where from?",
+        "targetRef": "v2ref_216",
+        "transitionClass": "structural_local",
+        "value": "Edinburgh"
+      },
+      {
+        "afterObservationId": "obs_1_7",
+        "beforeObservationId": "obs_1_6",
+        "index": 5,
+        "kind": "type",
+        "status": "completed",
+        "stepId": "step_6",
+        "strength": "none",
+        "targetName": "Where from?",
+        "targetRef": "v2ref_216",
+        "transitionClass": "microstate",
+        "value": "Edinburgh"
+      }
+    ],
+    "totalSteps": 6,
+    "truncated": true
+  },
+  "recovery": {
+    "nextMechanisms": [
+      "avoid_navigation_churn",
+      "commit_to_current_surface_until_progress",
+      "act_on_visible_controls",
+      "reobserve_current_surface"
+    ],
+    "severity": "warning",
+    "signals": [
+      "transition_strength:none",
+      "repeated_value_preview:type:v2ref_216:3",
+      "navigation_oscillation"
+    ],
+    "state": "navigation_oscillation"
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 21360,
+    "totalPlannerInputBytes": 46652,
+    "workingSetBytes": 21299
+  },
+  "taskProgress": {
+    "items": [
+      {
+        "evidence": [
+          "v2ref_4398",
+          "v2ref_236"
+        ],
+        "key": "destination",
+        "requested": "Manchester",
+        "status": "conflicting"
+      }
+    ],
+    "status": "conflicting"
+  },
+  "transition": {
+    "afterObservationId": "obs_1_7",
+    "beforeObservationId": "obs_1_6",
+    "generationChanged": false,
+    "notes": [],
+    "refChangeCounts": {
+      "appeared": 0,
+      "disappeared": 0,
+      "preserved": 3212,
+      "weakened": 0
+    },
+    "strength": "none",
+    "transitionClass": "microstate",
+    "urlChanged": false
+  },
+  "uncertainty": {
+    "level": "medium",
+    "signals": [
+      "transition_strength:none",
+      "repeated_value_preview:type:v2ref_216:3",
+      "navigation_oscillation"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_139",
+        "v2ref_14",
+        "v2ref_15",
+        "v2ref_19",
+        "v2ref_298",
+        "v2ref_4409",
+        "v2ref_4415",
+        "v2ref_4416",
+        "v2ref_4425",
+        "v2ref_16",
+        "v2ref_17",
+        "v2ref_180",
+        "v2ref_25",
+        "v2ref_18",
+        "v2ref_6567",
+        "v2ref_4380",
+        "v2ref_20",
+        "v2ref_21",
+        "v2ref_216",
+        "v2ref_235",
+        "v2ref_4398",
+        "v2ref_4399",
+        "v2ref_4410",
+        "v2ref_4417",
+        "v2ref_4426",
+        "v2ref_236",
+        "v2ref_3",
+        "v2ref_12",
+        "v2ref_310",
+        "v2ref_327",
+        "v2ref_344"
+      ],
+      "readableRefs": [
+        "v2ref_139",
+        "v2ref_14",
+        "v2ref_15",
+        "v2ref_19",
+        "v2ref_298",
+        "v2ref_4409",
+        "v2ref_4415",
+        "v2ref_4416",
+        "v2ref_4425",
+        "v2ref_16",
+        "v2ref_17",
+        "v2ref_180",
+        "v2ref_25",
+        "v2ref_18",
+        "v2ref_6567",
+        "v2ref_838",
+        "v2ref_839",
+        "v2ref_4380",
+        "v2ref_20",
+        "v2ref_21",
+        "v2ref_216",
+        "v2ref_235",
+        "v2ref_4398",
+        "v2ref_4399",
+        "v2ref_4410",
+        "v2ref_4417",
+        "v2ref_4426",
+        "v2ref_1573",
+        "v2ref_1574",
+        "v2ref_236",
+        "v2ref_253",
+        "v2ref_26",
+        "v2ref_3",
+        "v2ref_12",
+        "v2ref_256",
+        "v2ref_310",
+        "v2ref_327",
+        "v2ref_344",
+        "v2ref_6579",
+        "v2ref_6580",
+        "v2ref_6591",
+        "v2ref_6592",
+        "v2ref_6603",
+        "v2ref_6604",
+        "v2ref_340",
+        "v2ref_357",
+        "v2ref_323",
+        "v2ref_361",
+        "v2ref_378",
+        "v2ref_395",
+        "v2ref_412",
+        "v2ref_429",
+        "v2ref_446",
+        "v2ref_463",
+        "v2ref_480",
+        "v2ref_497",
+        "v2ref_6617",
+        "v2ref_6618",
+        "v2ref_6631",
+        "v2ref_6632",
+        "v2ref_6643",
+        "v2ref_6644",
+        "v2ref_6655",
+        "v2ref_6656",
+        "v2ref_6669",
+        "v2ref_6670",
+        "v2ref_6681",
+        "v2ref_6682",
+        "v2ref_6695",
+        "v2ref_6696",
+        "v2ref_6708",
+        "v2ref_6709",
+        "v2ref_6721",
+        "v2ref_6722",
+        "v2ref_374",
+        "v2ref_391",
+        "v2ref_408",
+        "v2ref_425",
+        "v2ref_459",
+        "v2ref_476"
+      ],
+      "selectableRefs": [
+        "v2ref_139",
+        "v2ref_180"
+      ],
+      "typeableRefs": [
+        "v2ref_216",
+        "v2ref_4398",
+        "v2ref_236",
+        "v2ref_253",
+        "v2ref_256"
+      ]
+    },
+    "changedRefs": {
+      "appearedCount": 0,
+      "omittedCount": 0,
+      "preservedCount": 3212,
+      "topRefs": [],
+      "weakenedCount": 0
+    },
+    "deltaRefs": {
+      "appeared": [],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "verify",
+    "modeReason": "recent_value_evidence",
+    "navigationRefs": [
+      {
+        "kind": "link",
+        "name": "Vacation rentals",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_19",
+        "role": "link",
+        "score": 115,
+        "text": "Vacation rentals"
+      },
+      {
+        "kind": "link",
+        "name": "Explore",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_16",
+        "role": "link",
+        "score": 112,
+        "text": "Explore"
+      },
+      {
+        "kind": "link",
+        "name": "Flights",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_17",
+        "role": "link",
+        "score": 112,
+        "text": "Flights"
+      },
+      {
+        "kind": "link",
+        "name": "Sign in",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_25",
+        "role": "link",
+        "score": 112,
+        "text": "Sign in"
+      },
+      {
+        "kind": "link",
+        "name": "Hotels",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_18",
+        "role": "link",
+        "score": 111,
+        "text": "Hotels"
+      },
+      {
+        "kind": "link",
+        "name": "Google",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_12",
+        "role": "link",
+        "score": 105
+      }
+    ],
+    "omitted": {
+      "droppedByReason": {
+        "generic_low_value": 31,
+        "hidden_low_value": 1649,
+        "offscreen_low_value": 137,
+        "rank_loss": 138,
+        "unlabeled_action": 8
+      },
+      "droppedRefCount": 3132,
+      "observedRefCount": 3212,
+      "selectedRefCount": 80
+    },
+    "primaryRefs": [
+      {
+        "kind": "generic",
+        "name": "Lucknow, Uttar Pradesh",
+        "reasons": [
+          "goal_keyword_match",
+          "suggestion_option",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4409",
+        "role": "option",
+        "score": 305,
+        "text": "Lucknow, Uttar PradeshCity in India.Showing 1 nearby location."
+      },
+      {
+        "kind": "generic",
+        "name": "Chaudhary Charan Singh International Airport, Terminal 3 (LKO)",
+        "reasons": [
+          "goal_keyword_match",
+          "suggestion_option",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4415",
+        "role": "option",
+        "score": 305,
+        "text": "Chaudhary Charan Singh International Airport, Terminal 3LKO11 km to destination.Sub-item 1 of 1"
+      },
+      {
+        "kind": "generic",
+        "name": "Lucknow, Australia",
+        "reasons": [
+          "goal_keyword_match",
+          "suggestion_option",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4416",
+        "role": "option",
+        "score": 305,
+        "text": "Lucknow, AustraliaCity in Australia.Nearby locations are hidden."
+      },
+      {
+        "kind": "generic",
+        "name": "Lucknow, Australia",
+        "reasons": [
+          "goal_keyword_match",
+          "suggestion_option",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4425",
+        "role": "option",
+        "score": 305,
+        "text": "Lucknow, AustraliaSuburb in Australia.Nearby locations are hidden."
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from Lucknow (LKO) to New Delhi (DEL) from ₹8,600. Operated by IndiGo. Nov 5 to Nov 12. 1 stop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_310",
+        "role": "button",
+        "score": 240,
+        "text": "LucknowNew DelhiNov 5 — Nov 121 stopfrom ₹8,600"
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from Lucknow (LKO) to Mumbai (BOM) from ₹12,271. Operated by IndiGo. Sep 17 to Sep 24. Nonstop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_327",
+        "role": "button",
+        "score": 240,
+        "text": "LucknowMumbaiSep 17 — Sep 24Nonstopfrom ₹12,271"
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from Lucknow (LKO) to Bengaluru (BLR) from ₹13,121. Operated by IndiGo. Dec 4 to Dec 10. Nonstop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_344",
+        "role": "button",
+        "score": 240,
+        "text": "LucknowBengaluruDec 4 — Dec 10Nonstopfrom ₹13,121"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹8,600",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6579",
+        "score": 236,
+        "text": "from ₹8,600"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹8,600",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6580",
+        "score": 236,
+        "text": "from ₹8,600"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹12,271",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6591",
+        "score": 236,
+        "text": "from ₹12,271"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹12,271",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6592",
+        "score": 236,
+        "text": "from ₹12,271"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹13,121",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6603",
+        "score": 236,
+        "text": "from ₹13,121"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹13,121",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6604",
+        "score": 236,
+        "text": "from ₹13,121"
+      },
+      {
+        "kind": "button",
+        "name": "Explore deals with AI",
+        "reasons": [
+          "goal_keyword_match",
+          "visible_ready"
+        ],
+        "refId": "v2ref_298",
+        "role": "button",
+        "score": 225,
+        "text": "Explore deals with AI"
+      },
+      {
+        "kind": "generic",
+        "name": "₹12,271",
+        "reasons": [
+          "result_row"
+        ],
+        "refId": "v2ref_340",
+        "score": 223,
+        "text": "₹12,271"
+      },
+      {
+        "kind": "generic",
+        "name": "₹13,121",
+        "reasons": [
+          "result_row"
+        ],
+        "refId": "v2ref_357",
+        "score": 223,
+        "text": "₹13,121"
+      },
+      {
+        "kind": "generic",
+        "name": "₹8,600",
+        "reasons": [
+          "result_row"
+        ],
+        "refId": "v2ref_323",
+        "score": 222,
+        "text": "₹8,600"
+      },
+      {
+        "kind": "input",
+        "name": "Where from?",
+        "reasons": [
+          "form_candidate",
+          "goal_keyword_match",
+          "visible_ready"
+        ],
+        "refId": "v2ref_216",
+        "role": "combobox",
+        "score": 219
+      },
+      {
+        "kind": "button",
+        "name": "Swap origin and destination.",
+        "reasons": [
+          "goal_keyword_match",
+          "visible_ready"
+        ],
+        "refId": "v2ref_235",
+        "role": "button",
+        "score": 219
+      },
+      {
+        "kind": "select",
+        "name": "Round trip",
+        "reasons": [
+          "form_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_139",
+        "role": "combobox",
+        "score": 215,
+        "text": "Round trip"
+      },
+      {
+        "kind": "button",
+        "name": "Skip to main content",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_14",
+        "role": "button",
+        "score": 215,
+        "text": "Skip to main content"
+      },
+      {
+        "kind": "button",
+        "name": "Accessibility feedback",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_15",
+        "role": "button",
+        "score": 215,
+        "text": "Accessibility feedback"
+      },
+      {
+        "kind": "link",
+        "name": "Vacation rentals",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_19",
+        "role": "link",
+        "score": 215,
+        "text": "Vacation rentals"
+      },
+      {
+        "kind": "input",
+        "name": "Return",
+        "reasons": [
+          "form_candidate",
+          "goal_keyword_match",
+          "visible_ready"
+        ],
+        "refId": "v2ref_256",
+        "role": "textbox",
+        "score": 215
+      },
+      {
+        "kind": "link",
+        "name": "Explore",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_16",
+        "role": "link",
+        "score": 212,
+        "text": "Explore"
+      },
+      {
+        "kind": "link",
+        "name": "Flights",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_17",
+        "role": "link",
+        "score": 212,
+        "text": "Flights"
+      },
+      {
+        "kind": "select",
+        "name": "Economy",
+        "reasons": [
+          "form_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_180",
+        "role": "combobox",
+        "score": 212,
+        "text": "Economy"
+      },
+      {
+        "kind": "link",
+        "name": "Sign in",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_25",
+        "role": "link",
+        "score": 212,
+        "text": "Sign in"
+      },
+      {
+        "kind": "link",
+        "name": "Hotels",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_18",
+        "role": "link",
+        "score": 211,
+        "text": "Hotels"
+      },
+      {
+        "kind": "button",
+        "name": "Search",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_6567",
+        "role": "button",
+        "score": 211,
+        "text": "Search"
+      },
+      {
+        "kind": "generic",
+        "name": "Round trip",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_838",
+        "score": 211,
+        "text": "Round trip"
+      },
+      {
+        "kind": "generic",
+        "name": "Round trip",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_839",
+        "score": 211,
+        "text": "Round trip"
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4409",
+        "text": "Lucknow, Uttar Pradesh Lucknow, Uttar PradeshCity in India.Showing 1 nearby location."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4415",
+        "text": "Chaudhary Charan Singh International Airport, Terminal 3 (LKO) Chaudhary Charan Singh International Airport, Terminal 3LKO11 km to destination.Sub-item 1 of 1"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4416",
+        "text": "Lucknow, Australia Lucknow, AustraliaCity in Australia.Nearby locations are hidden."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4425",
+        "text": "Lucknow, Australia Lucknow, AustraliaSuburb in Australia.Nearby locations are hidden."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_310",
+        "text": "Find flights from Lucknow (LKO) to New Delhi (DEL) from ₹8,600. Operated by IndiGo. Nov 5 to Nov 12. 1 stop LucknowNew DelhiNov 5 — Nov 121 stopfrom ₹8,600"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_327",
+        "text": "Find flights from Lucknow (LKO) to Mumbai (BOM) from ₹12,271. Operated by IndiGo. Sep 17 to Sep 24. Nonstop LucknowMumbaiSep 17 — Sep 24Nonstopfrom ₹12,271"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_344",
+        "text": "Find flights from Lucknow (LKO) to Bengaluru (BLR) from ₹13,121. Operated by IndiGo. Dec 4 to Dec 10. Nonstop LucknowBengaluruDec 4 — Dec 10Nonstopfrom ₹13,121"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6579",
+        "text": "from ₹8,600 from ₹8,600"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6580",
+        "text": "from ₹8,600 from ₹8,600"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6591",
+        "text": "from ₹12,271 from ₹12,271"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6592",
+        "text": "from ₹12,271 from ₹12,271"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6603",
+        "text": "from ₹13,121 from ₹13,121"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6604",
+        "text": "from ₹13,121 from ₹13,121"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_298",
+        "text": "Explore deals with AI Explore deals with AI"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_340",
+        "text": "₹12,271 ₹12,271"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_357",
+        "text": "₹13,121 ₹13,121"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_323",
+        "text": "₹8,600 ₹8,600"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_216",
+        "text": "Where from?"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_235",
+        "text": "Swap origin and destination."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_139",
+        "text": "Round trip Round trip"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_14",
+        "text": "Skip to main content Skip to main content"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_15",
+        "text": "Accessibility feedback Accessibility feedback"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_19",
+        "text": "Vacation rentals Vacation rentals"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_256",
+        "text": "Return"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_16",
+        "text": "Explore Explore"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_17",
+        "text": "Flights Flights"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_180",
+        "text": "Economy Economy"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_25",
+        "text": "Sign in Sign in"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_18",
+        "text": "Hotels Hotels"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_6567",
+        "text": "Search Search"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_838",
+        "text": "Round trip Round trip"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_839",
+        "text": "Round trip Round trip"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4380",
+        "text": "1 passenger 1"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_20",
+        "text": "Change appearance"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_21",
+        "text": "Google apps"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4398",
+        "text": "Where else?"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4399",
+        "text": "Origin, Select multiple airports"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4410",
+        "text": "Toggle nearby airports for Lucknow, Uttar Pradesh"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4417",
+        "text": "Toggle nearby airports for Lucknow, Australia"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4426",
+        "text": "Toggle nearby airports for Lucknow, Australia"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1573",
+        "text": "Economy Economy"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1574",
+        "text": "Economy Economy"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_236",
+        "text": "Where to?"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_253",
+        "text": "Departure"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_26",
+        "text": "Sign in Sign in"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_3",
+        "text": "Main menu"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_12",
+        "text": "Google"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_361",
+        "text": "Find flights from New Delhi (DEL) to Mumbai (BOM) from ₹11,860. Operated by IndiGo. Sep 24 to Oct 3. 1 stop New DelhiMumbaiSep 24 — Oct 31 stopfrom ₹11,860"
+      }
+    ],
+    "regionSummaries": [],
+    "secondaryRefs": [
+      {
+        "kind": "button",
+        "name": "1 passenger",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_4380",
+        "role": "button",
+        "score": 210,
+        "text": "1"
+      },
+      {
+        "kind": "button",
+        "name": "Change appearance",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_20",
+        "role": "button",
+        "score": 209
+      },
+      {
+        "kind": "button",
+        "name": "Google apps",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_21",
+        "role": "button",
+        "score": 209
+      },
+      {
+        "kind": "input",
+        "name": "Where else?",
+        "reasons": [
+          "form_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4398",
+        "role": "combobox",
+        "score": 209
+      },
+      {
+        "kind": "button",
+        "name": "Origin, Select multiple airports",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_4399",
+        "role": "button",
+        "score": 209
+      },
+      {
+        "kind": "button",
+        "name": "Toggle nearby airports for Lucknow, Uttar Pradesh",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_4410",
+        "role": "button",
+        "score": 209
+      },
+      {
+        "kind": "button",
+        "name": "Toggle nearby airports for Lucknow, Australia",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_4417",
+        "role": "button",
+        "score": 209
+      },
+      {
+        "kind": "button",
+        "name": "Toggle nearby airports for Lucknow, Australia",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_4426",
+        "role": "button",
+        "score": 209
+      },
+      {
+        "kind": "generic",
+        "name": "Economy",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1573",
+        "score": 208,
+        "text": "Economy"
+      },
+      {
+        "kind": "generic",
+        "name": "Economy",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_1574",
+        "score": 208,
+        "text": "Economy"
+      },
+      {
+        "kind": "input",
+        "name": "Where to?",
+        "reasons": [
+          "form_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_236",
+        "role": "combobox",
+        "score": 208
+      },
+      {
+        "kind": "input",
+        "name": "Departure",
+        "reasons": [
+          "form_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_253",
+        "role": "textbox",
+        "score": 208
+      },
+      {
+        "kind": "generic",
+        "name": "Sign in",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_26",
+        "score": 208,
+        "text": "Sign in"
+      },
+      {
+        "kind": "button",
+        "name": "Main menu",
+        "reasons": [
+          "visible_ready"
+        ],
+        "refId": "v2ref_3",
+        "role": "button",
+        "score": 208
+      },
+      {
+        "kind": "link",
+        "name": "Google",
+        "reasons": [
+          "navigation_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_12",
+        "role": "link",
+        "score": 205
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from New Delhi (DEL) to Mumbai (BOM) from ₹11,860. Operated by IndiGo. Sep 24 to Oct 3. 1 stop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_361",
+        "role": "button",
+        "score": 195,
+        "text": "New DelhiMumbaiSep 24 — Oct 31 stopfrom ₹11,860"
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from New Delhi (DEL) to Bengaluru (BLR) from ₹16,241. Operated by IndiGo. Sep 24 to Oct 3. 1 stop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_378",
+        "role": "button",
+        "score": 195,
+        "text": "New DelhiBengaluruSep 24 — Oct 31 stopfrom ₹16,241"
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from New Delhi (DEL) to Kolkata (CCU) from ₹14,417. Operated by IndiGo. Sep 17 to Sep 24. 1 stop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_395",
+        "role": "button",
+        "score": 195,
+        "text": "New DelhiKolkataSep 17 — Sep 241 stopfrom ₹14,417"
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from Mumbai (BOM) to New Delhi (DEL) from ₹12,300. Operated by IndiGo. Sep 7 to Sep 13. 1 stop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_412",
+        "role": "button",
+        "score": 195,
+        "text": "MumbaiNew DelhiSep 7 — Sep 131 stopfrom ₹12,300"
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from Mumbai (BOM) to Bengaluru (BLR) from ₹9,308. Operated by IndiGo. Sep 17 to Sep 23. Nonstop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_429",
+        "role": "button",
+        "score": 195,
+        "text": "MumbaiBengaluruSep 17 — Sep 23Nonstopfrom ₹9,308"
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from Mumbai (BOM) to Kolkata (CCU) from ₹16,261. Operated by Akasa Air. Sep 7 to Sep 15. Nonstop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_446",
+        "role": "button",
+        "score": 195,
+        "text": "MumbaiKolkataSep 7 — Sep 15Nonstopfrom ₹16,261"
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from Bengaluru (BLR) to New Delhi (DEL) from ₹16,451. Operated by IndiGo. Sep 24 to Oct 3. 1 stop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_463",
+        "role": "button",
+        "score": 195,
+        "text": "BengaluruNew DelhiSep 24 — Oct 31 stopfrom ₹16,451"
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from Bengaluru (BLR) to Mumbai (BOM) from ₹9,181. Operated by IndiGo. Sep 24 to Oct 3. Nonstop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_480",
+        "role": "button",
+        "score": 195,
+        "text": "BengaluruMumbaiSep 24 — Oct 3Nonstopfrom ₹9,181"
+      },
+      {
+        "kind": "button",
+        "name": "Find flights from Bengaluru (BLR) to Hyderabad (HYD) from ₹8,612. Operated by IndiGo. Sep 17 to Sep 23. Nonstop",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_497",
+        "role": "button",
+        "score": 195,
+        "text": "BengaluruHyderabadSep 17 — Sep 23Nonstopfrom ₹8,612"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹11,860",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6617",
+        "score": 191,
+        "text": "from ₹11,860"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹11,860",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6618",
+        "score": 191,
+        "text": "from ₹11,860"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,241",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6631",
+        "score": 191,
+        "text": "from ₹16,241"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,241",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6632",
+        "score": 191,
+        "text": "from ₹16,241"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹14,417",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6643",
+        "score": 191,
+        "text": "from ₹14,417"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹14,417",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6644",
+        "score": 191,
+        "text": "from ₹14,417"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹12,300",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6655",
+        "score": 191,
+        "text": "from ₹12,300"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹12,300",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6656",
+        "score": 191,
+        "text": "from ₹12,300"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹9,308",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6669",
+        "score": 191,
+        "text": "from ₹9,308"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹9,308",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6670",
+        "score": 191,
+        "text": "from ₹9,308"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,261",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6681",
+        "score": 191,
+        "text": "from ₹16,261"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,261",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6682",
+        "score": 191,
+        "text": "from ₹16,261"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,451",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6695",
+        "score": 191,
+        "text": "from ₹16,451"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹16,451",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6696",
+        "score": 191,
+        "text": "from ₹16,451"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹9,181",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6708",
+        "score": 191,
+        "text": "from ₹9,181"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹9,181",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6709",
+        "score": 191,
+        "text": "from ₹9,181"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹8,612",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6721",
+        "score": 191,
+        "text": "from ₹8,612"
+      },
+      {
+        "kind": "generic",
+        "name": "from ₹8,612",
+        "reasons": [
+          "goal_keyword_match",
+          "result_row"
+        ],
+        "refId": "v2ref_6722",
+        "score": 191,
+        "text": "from ₹8,612"
+      },
+      {
+        "kind": "generic",
+        "name": "₹11,860",
+        "reasons": [
+          "result_row"
+        ],
+        "refId": "v2ref_374",
+        "score": 178,
+        "text": "₹11,860"
+      },
+      {
+        "kind": "generic",
+        "name": "₹16,241",
+        "reasons": [
+          "result_row"
+        ],
+        "refId": "v2ref_391",
+        "score": 178,
+        "text": "₹16,241"
+      },
+      {
+        "kind": "generic",
+        "name": "₹14,417",
+        "reasons": [
+          "result_row"
+        ],
+        "refId": "v2ref_408",
+        "score": 178,
+        "text": "₹14,417"
+      },
+      {
+        "kind": "generic",
+        "name": "₹12,300",
+        "reasons": [
+          "result_row"
+        ],
+        "refId": "v2ref_425",
+        "score": 178,
+        "text": "₹12,300"
+      },
+      {
+        "kind": "generic",
+        "name": "₹16,261",
+        "reasons": [
+          "result_row"
+        ],
+        "refId": "v2ref_459",
+        "score": 178,
+        "text": "₹16,261"
+      },
+      {
+        "kind": "generic",
+        "name": "₹16,451",
+        "reasons": [
+          "result_row"
+        ],
+        "refId": "v2ref_476",
+        "score": 178,
+        "text": "₹16,451"
+      }
+    ]
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {
+      "generic_low_value": 31,
+      "hidden_low_value": 1649,
+      "offscreen_low_value": 137,
+      "rank_loss": 138,
+      "unlabeled_action": 8
+    },
+    "droppedRefCount": 3132,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 3212,
+    "selectedByReason": {
+      "form_candidate": 11,
+      "goal_keyword_match": 134,
+      "navigation_candidate": 79,
+      "result_row": 48,
+      "suggestion_option": 4,
+      "visible_ready": 35
+    },
+    "selectedRefCount": 80
+  }
+}

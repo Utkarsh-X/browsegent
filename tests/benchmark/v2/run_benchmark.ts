@@ -2,6 +2,7 @@ import { access, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { auditTraceReplay } from '../../../src/v2';
+import type { PlannerWorkingSetOptions } from '../../../src/v2/planner/workingSetTypes';
 import { createBenchmarkAdapter, readBenchmarkAdapterId } from './adapter_factory';
 import { BrowseGentBenchmarkAdapter } from './adapters/BrowseGentAdapter';
 import { resolveBenchmarkRateLimit } from './benchmark_rate_limit';
@@ -51,8 +52,8 @@ export interface RunBenchmarkOptions {
     expectedPlannerCalls: number,
     expectedToolExecutions: number,
   ) => Promise<BenchmarkTraceScore>;
-  plannerMode?: 'current' | 'compact_enforced';
   plannerSerialization?: BenchmarkRunMetadata['plannerSerialization'];
+  workingSetOptions?: PlannerWorkingSetOptions;
 }
 
 export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<BenchmarkReport> {
@@ -117,8 +118,8 @@ export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<B
           traceDir,
           headed: options.headed ?? false,
           requestMinIntervalMs: rateLimit.mode === 'paced' ? rateLimit.minIntervalMs : undefined,
-          plannerMode: options.plannerMode,
           plannerSerialization: options.plannerSerialization,
+          workingSetOptions: options.workingSetOptions,
         });
         const trace = options.traceAudit
           ? await options.traceAudit(
@@ -149,6 +150,7 @@ export async function runBenchmark(options: RunBenchmarkOptions = {}): Promise<B
         rateLimit,
         keyAssignments,
         options.plannerSerialization,
+        options.workingSetOptions,
       ),
       results: scoredResults,
     });
@@ -208,6 +210,7 @@ function buildRunMetadata(
   rateLimit: ReturnType<typeof resolveBenchmarkRateLimit>,
   assignments: BenchmarkGeminiKeyAssignment[],
   plannerSerialization: BenchmarkRunMetadata['plannerSerialization'],
+  workingSetOptions: BenchmarkRunMetadata['workingSetOptions'],
 ): BenchmarkRunMetadata {
   return {
     geminiKeyPool: {
@@ -222,6 +225,7 @@ function buildRunMetadata(
     },
     rateLimit,
     plannerSerialization,
+    ...(workingSetOptions !== undefined ? { workingSetOptions } : {}),
   };
 }
 
@@ -235,7 +239,8 @@ function renderMarkdownSummary(report: BenchmarkReport): string {
     `Gemini key diagnostics: configured ${report.runMetadata?.geminiKeyPool?.configuredKeyCount ?? 0}, unique ${report.runMetadata?.geminiKeyPool?.uniqueKeyCount ?? 0}, duplicates ${report.runMetadata?.geminiKeyPool?.duplicateKeyCount ?? 0}`,
     `Gemini key assignment: ${report.runMetadata?.geminiKeyPool?.assignmentMode ?? 'none'}${report.runMetadata?.geminiKeyPool?.assignments?.length ? `, ${report.runMetadata.geminiKeyPool.assignments.length} task attempts` : ''}`,
     `Rate limit: ${report.runMetadata?.rateLimit?.mode ?? 'disabled'}${report.runMetadata?.rateLimit?.minIntervalMs ? `, ${report.runMetadata.rateLimit.minIntervalMs}ms minimum interval` : ''}`,
-    `Planner serialization: ${report.runMetadata?.plannerSerialization?.mode ?? 'json'}`,
+    `Planner serialization: ${formatPlannerSerialization(report.runMetadata?.plannerSerialization)}`,
+    `Working set options: ${formatWorkingSetOptions(report.runMetadata?.workingSetOptions)}`,
     `Runs: ${report.summary.totalRuns}`,
     `Pass rate: ${(report.summary.passRate * 100).toFixed(1)}%`,
     `Trace complete rate: ${(report.summary.traceCompleteRate * 100).toFixed(1)}%`,
@@ -251,10 +256,47 @@ function renderMarkdownSummary(report: BenchmarkReport): string {
     `Max observation artifact: ${report.summary.diagnostics?.maxObservationBytes ?? 0} bytes`,
     `Max projection multi-section refs: ${report.summary.diagnostics?.maxProjectionMultiSectionRefs ?? 0}`,
     `Repeated/invalid action markers: ${report.summary.diagnostics?.totalRepeatedActions ?? 0}/${report.summary.diagnostics?.totalInvalidActions ?? 0}`,
+    `Latency ledger runs: ${report.summary.diagnostics?.latency?.runCount ?? 0}`,
+    `Latency ledger p50/p95: ${report.summary.diagnostics?.latency?.p50Ms ?? 0}/${report.summary.diagnostics?.latency?.p95Ms ?? 0}ms`,
+    `Latency phase totals: ${formatCounterMap(report.summary.diagnostics?.latency?.phaseTotals)}`,
+    `Evidence coverage planner inputs: ${report.summary.diagnostics?.evidenceCoverage?.plannerInputCount ?? 0}`,
+    `Evidence coverage states: ${formatCounterMap(report.summary.diagnostics?.evidenceCoverage?.states)}`,
+    `Evidence requirement statuses: ${formatCounterMap(report.summary.diagnostics?.evidenceCoverage?.requirementStatuses)}`,
     `Dev pass rate: ${(report.summary.partitions.dev.passRate * 100).toFixed(1)}% (${report.summary.partitions.dev.passedRuns}/${report.summary.partitions.dev.totalRuns})`,
     `Holdout pass rate: ${(report.summary.partitions.holdout.passRate * 100).toFixed(1)}% (${report.summary.partitions.holdout.passedRuns}/${report.summary.partitions.holdout.totalRuns})`,
     '',
   ].join('\n');
+}
+
+function formatPlannerSerialization(serialization: BenchmarkRunMetadata['plannerSerialization']): string {
+  const mode = serialization?.mode ?? 'json';
+  if (mode !== 'prc') return `mode=${mode}`;
+  return [
+    `mode=${mode}`,
+    `prcTierOmitted=${serialization?.prcTierOmitted ?? 'not-set'}`,
+    `compactDataPlane=${serialization?.compactDataPlane ?? 'not-set'}`,
+    `prcStableOrder=${serialization?.prcStableOrder ?? 'not-set'}`,
+    `composedPrompt=${serialization?.composedPrompt ?? 'not-set'}`,
+    `pageModel=${serialization?.pageModel ?? 'not-set'}`,
+    `doneChecklist=${serialization?.doneCandidateChecklist ?? 'not-set'}`,
+    `deltaSurface=${serialization?.deltaSurface ?? 'not-set'}`,
+  ].join(' ');
+}
+
+function formatWorkingSetOptions(workingSetOptions: PlannerWorkingSetOptions | undefined): string {
+  if (!workingSetOptions) return 'none';
+  return Object.entries(workingSetOptions)
+    .filter(([, value]) => value !== undefined)
+    .map(([key, value]) => `${key}=${String(value)}`)
+    .join(' ') || 'none';
+}
+
+function formatCounterMap(values: Record<string, number> | undefined): string {
+  if (!values || Object.keys(values).length === 0) return 'none';
+  return Object.entries(values)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}=${value}`)
+    .join(',');
 }
 
 export function selectBenchmarkTasks(
@@ -276,7 +318,7 @@ if (require.main === module) {
     });
 }
 
-function readCliOptions(): RunBenchmarkOptions {
+export function readCliOptions(): RunBenchmarkOptions {
   const model = readModelArg();
   const adapterId = readBenchmarkAdapterId(readFlag('--adapter'));
   const countArg = readFlag('--count');
@@ -287,11 +329,8 @@ function readCliOptions(): RunBenchmarkOptions {
   const partitionArg = readPartitionArg();
   const plannerModeArg = readFlag('--planner-mode');
   const plannerSerializationArg = readPlannerSerializationArg();
-  let plannerMode: 'current' | 'compact_enforced' = 'current';
-  if (plannerModeArg === 'current' || plannerModeArg === 'compact_enforced') {
-    plannerMode = plannerModeArg;
-  } else if (plannerModeArg !== undefined) {
-    throw new Error(`Unsupported --planner-mode "${plannerModeArg}". Use current or compact_enforced.`);
+  if (plannerModeArg !== undefined) {
+    throw new Error(`--planner-mode "${plannerModeArg}" is no longer supported; the compact_enforced plane was removed (use --planner-serialization).`);
   }
 
   return {
@@ -303,8 +342,8 @@ function readCliOptions(): RunBenchmarkOptions {
     requestRpm: requestRpmArg ? Number(requestRpmArg) : undefined,
     requestMinIntervalMs: requestMinIntervalArg ? Number(requestMinIntervalArg) : undefined,
     partition: partitionArg,
-    plannerMode,
-    plannerSerialization: plannerSerializationArg ? { mode: plannerSerializationArg } : undefined,
+    plannerSerialization: readPlannerSerializationConfig(plannerSerializationArg),
+    workingSetOptions: readWorkingSetOptions(),
   };
 }
 
@@ -329,10 +368,52 @@ function readPartitionArg(): BenchmarkPartitionSelection | undefined {
 
 function readPlannerSerializationArg(): NonNullable<BenchmarkRunMetadata['plannerSerialization']>['mode'] | undefined {
   const value = readFlag('--planner-serialization');
-  if (value === undefined || value === 'json' || value === 'prc') {
-    return value;
+  if (value === undefined || value === 'json' || value === 'prc' || value === 'prc-unified') {
+    return value === 'prc-unified' ? 'prc' : value;
   }
-  throw new Error(`Unsupported --planner-serialization "${value}". Use json or prc.`);
+  throw new Error(`Unsupported --planner-serialization "${value}". Use json, prc, or prc-unified.`);
+}
+
+function readPlannerSerializationConfig(
+  mode: NonNullable<BenchmarkRunMetadata['plannerSerialization']>['mode'] | undefined,
+): BenchmarkRunMetadata['plannerSerialization'] {
+  const rawArg = readFlag('--planner-serialization');
+  const prcUnified = hasFlag('--prc-unified') || rawArg === 'prc-unified';
+  const effectiveMode = prcUnified ? 'prc' : mode;
+
+  const prcTierOmitted = hasFlag('--prc-tier-omitted');
+  const compactDataPlane = hasFlag('--compact-data-plane');
+  if (prcUnified || prcTierOmitted || compactDataPlane) {
+    if (effectiveMode !== 'prc') {
+      const flags = [
+        ...(prcUnified ? ['--prc-unified'] : []),
+        ...(prcTierOmitted ? ['--prc-tier-omitted'] : []),
+        ...(compactDataPlane ? ['--compact-data-plane'] : []),
+      ];
+      throw new Error(`${flags.join(' and ')} require --planner-serialization prc.`);
+    }
+    return {
+      mode: 'prc',
+      ...(prcUnified ? { prcUnified: true } : {}),
+      ...(prcTierOmitted ? { prcTierOmitted: true } : {}),
+      ...(compactDataPlane ? { compactDataPlane: true } : {}),
+    };
+  }
+  return effectiveMode === undefined ? undefined : { mode: effectiveMode };
+}
+
+function readWorkingSetOptions(): PlannerWorkingSetOptions | undefined {
+  const bonusArg = readFlag('--readable-phrase-bonus');
+  if (bonusArg === undefined) return undefined;
+  const readablePhraseBonus = Number(bonusArg);
+  if (!Number.isFinite(readablePhraseBonus) || readablePhraseBonus < 0) {
+    throw new Error(`Unsupported --readable-phrase-bonus "${bonusArg}". Use a non-negative finite number.`);
+  }
+  return { readablePhraseBonus };
+}
+
+function hasFlag(name: string): boolean {
+  return process.argv.includes(name);
 }
 
 function isFlagValue(args: string[], value: string): boolean {

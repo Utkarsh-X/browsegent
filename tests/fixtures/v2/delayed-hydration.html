@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Delayed Hydration Fixture</title>
+  </head>
+  <body>
+    <main id="app"></main>
+    <script>
+      window.__hydrated = false;
+      setTimeout(() => {
+        document.querySelector('#app').innerHTML = '<button id="hydrated-action">Hydrated action</button>';
+        window.__hydrated = true;
+      }, 500);
+    </script>
+  </body>
+</html>

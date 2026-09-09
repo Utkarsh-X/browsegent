@@ -86,6 +86,125 @@ test('PlannerWorkingSetSelector promotes goal-matching refs over generic visible
   assert.ok(selection.workingSet.primaryRefs[0].score > (selection.current.refs.ref_docs.score ?? 0));
 });
 
+test('PlannerWorkingSetSelector retains visible suggestion options without goal-word matches', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_destination',
+      role: 'combobox',
+      name: 'Destination',
+      ariaAutocomplete: 'list',
+      ariaHasPopup: 'listbox',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+    makeRef({
+      refId: 'ref_option_delhi',
+      role: 'option',
+      name: 'New Delhi India',
+      text: 'New Delhi India',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+    makeRef({
+      refId: 'ref_settings',
+      role: 'button',
+      name: 'Settings',
+      text: 'Settings',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 2, maxSecondaryRefs: 0 }).select({
+    goal: 'Search for Paris',
+    projection,
+  });
+
+  assert.ok(selection.selectedRefIds.includes('ref_destination'));
+  assert.ok(selection.selectedRefIds.includes('ref_option_delhi'));
+  assert.ok(selection.workingSet.primaryRefs.some(ref =>
+    ref.refId === 'ref_option_delhi' && ref.reasons.includes('suggestion_option'),
+  ));
+  assert.equal(selection.current.refs.ref_option_delhi?.role, 'option');
+});
+
+test('PlannerWorkingSetSelector promotes current evidence refs without admitting stale refs', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_result',
+      role: 'link',
+      name: 'owner/repository',
+      text: 'owner/repository',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+    makeRef({
+      refId: 'ref_distractor',
+      role: 'button',
+      name: 'Account menu',
+      text: 'Account menu',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 1, maxSecondaryRefs: 0 }).select({
+    goal: 'Find the repository with the most stars',
+    projection,
+    evidenceRefIds: ['ref_result', 'ref_stale'],
+  });
+
+  assert.deepEqual(selection.selectedRefIds, ['ref_result']);
+  assert.ok(selection.workingSet.primaryRefs[0]?.reasons.includes('answer_candidate'));
+  assert.ok(selection.workingSet.actionSurface.clickableRefs.includes('ref_result'));
+  assert.equal(selection.current.refs.ref_stale, undefined);
+});
+
+test('P2 opts into named semantic offscreen evidence and sorts readable evidence by candidate score', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_generic_high',
+      role: undefined,
+      name: 'Generic evidence',
+      text: 'Generic evidence',
+      visibility: 'visible',
+      continuityConfidence: 0,
+    }),
+    makeRef({
+      refId: 'ref_gridcell',
+      role: ' GRIDCELL ',
+      name: 'Dec holiday',
+      text: 'Dec holiday',
+      visibility: 'offscreen',
+      continuityConfidence: 1,
+    }),
+    makeRef({
+      refId: 'ref_other',
+      role: 'text',
+      name: 'Other detail',
+      text: 'Other detail',
+      visibility: 'visible',
+      continuityConfidence: 0,
+    }),
+  ]));
+
+  const defaultSelection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 3,
+    maxSecondaryRefs: 0,
+    maxReadableEvidence: 2,
+  }).select({ goal: 'Book Dec holiday', projection });
+  assert.equal(defaultSelection.selectedRefIds.includes('ref_gridcell'), false);
+
+  const optInSelection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 3,
+    maxSecondaryRefs: 0,
+    maxReadableEvidence: 2,
+    readablePhraseBonus: 60,
+  }).select({ goal: 'Book Dec holiday', projection });
+  assert.ok(optInSelection.selectedRefIds.includes('ref_gridcell'));
+  assert.equal(optInSelection.workingSet.readableEvidence[0]?.refId, 'ref_gridcell');
+});
+
 test('PlannerWorkingSetSelector bounds dense repeated regions and reports omitted counts', () => {
   const projection = new ProjectionService().project(makeObservation([
     makeRef({ refId: 'ref_open_1', role: 'button', name: 'Open', targetId: 'target_1', selectorCandidates: ['[data-testid="open-1"]'] }),
@@ -445,6 +564,282 @@ test('PlannerWorkingSetSelector preserves failed refs as evidence without keepin
   assert.ok(selection.workingSet.actionSurface.typeableRefs.includes('ref_search'));
 });
 
+test('PlannerWorkingSetSelector promotes generic recovery controls after a persistent blocker', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_result',
+      role: 'button',
+      name: 'Search Paris hotels',
+      text: 'Search Paris hotels',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+    makeRef({
+      refId: 'ref_dismiss',
+      role: 'button',
+      name: 'Dismiss dialog',
+      text: 'Dismiss dialog',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+    makeRef({
+      refId: 'ref_generic',
+      role: 'link',
+      name: 'Paris hotels',
+      text: 'Paris hotels',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 1, maxSecondaryRefs: 0 }).select({
+    goal: 'Search Paris hotels',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_search',
+      error: { code: 'target_blocked', message: 'Target is blocked.', retryable: false },
+      traceStepId: 'step_blocked',
+    },
+  });
+
+  assert.equal(selection.workingSet.primaryRefs[0].refId, 'ref_dismiss');
+  assert.ok(selection.workingSet.primaryRefs[0].reasons.includes('recovery_control'));
+});
+
+test('PlannerWorkingSetSelector recognizes localized dismissal labels after a persistent blocker', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_result',
+      role: 'link',
+      name: 'Paris hotels',
+      text: 'Paris hotels',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+    makeRef({
+      refId: 'ref_dismiss',
+      role: 'button',
+      name: 'साइन इन की जानकारी को खारिज करें.',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 1, maxSecondaryRefs: 0 }).select({
+    goal: 'Search Paris hotels',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_search',
+      error: { code: 'target_blocked', message: 'Target is blocked.', retryable: false },
+      traceStepId: 'step_blocked',
+    },
+  });
+
+  assert.equal(selection.workingSet.primaryRefs[0].refId, 'ref_dismiss');
+  assert.ok(selection.workingSet.primaryRefs[0].reasons.includes('recovery_control'));
+});
+
+test('PlannerWorkingSetSelector does not promote recovery controls for retryable blockers', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_result',
+      role: 'link',
+      name: 'Paris hotels',
+      text: 'Paris hotels',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+    makeRef({
+      refId: 'ref_dismiss',
+      role: 'button',
+      name: 'Dismiss dialog',
+      text: 'Dismiss dialog',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 1, maxSecondaryRefs: 0 }).select({
+    goal: 'Search Paris hotels',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_search',
+      error: { code: 'target_blocked', message: 'Target is temporarily blocked.', retryable: true },
+      traceStepId: 'step_blocked',
+    },
+  });
+
+  assert.equal(selection.workingSet.primaryRefs[0].refId, 'ref_result');
+  assert.equal(selection.workingSet.primaryRefs[0].reasons.includes('recovery_control'), false);
+});
+
+test('PlannerWorkingSetSelector omits unlabeled button controls when named actions are available', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_unlabeled',
+      role: 'button',
+      name: undefined,
+      text: undefined,
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+    makeRef({
+      refId: 'ref_named',
+      role: 'button',
+      name: 'Choose Paris',
+      text: 'Choose Paris',
+      visibility: 'visible',
+      actionability: 'ready',
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 1, maxSecondaryRefs: 0 }).select({
+    goal: 'Choose Paris',
+    projection,
+  });
+
+  assert.equal(selection.workingSet.primaryRefs[0].refId, 'ref_named');
+  assert.equal(selection.selectedRefIds.includes('ref_unlabeled'), false);
+  assert.equal(selection.diagnostics.droppedByReason.unlabeled_action, 1);
+});
+
+test('PlannerWorkingSetSelector quarantines every mutation lane for a persistently failed target', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_failed_target',
+      targetId: 'target_failed',
+      role: 'textbox',
+      name: 'Search',
+      text: 'Search',
+      capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
+    }),
+    makeRef({
+      refId: 'ref_alternative',
+      targetId: 'target_alternative',
+      role: 'textbox',
+      name: 'Alternative search',
+      text: 'Alternative search',
+      capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 4, maxSecondaryRefs: 4 }).select({
+    goal: 'Search for Paris',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_failed_target',
+      error: { code: 'target_blocked', message: 'Target is blocked.', retryable: false },
+      traceStepId: 'step_blocked',
+    },
+    failureEvidence: [
+      {
+        failureId: 'failure_input_not_applied',
+        kind: 'input_not_applied',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'Input did not apply.',
+        source: 'test',
+        generationId: 1,
+        url: 'https://example.test',
+        targetRef: 'ref_failed_target',
+        signals: ['error:input_not_applied'],
+      },
+      {
+        failureId: 'failure_target_blocked',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'Target is blocked.',
+        source: 'test',
+        generationId: 1,
+        url: 'https://example.test',
+        targetRef: 'ref_failed_target',
+        signals: ['error:target_blocked'],
+      },
+    ],
+    uncertaintySignals: ['repeated_persistent_target:target_failed:2'],
+  });
+
+  assert.equal(selection.workingSet.actionSurface.clickableRefs.includes('ref_failed_target'), false);
+  assert.equal(selection.workingSet.actionSurface.typeableRefs.includes('ref_failed_target'), false);
+  assert.ok(selection.workingSet.actionSurface.clickableRefs.includes('ref_alternative'));
+  assert.ok(selection.workingSet.actionSurface.typeableRefs.includes('ref_alternative'));
+  assert.ok(selection.workingSet.actionSurface.readableRefs.includes('ref_failed_target'));
+  assert.ok(selection.workingSet.quarantinedActions.some(action =>
+    action.refId === 'ref_failed_target'
+    && action.tool === 'type'
+    && action.failureKind === 'persistent_target_failure'
+  ));
+});
+
+test('PlannerWorkingSetSelector applies semantic-target quarantine after ref identity churn', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({
+      refId: 'ref_reissued',
+      targetId: 'target_failed',
+      role: 'combobox',
+      name: 'Destination',
+      capabilities: { clickable: true, typeable: true, selectable: true, readable: true },
+    }),
+    makeRef({
+      refId: 'ref_alternative',
+      targetId: 'target_alternative',
+      role: 'textbox',
+      name: 'Alternative destination',
+      capabilities: { clickable: true, typeable: true, selectable: false, readable: true },
+    }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 4, maxSecondaryRefs: 4 }).select({
+    goal: 'Search for Paris',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_old',
+      error: { code: 'target_blocked', message: 'Target is blocked.', retryable: false },
+      traceStepId: 'step_blocked',
+    },
+    failureEvidence: [{
+      failureId: 'failure_target_blocked_ref_old',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'Target is blocked.',
+      source: 'test',
+      generationId: 1,
+      url: 'https://example.test',
+      targetRef: 'ref_old',
+      signals: ['error:target_blocked'],
+    }],
+    uncertaintySignals: ['repeated_persistent_target:target_failed:2'],
+  });
+
+  assert.equal(selection.workingSet.actionSurface.clickableRefs.includes('ref_reissued'), false);
+  assert.equal(selection.workingSet.actionSurface.typeableRefs.includes('ref_reissued'), false);
+  assert.equal(selection.workingSet.actionSurface.selectableRefs.includes('ref_reissued'), false);
+  assert.ok(selection.workingSet.actionSurface.clickableRefs.includes('ref_alternative'));
+  assert.ok(selection.workingSet.quarantinedActions.some(action =>
+    action.refId === 'ref_reissued'
+    && action.tool === 'type'
+    && action.failureKind === 'persistent_target_failure'
+  ));
+});
+
 test('PlannerWorkingSetSelector does not quarantine retryable transient failures', () => {
   const projection = new ProjectionService().project(makeObservation([
     makeRef({ refId: 'ref_submit', role: 'button', name: 'Submit', visibility: 'visible', actionability: 'ready' }),
@@ -650,4 +1045,156 @@ test('PlannerWorkingSetSelector quarantines repeated search_page from readable l
     && action.tool === 'search_page'
     && action.failureKind === 'repeated_read_loop'
   ));
+});
+
+// --- A2 Selection Invariants ---
+
+test('A2: exact goal phrase ranks above a generic visible-ready control', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_phrase', role: 'link', name: 'Climate data visualization', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_generic', role: 'button', name: 'Settings', visibility: 'visible', actionability: 'ready' }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 2,
+    maxSecondaryRefs: 2,
+    maxReadableEvidence: 2,
+    maxNavigationRefs: 2,
+    maxRegionSummaries: 2,
+  }).select({
+    goal: 'find climate data visualization',
+    projection,
+  });
+
+  // Both should be selected, but phrase match should have higher score in diagnostics
+  assert.ok(selection.selectedRefIds.includes('ref_phrase'));
+  assert.ok(selection.selectedRefIds.includes('ref_generic'));
+  const phraseReason = selection.diagnostics.selectedByReason;
+  assert.ok(phraseReason.goal_keyword_match! >= 1, 'goal_keyword_match should fire for phrase ref');
+});
+
+test('A2: failed or newly appeared ref remains eligible under existing precedence', () => {
+  const obs = makeObservation([
+    makeRef({ refId: 'ref_failed', role: 'button', name: 'Submit', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_appeared', role: 'link', name: 'New link', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_normal', role: 'button', name: 'Cancel', visibility: 'visible', actionability: 'ready' }),
+  ]);
+  const projection = new ProjectionService().project(obs);
+
+  const selection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 4,
+    maxSecondaryRefs: 4,
+    maxReadableEvidence: 4,
+    maxNavigationRefs: 4,
+    maxRegionSummaries: 4,
+  }).select({
+    goal: 'Submit the form',
+    projection,
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_failed',
+      error: { code: 'element_not_found', message: 'Not found', retryable: true },
+      traceStepId: 'step_1',
+    },
+    graphSnapshot: {
+      generation: 2,
+      refStates: {
+        ref_appeared: { present: true, confidence: 1, state: 'live', recentlyAppeared: true },
+      },
+    } as any,
+  });
+
+  assert.ok(selection.selectedRefIds.includes('ref_failed'), 'failed ref should remain selected');
+  assert.ok(selection.selectedRefIds.includes('ref_appeared'), 'newly appeared ref should be selected');
+});
+
+test('A2: with equal relevance, ordering is deterministic by existing score then refId', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_b', role: 'button', name: 'Action', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_a', role: 'button', name: 'Action', visibility: 'visible', actionability: 'ready' }),
+  ]));
+
+  const selection1 = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 4,
+    maxSecondaryRefs: 4,
+    maxReadableEvidence: 4,
+    maxNavigationRefs: 4,
+    maxRegionSummaries: 4,
+  }).select({ goal: 'do something', projection });
+
+  const selection2 = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 4,
+    maxSecondaryRefs: 4,
+    maxReadableEvidence: 4,
+    maxNavigationRefs: 4,
+    maxRegionSummaries: 4,
+  }).select({ goal: 'do something', projection });
+
+  assert.deepEqual(selection1.selectedRefIds, selection2.selectedRefIds, 'selection should be deterministic');
+});
+
+test('P1: ranking goals pin below-fold metric-bearing result rows into the working set', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_sort', role: 'button', name: 'Sort by: Best match', text: 'Sort by: Best match', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_card_1', role: 'link', name: 'visible-lab/visible-lab', text: 'visible-lab/visible-lab 6 stars', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_row_hidden_winner', role: undefined, name: 'resource-watch/resource-watch', text: 'resource-watch/resource-watch 73 stars', visibility: 'offscreen', actionability: 'ready' }),
+    makeRef({ refId: 'ref_decorative', role: undefined, name: 'Decorative', text: 'Decorative', visibility: 'offscreen', actionability: 'ready' }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 2,
+    maxSecondaryRefs: 2,
+    maxReadableEvidence: 2,
+    maxNavigationRefs: 2,
+    maxRegionSummaries: 2,
+  }).select({ goal: 'Which repository has the most stars?', projection });
+
+  assert.ok(selection.selectedRefIds.includes('ref_row_hidden_winner'), 'metric-bearing offscreen row should be pinned');
+  const pinned = selection.workingSet.primaryRefs.find(ref => ref.refId === 'ref_row_hidden_winner')
+    ?? selection.workingSet.secondaryRefs.find(ref => ref.refId === 'ref_row_hidden_winner');
+  assert.ok(pinned, 'pinned row should be in the working set');
+  assert.ok(pinned.reasons.includes('result_row'), 'pinned row should carry the result_row reason');
+  assert.ok(!selection.selectedRefIds.includes('ref_decorative'), 'non-metric decorative row stays dropped');
+  assert.ok((selection.diagnostics.droppedByReason.offscreen_low_value ?? 0) >= 1, 'decorative row dropped as offscreen_low_value');
+});
+
+test('P1: non-ranking goals do not pin metric rows (exemption without promotion)', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_submit', role: 'button', name: 'Submit order', text: 'Submit order', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_row_hidden', role: undefined, name: 'resource-watch/resource-watch', text: 'resource-watch/resource-watch 73 stars', visibility: 'offscreen', actionability: 'ready' }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({
+    maxPrimaryRefs: 1,
+    maxSecondaryRefs: 0,
+    maxReadableEvidence: 1,
+    maxNavigationRefs: 1,
+    maxRegionSummaries: 1,
+  }).select({ goal: 'Submit the order form', projection });
+
+  assert.ok(!selection.selectedRefIds.includes('ref_row_hidden'), 'metric row should not displace ready controls for non-ranking goals');
+  assert.equal(selection.diagnostics.droppedByReason.offscreen_low_value ?? 0, 0, 'metric row is data, not chrome: exempt from the low-value drop');
+});
+
+test('F2/F7b: selection exposes delta refs limited to the selected set', () => {
+  const projection = new ProjectionService().project(makeObservation([
+    makeRef({ refId: 'ref_new_option', role: 'option', name: 'New Delhi India', text: 'New Delhi India', visibility: 'visible', actionability: 'ready' }),
+    makeRef({ refId: 'ref_static', role: 'button', name: 'Static', text: 'Static', visibility: 'visible', actionability: 'ready' }),
+  ]));
+
+  const selection = new PlannerWorkingSetSelector({ maxPrimaryRefs: 4, maxSecondaryRefs: 4 }).select({
+    goal: 'Search for Delhi',
+    projection,
+    transitionEvidence: {
+      beforeObservationId: 'before', afterObservationId: 'after',
+      transitionClass: 'structural_local', strength: 'moderate',
+      generationChanged: false, urlChanged: false,
+      refChanges: { appeared: ['ref_new_option', 'ref_unselected_one'], disappeared: [], weakened: [], preserved: [] },
+      notes: [],
+    },
+  });
+
+  assert.ok(selection.workingSet.deltaRefs.appeared.includes('ref_new_option'), 'selected appeared ref is exposed for the +new marker');
+  assert.ok(!selection.workingSet.deltaRefs.appeared.includes('ref_unselected_one'), 'unselected refs are not marked');
 });

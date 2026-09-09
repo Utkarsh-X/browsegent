@@ -1,4 +1,5 @@
 import type { ScoredBenchmarkResult } from '../v2/types';
+import { hasInternalRefTokens, stripInternalRefTokens } from '../../../src/v2/agent/AnswerHygiene';
 import type {
   WebVoyagerBenchmarkTask,
   WebVoyagerEvaluationSummary,
@@ -8,22 +9,35 @@ import type {
   WebVoyagerVerdict,
 } from './types';
 
+export interface WebVoyagerJudgeInput {
+  score: 0 | 1;
+  verdict: 'SUCCESS' | 'NOT_SUCCESS' | 'UNAVAILABLE';
+  reason?: string;
+}
+
 export function evaluateWebVoyagerResult(
   task: WebVoyagerBenchmarkTask,
   result: ScoredBenchmarkResult,
   manualAudit?: WebVoyagerManualAuditEntry,
+  judge?: WebVoyagerJudgeInput,
 ): WebVoyagerVerdict {
   const reasons: string[] = [];
   const reference = task.webVoyager.referenceAnswer;
   const internalPassed = result.passed === true;
   const environmentStatus = classifyEnvironmentStatus(result, manualAudit);
+  // Internal ref identifiers are plumbing, not answer content: match on the
+  // cleaned text so a leak can never create token-overlap credit, and flag
+  // the leak for review.
+  const internalRefLeak = hasInternalRefTokens(result.value ?? '');
+  const referenceMatchValue = internalRefLeak ? stripInternalRefTokens(result.value) : result.value;
   const referenceMatchType = environmentStatus === 'normal'
-    ? (reference ? classifyReferenceMatch(result.value, reference.answer, reference.type) : 'missing_reference')
+    ? (reference ? classifyReferenceMatch(referenceMatchValue, reference.answer, reference.type) : 'missing_reference')
     : 'not_applicable';
 
   if (!internalPassed) reasons.push('benchmark_result_failed');
   if (environmentStatus === 'normal' && !reference) reasons.push('missing_reference');
   if (environmentStatus === 'normal' && reference && referenceMatchType === 'mismatch') reasons.push('reference_mismatch');
+  if (internalRefLeak) reasons.push('internal_ref_leak');
   if (environmentStatus !== 'normal') reasons.push(environmentStatus);
   if (manualAudit) reasons.push(`manual_${manualAudit.verdict}`);
 
@@ -45,9 +59,12 @@ export function evaluateWebVoyagerResult(
     environmentAdjustedEligible: environmentStatus === 'normal',
     environmentStatus,
     referenceMatchType,
-    needsManualReview: !manualAudit && (!reference || referenceMatchType === 'mismatch' || referenceMatchType === 'partial' || environmentStatus !== 'normal'),
+    needsManualReview: !manualAudit && (internalRefLeak || !reference || referenceMatchType === 'mismatch' || referenceMatchType === 'partial' || environmentStatus !== 'normal'),
     manualVerdict: manualAudit?.verdict,
     reasons,
+    judgeScore: judge?.score,
+    judgeVerdict: judge?.verdict,
+    judgeReason: judge?.reason,
   };
 }
 
@@ -66,7 +83,16 @@ export function summarizeWebVoyagerEvaluation(verdicts: WebVoyagerVerdict[]): We
     manualReviewCount: verdicts.filter(verdict => verdict.needsManualReview).length,
     environmentBlockedCount: verdicts.filter(verdict => verdict.environmentStatus === 'environment_block').length,
     impossibleTaskCount: verdicts.filter(verdict => verdict.environmentStatus === 'impossible_task').length,
+    judgedCount: verdicts.filter(verdict => verdict.judgeScore !== undefined).length,
+    judgeScoreRate: judgeRatio(verdicts, undefined),
+    environmentAdjustedJudgeScore: judgeRatio(verdicts, 'eligible'),
   };
+}
+
+function judgeRatio(verdicts: WebVoyagerVerdict[], scope: 'eligible' | undefined): number {
+  const scoped = verdicts.filter(verdict => verdict.judgeScore !== undefined
+    && (scope === undefined || verdict.environmentAdjustedEligible));
+  return ratio(sum(scoped.map(verdict => verdict.judgeScore ?? 0)), scoped.length);
 }
 
 function classifyEnvironmentStatus(

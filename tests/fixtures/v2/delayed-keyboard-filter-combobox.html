@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Delayed Keyboard Filter Combobox Fixture</title>
+</head>
+<body>
+  <label for="destination">Destination</label>
+  <input id="destination" type="text" role="combobox" aria-label="Destination"
+    aria-autocomplete="list" aria-haspopup="listbox" aria-controls="destinations">
+  <ul id="destinations" role="listbox" hidden>
+    <li role="option">New Delhi</li>
+  </ul>
+  <script>
+    const input = document.querySelector('#destination');
+    const list = document.querySelector('#destinations');
+    let delayedTimer;
+    let keyups = 0;
+
+    function renderDefault() {
+      list.hidden = false;
+      list.innerHTML = '<li role="option">New Delhi</li>';
+    }
+
+    function renderMatches() {
+      list.hidden = false;
+      list.innerHTML = input.value.trim().toLowerCase() === 'paris'
+        ? '<li role="option">Paris</li>'
+        : '<li role="option">New Delhi</li>';
+    }
+
+    input.addEventListener('input', () => {
+      clearTimeout(delayedTimer);
+      delayedTimer = setTimeout(renderDefault, 200);
+    });
+
+    input.addEventListener('keyup', () => {
+      keyups += 1;
+      clearTimeout(delayedTimer);
+      renderMatches();
+    });
+
+    input.__testKeyupCount = () => keyups;
+  </script>
+</body>
+</html>

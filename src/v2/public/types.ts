@@ -1,5 +1,6 @@
 import type { V2AgentLoopResult } from '../agent/types';
 import type { PlannerSerializationConfig } from '../planner/types';
+import type { PlannerWorkingSetOptions } from '../planner/workingSetTypes';
 
 export type BrowserAgentOutputMode =
   | 'text'
@@ -32,8 +33,8 @@ export interface BrowserAgentRunOptions {
   browser?: BrowserAgentBrowserOptions;
   trace?: boolean | BrowserAgentTraceOptions;
   output?: BrowserAgentOutputMode;
-  plannerMode?: 'current' | 'compact_enforced';
   plannerSerialization?: PlannerSerializationConfig;
+  workingSetOptions?: PlannerWorkingSetOptions;
 }
 
 export interface BrowserAgentRunResult {
@@ -41,6 +42,8 @@ export interface BrowserAgentRunResult {
   value: string;
   data?: unknown;
   failureReason?: string;
+  /** Advisory contract reasons that fired but were overridden to preserve the answer. */
+  advisoryNotes?: string;
   tracePath?: string;
   warnings: string[];
   metrics: V2AgentLoopResult['metrics'];

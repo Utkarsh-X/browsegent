@@ -1,4 +1,4 @@
-import { robustJsonParse } from '../../agent/parser';
+import { robustJsonParse } from './robustJsonParse';
 import { callProvider, type ProviderCallOptions } from '../../providers';
 import type { TraceStore } from '../trace/TraceStore';
 import { PlannerOutputSchema, type PlannerOutputValidationContext } from './PlannerOutputSchema';
@@ -8,12 +8,13 @@ import {
   buildV2PlannerValidationFeedback,
 } from './PlannerPrompt';
 import { buildV2PlannerResponseSchema } from './V2PlannerResponseSchema';
-import type { PlannerInput, PlannerOutput, PlannerSerializationConfig } from './types';
+import { type PlannerInput, type PlannerOutput, type PlannerSerializationConfig, resolvePlannerSerializationConfig } from './types';
 
 export interface V2PlannerProviderResult {
   text: string;
   inputTokens: number;
   outputTokens: number;
+  cachedInputTokens?: number;
 }
 
 export type V2PlannerProvider = (
@@ -33,7 +34,15 @@ export interface V2PlannerClientOptions {
 export interface V2PlannerCallInput {
   plannerInput: PlannerInput;
   model?: string;
-  mode?: 'normal' | 'finalization';
+  mode?: 'normal' | 'finalization' | 'done_candidate';
+  /** Done-candidate verification checklist appended to the user message when
+   *  mode='done_candidate' (answer-quality round 1, D1). */
+  checklistSuffix?: string;
+  /** Page-model 2b (W2 wire): the previous payload's surface element lines —
+   *  the line-diff source for the changed class. Undefined = no previous
+   *  render (first episode renders everything full). */
+  previousSurfaceLines?: readonly string[];
+  onPacingWait?: (durationMs: number) => void;
 }
 
 export interface V2PlannerCallResult {
@@ -41,6 +50,7 @@ export interface V2PlannerCallResult {
   rawText: string;
   inputTokens: number;
   outputTokens: number;
+  cachedInputTokens?: number;
   durationMs: number;
 }
 
@@ -76,18 +86,22 @@ export class V2PlannerClient {
     this.provider = options.provider ?? callProvider;
     this.schema = options.schema ?? new PlannerOutputSchema();
     this.traceStore = options.traceStore;
-    this.plannerSerialization = options.plannerSerialization ?? { mode: 'json' };
+    this.plannerSerialization = resolvePlannerSerializationConfig(options.plannerSerialization);
   }
 
   async call(input: V2PlannerCallInput): Promise<V2PlannerCallResult> {
     const startedAt = Date.now();
-    const systemPrompt = buildV2PlannerSystemPrompt();
+    const systemPrompt = buildV2PlannerSystemPrompt(this.plannerSerialization, input.plannerInput);
     const baseUserMessage = buildV2PlannerUserMessage(
       input.plannerInput,
       this.plannerSerialization,
+      input.previousSurfaceLines,
     );
-    let userMessage = baseUserMessage;
+    let userMessage = input.mode === 'done_candidate' && input.checklistSuffix
+      ? `${baseUserMessage}\n\n${input.checklistSuffix}`
+      : baseUserMessage;
     let totalInputTokens = 0;
+    let totalCachedInputTokens: number | undefined;
     let totalOutputTokens = 0;
     let lastRawText = '';
     let lastErrors: string[] = [];
@@ -100,7 +114,10 @@ export class V2PlannerClient {
       providerPayloadAttempts.push(summarizeProviderPayloadAttempt(attempt, systemPrompt, userMessage));
       try {
         providerResult = await this.provider(systemPrompt, userMessage, input.model, {
-          responseSchema: buildV2PlannerResponseSchema(),
+          ...(this.plannerSerialization.omitResponseJsonSchema
+            ? {}
+            : { responseSchema: buildV2PlannerResponseSchema() }),
+          onPacingWait: input.onPacingWait,
         });
       } catch (error) {
         const durationMs = Date.now() - startedAt;
@@ -114,6 +131,7 @@ export class V2PlannerClient {
           metrics: {
             inputTokens: totalInputTokens,
             outputTokens: totalOutputTokens,
+            ...(totalCachedInputTokens !== undefined ? { cachedInputTokens: totalCachedInputTokens } : {}),
             durationMs,
           },
         });
@@ -129,6 +147,9 @@ export class V2PlannerClient {
       }
       totalInputTokens += providerResult.inputTokens;
       totalOutputTokens += providerResult.outputTokens;
+      if (providerResult.cachedInputTokens !== undefined) {
+        totalCachedInputTokens = (totalCachedInputTokens ?? 0) + providerResult.cachedInputTokens;
+      }
       lastRawText = providerResult.text;
 
       const validation = this.parseAndValidate(providerResult.text, input);
@@ -139,6 +160,7 @@ export class V2PlannerClient {
           rawText: providerResult.text,
           inputTokens: totalInputTokens,
           outputTokens: totalOutputTokens,
+          ...(totalCachedInputTokens !== undefined ? { cachedInputTokens: totalCachedInputTokens } : {}),
           durationMs,
         };
 
@@ -151,6 +173,7 @@ export class V2PlannerClient {
           metrics: {
             inputTokens: totalInputTokens,
             outputTokens: totalOutputTokens,
+            ...(totalCachedInputTokens !== undefined ? { cachedInputTokens: totalCachedInputTokens } : {}),
             durationMs,
           },
         });
@@ -204,6 +227,40 @@ export class V2PlannerClient {
       return result;
     }
 
+    const emptyObservationRecovery = buildEmptyObservationWaitRescue(
+      lastRawText,
+      input,
+      lastErrors,
+    );
+    if (emptyObservationRecovery) {
+      const result: V2PlannerCallResult = {
+        output: emptyObservationRecovery,
+        rawText: lastRawText,
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+        durationMs,
+      };
+
+      this.recordPlannerOutput(input.plannerInput.episodeId, {
+        attempts: 2,
+        rawText: lastRawText,
+        validation: { ok: true, errors: [] },
+        output: emptyObservationRecovery,
+        recovery: {
+          kind: 'empty_observation_wait',
+          sourceErrors: lastErrors,
+        },
+        providerPayload: summarizeProviderPayload(this.plannerSerialization, providerPayloadAttempts),
+        metrics: {
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
+          durationMs,
+        },
+      });
+
+      return result;
+    }
+
     this.recordPlannerOutput(input.plannerInput.episodeId, {
       attempts: 2,
       rawText: lastRawText,
@@ -228,6 +285,19 @@ export class V2PlannerClient {
   }
 
   private parseAndValidate(rawText: string, input: V2PlannerCallInput): { ok: true; output: PlannerOutput } | { ok: false; errors: string[] } {
+    // Detect truncated navigate URL before attempting JSON parse.
+    // When the LLM generates an oversized URL consuming the entire output budget,
+    // the JSON is irrecoverably truncated. Detect this pattern and return actionable feedback.
+    if (isTruncatedNavigateOutput(rawText)) {
+      return {
+        ok: false,
+        errors: [
+          'url_truncated: The navigate URL consumed the entire output budget and was truncated. ' +
+          'Use a short URL (under 200 characters) or navigate via page elements instead of constructing URLs.',
+        ],
+      };
+    }
+
     const parsed = robustJsonParse(rawText);
     if (!parsed) {
       return { ok: false, errors: ['Planner response did not contain a valid JSON object'] };
@@ -264,11 +334,32 @@ function buildActionCompatibilityGuidance(
 
   const lines: string[] = [];
   for (const error of errors) {
+    const unknownRefMatch = error.match(/ref "([^"]+)" is not present in selected planner refs(?: for tool "([^"]+)")?/);
+    if (unknownRefMatch) {
+      const invalidRef = unknownRefMatch[1];
+      const tool = unknownRefMatch[2] ?? 'the requested tool';
+      const candidates = compatibleRefIdsForTool(tool, surface);
+      const observationId = input.current.observationId;
+      lines.push(
+        `Invalid planner ref: ${invalidRef} is not a current ref for tool "${tool}". `
+        + `Observation IDs${observationId ? ` such as ${observationId}` : ''} are not ref IDs. `
+        + `Use a ref from the current observation${candidates.length > 0 ? `: ${formatRefAlternatives(candidates, input)}` : '.'}`,
+      );
+    }
+
     const typeMatch = error.match(/ref "([^"]+)" is not compatible with tool "type"/);
     if (typeMatch) {
       lines.push(formatInvalidRefDetail(typeMatch[1], input, surface));
       if (surface.typeableRefs.length > 0) {
         lines.push(`Typeable refs available: ${formatRefAlternatives(surface.typeableRefs, input)}`);
+      } else {
+        const launcherCandidates = surface.clickableRefs.length > 0
+          ? ` Clickable launcher candidates: ${formatRefAlternatives(surface.clickableRefs, input)}.`
+          : '';
+        lines.push(
+          'No typeable refs are currently available. Do not type into a button or readable ref. '
+          + `Click a compatible launcher and reobserve before typing; otherwise use wait, scroll, search_page, or escalate.${launcherCandidates}`,
+        );
       }
     }
 
@@ -293,6 +384,20 @@ function buildActionCompatibilityGuidance(
         lines.push(`Selectable refs available: ${formatRefAlternatives(surface.selectableRefs, input)}`);
       }
     }
+  }
+
+  if (
+    errors.some(error => error.includes(' is not compatible with tool '))
+    && input.lastResult?.success === true
+    && input.lastResult.evidence?.strength === 'none'
+    && input.lastResult.targetRef
+  ) {
+    const previousRef = input.current.refs?.[input.lastResult.targetRef];
+    const previousRole = previousRef?.role ?? previousRef?.kind ?? 'target';
+    lines.push(
+      `Previous ${input.lastResult.kind} on ${input.lastResult.targetRef} produced no observable transition. `
+      + `Do not assume the ${previousRole} became a text field or changed action lane; use a currently compatible ref or reobserve.`,
+    );
   }
 
   return lines.length > 0 ? [...new Set(lines)].join('\n') : undefined;
@@ -327,6 +432,68 @@ function buildReadableOnlyClickRescue(
   };
 }
 
+function buildEmptyObservationWaitRescue(
+  rawText: string,
+  input: V2PlannerCallInput,
+  errors: string[],
+): PlannerOutput | undefined {
+  const lastResult = input.plannerInput.lastResult;
+  const followedPageChange = Boolean(
+    input.plannerInput.transition
+      && (input.plannerInput.transition.urlChanged || input.plannerInput.transition.generationChanged),
+  );
+  if (
+    input.mode === 'finalization'
+    || !isEmptyCurrentProjection(input.plannerInput.current)
+    || lastResult?.success !== true
+    || lastResult.kind !== 'navigate'
+    || !followedPageChange
+  ) {
+    return undefined;
+  }
+
+  const hasObservationIdReadError = errors.some(error =>
+    /ref "obs_[^"]+" is not present in selected planner refs for tool "(get|inspect_region)"/.test(error),
+  );
+  if (!hasObservationIdReadError) return undefined;
+
+  const parsed = robustJsonParse(rawText);
+  if (!parsed || !Array.isArray(parsed.plan)) return undefined;
+  const firstStep = parsed.plan[0];
+  if (typeof firstStep !== 'object' || firstStep === null || Array.isArray(firstStep)) {
+    return undefined;
+  }
+
+  const step = firstStep as Record<string, unknown>;
+  const ref = typeof step.ref === 'string'
+    ? step.ref
+    : typeof step.sel === 'string'
+      ? step.sel
+      : typeof step.selector === 'string'
+        ? step.selector
+        : undefined;
+  if ((step.tool !== 'get' && step.tool !== 'inspect_region') || !ref || !/^obs_[A-Za-z0-9_-]+$/.test(ref)) {
+    return undefined;
+  }
+
+  return {
+    plan: [{ tool: 'wait', timeout: 1000 }],
+    confidence: 'low',
+  };
+}
+
+function isEmptyCurrentProjection(current: PlannerInput['current']): boolean {
+  return Object.keys(current.refs ?? {}).length === 0
+    && current.interactions.length === 0
+    && current.readables.length === 0
+    && current.navigation.length === 0
+    && current.regions.length === 0
+    && current.stats.interactionCount === 0
+    && current.stats.readableCount === 0
+    && current.stats.navigationCount === 0
+    && current.stats.regionCount === 0;
+}
+
 function formatInvalidRefDetail(
   refId: string | undefined,
   input: PlannerInput,
@@ -349,6 +516,26 @@ function formatInvalidRefDetail(
 
 function formatRefAlternatives(refIds: string[], input: PlannerInput): string {
   return refIds.slice(0, 5).map(refId => formatRefAlternative(refId, input)).join(', ');
+}
+
+function compatibleRefIdsForTool(
+  tool: string,
+  surface: NonNullable<PlannerOutputValidationContext['actionSurface']>,
+): string[] {
+  switch (tool) {
+    case 'type':
+      return surface.typeableRefs;
+    case 'click':
+    case 'close':
+      return surface.clickableRefs;
+    case 'select':
+      return surface.selectableRefs;
+    case 'get':
+    case 'inspect_region':
+      return surface.readableRefs;
+    default:
+      return [...surface.clickableRefs, ...surface.typeableRefs, ...surface.selectableRefs, ...surface.readableRefs];
+  }
 }
 
 function formatRefAlternative(refId: string, input: PlannerInput): string {
@@ -413,6 +600,14 @@ function summarizeProviderPayload(
   attempts: ProviderPayloadAttemptSummary[],
 ) {
   return {
+    serialization: {
+      mode: config.mode,
+      prcTierOmitted: config.prcTierOmitted ?? false,
+      compactDataPlane: config.compactDataPlane ?? false,
+      prcLeanPlane: config.prcLeanPlane ?? false,
+      conditionalSystemPrompt: config.conditionalSystemPrompt ?? false,
+      omitResponseJsonSchema: config.omitResponseJsonSchema ?? false,
+    },
     serializationMode: config.mode,
     attempts,
     totalSystemBytes: sum(attempts.map(attempt => attempt.systemBytes)),
@@ -464,4 +659,19 @@ function collectValidationContext(input: PlannerInput): PlannerOutputValidationC
 
 function formatErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/**
+ * Detect planner output truncated mid-URL.
+ * Conditions: mentions "navigate" and "url", text does NOT end with valid JSON
+ * structural closure, and has a long unfinished string value (500+ chars without
+ * closing quote) at the end.
+ */
+export function isTruncatedNavigateOutput(rawText: string): boolean {
+  if (!rawText.includes('"navigate"') || !rawText.includes('"url"')) return false;
+  const trimmed = rawText.trimEnd();
+  // If text ends with } or ], JSON structure might be intact — not truncated
+  if (trimmed.endsWith('}') || trimmed.endsWith(']')) return false;
+  // Long unfinished URL value at end of text
+  return /"url"\s*:\s*"[^"]{500,}$/.test(trimmed);
 }

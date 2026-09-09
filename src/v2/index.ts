@@ -94,6 +94,10 @@ export type {
   PlannerOutputTool,
   PlannerOutputValidationResult,
   PlannerTransitionSummary,
+  PlannerTaskProgress,
+  PlannerTaskProgressItem,
+  PlannerTaskProgressItemStatus,
+  PlannerTaskProgressState,
   PlannerUncertainty,
   PlannerUncertaintyLevel,
 } from './planner/types';

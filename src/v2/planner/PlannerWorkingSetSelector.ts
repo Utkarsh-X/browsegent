@@ -7,6 +7,8 @@ import type {
 import type { ContinuityGraphSnapshot } from '../graph/types';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { TransitionEvidence, V2ToolResult } from '../runtime/types';
+import { scoreGoalRelevance } from './GoalRelevance';
+import { isComparativeRankingGoal } from '../agent/AnswerContract';
 import type {
   PlannerQuarantinedAction,
   PlannerWorkingSetDiagnostics,
@@ -20,7 +22,10 @@ import type {
   WorkingSetMode,
 } from './workingSetTypes';
 
-const DEFAULT_OPTIONS: Required<PlannerWorkingSetOptions> = {
+type ResolvedPlannerWorkingSetOptions = Omit<Required<PlannerWorkingSetOptions>, 'readablePhraseBonus'>
+  & Pick<PlannerWorkingSetOptions, 'readablePhraseBonus'>;
+
+const DEFAULT_OPTIONS: ResolvedPlannerWorkingSetOptions = {
   maxPrimaryRefs: 32,
   maxSecondaryRefs: 48,
   maxReadableEvidence: 48,
@@ -33,11 +38,26 @@ const DEFAULT_OPTIONS: Required<PlannerWorkingSetOptions> = {
 export interface PlannerWorkingSetSelectorInput {
   goal: string;
   projection: OperationalProjection;
+  /** Current-observation refs that back relation-bound evidence facts. */
+  evidenceRefIds?: readonly string[];
+  /** Widget-local navigation controls needed to bring a focused requirement's
+   *  target into view; force-selected so the planner can act on them. */
+  horizonControlRefs?: readonly string[];
+  /** Observed elements that concretely match the focused requirement's target
+   *  value (e.g. the goal's exact dates in an open calendar); force-selected. */
+  targetValueRefs?: readonly string[];
+  /** Form submit controls promoted during the commit phase (every parsed
+   *  requirement satisfied, no submission yet); force-selected. */
+  submitControlRefs?: readonly string[];
   graphSnapshot?: ContinuityGraphSnapshot;
   transitionEvidence?: TransitionEvidence;
   lastResult?: V2ToolResult;
   failureEvidence?: FailureEvidence[];
   uncertaintySignals?: readonly string[];
+  /** Page-model 2b (H4): refs rendered in the previous episode (refId + the
+   *  targetId they had then). Still-alive matches join the selection
+   *  additively — nothing is ever displaced. */
+  previousRenderedRefs?: ReadonlyArray<{ refId: string; targetId?: string }>;
 }
 
 interface Candidate {
@@ -48,7 +68,7 @@ interface Candidate {
 }
 
 export class PlannerWorkingSetSelector {
-  private readonly options: Required<PlannerWorkingSetOptions>;
+  private readonly options: ResolvedPlannerWorkingSetOptions;
 
   constructor(options: PlannerWorkingSetOptions = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
@@ -56,18 +76,99 @@ export class PlannerWorkingSetSelector {
 
   select(input: PlannerWorkingSetSelectorInput): PlannerWorkingSetSelection {
     const evidence = buildEvidenceSets(input);
-    const candidates = input.projection.interactions.map(item => scoreCandidate(item, input.goal, evidence));
+    const readableRefs = new Set(input.projection.readables.map(item => item.refId));
+    const evidenceRefIds = new Set(input.evidenceRefIds ?? []);
+    const suggestionOptionRefs = visibleSuggestionOptionRefs(input.projection.interactions);
+    const prioritizeRecoveryControls = shouldPrioritizeRecoveryControls(input);
+    const horizonControlRefs = new Set(input.horizonControlRefs ?? []);
+    const targetValueRefs = new Set(input.targetValueRefs ?? []);
+    const submitControlRefs = new Set(input.submitControlRefs ?? []);
+    const rankingGoalActive = isComparativeRankingGoal(input.goal.toLowerCase());
+    const candidates = input.projection.interactions.map(item => {
+      const candidate = scoreCandidate(
+        item,
+        input.goal,
+        evidence,
+        { readablePhraseBonus: this.options.readablePhraseBonus },
+        readableRefs.has(item.refId),
+        this.options.readablePhraseBonus !== undefined,
+        evidenceRefIds.has(item.refId),
+      );
+      if (suggestionOptionRefs.has(item.refId)) {
+        // Visible options are the only actionable confirmation surface for an
+        // open ARIA suggestion control. Retain a bounded, high-priority set
+        // even when option labels do not contain goal words.
+        candidate.reasons.add('suggestion_option');
+        candidate.score += 80;
+        candidate.dropReason = undefined;
+      }
+      if (prioritizeRecoveryControls && isGenericRecoveryControl(item)) {
+        // A hard blocker needs a nearby way out to remain visible to the
+        // planner, but this is only a ranking prior, never an auto-action.
+        candidate.reasons.add('recovery_control');
+        candidate.score += 180;
+        candidate.dropReason = undefined;
+      }
+      if (horizonControlRefs.has(item.refId)) {
+        // A paginated widget's navigation controls must stay visible while a
+        // focused requirement's target lies outside the rendered window. This
+        // is a ranking prior, never an auto-action.
+        candidate.reasons.add('horizon_control');
+        candidate.score += 160;
+        candidate.dropReason = undefined;
+      }
+      if (targetValueRefs.has(item.refId)) {
+        // Elements that concretely match the focused requirement's target
+        // value must reach the planner even when sibling floods squeeze them
+        // out; the planner still decides whether and in what order to act.
+        candidate.reasons.add('target_value');
+        candidate.score += 160;
+        candidate.dropReason = undefined;
+      }
+      if (submitControlRefs.has(item.refId)) {
+        // The commit phase needs the form's submit control visible; render
+        // floods after the last selection must not hide it.
+        candidate.reasons.add('submit_control');
+        candidate.score += 160;
+        candidate.dropReason = undefined;
+      }
+      if (rankingGoalActive && hasRankingMetricSignal(item)) {
+        // Result rows carrying ranking metrics (stars, ratings, prices, review
+        // counts) are data, not chrome: a visible-only flood on result pages
+        // must not hide below-fold rows from a superlative/ranking goal. This
+        // is a ranking prior, never an auto-action.
+        candidate.reasons.add('result_row');
+        candidate.score += 140;
+        candidate.dropReason = undefined;
+      }
+      return candidate;
+    });
+    const scoreByRef = new Map(candidates.map(candidate => [candidate.item.refId, candidate.score]));
     const selected = candidates
       .filter(candidate => shouldKeepCandidate(candidate))
-      .sort(compareCandidates);
+      .sort(compareCandidatesWithEvidence);
     const dropped = candidates.filter(candidate => !shouldKeepCandidate(candidate));
-    const selectedRefIds = selected
-      .slice(0, this.options.maxPrimaryRefs + this.options.maxSecondaryRefs)
+    const maxSelected = this.options.maxPrimaryRefs + this.options.maxSecondaryRefs;
+    const requiredRefs = [...horizonControlRefs, ...targetValueRefs, ...submitControlRefs];
+    const selectedWithHorizon = forceIncludeRefs(
+      selected.slice(0, maxSelected),
+      selected,
+      new Set(requiredRefs),
+      maxSelected,
+    );
+    const selectedRefIds = selectedWithHorizon
       .map(candidate => candidate.item.refId);
     const selectedSet = new Set(selectedRefIds);
-    const primary = selected.slice(0, this.options.maxPrimaryRefs);
-    const secondary = selected.slice(this.options.maxPrimaryRefs, this.options.maxPrimaryRefs + this.options.maxSecondaryRefs);
-    const readableEvidence = buildReadableEvidence(input.projection, selectedSet, this.options);
+    // Page-model 2b (H4 additive carry): previously-rendered refs that are
+    // still alive join the selection additively. Nothing is ever displaced —
+    // displacement variants measured 52-82 acted refs starved; additive: 0.
+    const carried = carryPreviouslyRendered(input, candidates, selectedSet, MAX_CARRIED_REFS);
+    const raceLosers = selected
+      .filter(candidate => !selectedSet.has(candidate.item.refId)).length;
+    const primary = selectedWithHorizon.slice(0, this.options.maxPrimaryRefs);
+    const secondary = selectedWithHorizon.slice(this.options.maxPrimaryRefs, this.options.maxPrimaryRefs + this.options.maxSecondaryRefs);
+    secondary.push(...carried);
+    const readableEvidence = buildReadableEvidence(input.projection, selectedSet, this.options, scoreByRef);
     const quarantinedActions = buildQuarantinedActions(input);
     const actionSurface = buildActionSurface(input.projection, selectedSet, quarantinedActions);
     const navigationRefs = input.projection.navigation
@@ -78,22 +179,25 @@ export class PlannerWorkingSetSelector {
         selected.find(candidate => candidate.item.refId === item.refId)?.reasons ?? new Set(['navigation_candidate']),
       ));
     const regionSummaries = buildRegionSummaries(input.projection.regions, selectedSet, this.options.maxRegionSummaries);
-    const diagnostics = buildDiagnostics(input.projection, selectedRefIds, selected, dropped, this.options);
-    const current = serializeSelectedProjection(input.projection, selectedSet, this.options);
+    const diagnostics = buildDiagnostics(input.projection, selectedRefIds, selected, dropped, this.options, raceLosers);
+    const mode = inferMode(input);
+    const current = serializeSelectedProjection(input.projection, selectedSet, this.options, mode);
+    const changedSummary = buildChangedRefsSummary(selected, evidence, this.options.maxChangedRefs);
 
     return {
       current,
       selectedRefIds,
       diagnostics,
       workingSet: {
-        mode: inferMode(input),
+        deltaRefs: buildDeltaRefs(changedSummary),
+        mode,
         modeReason: inferModeReason(input),
         primaryRefs: primary.map(candidate => toWorkingSetRef(candidate.item, candidate.reasons, candidate.score)),
         secondaryRefs: secondary.map(candidate => toWorkingSetRef(candidate.item, candidate.reasons, candidate.score)),
         readableEvidence,
         navigationRefs,
         actionSurface,
-        changedRefs: buildChangedRefsSummary(selected, evidence, this.options.maxChangedRefs),
+        changedRefs: changedSummary,
         failedRefs: selected
           .filter(candidate => candidate.reasons.has('last_failure'))
           .map(candidate => toWorkingSetRef(candidate.item, candidate.reasons, candidate.score)),
@@ -161,16 +265,29 @@ function scoreCandidate(
   item: ProjectionItem,
   goal: string,
   evidence: { appearedRefs: Set<string>; changedRefs: Set<string>; failedRefs: Set<string> },
+  options: Pick<PlannerWorkingSetOptions, 'readablePhraseBonus'> = {},
+  isReadable: boolean,
+  allowSemanticOffscreen: boolean,
+  isEvidenceRef: boolean,
 ): Candidate {
   const reasons = new Set<WorkingSetIncludeReason>();
   let score = item.score;
+  if (isEvidenceRef) {
+    reasons.add('answer_candidate');
+    score += 120;
+  }
   if (item.visibility === 'visible' && item.actionability === 'ready') {
     reasons.add('visible_ready');
     score += 100;
   }
-  if (goalMatchesItem(goal, item)) {
+  const goalRelevance = scoreGoalRelevance(goal, item);
+  if (goalRelevance.tokenMatches > 0) {
     reasons.add('goal_keyword_match');
-    score += 60;
+    score += Math.min(goalRelevance.score * 10, 60);
+  }
+  if (goalRelevance.phraseMatches > 0) {
+    reasons.add('goal_phrase_match');
+    score += isReadable ? (options.readablePhraseBonus ?? 30) : 30;
   }
   if (isGoalRelevantRole(goal, item)) {
     reasons.add('role_relevant_to_goal');
@@ -189,10 +306,12 @@ function scoreCandidate(
   if (evidence.failedRefs.has(item.refId)) {
     reasons.add('last_failure');
   }
-  const lowValueReason = classifyLowValue(item);
-  const dropReason = evidence.failedRefs.has(item.refId) || evidence.changedRefs.has(item.refId)
-    ? undefined
-    : lowValueReason;
+  const lowValueReason = classifyLowValue(item, allowSemanticOffscreen);
+  const dropReason = isUnlabeledActionControl(item) && !isEvidenceRef && !evidence.failedRefs.has(item.refId)
+    ? 'unlabeled_action'
+    : isEvidenceRef || evidence.failedRefs.has(item.refId) || evidence.changedRefs.has(item.refId)
+      ? undefined
+      : lowValueReason;
   return { item, score, reasons, dropReason };
 }
 
@@ -200,17 +319,137 @@ function shouldKeepCandidate(candidate: Candidate): boolean {
   return candidate.dropReason === undefined && candidate.reasons.size > 0;
 }
 
+/**
+ * Ensures every required ref (horizon nav controls, target-value matches)
+ * ends up in the selected slice: planner refs are validated against the
+ * selected set, so an annotated-but-unselected control would be unactionable.
+ * Evicts from the sorted tail (lowest score) to make room.
+ */
+function forceIncludeRefs(
+  selectedSlice: Candidate[],
+  allCandidates: Candidate[],
+  requiredRefs: Set<string>,
+  maxSelected: number,
+): Candidate[] {
+  if (requiredRefs.size === 0) return selectedSlice;
+
+  const selectedRefIds = new Set(selectedSlice.map(candidate => candidate.item.refId));
+  const missing = allCandidates
+    .filter(candidate => requiredRefs.has(candidate.item.refId) && !selectedRefIds.has(candidate.item.refId))
+    .sort(compareCandidates);
+
+  if (missing.length === 0) return selectedSlice;
+
+  const merged = [...selectedSlice];
+  for (const candidate of missing) {
+    if (merged.length >= maxSelected) merged.pop();
+    merged.push(candidate);
+  }
+  return merged;
+}
+
 function compareCandidates(left: Candidate, right: Candidate): number {
   if (right.score !== left.score) return right.score - left.score;
   return left.item.refId.localeCompare(right.item.refId);
 }
 
-function classifyLowValue(item: ProjectionItem): WorkingSetDropReason | undefined {
+function shouldPrioritizeRecoveryControls(input: PlannerWorkingSetSelectorInput): boolean {
+  if (
+    input.lastResult?.success === false
+    && input.lastResult.error?.code === 'target_blocked'
+    && input.lastResult.error.retryable === false
+  ) {
+    return true;
+  }
+  // A blocker recorded at the current URL stays present until an action
+  // removes it: successful reads, navigations back to the same surface, and
+  // re-opened overlays all leave the latest failure unresolved. Once the
+  // blocker is actually dismissed, its dismiss control usually disappears
+  // from the page, so a stale promotion degrades to a no-op.
+  const failures = input.failureEvidence ?? [];
+  const latest = failures[failures.length - 1];
+  return Boolean(
+    latest
+    && latest.kind === 'target_blocked'
+    && latest.retryable === false
+    && input.projection.url
+    && latest.url === input.projection.url,
+  );
+}
+
+function isGenericRecoveryControl(item: ProjectionItem): boolean {
+  const role = item.role?.trim().toLowerCase();
+  if (item.visibility !== 'visible' || item.actionability !== 'ready') return false;
+  if (item.kind !== 'button' && role !== 'button') return false;
+
+  const label = `${item.name ?? ''} ${item.text ?? ''}`
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+  if (!label) return false;
+
+  // Keep this list language-agnostic at the call site: these are common
+  // accessible labels for dismiss/close actions, not website selectors.
+  return /\b(?:dismiss|close|got it|no thanks)\b/.test(label)
+    || label.includes('खारिज')
+    || label.includes('बंद करें')
+    || label.includes('बन्द करें');
+}
+
+function visibleSuggestionOptionRefs(items: ProjectionItem[]): Set<string> {
+  const hasSuggestionControl = items.some(item => {
+    const role = item.role?.trim().toLowerCase();
+    const autocomplete = item.ariaAutocomplete?.trim().toLowerCase();
+    const hasPopup = item.ariaHasPopup?.trim().toLowerCase();
+    return item.visibility === 'visible'
+      && item.actionability === 'ready'
+      && (role === 'combobox' || role === 'searchbox')
+      && (autocomplete === 'list' || autocomplete === 'both' || autocomplete === 'inline' || hasPopup === 'listbox');
+  });
+  if (!hasSuggestionControl) return new Set();
+
+  return new Set(items
+    .filter(item => item.role?.trim().toLowerCase() === 'option')
+    .filter(item => item.visibility === 'visible' && item.actionability === 'ready')
+    .filter(item => item.state !== 'stale' && item.state !== 'invalid')
+    .filter(item => Boolean(item.name?.trim() || item.text?.trim()))
+    .map(item => item.refId));
+}
+
+function compareCandidatesWithEvidence(left: Candidate, right: Candidate): number {
+  const leftIsEvidence = left.reasons.has('answer_candidate');
+  const rightIsEvidence = right.reasons.has('answer_candidate');
+  if (leftIsEvidence !== rightIsEvidence) return leftIsEvidence ? -1 : 1;
+  return compareCandidates(left, right);
+}
+
+function classifyLowValue(item: ProjectionItem, allowSemanticOffscreen = false): WorkingSetDropReason | undefined {
   const hasText = Boolean(item.name?.trim() || item.text?.trim());
+  const normalizedRole = item.role?.trim().toLowerCase();
+  const semanticRoleExempt = allowSemanticOffscreen
+    && ['radio', 'checkbox', 'option', 'gridcell'].includes(normalizedRole ?? '')
+    && hasText;
+  if (semanticRoleExempt) return undefined;
   if (item.visibility === 'hidden' && !hasText) return 'hidden_low_value';
-  if (item.visibility === 'offscreen' && item.kind === 'generic') return 'offscreen_low_value';
+  if (item.visibility === 'offscreen' && item.kind === 'generic') {
+    // Metric-bearing rows are result data, not page chrome; dropping them as
+    // low-value hides exactly the numbers ranking goals must compare.
+    return hasRankingMetricSignal(item) ? undefined : 'offscreen_low_value';
+  }
   if (item.kind === 'generic' && !hasText) return 'generic_low_value';
   return undefined;
+}
+
+const RANKING_METRIC_PATTERN = /\b\d[\d,.]*\s*[km]?\s+stars?\b|\b[1-5](?:\.\d)?\s*(?:[-\s]stars?|\/\s*5|out of 5)|[$€£¥₹]\s*\d|\b\d[\d,.]*\s*[km]?\s+reviews?\b/i;
+
+function hasRankingMetricSignal(item: ProjectionItem): boolean {
+  return RANKING_METRIC_PATTERN.test(`${item.name ?? ''} ${item.text ?? ''}`);
+}
+
+function isUnlabeledActionControl(item: ProjectionItem): boolean {
+  const role = item.role?.trim().toLowerCase();
+  const isButton = item.kind === 'button' || role === 'button';
+  return isButton && !item.name?.trim() && !item.text?.trim();
 }
 
 function goalTokens(goal: string): string[] {
@@ -245,11 +484,16 @@ function toWorkingSetRef(item: ProjectionItem, reasons: Set<WorkingSetIncludeRea
 function buildReadableEvidence(
   projection: OperationalProjection,
   selectedSet: Set<string>,
-  options: Required<PlannerWorkingSetOptions>,
+  options: ResolvedPlannerWorkingSetOptions,
+  scoreByRef: ReadonlyMap<string, number>,
 ): PlannerWorkingSetEvidence[] {
   return projection.readables
     .filter(item => selectedSet.has(item.refId))
     .filter(item => Boolean(item.name?.trim() || item.text?.trim()))
+    .sort((left, right) => {
+      const scoreDifference = (scoreByRef.get(right.refId) ?? 0) - (scoreByRef.get(left.refId) ?? 0);
+      return scoreDifference !== 0 ? scoreDifference : left.refId.localeCompare(right.refId);
+    })
     .slice(0, options.maxReadableEvidence)
     .map(item => ({
       refId: item.refId,
@@ -295,14 +539,43 @@ function buildQuarantinedActions(input: PlannerWorkingSetSelectorInput): Planner
     });
   }
 
-  actions.push(...quarantinedActionsFromUncertainty(input.uncertaintySignals));
+  actions.push(...quarantinedActionsFromUncertainty(
+    input.uncertaintySignals,
+    input.projection,
+  ));
 
   return uniqueQuarantinedActions(actions);
 }
 
-function quarantinedActionsFromUncertainty(signals: readonly string[] | undefined): PlannerQuarantinedAction[] {
+function quarantinedActionsFromUncertainty(
+  signals: readonly string[] | undefined,
+  projection: OperationalProjection,
+): PlannerQuarantinedAction[] {
   const actions: PlannerQuarantinedAction[] = [];
   for (const signal of signals ?? []) {
+    const persistentTargetMatch = signal.match(/^repeated_persistent_target:([^:]+):(\d+)$/);
+    if (persistentTargetMatch) {
+      const count = Number.parseInt(persistentTargetMatch[2], 10);
+      if (Number.isFinite(count) && count >= 2) {
+        const targetKey = persistentTargetMatch[1];
+        const currentTargetRefs = projection.interactions
+          .filter(item => item.targetId && normalizeTargetIdentity(item.targetId) === targetKey)
+          .map(item => item.refId);
+        for (const targetRef of currentTargetRefs) {
+          for (const tool of ['click', 'type', 'select']) {
+            actions.push({
+              refId: targetRef,
+              tool,
+              failureKind: 'persistent_target_failure',
+              retryable: false,
+              persistence: 'persistent',
+            });
+          }
+        }
+      }
+      continue;
+    }
+
     const noProgressMatch = signal.match(/^repeated_no_progress_transition:([^:]+):([^:]+):(\d+)$/);
     if (noProgressMatch) {
       const [, tool, refId, countText] = noProgressMatch;
@@ -460,7 +733,8 @@ function buildChangedRefsSummary(
 function serializeSelectedProjection(
   projection: OperationalProjection,
   selectedSet: Set<string>,
-  options: Required<PlannerWorkingSetOptions>,
+  options: ResolvedPlannerWorkingSetOptions,
+  mode?: WorkingSetMode,
 ): SerializedProjection {
   const selectedItems = projection.interactions.filter(item => selectedSet.has(item.refId));
   const selectedRefs: SerializedProjection['refs'] = {};
@@ -472,12 +746,17 @@ function serializeSelectedProjection(
       role: item.role,
       name: item.name,
       text: item.text && normalizeText(item.text) !== normalizeText(item.name) ? compactText(item.text, options.maxTextLengthPerRef) : undefined,
+      ariaAutocomplete: item.ariaAutocomplete,
+      ariaHasPopup: item.ariaHasPopup,
+      value: item.value,
+      placeholder: item.placeholder,
       visibility: item.visibility,
       actionability: item.actionability,
       state: item.state,
       confidence: item.continuityConfidence,
       score: item.score,
       regionId: item.regionId,
+      selectOptions: item.selectOptions,
     };
   }
 
@@ -502,6 +781,7 @@ function serializeSelectedProjection(
       .filter(region => region.refIds.length > 0)
       .slice(0, options.maxRegionSummaries),
     warnings: projection.warnings,
+    prose: gatedProse(projection, mode),
     stats: {
       interactionCount: selectedItems.length,
       readableCount: projection.readables.filter(item => selectedSet.has(item.refId)).length,
@@ -509,6 +789,55 @@ function serializeSelectedProjection(
       regionCount: projection.regions.filter(region => region.refIds.some(refId => selectedSet.has(refId))).length,
     },
   };
+}
+
+
+/**
+ * Diff-first marker source (BP3): derived from the priority-ranked
+ * changedRefs.topRefs, never from the raw appeared sets — targetId hashes the
+ * element index, so same-page re-renders "appear" hundreds of successors
+ * (median 654/episode in run 15) and raw-set markers would flood the surface.
+ * Cap 8 keeps the measured cost at ~9 B/call.
+ */
+const MAX_DELTA_MARKERS = 8;
+
+function buildDeltaRefs(summary: {
+  topRefs: Array<{ refId: string; reasons: WorkingSetIncludeReason[] }>;
+}): { appeared: string[]; changed: string[] } {
+  const appeared: string[] = [];
+  const changed: string[] = [];
+  for (const ref of summary.topRefs) {
+    if (appeared.length + changed.length >= MAX_DELTA_MARKERS) break;
+    if (ref.reasons.includes('recently_appeared')) {
+      if (!appeared.includes(ref.refId)) appeared.push(ref.refId);
+    } else if (!changed.includes(ref.refId)) {
+      changed.push(ref.refId);
+    }
+  }
+  return { appeared, changed };
+}
+
+/**
+ * D1 prose gate: bounded page text reaches the planner only for
+ * information-seeking modes (extract/verify) on prose-poor pages — measured
+ * gap sits below ~4,000 ref-text chars (Wolfram/Map class 2.1-3.6K vs content
+ * pages >=20K). Transactional pages therefore pay zero prose bytes.
+ */
+const PROSE_REFRICH_PAGE_CHARS = 4_000;
+
+function gatedProse(projection: OperationalProjection, mode: WorkingSetMode | undefined): SerializedProjection['prose'] {
+  if (!projection.prose?.length) return undefined;
+  if (mode !== 'extract' && mode !== 'verify') return undefined;
+  let refTextChars = 0;
+  for (const item of projection.interactions) {
+    refTextChars += (item.name?.length ?? 0) + (item.text?.length ?? 0);
+  }
+  if (refTextChars >= PROSE_REFRICH_PAGE_CHARS) return undefined;
+  return projection.prose.slice(0, 8).map(entry => ({
+    proseId: entry.proseId,
+    anchorRefIds: [...entry.anchorRefIds],
+    text: entry.text,
+  }));
 }
 
 function compareChangedRefPriority(
@@ -627,14 +956,19 @@ function buildDiagnostics(
   selectedRefIds: string[],
   selected: Candidate[],
   dropped: Candidate[],
-  options: Required<PlannerWorkingSetOptions>,
+  options: ResolvedPlannerWorkingSetOptions,
+  raceLosers = 0,
 ): PlannerWorkingSetDiagnostics {
+  const counts = countDropReasons(dropped);
+  // Candidates that passed every filter but lost the top-K score race carry no
+  // drop reason; without this bucket the diagnostics under-report drops.
+  if (raceLosers > 0) counts.rank_loss = (counts.rank_loss ?? 0) + raceLosers;
   return {
     observedRefCount: projection.stats.interactionCount,
     selectedRefCount: selectedRefIds.length,
     droppedRefCount: Math.max(0, projection.stats.interactionCount - selectedRefIds.length),
     selectedByReason: countIncludeReasons(selected),
-    droppedByReason: countDropReasons(dropped),
+    droppedByReason: counts,
     maxPrimaryRefs: options.maxPrimaryRefs,
     maxSecondaryRefs: options.maxSecondaryRefs,
     maxReadableEvidence: options.maxReadableEvidence,
@@ -684,4 +1018,35 @@ function compactText(value: string, maxLength: number): string {
 
 function normalizeText(value: string | undefined): string {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function normalizeTargetIdentity(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_.-]+/g, '_').slice(0, 80) || 'unknown';
+}
+
+/** Page-model 2b: H4 carried-ref pressure valve (binds on <1% of pairs per the round-2 replay). */
+const MAX_CARRIED_REFS = 32;
+
+function carryPreviouslyRendered(
+  input: PlannerWorkingSetSelectorInput,
+  candidates: Candidate[],
+  selectedSet: Set<string>,
+  maxCarried: number,
+): Candidate[] {
+  const carried: Candidate[] = [];
+  if (!input.previousRenderedRefs || input.previousRenderedRefs.length === 0) return carried;
+  const currentByTarget = new Map<string, Candidate>();
+  for (const candidate of candidates) {
+    if (candidate.item.targetId) currentByTarget.set(candidate.item.targetId, candidate);
+  }
+  for (const prev of input.previousRenderedRefs) {
+    if (carried.length >= maxCarried) break;
+    if (!prev.targetId) continue;
+    const current = currentByTarget.get(prev.targetId);
+    if (!current || selectedSet.has(current.item.refId)) continue;
+    selectedSet.add(current.item.refId);
+    current.reasons.add('carried');
+    carried.push(current);
+  }
+  return carried;
 }

@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { RecoveryStateBuilder } from '../../../src/v2/runtime/RecoveryState';
+import type { FailureEvidence } from '../../../src/v2/runtime/FailureClassifier';
+import type { OperationalProjection } from '../../../src/v2/brain1/projectionTypes';
 
 test('RecoveryStateBuilder detects wrong target type for non-editable type failures', () => {
   const recovery = new RecoveryStateBuilder().build({
@@ -42,6 +44,230 @@ test('RecoveryStateBuilder detects repeated no-progress mutations', () => {
   assert.ok(recovery?.nextMechanisms.includes('avoid_repeating_blocked_action'));
 });
 
+test('RecoveryStateBuilder preserves a non-applied input as a type-target recovery signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_search',
+      error: {
+        code: 'input_not_applied',
+        message: 'The target did not retain the requested input.',
+        retryable: false,
+      },
+      traceStepId: 'step_input_not_applied',
+    },
+    failures: [],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery?.state, 'wrong_target_type');
+  assert.equal(recovery?.blockedAction?.tool, 'type');
+  assert.equal(recovery?.blockedAction?.ref, 'ref_search');
+  assert.ok(recovery?.nextMechanisms.includes('choose_typeable_ref'));
+});
+
+test('RecoveryStateBuilder exposes blocker recovery for a hard target block', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_search',
+      error: {
+        code: 'target_blocked',
+        message: 'The target is covered by another element.',
+        retryable: false,
+        diagnostics: {
+          blockerTagName: 'div',
+          hitTestOutcome: 'hard_blocker',
+        },
+      },
+      traceStepId: 'step_target_blocked',
+    },
+    failures: [],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery?.state, 'wrong_target_type');
+  assert.ok(recovery?.nextMechanisms.includes('find_dismiss_or_close_control'));
+  assert.ok(recovery?.nextMechanisms.includes('reobserve_current_surface'));
+});
+
+test('RecoveryStateBuilder treats repeated no-progress tool use as a strategy pivot', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    failures: [],
+    uncertaintySignals: ['repeated_no_progress_kind:press:3'],
+  });
+
+  assert.equal(recovery?.state, 'same_action_loop');
+  assert.equal(recovery?.blockedAction?.tool, 'press');
+  assert.equal(recovery?.blockedAction?.ref, undefined);
+  assert.ok(recovery?.nextMechanisms.includes('choose_alternative_ref'));
+});
+
+test('RecoveryStateBuilder aggregates the same blocker across distinct refs within one page epoch', () => {
+  const blocker = {
+    blockerDescription: 'div#consent-overlay',
+    blockerTagName: 'div',
+    hitTestOutcome: 'hard_blocker',
+    blockerIsFixedOrSticky: true,
+  };
+  const failures: FailureEvidence[] = [
+    {
+      failureId: 'failure_target_blocked_ref_a',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'blocked',
+      source: 'test',
+      observationId: 'obs_1_2',
+      targetRef: 'ref_a',
+      signals: ['error:target_blocked'],
+      diagnostics: blocker,
+      generationId: 1,
+      url: 'https://example.test/form',
+    },
+    {
+      failureId: 'failure_target_blocked_ref_b',
+      kind: 'target_blocked',
+      category: 'target',
+      severity: 'warning',
+      persistence: 'persistent',
+      retryable: false,
+      message: 'blocked',
+      source: 'test',
+      observationId: 'obs_1_4',
+      targetRef: 'ref_b',
+      signals: ['error:target_blocked'],
+      diagnostics: blocker,
+      generationId: 1,
+      url: 'https://example.test/form',
+    },
+  ];
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_b',
+      error: { code: 'target_blocked', message: 'blocked', retryable: false, diagnostics: blocker },
+      traceStepId: 'step_b',
+    },
+    failures,
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery?.state, 'persistent_target_blocker');
+  assert.equal(recovery?.blockedAction?.ref, 'ref_b');
+  assert.ok(recovery?.nextMechanisms.includes('find_dismiss_or_close_control'));
+});
+
+test('RecoveryStateBuilder does not aggregate blockers across page epochs', () => {
+  const blocker = {
+    blockerDescription: 'div#consent-overlay',
+    blockerTagName: 'div',
+    hitTestOutcome: 'hard_blocker',
+    blockerIsFixedOrSticky: true,
+  };
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_b',
+      error: { code: 'target_blocked', message: 'blocked', retryable: false, diagnostics: blocker },
+      traceStepId: 'step_b',
+    },
+    failures: [
+      {
+        failureId: 'failure_target_blocked_ref_a',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'blocked',
+        source: 'test',
+        targetRef: 'ref_a',
+        signals: ['error:target_blocked'],
+        diagnostics: blocker,
+        generationId: 1,
+        url: 'https://example.test/old-page',
+      },
+      {
+        failureId: 'failure_target_blocked_ref_b',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'blocked',
+        source: 'test',
+        targetRef: 'ref_b',
+        signals: ['error:target_blocked'],
+        diagnostics: blocker,
+        generationId: 2,
+        url: 'https://example.test/new-page',
+      },
+    ],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery?.state, 'wrong_target_type');
+});
+
+test('RecoveryStateBuilder does not aggregate different blockers in one page epoch', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_b',
+      error: {
+        code: 'target_blocked',
+        message: 'blocked',
+        retryable: false,
+        diagnostics: { blockerDescription: 'div#other-overlay', blockerTagName: 'div', hitTestOutcome: 'hard_blocker' },
+      },
+      traceStepId: 'step_b',
+    },
+    failures: [
+      {
+        failureId: 'failure_target_blocked_ref_a',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'blocked',
+        source: 'test',
+        targetRef: 'ref_a',
+        signals: ['error:target_blocked'],
+        diagnostics: { blockerDescription: 'div#consent-overlay', blockerTagName: 'div', hitTestOutcome: 'hard_blocker' },
+        generationId: 1,
+        url: 'https://example.test/form',
+      },
+      {
+        failureId: 'failure_target_blocked_ref_b',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'blocked',
+        source: 'test',
+        targetRef: 'ref_b',
+        signals: ['error:target_blocked'],
+        diagnostics: { blockerDescription: 'div#other-overlay', blockerTagName: 'div', hitTestOutcome: 'hard_blocker' },
+        generationId: 1,
+        url: 'https://example.test/form',
+      },
+    ],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery?.state, 'wrong_target_type');
+});
+
 test('RecoveryStateBuilder returns undefined when no recovery signal is present', () => {
   const recovery = new RecoveryStateBuilder().build({
     failures: [],
@@ -49,6 +275,34 @@ test('RecoveryStateBuilder returns undefined when no recovery signal is present'
   });
 
   assert.equal(recovery, undefined);
+});
+
+test('RecoveryStateBuilder identifies a successful navigation to an empty operational surface', () => {
+  const projection = {
+    stats: {
+      interactionCount: 0,
+      readableCount: 0,
+      navigationCount: 0,
+      regionCount: 0,
+    },
+  } as OperationalProjection;
+  const recovery = new RecoveryStateBuilder().build({
+    projection,
+    lastResult: {
+      success: true,
+      kind: 'navigate',
+      traceStepId: 'step_navigation',
+      value: { url: 'https://example.test/results' },
+    },
+    failures: [],
+    uncertaintySignals: ['empty_interactions'],
+  });
+
+  assert.equal(recovery?.state, 'empty_navigation_surface');
+  assert.equal(recovery?.severity, 'warning');
+  assert.ok(recovery?.nextMechanisms.includes('wait_for_hydration'));
+  assert.ok(recovery?.nextMechanisms.includes('reobserve_current_surface'));
+  assert.ok(recovery?.nextMechanisms.includes('avoid_navigation_churn'));
 });
 
 test('RecoveryStateBuilder blocks persistent target failure as same action pair', () => {
@@ -117,4 +371,296 @@ test('RecoveryStateBuilder returns zero_result_read_loop for search_page repeats
   assert.ok(result);
   assert.equal(result.state, 'zero_result_read_loop');
   assert.ok(result.nextMechanisms.includes('try_different_evidence_action'));
+});
+
+test('same_url_navigation refusals steer the planner to on-page controls', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'navigate',
+      error: { code: 'same_url_navigation', message: 'Refused.', retryable: false },
+      traceStepId: 'step_nav',
+    },
+  });
+
+  assert.equal(recovery?.state, 'wrong_target_type');
+  assert.ok(recovery?.nextMechanisms.includes('avoid_navigation_churn'));
+  assert.ok(recovery?.nextMechanisms.includes('act_on_visible_controls'));
+});
+
+function blockedFailure(id: string, ref: string, generationId = 1): FailureEvidence {
+  return {
+    failureId: `failure_target_blocked_${id}`,
+    kind: 'target_blocked',
+    category: 'target',
+    severity: 'warning',
+    persistence: 'persistent',
+    retryable: false,
+    message: 'blocked',
+    source: 'test',
+    observationId: 'obs_1_2',
+    targetRef: ref,
+    signals: ['error:target_blocked'],
+    diagnostics: {
+      blockerDescription: 'div#consent-overlay',
+      blockerTagName: 'div',
+      hitTestOutcome: 'hard_blocker',
+      blockerIsFixedOrSticky: true,
+    },
+    generationId,
+    url: 'https://example.test/form',
+  };
+}
+
+test('RecoveryStateBuilder escalates to surface_wide_blocker when one blocker covers 3+ refs', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_c',
+      error: { code: 'target_blocked', message: 'blocked', retryable: false, diagnostics: { blockerDescription: 'div#consent-overlay' } },
+      traceStepId: 'step_c',
+    },
+    failures: [blockedFailure('a', 'ref_a'), blockedFailure('b', 'ref_b'), blockedFailure('c', 'ref_c')],
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'surface_wide_blocker');
+  assert.equal(recovery.severity, 'critical');
+  assert.ok(recovery.nextMechanisms.includes('find_dismiss_or_close_control'));
+  assert.ok(recovery.nextMechanisms.includes('act_on_overlay_controls'));
+  assert.ok(recovery.signals.some(signal => signal.startsWith('surface_wide_blocker:')));
+});
+
+test('RecoveryStateBuilder fires persistent_target_blocker for same-ref retries (single-ref blindspot)', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_a',
+      error: { code: 'target_blocked', message: 'blocked', retryable: false, diagnostics: { blockerDescription: 'div#onetrust-banner' } },
+      traceStepId: 'step_a',
+    },
+    failures: [blockedFailure('a1', 'ref_a'), blockedFailure('a2', 'ref_a')],
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'persistent_target_blocker');
+  assert.ok(recovery.signals.some(signal => signal.startsWith('persistent_blocker:same_ref:')));
+});
+
+test('RecoveryStateBuilder reports unresponsive_surface after consecutive timeouts', () => {
+  const timeoutFailure = (id: string, ref: string): FailureEvidence => ({
+    failureId: `failure_timeout_${id}`,
+    kind: 'timeout',
+    category: 'timing',
+    severity: 'warning',
+    persistence: 'transient',
+    retryable: true,
+    message: 'timed out',
+    source: 'test',
+    targetRef: ref,
+    signals: ['error:timeout'],
+    generationId: 1,
+    url: 'https://example.test/page',
+  });
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_x',
+      error: { code: 'timeout', message: 'timeout', retryable: true },
+      traceStepId: 'step_x',
+    },
+    failures: [timeoutFailure('1', 'ref_x'), timeoutFailure('2', 'ref_y'), timeoutFailure('3', 'ref_z')],
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'unresponsive_surface');
+  assert.ok(recovery.nextMechanisms.includes('report_unresponsive_honestly'));
+});
+
+test('RecoveryStateBuilder quarantines a ref that repeatedly times out', () => {
+  const timeoutFailure = (id: string): FailureEvidence => ({
+    failureId: `failure_timeout_${id}`,
+    kind: 'timeout',
+    category: 'timing',
+    severity: 'warning',
+    persistence: 'transient',
+    retryable: true,
+    message: 'timed out',
+    source: 'test',
+    targetRef: 'ref_stuck',
+    signals: ['error:timeout'],
+    generationId: 1,
+    url: 'https://example.test/page',
+  });
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_stuck',
+      error: { code: 'timeout', message: 'timeout', retryable: true },
+      traceStepId: 'step_stuck',
+    },
+    failures: [
+      timeoutFailure('1'),
+      {
+        failureId: 'failure_target_blocked_other',
+        kind: 'target_blocked',
+        category: 'target',
+        severity: 'warning',
+        persistence: 'persistent',
+        retryable: false,
+        message: 'blocked',
+        source: 'test',
+        targetRef: 'ref_other',
+        signals: ['error:target_blocked'],
+        generationId: 1,
+        url: 'https://example.test/page',
+      },
+      timeoutFailure('3'),
+    ],
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'repeated_timeout_target');
+  assert.equal(recovery.blockedAction?.ref, 'ref_stuck');
+  assert.ok(recovery.nextMechanisms.includes('choose_alternative_ref'));
+});
+
+test('RecoveryStateBuilder steers repeated identical typing toward committing the selection', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    uncertaintySignals: ['repeated_value_preview:type:v2ref_216:3'],
+    lastResult: {
+      success: true,
+      kind: 'type',
+      targetRef: 'v2ref_216',
+      traceStepId: 'step_t',
+    },
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'repeated_type_same_value');
+  assert.equal(recovery.blockedAction?.tool, 'type');
+  assert.equal(recovery.blockedAction?.ref, 'v2ref_216');
+  assert.ok(recovery.nextMechanisms.includes('click_matching_suggestion_option'));
+});
+
+test('RecoveryStateBuilder stops navigation churn on the oscillation signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    uncertaintySignals: ['navigation_oscillation'],
+    lastResult: {
+      success: true,
+      kind: 'navigate',
+      traceStepId: 'step_nav',
+    },
+  });
+
+  assert.ok(recovery);
+  assert.equal(recovery.state, 'navigation_oscillation');
+  assert.ok(recovery.nextMechanisms.includes('commit_to_current_surface_until_progress'));
+});
+
+test('RecoveryStateBuilder detects click-no-navigation from the runtime signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: {
+      success: true,
+      kind: 'click',
+      targetRef: 'ref_card_link',
+      traceStepId: 'step_5',
+    },
+    failures: [],
+    uncertaintySignals: ['click_no_navigation'],
+  });
+
+  assert.equal(recovery?.state, 'click_no_navigation');
+  assert.equal(recovery?.severity, 'warning');
+  assert.equal(recovery?.blockedAction?.tool, 'click');
+  assert.equal(recovery?.blockedAction?.ref, 'ref_card_link');
+  assert.ok(recovery?.nextMechanisms.includes('read_link_target_before_clicking_again'));
+});
+
+test('RecoveryStateBuilder does not emit click-no-navigation without the signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: { success: true, kind: 'click', targetRef: 'ref_card_link', traceStepId: 'step_5' },
+    failures: [],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery, undefined);
+});
+
+test('RecoveryStateBuilder detects navigate_loop from the runtime signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: { success: false, kind: 'navigate', traceStepId: 'step_3' },
+    failures: [],
+    uncertaintySignals: ['navigate_loop'],
+  });
+
+  assert.equal(recovery?.state, 'navigate_loop');
+  assert.equal(recovery?.blockedAction?.tool, 'navigate');
+  assert.ok(recovery?.nextMechanisms.includes('press_enter_on_last_typed_field'));
+  assert.ok(recovery?.nextMechanisms.includes('click_visible_submit_control'));
+});
+
+test('RecoveryStateBuilder emits max_step_risk only under budget pressure with unfinished coverage and a rejected episode', () => {
+  const base = { failures: [] as never[], uncertaintySignals: ['budget_low:2'] };
+  const fires = new RecoveryStateBuilder().build({
+    ...base,
+    lastResult: { success: false, kind: 'click', targetRef: 'ref_x', traceStepId: 's' },
+    evidenceCoverageStatus: 'incomplete',
+  });
+  assert.equal(fires?.state, 'max_step_risk');
+  assert.ok(fires?.nextMechanisms.includes('finalize_with_collected_evidence'));
+
+  // Clean-progress run: last action succeeded — no risk state.
+  const cleanProgress = new RecoveryStateBuilder().build({
+    ...base,
+    lastResult: { success: true, kind: 'click', targetRef: 'ref_x', traceStepId: 's' },
+    evidenceCoverageStatus: 'incomplete',
+  });
+  assert.notEqual(cleanProgress?.state, 'max_step_risk');
+
+  // Coverage ready — no risk state.
+  const coverageReady = new RecoveryStateBuilder().build({
+    ...base,
+    lastResult: { success: false, kind: 'click', targetRef: 'ref_x', traceStepId: 's' },
+    evidenceCoverageStatus: 'ready',
+  });
+  assert.notEqual(coverageReady?.state, 'max_step_risk');
+
+  // No budget signal — no risk state.
+  const noBudget = new RecoveryStateBuilder().build({
+    failures: [],
+    uncertaintySignals: [],
+    lastResult: { success: false, kind: 'click', targetRef: 'ref_x', traceStepId: 's' },
+    evidenceCoverageStatus: 'incomplete',
+  });
+  assert.notEqual(noBudget?.state, 'max_step_risk');
+});
+
+test('RecoveryStateBuilder detects calendar click stalls from the runtime signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: { success: true, kind: 'click', targetRef: 'ref_day_cell', traceStepId: 'step_9' },
+    failures: [],
+    uncertaintySignals: ['calendar_click_stalled'],
+  });
+
+  assert.equal(recovery?.state, 'calendar_click_stalled');
+  assert.equal(recovery?.blockedAction?.tool, 'click');
+  assert.equal(recovery?.blockedAction?.ref, 'ref_day_cell');
+  assert.ok(recovery?.nextMechanisms.includes('verify_picker_state_with_get'));
+  assert.ok(recovery?.nextMechanisms.includes('use_keyboard_navigation'));
+  assert.ok(recovery?.nextMechanisms.includes('avoid_reclicking_sibling_cells'));
+});
+
+test('RecoveryStateBuilder does not emit calendar_click_stalled without the signal', () => {
+  const recovery = new RecoveryStateBuilder().build({
+    lastResult: { success: true, kind: 'click', targetRef: 'ref_day_cell', traceStepId: 'step_9' },
+    failures: [],
+    uncertaintySignals: [],
+  });
+
+  assert.equal(recovery, undefined);
 });

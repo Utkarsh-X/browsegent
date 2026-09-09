@@ -2,7 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { ProjectionService } from '../../../src/v2/brain1/ProjectionService';
-import { serializeProjection } from '../../../src/v2/brain1/serializeProjection';
+import { PlannerWorkingSetSelector } from '../../../src/v2/planner/PlannerWorkingSetSelector';
+
+function selectCurrent(refs: V2Ref[], graphSnapshot?: ContinuityGraphSnapshot) {
+  const projection = new ProjectionService().project(makeObservation(refs), graphSnapshot);
+  return new PlannerWorkingSetSelector().select({ goal: 'fixture goal', projection }).current;
+}
 import { buildBrowserObservation } from '../../../src/v2/substrate/ObservationService';
 import type { BrowserObservation, V2Ref } from '../../../src/v2';
 import type { ContinuityGraphSnapshot } from '../../../src/v2/graph/types';
@@ -82,78 +87,19 @@ test('ProjectionService exposes route-changing controls in navigation view witho
   assert.equal(projection.navigation[0].role, 'link');
 });
 
-test('serializeProjection excludes backend node ids and selector candidates', () => {
-  const projection = new ProjectionService().project(makeObservation([
-    makeRef({
-      refId: 'ref_secret',
-      backendNodeId: 123,
-      selectorCandidates: ['#secret', 'button:nth-of-type(1)'],
-      name: 'Secret button',
-    }),
-  ]));
+test('working-set serialization stores full ref facts once and emits lightweight ranked views', () => {
+  const current = selectCurrent([
+    makeRef({ refId: 'ref_shared', role: 'link', name: 'Docs', text: 'Docs' }),
+    makeRef({ refId: 'ref_button', role: 'button', name: 'Submit', text: 'Submit form' }),
+  ]);
 
-  const serialized = serializeProjection(projection);
-  const json = JSON.stringify(serialized);
-
-  assert.match(json, /Secret button/);
-  assert.doesNotMatch(json, /backendNodeId/);
-  assert.doesNotMatch(json, /selectorCandidates/);
-  assert.doesNotMatch(json, /#secret/);
-});
-
-test('serializeProjection removes duplicate item text without losing the accessible name', () => {
-  const projection = new ProjectionService().project(makeObservation([
-    makeRef({
-      refId: 'ref_duplicate',
-      name: 'Open account settings',
-      text: 'Open   account\nsettings',
-    }),
-    makeRef({
-      refId: 'ref_distinct',
-      name: 'Plan',
-      text: 'Plan Pro includes advanced usage details',
-    }),
-  ]));
-
-  const serialized = serializeProjection(projection);
-  const duplicate = serialized.refs.ref_duplicate;
-  const distinct = serialized.refs.ref_distinct;
-
-  assert.equal(duplicate?.name, 'Open account settings');
-  assert.equal(duplicate?.text, undefined);
-  assert.equal(distinct?.name, 'Plan');
-  assert.equal(distinct?.text, 'Plan Pro includes advanced usage details');
-});
-
-test('serializeProjection stores full ref facts once and emits lightweight ranked views', () => {
-  const projection = new ProjectionService().project(makeObservation([
-    makeRef({
-      refId: 'ref_shared',
-      role: 'link',
-      name: 'Docs',
-      text: 'Docs',
-    }),
-    makeRef({
-      refId: 'ref_button',
-      role: 'button',
-      name: 'Submit',
-      text: 'Submit form',
-    }),
-  ]));
-
-  const serialized = serializeProjection(projection);
-
-  assert.deepEqual(Object.keys(serialized.refs).sort(), ['ref_button', 'ref_shared']);
-  assert.equal(serialized.refs.ref_shared.name, 'Docs');
-  assert.equal(serialized.refs.ref_shared.text, undefined);
-  assert.equal(serialized.refs.ref_button.name, 'Submit');
-  assert.equal(serialized.refs.ref_button.text, 'Submit form');
-  assert.deepEqual(serialized.interactions.find(item => item.refId === 'ref_shared'), { refId: 'ref_shared', rank: 2 });
-  assert.deepEqual(serialized.readables.find(item => item.refId === 'ref_shared'), { refId: 'ref_shared', rank: 2 });
-  assert.deepEqual(serialized.navigation.find(item => item.refId === 'ref_shared'), { refId: 'ref_shared', rank: 1 });
-  assert.equal('name' in serialized.interactions[0], false);
-  assert.equal('text' in serialized.readables[0], false);
-  assert.equal('role' in serialized.navigation[0], false);
+  assert.deepEqual(Object.keys(current.refs).sort(), ['ref_button', 'ref_shared']);
+  assert.equal(current.refs.ref_shared.name, 'Docs');
+  assert.equal(current.refs.ref_shared.text, undefined);
+  assert.equal(current.refs.ref_button.name, 'Submit');
+  assert.equal(current.refs.ref_button.text, 'Submit form');
+  assert.deepEqual(current.interactions.find(item => item.refId === 'ref_shared'), { refId: 'ref_shared', rank: 2 });
+  assert.equal('name' in current.interactions[0], false);
 });
 
 test('ProjectionService accepts graph context without interpreting transition history', () => {
@@ -191,24 +137,22 @@ test('ProjectionService accepts graph context without interpreting transition hi
     },
   };
 
-  const projection = new ProjectionService().project(makeObservation([
+  const current = selectCurrent([
     makeRef({ refId: 'ref_ready', name: 'Ready button' }),
-  ]), graphSnapshot);
-  const serialized = JSON.stringify(serializeProjection(projection));
+  ], graphSnapshot);
 
-  assert.equal(projection.focus?.refId, 'ref_ready');
-  assert.doesNotMatch(serialized, /transition_before_after/);
+  assert.equal(current.focus?.refId, 'ref_ready');
+  assert.doesNotMatch(JSON.stringify(current), /transition_before_after/);
 });
 
-test('serializeProjection includes bounded native select option labels for selected refs', () => {
-  const observation = makeObservation([
+test('working-set serialization includes native select option labels for selected refs', () => {
+  const current = selectCurrent([
     makeRef({
       refId: 'ref_sort',
       role: 'combobox',
       tagName: 'select',
       name: 'Sort order',
       selectorCandidates: ['#sort-select'],
-      capabilities: { clickable: true, typeable: false, selectable: true, readable: true },
       selectOptions: [
         'Choose sort',
         'Announcement date (newest first)',
@@ -217,13 +161,32 @@ test('serializeProjection includes bounded native select option labels for selec
       ],
     }),
   ]);
-  const projection = new ProjectionService().project(observation);
-  const serialized = serializeProjection(projection);
 
-  assert.deepEqual(serialized.refs.ref_sort.selectOptions, [
+  assert.deepEqual(current.refs.ref_sort.selectOptions, [
     'Choose sort',
     'Announcement date (newest first)',
     'Announcement date (oldest first)',
     'Relevance',
   ]);
+});
+
+test('working-set serialization preserves generic combobox protocol metadata and current value', () => {
+  const current = selectCurrent([
+    makeRef({
+      refId: 'ref_destination',
+      role: 'combobox',
+      tagName: 'input',
+      inputType: 'text',
+      name: 'Destination',
+      ariaAutocomplete: 'list',
+      ariaHasPopup: 'listbox',
+      value: 'Par',
+      placeholder: 'Where are you going?',
+    }),
+  ]);
+
+  assert.equal(current.refs.ref_destination.ariaAutocomplete, 'list');
+  assert.equal(current.refs.ref_destination.ariaHasPopup, 'listbox');
+  assert.equal(current.refs.ref_destination.value, 'Par');
+  assert.equal(current.refs.ref_destination.placeholder, 'Where are you going?');
 });

@@ -1,6 +1,6 @@
 import type { BrowserObservation, V2Ref } from '../runtime/types';
 import type { ContinuityGraphSnapshot } from '../graph/types';
-import type { OperationalProjection, ProjectionItem, ProjectionRegion } from './projectionTypes';
+import type { OperationalProjection, ProjectionItem, ProjectionProse, ProjectionRegion } from './projectionTypes';
 import { sortProjectionItems, toProjectionItem } from './rankOperationalItems';
 
 export class ProjectionService {
@@ -21,6 +21,11 @@ export class ProjectionService {
     const interactions = sortProjectionItems(regionedItems);
     const readables = sortProjectionItems(regionedItems.filter(hasReadableText));
     const navigation = sortProjectionItems(regionedItems.filter(item => item.kind === 'link'));
+    const prose: ProjectionProse[] = (observation.prose ?? []).map(entry => ({
+      proseId: entry.proseId,
+      anchorRefIds: [...entry.anchorRefIds],
+      text: entry.text,
+    }));
     const focus = interactions[0]
       ? { refId: interactions[0].refId, reason: 'highest_operational_score' as const }
       : undefined;
@@ -31,10 +36,12 @@ export class ProjectionService {
       generationId: observation.generationId,
       url: observation.url,
       title: observation.title,
+      lang: observation.lang,
       interactions,
       readables,
       navigation,
       regions,
+      prose,
       focus,
       warnings: observation.warnings,
       stats: {

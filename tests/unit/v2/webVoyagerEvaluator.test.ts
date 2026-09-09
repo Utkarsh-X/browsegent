@@ -210,6 +210,47 @@ test('isWebVoyagerJudgeResult validates optional judge schema', () => {
   }), false);
 });
 
+test('evaluateWebVoyagerResult matches on ref-stripped text and flags internal ref leaks', () => {
+  const verdict = evaluateWebVoyagerResult(task('GitHub--0', '42 stars'), result({
+    passed: true,
+    value: "The repository has 42 stars (v2ref_1216).",
+  }));
+
+  assert.equal(verdict.internalPassed, true);
+  assert.equal(verdict.strictScore, 1);
+  assert.ok(verdict.reasons.includes('internal_ref_leak'));
+  assert.equal(verdict.needsManualReview, true);
+});
+
+test('evaluateWebVoyagerResult grants leaked refs no matching credit beyond cleaned text', () => {
+  const reference = task('Amazon--0', { type: 'string', answer: 'green controller 4 stars and up' });
+  const leaky = evaluateWebVoyagerResult(reference, result({
+    passed: true,
+    value: 'listed as (v2ref_1) green 4 stars (v2ref_2) and up',
+  }));
+  const clean = evaluateWebVoyagerResult(reference, result({
+    passed: true,
+    value: 'listed as green 4 stars and up',
+  }));
+
+  assert.equal(leaky.referenceMatchType, clean.referenceMatchType);
+  assert.equal(leaky.strictScore, clean.strictScore);
+  assert.ok(leaky.reasons.includes('internal_ref_leak'));
+  assert.equal(leaky.needsManualReview, true);
+  assert.equal(clean.reasons.includes('internal_ref_leak'), false);
+});
+
+test('evaluateWebVoyagerResult leaves leak-free values byte-identical in matching', () => {
+  const verdict = evaluateWebVoyagerResult(task('GitHub--0', '42 stars'), result({
+    passed: true,
+    value: 'The repository has 42 stars.',
+  }));
+
+  assert.equal(verdict.strictScore, 1);
+  assert.equal(verdict.referenceMatchType, 'exact');
+  assert.deepEqual(verdict.reasons, []);
+});
+
 function task(
   id: string,
   answer: string | { type?: string; answer: unknown } | undefined,

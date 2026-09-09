@@ -78,15 +78,23 @@ function inferFailureType(
   validation: BenchmarkValidationResult,
   trace: BenchmarkTraceScore,
 ): ScoredBenchmarkResult['failureType'] {
+
   if (result.failureReason?.match(/API_BUDGET_EXCEEDED|budget_exceeded|input budget/i)) return 'budget_exceeded';
+
   if (result.failureReason?.match(/API_QUOTA_EXCEEDED|rate limit|rate_limited|429|RESOURCE_EXHAUSTED/i)) return 'rate_limited';
-  if (result.failureReason?.match(/planner_escalated:captcha|captcha|verification required/i)) return 'environment_block';
+  // Bot-verification walls are observable page content, not infrastructure
+  // failures: they stay in the scored denominator (official WebVoyager
+  // methodology) under a precise failure type instead of excluding the task.
+  if (result.failureReason?.match(/planner_escalated:captcha|captcha|verification required|cloudflare|turnstile|security verification/i)) return 'captcha_wall';
+
   if (result.failureReason?.match(/planner_client_error|Planner output invalid|planner/i)) return 'planning_error';
   if (result.failureReason?.match(/page\.goto.*[Tt]imeout/i) && result.metrics.toolExecutions === 0) return 'runtime_startup_failure';
   if (!trace.ok) return 'trace_error';
   if (!validation.passed) return 'validation_error';
+  if (result.failureReason?.match(/max_steps_exhausted|step_budget_exhausted|v2_max_steps_exhausted/i)) return 'budget_exceeded';
   if (result.failureReason?.match(/blocked|hidden|disabled|stale|target/i)) return 'action_error';
-  if (result.failureReason?.match(/captcha|access denied/i)) return 'environment_block';
+
+  if (result.failureReason?.match(/captcha|access denied/i)) return 'captcha_wall';
   if (!result.success) return 'unknown';
   return undefined;
 }

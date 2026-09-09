@@ -1,0 +1,2913 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "latestTransition": {
+      "strength": "moderate",
+      "transitionClass": "structural_local",
+      "transitionId": "transition_obs_1_6_obs_1_7"
+    },
+    "observationId": "obs_1_8",
+    "presentRefCount": 218,
+    "refCount": 1260,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_8_6",
+    "transitionCount": 6,
+    "url": "https://www.google.com/maps/search/beauty+salons+in+Seattle,+WA/@47.6120211,-122.4170668,12z?entry=ttu&g_ep=EgoyMDI2MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_1130"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1130"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1133"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_1137"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_1141"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_1174"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_1131"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_1142"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_1144"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_1175"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_1176"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_1126"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_1238"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_1239"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_1178"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_1187"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_1196"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_1205"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_1214"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_1223"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_1177"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_1186"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_1195"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_1204"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_1213"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_1222"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_1236"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_1237"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_1179"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_1188"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_1197"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_1206"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_1215"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_1224"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_104"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_1180"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_1181"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_1182"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_1183"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_1184"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_1185"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_1189"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_1190"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_1191"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_1192"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_1193"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_1194"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_1198"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_1199"
+      },
+      {
+        "rank": 49,
+        "refId": "v2ref_1200"
+      },
+      {
+        "rank": 50,
+        "refId": "v2ref_1201"
+      },
+      {
+        "rank": 51,
+        "refId": "v2ref_1202"
+      },
+      {
+        "rank": 52,
+        "refId": "v2ref_1203"
+      },
+      {
+        "rank": 53,
+        "refId": "v2ref_1207"
+      },
+      {
+        "rank": 54,
+        "refId": "v2ref_1208"
+      },
+      {
+        "rank": 55,
+        "refId": "v2ref_1209"
+      },
+      {
+        "rank": 56,
+        "refId": "v2ref_1210"
+      },
+      {
+        "rank": 57,
+        "refId": "v2ref_1211"
+      },
+      {
+        "rank": 58,
+        "refId": "v2ref_1212"
+      },
+      {
+        "rank": 59,
+        "refId": "v2ref_1216"
+      },
+      {
+        "rank": 60,
+        "refId": "v2ref_1217"
+      },
+      {
+        "rank": 61,
+        "refId": "v2ref_1218"
+      },
+      {
+        "rank": 62,
+        "refId": "v2ref_1219"
+      },
+      {
+        "rank": 63,
+        "refId": "v2ref_1220"
+      },
+      {
+        "rank": 64,
+        "refId": "v2ref_1221"
+      },
+      {
+        "rank": 65,
+        "refId": "v2ref_1225"
+      },
+      {
+        "rank": 66,
+        "refId": "v2ref_1226"
+      },
+      {
+        "rank": 67,
+        "refId": "v2ref_1227"
+      },
+      {
+        "rank": 68,
+        "refId": "v2ref_1228"
+      },
+      {
+        "rank": 69,
+        "refId": "v2ref_1229"
+      },
+      {
+        "rank": 70,
+        "refId": "v2ref_1230"
+      },
+      {
+        "rank": 71,
+        "refId": "v2ref_1234"
+      },
+      {
+        "rank": 72,
+        "refId": "v2ref_1235"
+      },
+      {
+        "rank": 73,
+        "refId": "v2ref_1240"
+      },
+      {
+        "rank": 74,
+        "refId": "v2ref_1241"
+      },
+      {
+        "rank": 75,
+        "refId": "v2ref_1242"
+      },
+      {
+        "rank": 76,
+        "refId": "v2ref_1245"
+      },
+      {
+        "rank": 77,
+        "refId": "v2ref_1246"
+      },
+      {
+        "rank": 78,
+        "refId": "v2ref_1249"
+      },
+      {
+        "rank": 79,
+        "refId": "v2ref_1250"
+      },
+      {
+        "rank": 80,
+        "refId": "v2ref_1270"
+      }
+    ],
+    "navigation": [],
+    "observationId": "obs_1_8",
+    "page": {
+      "title": "beauty salons in Seattle, WA - Google Maps",
+      "url": "https://www.google.com/maps/search/beauty+salons+in+Seattle,+WA/@47.6120211,-122.4170668,12z?entry=ttu&g_ep=EgoyMDI2MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+    },
+    "projectionId": "projection_obs_1_8",
+    "prose": [
+      {
+        "anchorRefIds": [
+          "ref_1_213"
+        ],
+        "proseId": "prose_1",
+        "text": "Map data ©2026 GoogleIndiaTerm PrivacySend Product Feedback"
+      }
+    ],
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_1130"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1133"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_1137"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_1141"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_1174"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_1131"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_1142"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_1144"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_1175"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_1176"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_1126"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_1238"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_1239"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_1178"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_1187"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_1196"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_1205"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_1214"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_1223"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_1177"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_1186"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_1195"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_1204"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_1213"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_1222"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_1236"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_1237"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_1179"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_1188"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_1197"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_1206"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_1215"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_1224"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_104"
+      }
+    ],
+    "refs": {
+      "v2ref_104": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "",
+        "refId": "v2ref_104",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1126": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Clear",
+        "refId": "v2ref_1126",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1130": {
+        "actionability": "ready",
+        "ariaHasPopup": "true",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Any rating ",
+        "refId": "v2ref_1130",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1131": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Any rating ",
+        "refId": "v2ref_1131",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1133": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "openHoursFilter",
+        "refId": "v2ref_1133",
+        "regionId": "region_repeated_1",
+        "role": "radio",
+        "score": 115,
+        "state": "live",
+        "text": "Any time",
+        "visibility": "visible"
+      },
+      "v2ref_1137": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "openHoursFilter",
+        "refId": "v2ref_1137",
+        "regionId": "region_repeated_1",
+        "role": "radio",
+        "score": 115,
+        "state": "live",
+        "text": "Open now",
+        "visibility": "visible"
+      },
+      "v2ref_1141": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "openHoursFilter",
+        "refId": "v2ref_1141",
+        "regionId": "region_repeated_1",
+        "role": "radio",
+        "score": 115,
+        "state": "live",
+        "text": "Open 24 hours",
+        "visibility": "visible"
+      },
+      "v2ref_1142": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Open 24 hours",
+        "refId": "v2ref_1142",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1144": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Open 24 hours",
+        "refId": "v2ref_1144",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1174": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Any rating",
+        "refId": "v2ref_1174",
+        "role": "menuitemradio",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1175": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Any rating",
+        "refId": "v2ref_1175",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1176": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Any rating",
+        "refId": "v2ref_1176",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1177": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "2.0",
+        "refId": "v2ref_1177",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1178": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "2.0 stars",
+        "refId": "v2ref_1178",
+        "score": 107,
+        "state": "live",
+        "text": "2.0",
+        "visibility": "visible"
+      },
+      "v2ref_1179": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "2.0",
+        "refId": "v2ref_1179",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1180": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1180",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1181": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1181",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1182": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1182",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1183": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1183",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1184": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1184",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1185": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1185",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1186": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "2.5",
+        "refId": "v2ref_1186",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1187": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "2.5 stars",
+        "refId": "v2ref_1187",
+        "score": 107,
+        "state": "live",
+        "text": "2.5",
+        "visibility": "visible"
+      },
+      "v2ref_1188": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "2.5",
+        "refId": "v2ref_1188",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1189": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1189",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1190": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1190",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1191": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1191",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1192": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1192",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1193": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1193",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1194": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1194",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1195": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "3.0",
+        "refId": "v2ref_1195",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1196": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "3.0 stars",
+        "refId": "v2ref_1196",
+        "score": 107,
+        "state": "live",
+        "text": "3.0",
+        "visibility": "visible"
+      },
+      "v2ref_1197": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "3.0",
+        "refId": "v2ref_1197",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1198": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1198",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1199": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1199",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1200": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1200",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1201": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1201",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1202": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1202",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1203": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1203",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1204": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "3.5",
+        "refId": "v2ref_1204",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1205": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "3.5 stars",
+        "refId": "v2ref_1205",
+        "score": 107,
+        "state": "live",
+        "text": "3.5",
+        "visibility": "visible"
+      },
+      "v2ref_1206": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "3.5",
+        "refId": "v2ref_1206",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1207": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1207",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1208": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1208",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1209": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1209",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1210": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1210",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1211": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1211",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1212": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1212",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1213": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "4.0",
+        "refId": "v2ref_1213",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1214": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "4.0 stars",
+        "refId": "v2ref_1214",
+        "score": 107,
+        "state": "live",
+        "text": "4.0",
+        "visibility": "visible"
+      },
+      "v2ref_1215": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "4.0",
+        "refId": "v2ref_1215",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1216": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1216",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1217": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1217",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1218": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1218",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1219": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1219",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1220": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1220",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1221": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1221",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1222": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "4.5",
+        "refId": "v2ref_1222",
+        "role": "menuitemradio",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1223": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "4.5 stars",
+        "refId": "v2ref_1223",
+        "score": 107,
+        "state": "live",
+        "text": "4.5",
+        "visibility": "visible"
+      },
+      "v2ref_1224": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "4.5",
+        "refId": "v2ref_1224",
+        "score": 101,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1225": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1225",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1226": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1226",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1227": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1227",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1228": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1228",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1229": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1229",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1230": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1230",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1234": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1234",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1235": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1235",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1236": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Saved",
+        "refId": "v2ref_1236",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1237": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Saved",
+        "refId": "v2ref_1237",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1238": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Get app",
+        "refId": "v2ref_1238",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1239": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Get app",
+        "refId": "v2ref_1239",
+        "score": 108,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1240": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1240",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1241": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1241",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1242": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1242",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1245": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1245",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1246": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1246",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1249": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1249",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1250": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1250",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1270": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_1270",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      }
+    },
+    "regions": [
+      {
+        "kind": "repeated_list",
+        "label": "Repeated radio controls",
+        "refIds": [
+          "v2ref_1133",
+          "v2ref_1137",
+          "v2ref_1141"
+        ],
+        "regionId": "region_repeated_1",
+        "score": 100
+      }
+    ],
+    "stats": {
+      "interactionCount": 80,
+      "navigationCount": 0,
+      "readableCount": 34,
+      "regionCount": 1
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_8_obs_1_8",
+  "evidenceCoverage": {
+    "contractKind": "unknown",
+    "readCount": 82,
+    "requirements": [],
+    "status": "ready"
+  },
+  "evidenceSnapshot": {
+    "cards": [
+      {
+        "entity": "WAXON",
+        "metrics": {},
+        "position": 0,
+        "refIds": []
+      },
+      {
+        "entity": "Sponsored",
+        "metrics": {
+          "rating": 4.7
+        },
+        "position": 1,
+        "refIds": []
+      },
+      {
+        "entity": "Sky Barbershop & Salon",
+        "metrics": {},
+        "position": 2,
+        "refIds": []
+      },
+      {
+        "entity": "Sponsored",
+        "metrics": {
+          "price": 30,
+          "rating": 4.8
+        },
+        "position": 3,
+        "refIds": []
+      },
+      {
+        "entity": "Liana Hair Salon",
+        "metrics": {
+          "rating": 4.7
+        },
+        "position": 4,
+        "refIds": []
+      },
+      {
+        "entity": "Vann Studio Salon",
+        "metrics": {
+          "rating": 4.8
+        },
+        "position": 5,
+        "provenRank": 1,
+        "refIds": [
+          "v2ref_104"
+        ]
+      }
+    ]
+  },
+  "goal": "Find 5 beauty salons with ratings greater than 4.8 in Seattle, WA.",
+  "goalProgress": {
+    "entries": [
+      {
+        "key": "destination",
+        "state": "typed:\"Seattle\""
+      }
+    ]
+  },
+  "lastResult": {
+    "effect": "none",
+    "kind": "search_page",
+    "success": true,
+    "traceStepId": "step_7",
+    "valuePreview": "{\"matches\":0,\"preview\":[]}"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_4",
+        "beforeObservationId": "obs_1_3",
+        "index": 2,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_3",
+        "strength": "strong",
+        "targetName": "Search",
+        "targetRef": "v2ref_3",
+        "transitionClass": "structural_macrostate"
+      },
+      {
+        "afterObservationId": "obs_1_5",
+        "beforeObservationId": "obs_1_4",
+        "index": 3,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_4",
+        "strength": "strong",
+        "targetName": "All filters",
+        "targetRef": "v2ref_272",
+        "transitionClass": "structural_macrostate"
+      },
+      {
+        "afterObservationId": "obs_1_6",
+        "beforeObservationId": "obs_1_5",
+        "index": 4,
+        "kind": "scroll",
+        "status": "completed",
+        "stepId": "step_5",
+        "strength": "strong",
+        "transitionClass": "structural_macrostate"
+      },
+      {
+        "afterObservationId": "obs_1_7",
+        "beforeObservationId": "obs_1_6",
+        "index": 5,
+        "kind": "click",
+        "status": "completed",
+        "stepId": "step_6",
+        "strength": "moderate",
+        "targetName": "Any rating ",
+        "targetRef": "v2ref_1130",
+        "transitionClass": "structural_local"
+      },
+      {
+        "afterObservationId": "obs_1_8",
+        "beforeObservationId": "obs_1_7",
+        "index": 6,
+        "kind": "search_page",
+        "status": "completed",
+        "stepId": "step_7"
+      }
+    ],
+    "totalSteps": 7,
+    "truncated": true
+  },
+  "recovery": {
+    "nextMechanisms": [
+      "avoid_navigation_churn",
+      "commit_to_current_surface_until_progress",
+      "act_on_visible_controls",
+      "reobserve_current_surface"
+    ],
+    "severity": "warning",
+    "signals": [
+      "navigation_oscillation"
+    ],
+    "state": "navigation_oscillation"
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 16937,
+    "totalPlannerInputBytes": 37713,
+    "workingSetBytes": 17352
+  },
+  "taskProgress": {
+    "items": [
+      {
+        "key": "destination",
+        "requested": "Seattle",
+        "status": "pending"
+      }
+    ],
+    "status": "incomplete"
+  },
+  "uncertainty": {
+    "level": "none",
+    "signals": [
+      "navigation_oscillation"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_1130",
+        "v2ref_1133",
+        "v2ref_1137",
+        "v2ref_1141",
+        "v2ref_1174",
+        "v2ref_1126",
+        "v2ref_1177",
+        "v2ref_1186",
+        "v2ref_1195",
+        "v2ref_1204",
+        "v2ref_1213",
+        "v2ref_1222"
+      ],
+      "readableRefs": [
+        "v2ref_1130",
+        "v2ref_1133",
+        "v2ref_1137",
+        "v2ref_1141",
+        "v2ref_1174",
+        "v2ref_1131",
+        "v2ref_1142",
+        "v2ref_1144",
+        "v2ref_1175",
+        "v2ref_1176",
+        "v2ref_1126",
+        "v2ref_1238",
+        "v2ref_1239",
+        "v2ref_1178",
+        "v2ref_1187",
+        "v2ref_1196",
+        "v2ref_1205",
+        "v2ref_1214",
+        "v2ref_1223",
+        "v2ref_1177",
+        "v2ref_1186",
+        "v2ref_1195",
+        "v2ref_1204",
+        "v2ref_1213",
+        "v2ref_1222",
+        "v2ref_1236",
+        "v2ref_1237",
+        "v2ref_1179",
+        "v2ref_1188",
+        "v2ref_1197",
+        "v2ref_1206",
+        "v2ref_1215",
+        "v2ref_1224",
+        "v2ref_104"
+      ],
+      "selectableRefs": [],
+      "typeableRefs": []
+    },
+    "changedRefs": {
+      "appearedCount": 97,
+      "omittedCount": 109,
+      "preservedCount": 20,
+      "topRefs": [
+        {
+          "kind": "button",
+          "name": "Any rating",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1174",
+          "role": "menuitemradio",
+          "score": 375,
+          "text": "Any rating"
+        },
+        {
+          "kind": "generic",
+          "name": "Any rating",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1175",
+          "score": 371,
+          "text": "Any rating"
+        },
+        {
+          "kind": "generic",
+          "name": "Any rating",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1176",
+          "score": 371,
+          "text": "Any rating"
+        },
+        {
+          "kind": "generic",
+          "name": "Get app",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1238",
+          "score": 368,
+          "text": "Get app"
+        },
+        {
+          "kind": "generic",
+          "name": "Get app",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1239",
+          "score": 368,
+          "text": "Get app"
+        },
+        {
+          "kind": "generic",
+          "name": "2.0 stars",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1178",
+          "score": 367,
+          "text": "2.0"
+        },
+        {
+          "kind": "generic",
+          "name": "2.5 stars",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1187",
+          "score": 367,
+          "text": "2.5"
+        },
+        {
+          "kind": "generic",
+          "name": "3.0 stars",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1196",
+          "score": 367,
+          "text": "3.0"
+        },
+        {
+          "kind": "generic",
+          "name": "3.5 stars",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1205",
+          "score": 367,
+          "text": "3.5"
+        },
+        {
+          "kind": "generic",
+          "name": "4.0 stars",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1214",
+          "score": 367,
+          "text": "4.0"
+        },
+        {
+          "kind": "generic",
+          "name": "4.5 stars",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1223",
+          "score": 367,
+          "text": "4.5"
+        },
+        {
+          "kind": "button",
+          "name": "2.0",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1177",
+          "role": "menuitemradio",
+          "score": 365,
+          "text": "2.0"
+        },
+        {
+          "kind": "button",
+          "name": "2.5",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1186",
+          "role": "menuitemradio",
+          "score": 365,
+          "text": "2.5"
+        },
+        {
+          "kind": "button",
+          "name": "3.0",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1195",
+          "role": "menuitemradio",
+          "score": 365,
+          "text": "3.0"
+        },
+        {
+          "kind": "button",
+          "name": "3.5",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1204",
+          "role": "menuitemradio",
+          "score": 365,
+          "text": "3.5"
+        },
+        {
+          "kind": "button",
+          "name": "4.0",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed",
+            "visible_ready"
+          ],
+          "refId": "v2ref_1213",
+          "role": "menuitemradio",
+          "score": 365,
+          "text": "4.0"
+        }
+      ],
+      "weakenedCount": 28
+    },
+    "deltaRefs": {
+      "appeared": [
+        "v2ref_1174",
+        "v2ref_1175",
+        "v2ref_1176",
+        "v2ref_1238",
+        "v2ref_1239",
+        "v2ref_1178",
+        "v2ref_1187",
+        "v2ref_1196"
+      ],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "verify",
+    "modeReason": "recent_value_evidence",
+    "navigationRefs": [],
+    "omitted": {
+      "droppedByReason": {
+        "generic_low_value": 3,
+        "hidden_low_value": 21,
+        "rank_loss": 75
+      },
+      "droppedRefCount": 138,
+      "observedRefCount": 218,
+      "selectedRefCount": 80
+    },
+    "primaryRefs": [
+      {
+        "kind": "generic",
+        "name": "",
+        "reasons": [
+          "answer_candidate",
+          "visible_ready"
+        ],
+        "refId": "v2ref_104",
+        "score": 317,
+        "text": ""
+      },
+      {
+        "kind": "button",
+        "name": "Any rating",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1174",
+        "role": "menuitemradio",
+        "score": 375,
+        "text": "Any rating"
+      },
+      {
+        "kind": "generic",
+        "name": "Any rating",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1175",
+        "score": 371,
+        "text": "Any rating"
+      },
+      {
+        "kind": "generic",
+        "name": "Any rating",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1176",
+        "score": 371,
+        "text": "Any rating"
+      },
+      {
+        "kind": "generic",
+        "name": "Get app",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1238",
+        "score": 368,
+        "text": "Get app"
+      },
+      {
+        "kind": "generic",
+        "name": "Get app",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1239",
+        "score": 368,
+        "text": "Get app"
+      },
+      {
+        "kind": "generic",
+        "name": "2.0 stars",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1178",
+        "score": 367,
+        "text": "2.0"
+      },
+      {
+        "kind": "generic",
+        "name": "2.5 stars",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1187",
+        "score": 367,
+        "text": "2.5"
+      },
+      {
+        "kind": "generic",
+        "name": "3.0 stars",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1196",
+        "score": 367,
+        "text": "3.0"
+      },
+      {
+        "kind": "generic",
+        "name": "3.5 stars",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1205",
+        "score": 367,
+        "text": "3.5"
+      },
+      {
+        "kind": "generic",
+        "name": "4.0 stars",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1214",
+        "score": 367,
+        "text": "4.0"
+      },
+      {
+        "kind": "generic",
+        "name": "4.5 stars",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1223",
+        "score": 367,
+        "text": "4.5"
+      },
+      {
+        "kind": "button",
+        "name": "2.0",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1177",
+        "role": "menuitemradio",
+        "score": 365,
+        "text": "2.0"
+      },
+      {
+        "kind": "button",
+        "name": "2.5",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1186",
+        "role": "menuitemradio",
+        "score": 365,
+        "text": "2.5"
+      },
+      {
+        "kind": "button",
+        "name": "3.0",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1195",
+        "role": "menuitemradio",
+        "score": 365,
+        "text": "3.0"
+      },
+      {
+        "kind": "button",
+        "name": "3.5",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1204",
+        "role": "menuitemradio",
+        "score": 365,
+        "text": "3.5"
+      },
+      {
+        "kind": "button",
+        "name": "4.0",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1213",
+        "role": "menuitemradio",
+        "score": 365,
+        "text": "4.0"
+      },
+      {
+        "kind": "button",
+        "name": "4.5",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1222",
+        "role": "menuitemradio",
+        "score": 365,
+        "text": "4.5"
+      },
+      {
+        "kind": "generic",
+        "name": "Saved",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1236",
+        "score": 365,
+        "text": "Saved"
+      },
+      {
+        "kind": "generic",
+        "name": "Saved",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1237",
+        "score": 365,
+        "text": "Saved"
+      },
+      {
+        "kind": "generic",
+        "name": "2.0",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1179",
+        "score": 361,
+        "text": "2.0"
+      },
+      {
+        "kind": "generic",
+        "name": "2.5",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1188",
+        "score": 361,
+        "text": "2.5"
+      },
+      {
+        "kind": "generic",
+        "name": "3.0",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1197",
+        "score": 361,
+        "text": "3.0"
+      },
+      {
+        "kind": "generic",
+        "name": "3.5",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1206",
+        "score": 361,
+        "text": "3.5"
+      },
+      {
+        "kind": "generic",
+        "name": "4.0",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1215",
+        "score": 361,
+        "text": "4.0"
+      },
+      {
+        "kind": "generic",
+        "name": "4.5",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1224",
+        "score": 361,
+        "text": "4.5"
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1180",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1181",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1182",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1183",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1184",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1185",
+        "score": 355
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1174",
+        "text": "Any rating Any rating"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1175",
+        "text": "Any rating Any rating"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1176",
+        "text": "Any rating Any rating"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1238",
+        "text": "Get app Get app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1239",
+        "text": "Get app Get app"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1178",
+        "text": "2.0 stars 2.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1187",
+        "text": "2.5 stars 2.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1196",
+        "text": "3.0 stars 3.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1205",
+        "text": "3.5 stars 3.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1214",
+        "text": "4.0 stars 4.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1223",
+        "text": "4.5 stars 4.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1177",
+        "text": "2.0 2.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1186",
+        "text": "2.5 2.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1195",
+        "text": "3.0 3.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1204",
+        "text": "3.5 3.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1213",
+        "text": "4.0 4.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1222",
+        "text": "4.5 4.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1236",
+        "text": "Saved Saved"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1237",
+        "text": "Saved Saved"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1179",
+        "text": "2.0 2.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1188",
+        "text": "2.5 2.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1197",
+        "text": "3.0 3.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1206",
+        "text": "3.5 3.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1215",
+        "text": "4.0 4.0"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1224",
+        "text": "4.5 4.5"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_104",
+        "text": " "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1130",
+        "text": "Any rating  Any rating "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1133",
+        "text": "openHoursFilter Any time"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1137",
+        "text": "openHoursFilter Open now"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1141",
+        "text": "openHoursFilter Open 24 hours"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1131",
+        "text": "Any rating  Any rating "
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1142",
+        "text": "Open 24 hours Open 24 hours"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1144",
+        "text": "Open 24 hours Open 24 hours"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1126",
+        "text": "Clear Clear"
+      }
+    ],
+    "regionSummaries": [
+      {
+        "label": "Repeated radio controls",
+        "omittedRefCount": 0,
+        "regionId": "region_repeated_1",
+        "representativeRefs": [
+          "v2ref_1133",
+          "v2ref_1137",
+          "v2ref_1141"
+        ]
+      }
+    ],
+    "secondaryRefs": [
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1189",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1190",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1191",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1192",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1193",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1194",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1198",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1199",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1200",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1201",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1202",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1203",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1207",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1208",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1209",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1210",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1211",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1212",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1216",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1217",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1218",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1219",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1220",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1221",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1225",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1226",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1227",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1228",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1229",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1230",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1234",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1235",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1240",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1241",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1242",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1245",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1246",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1249",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1250",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1270",
+        "score": 355
+      },
+      {
+        "kind": "button",
+        "name": "Any rating ",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1130",
+        "role": "button",
+        "score": 285,
+        "text": "Any rating "
+      },
+      {
+        "kind": "button",
+        "name": "openHoursFilter",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1133",
+        "role": "radio",
+        "score": 285,
+        "text": "Any time"
+      },
+      {
+        "kind": "button",
+        "name": "openHoursFilter",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1137",
+        "role": "radio",
+        "score": 285,
+        "text": "Open now"
+      },
+      {
+        "kind": "button",
+        "name": "openHoursFilter",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1141",
+        "role": "radio",
+        "score": 285,
+        "text": "Open 24 hours"
+      },
+      {
+        "kind": "generic",
+        "name": "Any rating ",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1131",
+        "score": 281,
+        "text": "Any rating "
+      },
+      {
+        "kind": "generic",
+        "name": "Open 24 hours",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1142",
+        "score": 281,
+        "text": "Open 24 hours"
+      },
+      {
+        "kind": "generic",
+        "name": "Open 24 hours",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1144",
+        "score": 281,
+        "text": "Open 24 hours"
+      },
+      {
+        "kind": "button",
+        "name": "Clear",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_1126",
+        "role": "button",
+        "score": 279,
+        "text": "Clear"
+      }
+    ]
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {
+      "generic_low_value": 3,
+      "hidden_low_value": 21,
+      "rank_loss": 75
+    },
+    "droppedRefCount": 138,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 218,
+    "selectedByReason": {
+      "answer_candidate": 1,
+      "form_candidate": 1,
+      "navigation_candidate": 1,
+      "recently_appeared": 97,
+      "recently_changed": 125,
+      "role_relevant_to_goal": 1,
+      "visible_ready": 121
+    },
+    "selectedRefCount": 80
+  }
+}

@@ -5,6 +5,7 @@ export const V2_OPERATIONAL_ERROR_CODES = [
   'target_disabled',
   'target_blocked',
   'target_not_editable',
+  'input_not_applied',
   'target_not_clickable',
   'target_not_selectable',
   'stale_ref',
@@ -17,6 +18,11 @@ export const V2_OPERATIONAL_ERROR_CODES = [
   'navigation_blocked',
   'captcha_or_access_block',
   'trace_write_failed',
+  'invalid_action_payload',
+  'action_blocked_by_loop_detector',
+  'suggestion_surface_did_not_open',
+  'no_matching_option',
+  'ambiguous_match',
 ] as const;
 
 export type V2OperationalErrorCode = (typeof V2_OPERATIONAL_ERROR_CODES)[number];

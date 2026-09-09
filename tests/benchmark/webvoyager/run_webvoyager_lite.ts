@@ -1,11 +1,13 @@
 import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 
 import { createBenchmarkAdapter, readBenchmarkAdapterId } from '../v2/adapter_factory';
 import { runBenchmark, type RunBenchmarkOptions } from '../v2/run_benchmark';
 import type { BenchmarkAdapter, BenchmarkReport, BenchmarkTraceScore } from '../v2/types';
 import { buildWebVoyagerTaskArtifactSummary } from './artifacts';
 import { evaluateWebVoyagerResult, summarizeWebVoyagerEvaluation } from './evaluator';
+import { collectFinalPageEvidence, judgeTaskResult } from './judge';
 import { loadWebVoyagerManualAudit } from './manual_audit';
 import { loadWebVoyagerSource } from './source_loader';
 import { resolveWebVoyagerTaskIds, selectWebVoyagerLiteTasks, toBenchmarkTasks, type WebVoyagerTaskSlice } from './task_selection';
@@ -28,6 +30,10 @@ export interface RunWebVoyagerLiteOptions {
   manualAuditPath?: string;
   plannerMode?: 'current' | 'compact_enforced';
   plannerSerialization?: RunBenchmarkOptions['plannerSerialization'];
+  /** Official-methodology LLM judge over internal-passed strict-0 tasks. */
+  judgeEnabled?: boolean;
+  judgeModel?: string;
+  workingSetOptions?: RunBenchmarkOptions['workingSetOptions'];
 }
 
 export interface WebVoyagerLiteRunResult {
@@ -62,8 +68,8 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
     geminiKeyIndex: options.geminiKeyIndex,
     headed: options.headed,
     traceAudit: options.traceAudit,
-    plannerMode: options.plannerMode,
     plannerSerialization: options.plannerSerialization,
+    workingSetOptions: options.workingSetOptions,
   });
 
   const byTaskId = new Map(tasks.map(task => [task.taskId, task]));
@@ -73,6 +79,32 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
     result,
     manualAudit.get(result.taskId),
   ));
+
+  // Official-methodology judge: additive measurement over internal-passed
+  // tasks whose strict score was zero — the cases where the string reference
+  // matcher cannot validate live-varying results.
+  const judgeEnabled = options.judgeEnabled === true;
+  if (judgeEnabled) {
+    const judgeModel = options.judgeModel;
+    for (const verdict of verdicts) {
+      if (verdict.internalPassed !== true || verdict.strictScore !== 0 || verdict.environmentStatus !== 'normal') continue;
+      const result = benchmark.results.find(candidate => candidate.taskId === verdict.taskId);
+      const tracePath = result?.tracePath;
+      if (!tracePath) continue;
+      const judgeOutcome = await judgeTaskResult({
+        goal: byTaskId.get(verdict.taskId)?.goal ?? '',
+        referenceHint: byTaskId.get(verdict.taskId)?.webVoyager.referenceAnswer?.answer as string | undefined,
+        agentAnswer: result.value ?? '',
+        finalUrl: readFinalPageUrl(tracePath),
+        pageEvidence: collectFinalPageEvidence(tracePath, undefined, undefined, byTaskId.get(verdict.taskId)?.goal),
+        judgeModel,
+      });
+      verdict.judgeVerdict = judgeOutcome.verdict;
+      verdict.judgeReason = judgeOutcome.reason;
+      verdict.judgeScore = judgeOutcome.verdict === 'SUCCESS' ? 1 : judgeOutcome.verdict === 'NOT_SUCCESS' ? 0 : undefined;
+    }
+  }
+
   const evaluation = {
     summary: summarizeWebVoyagerEvaluation(verdicts),
     verdicts,
@@ -89,6 +121,44 @@ export async function runWebVoyagerLite(options: RunWebVoyagerLiteOptions): Prom
   return { benchmark, evaluation };
 }
 
+function readFinalPageUrl(tracePath: string | undefined): string | undefined {
+  if (!tracePath) return undefined;
+  try {
+    const isDir = existsSync(tracePath) && statSync(tracePath).isDirectory();
+    const traceFile = isDir ? join(tracePath, 'trace.json') : tracePath;
+    if (existsSync(traceFile)) {
+      const trace = JSON.parse(readFileSync(traceFile, 'utf8'));
+      const observations = Array.isArray(trace?.observations) ? trace.observations : [];
+      for (let index = observations.length - 1; index >= 0; index -= 1) {
+        const url = observations[index]?.observation?.url;
+        if (typeof url === 'string' && url.length > 0) return url;
+      }
+    }
+  } catch {
+    // continue to fallback
+  }
+
+  try {
+    const dir = existsSync(tracePath) && statSync(tracePath).isDirectory() ? tracePath : dirname(tracePath);
+    const stderrFile = join(dir, 'stderr.txt');
+    if (existsSync(stderrFile)) {
+      const stderr = readFileSync(stderrFile, 'utf8');
+      const urlMatches = [...stderr.matchAll(/'url':\s*'([^']+)'/g)];
+      if (urlMatches.length > 0) {
+        return urlMatches[urlMatches.length - 1][1];
+      }
+    }
+    const inputFile = join(dir, 'input.json');
+    if (existsSync(inputFile)) {
+      const input = JSON.parse(readFileSync(inputFile, 'utf8'));
+      if (input.url) return input.url;
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
 export function renderWebVoyagerEvaluationMarkdown(evaluation: WebVoyagerLiteRunResult['evaluation']): string {
   return [
     '# WebVoyager-lite Evaluation',
@@ -100,22 +170,29 @@ export function renderWebVoyagerEvaluationMarkdown(evaluation: WebVoyagerLiteRun
     `Partial-credit score: ${(evaluation.summary.partialCreditRate * 100).toFixed(1)}%`,
     `Environment-adjusted strict score: ${(evaluation.summary.environmentAdjustedStrictScore * 100).toFixed(1)}%`,
     `Environment-adjusted manual score: ${(evaluation.summary.environmentAdjustedManualScore * 100).toFixed(1)}%`,
+    evaluation.summary.judgedCount
+      ? `Judge score (official methodology, ${evaluation.summary.judgedCount} judged): ${((evaluation.summary.judgeScoreRate ?? 0) * 100).toFixed(1)}%`
+      : undefined,
+    evaluation.summary.judgedCount
+      ? `Environment-adjusted judge score: ${((evaluation.summary.environmentAdjustedJudgeScore ?? 0) * 100).toFixed(1)}%`
+      : undefined,
     `Manual review count: ${evaluation.summary.manualReviewCount}`,
     `Environment blocked count: ${evaluation.summary.environmentBlockedCount}`,
     `Impossible task count: ${evaluation.summary.impossibleTaskCount}`,
     '',
-    '| Task | Internal | Strict | Manual | Partial | Env | Ref Match | Review | Reasons |',
-    '| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |',
+    '| Task | Internal | Strict | Judge | Manual | Partial | Env | Ref Match | Review | Reasons |',
+    '| --- | ---: | ---: | ---: | ---: | ---: | --- | --- | --- | --- |',
     ...evaluation.verdicts.map(verdict => [
       verdict.taskId,
       verdict.internalPassed ? 1 : 0,
       verdict.strictScore,
+      verdict.judgeScore !== undefined ? verdict.judgeScore : '-',
       verdict.manualCorrectedScore,
       verdict.partialCredit,
       verdict.environmentStatus,
       verdict.referenceMatchType,
       verdict.needsManualReview ? 'yes' : 'no',
-      verdict.reasons.join(', ') || 'none',
+      [verdict.reasons.join(', '), verdict.judgeVerdict ? `judge:${verdict.judgeVerdict}` : ''].filter(Boolean).join('; ') || 'none',
     ].join(' | ').replace(/^/, '| ').replace(/$/, ' |')),
     '',
   ].join('\n');
@@ -132,7 +209,7 @@ if (require.main === module) {
     });
 }
 
-function readCliOptions(): RunWebVoyagerLiteOptions {
+export function readCliOptions(): RunWebVoyagerLiteOptions {
   const sourceRoot = readFlag('--source-root') ?? process.env.WEBVOYAGER_SOURCE_ROOT;
   if (!sourceRoot) {
     throw new Error('Provide --source-root or WEBVOYAGER_SOURCE_ROOT pointing to the external WebVoyager clone.');
@@ -150,17 +227,20 @@ function readCliOptions(): RunWebVoyagerLiteOptions {
   const manualAuditPath = readFlag('--manual-audit');
   const plannerModeArg = readFlag('--planner-mode');
   const plannerSerializationArg = readPlannerSerializationArg();
-  let plannerMode: 'current' | 'compact_enforced' = 'current';
-  if (plannerModeArg === 'current' || plannerModeArg === 'compact_enforced') {
-    plannerMode = plannerModeArg;
-  } else if (plannerModeArg !== undefined) {
-    throw new Error(`Unsupported --planner-mode "${plannerModeArg}". Use current or compact_enforced.`);
+  if (plannerModeArg !== undefined) {
+    throw new Error(`--planner-mode "${plannerModeArg}" is no longer supported; the compact_enforced plane was removed (use --planner-serialization).`);
   }
+
+  const judgeEnabled = hasFlag('--judge');
+  const judgeModel = readFlag('--judge-model');
 
   return {
     sourceRoot,
     adapter: createBenchmarkAdapter(adapterId, { env: process.env }),
+    judgeEnabled,
+    judgeModel,
     model,
+    headed: hasFlag('--headed') || process.env.BROWSEGENT_V2_HEADED === 'true',
     count: countArg ? Number(countArg) : undefined,
     geminiKeyIndex: keyIndexArg ? Number(keyIndexArg) : undefined,
     requestRpm: requestRpmArg ? Number(requestRpmArg) : undefined,
@@ -168,8 +248,8 @@ function readCliOptions(): RunWebVoyagerLiteOptions {
     taskIds,
     taskSlice,
     manualAuditPath,
-    plannerMode,
-    plannerSerialization: plannerSerializationArg ? { mode: plannerSerializationArg } : undefined,
+    plannerSerialization: readPlannerSerializationConfig(plannerSerializationArg),
+    workingSetOptions: readWorkingSetOptions(),
   };
 }
 
@@ -186,18 +266,96 @@ function readFlag(name: string): string | undefined {
 
 function readTaskSliceArg(): WebVoyagerTaskSlice | undefined {
   const value = readFlag('--slice');
-  if (value === undefined || value === 'balanced30' || value === 'mvr5' || value === 'mvr5-stable') {
+  if (
+    value === undefined ||
+    value === 'balanced30' ||
+    value === 'mvr5' ||
+    value === 'mvr5-stable' ||
+    value === 'fresh50' ||
+    value === 'fresh50-stable'
+  ) {
     return value;
   }
-  throw new Error(`Unsupported WebVoyager slice "${value}". Use balanced30, mvr5, or mvr5-stable.`);
+  throw new Error(`Unsupported WebVoyager slice "${value}". Use balanced30, mvr5, mvr5-stable, fresh50, or fresh50-stable.`);
 }
 
-function readPlannerSerializationArg(): NonNullable<RunBenchmarkOptions['plannerSerialization']>['mode'] | undefined {
+export function readPlannerSerializationArg(): NonNullable<RunBenchmarkOptions['plannerSerialization']>['mode'] | undefined {
   const value = readFlag('--planner-serialization');
-  if (value === undefined || value === 'json' || value === 'prc') {
-    return value;
+  if (value === undefined || value === 'json' || value === 'prc' || value === 'prc-unified') {
+    return value === 'prc-unified' ? 'prc' : value;
   }
-  throw new Error(`Unsupported --planner-serialization "${value}". Use json or prc.`);
+  throw new Error(`Unsupported --planner-serialization "${value}". Use json, prc, or prc-unified.`);
+}
+
+export function readPlannerSerializationConfig(
+  mode: NonNullable<RunBenchmarkOptions['plannerSerialization']>['mode'] | undefined,
+): RunBenchmarkOptions['plannerSerialization'] {
+  const rawArg = readFlag('--planner-serialization');
+  const prcUnified = hasFlag('--prc-unified') || rawArg === 'prc-unified';
+  const effectiveMode = prcUnified ? 'prc' : mode;
+
+  const prcTierOmitted = hasFlag('--prc-tier-omitted');
+  const compactDataPlane = hasFlag('--compact-data-plane');
+  const prcLeanPlane = hasFlag('--prc-lean-plane') || prcUnified;
+  const conditionalPrompt = hasFlag('--planner-conditional-prompt') || prcUnified;
+  const stableOrder = hasFlag('--prc-stable-order');
+  const composedPrompt = hasFlag('--planner-composed-prompt') || prcUnified;
+  const pageModel = hasFlag('--prc-page-model') || prcUnified;
+  const doneChecklist = hasFlag('--done-candidate-checklist') || prcUnified;
+  const deltaSurface = hasFlag('--prc-delta-surface') || prcUnified;
+  const noJsonSchema = hasFlag('--planner-no-json-schema');
+  if (prcUnified || prcTierOmitted || compactDataPlane || prcLeanPlane || conditionalPrompt || stableOrder || composedPrompt || pageModel || doneChecklist || deltaSurface) {
+    if (effectiveMode !== 'prc') {
+      const flags = [
+        ...(prcUnified ? ['--prc-unified'] : []),
+        ...(prcTierOmitted ? ['--prc-tier-omitted'] : []),
+        ...(compactDataPlane ? ['--compact-data-plane'] : []),
+        ...(prcLeanPlane ? ['--prc-lean-plane'] : []),
+        ...(conditionalPrompt ? ['--planner-conditional-prompt'] : []),
+        ...(stableOrder ? ['--prc-stable-order'] : []),
+        ...(composedPrompt ? ['--planner-composed-prompt'] : []),
+        ...(pageModel ? ['--prc-page-model'] : []),
+        ...(doneChecklist ? ['--done-candidate-checklist'] : []),
+        ...(deltaSurface ? ['--prc-delta-surface'] : []),
+      ];
+      throw new Error(`${flags.join(' and ')} require --planner-serialization prc.`);
+    }
+    return {
+      mode: 'prc',
+      ...(prcUnified ? { prcUnified: true } : {}),
+      ...(prcTierOmitted ? { prcTierOmitted: true } : {}),
+      ...(compactDataPlane ? { compactDataPlane: true } : {}),
+      ...(prcLeanPlane ? { prcLeanPlane: true } : {}),
+      ...(conditionalPrompt ? { conditionalSystemPrompt: true } : {}),
+      ...(stableOrder ? { prcStableOrder: true } : {}),
+      ...(composedPrompt ? { composedPrompt: true } : {}),
+      ...(pageModel ? { pageModel: true } : {}),
+      ...(doneChecklist ? { doneCandidateChecklist: true } : {}),
+      ...(deltaSurface ? { deltaSurface: true } : {}),
+      ...(noJsonSchema ? { omitResponseJsonSchema: true } : {}),
+    };
+  }
+  if (noJsonSchema) {
+    if (effectiveMode === undefined) {
+      throw new Error('--planner-no-json-schema requires --planner-serialization (json or prc).');
+    }
+    return { mode: effectiveMode, ...(noJsonSchema ? { omitResponseJsonSchema: true } : {}) };
+  }
+  return effectiveMode === undefined ? undefined : { mode: effectiveMode };
+}
+
+function readWorkingSetOptions(): RunBenchmarkOptions['workingSetOptions'] {
+  const bonusArg = readFlag('--readable-phrase-bonus');
+  if (bonusArg === undefined) return undefined;
+  const readablePhraseBonus = Number(bonusArg);
+  if (!Number.isFinite(readablePhraseBonus) || readablePhraseBonus < 0) {
+    throw new Error(`Unsupported --readable-phrase-bonus "${bonusArg}". Use a non-negative finite number.`);
+  }
+  return { readablePhraseBonus };
+}
+
+function hasFlag(name: string): boolean {
+  return process.argv.includes(name);
 }
 
 function isFlagValue(args: string[], value: string): boolean {

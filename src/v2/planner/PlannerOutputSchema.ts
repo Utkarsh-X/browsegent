@@ -13,7 +13,7 @@ export interface PlannerOutputValidationContext {
   allowedRefs?: readonly string[];
   regionRefs?: Readonly<Record<string, string>>;
   actionSurface?: PlannerActionSurface;
-  mode?: 'normal' | 'finalization';
+  mode?: 'normal' | 'finalization' | 'done_candidate';
   actionCompatibilityScope?: 'all_steps' | 'first_step';
 }
 
@@ -28,6 +28,7 @@ const VALID_TOOLS = new Set<PlannerOutputTool>([
   'close',
   'select',
   'search_page',
+  'seek',
   'find_elements',
   'count_elements',
   'inspect_region',
@@ -35,7 +36,8 @@ const VALID_TOOLS = new Set<PlannerOutputTool>([
 const VALID_CONFIDENCE = new Set<PlannerConfidence>(['high', 'medium', 'low']);
 const VALID_ESCALATION = new Set<PlannerEscalation>(['user_needed', 'captcha', 'dead_end']);
 const VALID_PRESS_KEYS = new Set(['Enter', 'Escape', 'Tab', 'ArrowDown', 'ArrowUp']);
-const REF_REQUIRED_TOOLS = new Set<PlannerOutputTool>(['click', 'type', 'get', 'close', 'select', 'inspect_region']);
+const REF_REQUIRED_TOOLS = new Set<PlannerOutputTool>(['click', 'type', 'get', 'close', 'select', 'inspect_region', 'seek', 'pick_option', 'submit_form']);
+const TEXT_REQUIRED_TOOLS = new Set<PlannerOutputTool>(['type', 'pick_option']);
 const FORBIDDEN_FIELDS = new Set([
   'sel',
   'selector',
@@ -216,11 +218,11 @@ function validateRequiredFields(
     && context.allowedRefs !== undefined
     && !isAllowedRef(step.ref, context)
   ) {
-    errors.push(`Step ${stepNumber} ref "${step.ref}" is not present in selected planner refs`);
+    errors.push(`Step ${stepNumber} ref "${step.ref}" is not present in selected planner refs for tool "${tool}"`);
   }
 
-  if (tool === 'type' && !isNonEmptyString(step.text)) {
-    errors.push(`Step ${stepNumber} type requires "text"`);
+  if (TEXT_REQUIRED_TOOLS.has(tool) && !isNonEmptyString(step.text)) {
+    errors.push(`Step ${stepNumber} ${tool} requires "text"`);
   }
 
   validateActionCompatibility(tool, step, stepNumber, errors, context);
@@ -297,6 +299,14 @@ function validateActionCompatibility(
 
   if (tool === 'type' && !surface.typeableRefs.includes(ref)) {
     errors.push(`Step ${stepNumber} ref "${ref}" is not compatible with tool "type"`);
+  }
+
+  if (tool === 'pick_option' && !surface.typeableRefs.includes(ref)) {
+    errors.push(`Step ${stepNumber} ref "${ref}" is not compatible with tool "pick_option"`);
+  }
+
+  if (tool === 'submit_form' && !surface.clickableRefs.includes(ref)) {
+    errors.push(`Step ${stepNumber} ref "${ref}" is not compatible with tool "submit_form"`);
   }
 
   if (tool === 'select' && !surface.selectableRefs.includes(ref)) {

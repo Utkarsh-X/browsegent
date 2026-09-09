@@ -1,0 +1,175 @@
+{
+  "version": 1,
+  "preset": "pilot5",
+  "pinnedAt": "2026-08-24T13:00:26.695Z",
+  "source": {
+    "file": "tests/benchmark/v2/webarena/source/test.raw.json",
+    "sha256": "7b50386fd69163dbc05d615d834df4c6ed2c35596e97a1b10d17451c02537652",
+    "totalTasks": 812
+  },
+  "counts": {
+    "shopping": 5
+  },
+  "shortfalls": [],
+  "tasks": [
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 21,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__/6s-wireless-headphones-over-ear-noise-canceling-hi-fi-bass-foldable-stereo-wireless-kid-headsets-earbuds-with-built-in-mic-micro-sd-tf-fm-for-iphone-samsung-ipad-pc-black-gold.html",
+      "geolocation": null,
+      "intent_template": "List out reviewers, if exist, who mention about {{description}}",
+      "instantiation_dict": {
+        "description": "ear cups being small"
+      },
+      "intent": "List out reviewers, if exist, who mention about ear cups being small",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "must_include": [
+            "Joseph Brzezinski",
+            "Catso",
+            "Dibbins",
+            "Anglebert Dinkherhump",
+            "Michelle Davis"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "Joseph Brzezinski, Catso, Dibbins, Anglebert Dinkherhump, Michelle Davis"
+      },
+      "intent_template_id": 222
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 47,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "Today is 6/12/2023. Tell me how many fulfilled orders I have {{period}}, and the total amount of money I spent.",
+      "instantiation_dict": {
+        "period": "over the past month"
+      },
+      "intent": "Today is 6/12/2023. Tell me how many fulfilled orders I have over the past month, and the total amount of money I spent.",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "fuzzy_match": [
+            "0 order",
+            "$0 total spend"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "0 order, $0 total spend"
+      },
+      "intent_template_id": 197
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 96,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "Tell me the status of my latest order and when will it arrive",
+      "instantiation_dict": {},
+      "intent": "Tell me the status of my latest order and when will it arrive",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "fuzzy_match": [
+            "The last order was canceled. It will never arrive."
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "reference_answer_raw_annotation": "The last order was canceled. It will never arrive.",
+        "string_note": ""
+      },
+      "intent_template_id": 193
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 117,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "What is the date when I made my first purchase on this site?",
+      "instantiation_dict": {},
+      "intent": "What is the date when I made my first purchase on this site?",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "string_match"
+        ],
+        "reference_answers": {
+          "fuzzy_match": [
+            "3/2/22"
+          ]
+        },
+        "reference_url": "",
+        "program_html": [],
+        "string_note": "",
+        "reference_answer_raw_annotation": "3/2/22"
+      },
+      "intent_template_id": 161
+    },
+    {
+      "sites": [
+        "shopping"
+      ],
+      "task_id": 118,
+      "require_login": true,
+      "storage_state": "./.auth/shopping_state.json",
+      "start_url": "__SHOPPING__",
+      "geolocation": null,
+      "intent_template": "I have jaw bruxism problem, show me something that could alleviate the problem.",
+      "instantiation_dict": {},
+      "intent": "I have jaw bruxism problem, show me something that could alleviate the problem.",
+      "require_reset": false,
+      "eval": {
+        "eval_types": [
+          "program_html"
+        ],
+        "reference_answers": null,
+        "reference_url": null,
+        "program_html": [
+          {
+            "url": "last",
+            "locator": "",
+            "required_contents": {
+              "must_include": [
+                "jaw bruxism",
+                "mouth guard"
+              ]
+            }
+          }
+        ]
+      },
+      "intent_template_id": 151
+    }
+  ]
+}

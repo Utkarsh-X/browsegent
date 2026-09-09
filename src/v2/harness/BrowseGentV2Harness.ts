@@ -11,10 +11,12 @@ import { KeyboardService } from '../substrate/KeyboardService';
 import { ObservationService } from '../substrate/ObservationService';
 import { TraceStore } from '../trace/TraceStore';
 import type { TraceArtifact, TraceManifest } from '../trace/types';
+import type { LatencyLedger, LedgerSummary } from '../trace/LatencyLedger';
 import type { FailureEvidence } from '../runtime/FailureClassifier';
 import type { BrowseGentV2HarnessOptions } from './types';
 import { buildRefResolutionAudit } from '../runtime/RefResolutionAudit';
 import { shouldAttemptWeakenedRefSelfHeal } from '../runtime/RefSelfHealingPolicy';
+import { buildBoundedReadEvidenceText } from './ReadEvidence';
 
 const READ_EVIDENCE_TEXT_LIMIT = 4_000;
 
@@ -30,6 +32,7 @@ export class BrowseGentV2Harness {
   private readonly sessionId: string;
   private generationId = 0;
   private current?: BrowserObservation;
+  private ledger?: LatencyLedger;
 
   constructor(options: BrowseGentV2HarnessOptions = {}) {
     const runId = options.runId ?? `v2run_${Date.now()}`;
@@ -49,12 +52,31 @@ export class BrowseGentV2Harness {
     this.generationId += 1;
     await this.session.open(url);
     await this.stabilizationService.waitForSettledState(this.session.currentPage());
-    return this.captureCurrentObservation();
+    return this.captureCurrentObservation(true);
   }
 
   async observe(): Promise<BrowserObservation> {
     this.assertOpened();
-    return this.captureCurrentObservation();
+    const start = Date.now();
+    const obs = await this.captureCurrentObservation();
+    this.ledger?.recordPhase('observation_capture', Date.now() - start);
+    return obs;
+  }
+
+  getCurrentObservation(): BrowserObservation | undefined {
+    return this.current;
+  }
+
+  setLatencyLedger(ledger: LatencyLedger): void {
+    this.ledger = ledger;
+  }
+
+  recordLatencyLedger(summary: LedgerSummary): void {
+    this.traceStore.recordLedgerSummary(summary);
+  }
+
+  recordActionOutcomes(summary: unknown): void {
+    this.traceStore.recordOutcomeSummary(summary);
   }
 
   async click(refId: string): Promise<V2ToolResult> {
@@ -63,6 +85,75 @@ export class BrowseGentV2Harness {
 
   async type(refId: string, text: string): Promise<V2ToolResult<{ inputValue: string }>> {
     return this.executeMutation('type', refId, async (ref) => this.inputService.type(ref, text, this.session.currentPage()));
+  }
+
+  async pickOption(refId: string, text: string): Promise<V2ToolResult<{ committed: string }>> {
+    return this.executeMutation('click', refId, async (ref) => this.inputService.pickOption(ref, text, this.session.currentPage()));
+  }
+
+  /**
+   * Submit primitive (`submit_form`): click the submit control, then grade the
+   * results triad — URL or generation changed AND a non-empty surface. An
+   * unchanged/empty outcome returns success=false with an honest code so a
+   * wasted submit costs one episode and the planner re-plans (run-15 Booking
+   * submits landed parameterless city pages and burned the run in silence).
+   */
+  async submitForm(refId: string): Promise<V2ToolResult<{ resultsSurface: 'loaded' | 'unchanged' | 'empty'; url?: string }>> {
+    const before = this.assertOpened();
+    const resolution = this.refService.resolve(refId, before);
+    const target = resolution.ref;
+    const isSubmitClass = target?.role === 'button'
+      || target?.tagName?.toLowerCase() === 'button'
+      || target?.inputType === 'submit';
+    if (!target || !isSubmitClass) {
+      return {
+        success: false,
+        kind: 'submit_form',
+        targetRef: refId,
+        error: {
+          code: 'not_a_submit_control',
+          message: 'submit_form targets a submit-class control (button); use click for other elements.',
+          retryable: false,
+        },
+        traceStepId: `submit_form_${refId}`,
+      };
+    }
+
+    const result = await this.executeMutation('click', refId, async (ref) => this.inputService.click(ref, this.session.currentPage()));
+    const changed = result.evidence?.urlChanged === true || result.evidence?.generationChanged === true;
+    const after = await this.captureCurrentObservation();
+    const resultsSurface: 'loaded' | 'unchanged' | 'empty' = !changed
+      ? 'unchanged'
+      : after.refs.length > 0
+        ? 'loaded'
+        : 'empty';
+
+    if (resultsSurface !== 'loaded') {
+      return {
+        success: false,
+        kind: 'submit_form',
+        targetRef: refId,
+        value: { resultsSurface, url: after.url },
+        error: {
+          code: resultsSurface === 'empty' ? 'results_surface_empty' : 'results_surface_unchanged',
+          message: resultsSurface === 'empty'
+            ? 'The submit changed the page but the results surface captured empty; wait once or re-observe before re-submitting.'
+            : 'The submit produced no page change; the form was likely not committed. Complete pending requirements or use a different submit control.',
+          retryable: true,
+        },
+        evidence: result.evidence,
+        traceStepId: result.traceStepId,
+      };
+    }
+
+    return {
+      success: true,
+      kind: 'submit_form',
+      targetRef: refId,
+      value: { resultsSurface, url: after.url },
+      evidence: result.evidence,
+      traceStepId: result.traceStepId,
+    };
   }
 
   async select(refId: string, value: string): Promise<V2ToolResult<{ value: string; selectedText: string }>> {
@@ -78,9 +169,15 @@ export class BrowseGentV2Harness {
     });
 
     try {
+      const actionStart = Date.now();
       const execution = await this.keyboardService.press(key, this.session.currentPage());
+      this.ledger?.recordPhase('browser_interaction', Date.now() - actionStart);
+      const stabStart = Date.now();
       await this.stabilizationService.waitForSettledState(this.session.currentPage());
-      const after = await this.captureCurrentObservation();
+      this.ledger?.recordPhase('stabilization_wait', Date.now() - stabStart);
+      const obsStart = Date.now();
+      const after = await this.captureAfterMutationObservation(before);
+      this.ledger?.recordPhase('observation_capture', Date.now() - obsStart);
       const evidence = this.transitionService.compare(before, after);
       const result: V2ToolResult<{ key: PlannerPressKey }> = {
         success: true,
@@ -130,9 +227,15 @@ export class BrowseGentV2Harness {
 
     try {
       this.generationId += 1;
+      const actionStart = Date.now();
       await this.session.open(url);
+      this.ledger?.recordPhase('browser_interaction', Date.now() - actionStart);
+      const stabStart = Date.now();
       await this.stabilizationService.waitForSettledState(this.session.currentPage());
-      const after = await this.captureCurrentObservation();
+      this.ledger?.recordPhase('stabilization_wait', Date.now() - stabStart);
+      const obsStart = Date.now();
+      const after = await this.captureCurrentObservation(true);
+      this.ledger?.recordPhase('observation_capture', Date.now() - obsStart);
       const evidence = this.transitionService.compare(before, after);
       const result: V2ToolResult<{ url: string }> = {
         success: true,
@@ -154,8 +257,8 @@ export class BrowseGentV2Harness {
   }
 
   async get(refId: string): Promise<V2ToolResult<{ text: string; value?: string }>> {
-    return this.executeRefRead('get', refId, (ref) => ({
-      text: compactText(joinUniqueText([ref.name, ref.text]), READ_EVIDENCE_TEXT_LIMIT),
+    return this.executeRefRead('get', refId, (ref, observation) => ({
+      text: compactText(buildBoundedReadEvidenceText(ref, observation.refs, undefined, observation.prose), READ_EVIDENCE_TEXT_LIMIT),
       value: ref.role === 'textbox' && ref.name ? compactText(ref.name, READ_EVIDENCE_TEXT_LIMIT) : undefined,
     }));
   }
@@ -163,7 +266,7 @@ export class BrowseGentV2Harness {
   async inspectRegion(refId: string): Promise<V2ToolResult<{ refId: string; text: string; nearbyRefs: string[] }>> {
     return this.executeRefRead('inspect_region', refId, (ref, observation) => ({
       refId: ref.refId,
-      text: compactText(joinUniqueText([ref.name, ref.text]), READ_EVIDENCE_TEXT_LIMIT),
+      text: compactText(buildBoundedReadEvidenceText(ref, observation.refs, undefined, observation.prose), READ_EVIDENCE_TEXT_LIMIT),
       nearbyRefs: observation.refs
         .filter(candidate => candidate.refId !== ref.refId && candidate.visibility !== 'hidden')
         .slice(0, 5)
@@ -309,9 +412,6 @@ export class BrowseGentV2Harness {
     return this.traceStore.recordFailureEvidence(failure);
   }
 
-  recordCompactPlannerView(episodeId: string, payload: unknown): TraceArtifact {
-    return this.traceStore.recordCompactPlannerView(episodeId, payload);
-  }
 
   async close(): Promise<void> {
     await this.session.close();
@@ -362,7 +462,9 @@ export class BrowseGentV2Harness {
     }
 
     try {
+      const actionStart = Date.now();
       const execution = await run(ref);
+      this.ledger?.recordPhase('browser_interaction', Date.now() - actionStart);
       let result = await this.buildSuccessfulMutationResult(kind, refId, ref, before, stepId, execution);
       if (resolution.state !== 'live' && decision.allow) {
         this.recordRefResolutionAudit({
@@ -446,9 +548,23 @@ export class BrowseGentV2Harness {
     stepId: string,
     execution: InputExecutionResult<TValue>,
   ): Promise<V2ToolResult<TValue>> {
+    const stabStart = Date.now();
     await this.stabilizationService.waitForSettledState(this.session.currentPage());
-    const after = await this.captureCurrentObservation();
+    this.ledger?.recordPhase('stabilization_wait', Date.now() - stabStart);
+    const obsStart = Date.now();
+    const after = await this.captureAfterMutationObservation(before);
+    this.ledger?.recordPhase('observation_capture', Date.now() - obsStart);
     const evidence = this.transitionService.compare(before, after);
+    if (execution.interactionEvidence?.href) {
+      evidence.clickedHref = execution.interactionEvidence.href;
+    }
+    if (after.refs.length === 0) {
+      // The post-mutation capture came back empty even after the bounded
+      // recapture: say so instead of silence, carrying the pre-action URL so
+      // the planner knows where the action was dispatched from (run-15/16
+      // Booking tails burned their final episodes on empty surfaces).
+      evidence.notes.push(`post_action_capture_empty: dispatched from ${before.url}`);
+    }
     return {
       success: true,
       kind,
@@ -458,6 +574,18 @@ export class BrowseGentV2Harness {
       evidence,
       traceStepId: stepId,
     };
+  }
+
+  private async captureAfterMutationObservation(before: BrowserObservation): Promise<BrowserObservation> {
+    const after = await this.captureCurrentObservation();
+    if (after.refs.length === 0) {
+      // Empty captures are not limited to navigation-identity changes: SPA
+      // transitions and hydration races can return an empty shell on the same
+      // URL+title. One bounded wait-retry before giving up (W-A).
+      const recaptured = await this.captureCurrentObservation(true);
+      if (recaptured.refs.length > 0) return recaptured;
+    }
+    return after;
   }
 
   private async retryAfterDetachedMutation<TValue>(
@@ -642,11 +770,12 @@ export class BrowseGentV2Harness {
     }
   }
 
-  private async captureCurrentObservation(): Promise<BrowserObservation> {
+  private async captureCurrentObservation(retryEmptyNavigationCapture = false): Promise<BrowserObservation> {
     const observation = await this.observer.capture({
       sessionId: this.sessionId,
       generationId: this.generationId,
       page: this.session.currentPage(),
+      retryEmptyNavigationCapture,
     });
     const assigned = this.refService.assign(observation);
     this.current = assigned;

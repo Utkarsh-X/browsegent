@@ -39,7 +39,7 @@ export function buildV2ReleaseGateCommands(options: { platform?: NodeJS.Platform
         '--test',
         'tests\\integration\\v2\\observationRuntime.test.ts',
         'tests\\integration\\v2\\mvrRuntime.test.ts',
-        'tests\\integration\\v2\\v1Compatibility.test.ts',
+        'tests\\integration\\v2\\browseGentApi.test.ts',
         'tests\\integration\\v2\\publicAgentMode.test.ts',
       ],
     },

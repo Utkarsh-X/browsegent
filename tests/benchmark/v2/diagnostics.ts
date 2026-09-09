@@ -5,6 +5,8 @@ import type {
   BenchmarkAdapterResult,
   BenchmarkActionDiagnostics,
   BenchmarkDiagnostics,
+  BenchmarkEvidenceCoverageDiagnostics,
+  BenchmarkLatencyDiagnostics,
   BenchmarkPayloadDiagnostics,
   BenchmarkPayloadSizeSummary,
   BenchmarkProjectionOverlapDiagnostics,
@@ -61,6 +63,18 @@ async function collectTraceDiagnostics(tracePath: string): Promise<BenchmarkDiag
     diagnostics.workingSet = await summarizeWorkingSetDiagnostics(
       tracePath,
       plannerInputs,
+      diagnostics.warnings,
+    );
+    if (manifest.artifacts.latencyLedger) {
+      diagnostics.latency = await summarizeLatencyLedger(
+        tracePath,
+        manifest.artifacts.latencyLedger,
+        diagnostics.warnings,
+      );
+    }
+    diagnostics.evidenceCoverage = await summarizeEvidenceCoverage(
+      tracePath,
+      plannerInputs.length > 0 ? plannerInputs : compactInputs,
       diagnostics.warnings,
     );
     const plannerOutputs = manifest.artifacts.planner.filter(artifact => artifact.kind === 'planner_output');
@@ -207,6 +221,48 @@ async function summarizeWorkingSetDiagnostics(
     summary.maxDroppedRefs = Math.max(summary.maxDroppedRefs, dropped);
     mergeCounts(summary.selectedByReason, section(record, 'selectedByReason'));
     mergeCounts(summary.droppedByReason, section(record, 'droppedByReason'));
+  }
+
+  return summary;
+}
+
+async function summarizeEvidenceCoverage(
+  tracePath: string,
+  artifacts: TraceArtifact[],
+  warnings: string[],
+): Promise<BenchmarkEvidenceCoverageDiagnostics> {
+  const summary = emptyEvidenceCoverageDiagnostics();
+
+  for (const artifact of artifacts) {
+    const artifactPath = resolveArtifactPath(tracePath, artifact.path);
+    let input: unknown;
+    try {
+      input = JSON.parse(await readFile(artifactPath, 'utf8'));
+    } catch (error) {
+      warnings.push(`evidence_coverage_unavailable:${artifact.id}:${error instanceof Error ? error.message : String(error)}`);
+      continue;
+    }
+
+    const coverage = section(input, 'evidenceCoverage');
+    if (!coverage || typeof coverage !== 'object' || Array.isArray(coverage)) continue;
+    const record = coverage as Record<string, unknown>;
+    const status = record.status;
+    if (typeof status !== 'string' || status.length === 0) continue;
+
+    summary.plannerInputCount += 1;
+    summary.states[status] = (summary.states[status] ?? 0) + 1;
+
+    const requirements = record.requirements;
+    if (!Array.isArray(requirements)) continue;
+    for (const requirement of requirements) {
+      if (!requirement || typeof requirement !== 'object' || Array.isArray(requirement)) continue;
+      const requirementRecord = requirement as Record<string, unknown>;
+      const key = requirementRecord.key;
+      const requirementStatus = requirementRecord.status;
+      if (typeof key !== 'string' || typeof requirementStatus !== 'string') continue;
+      const counterKey = `${key}_${requirementStatus}`;
+      summary.requirementStatuses[counterKey] = (summary.requirementStatuses[counterKey] ?? 0) + 1;
+    }
   }
 
   return summary;
@@ -382,8 +438,60 @@ function emptyDiagnostics(): BenchmarkDiagnostics {
     },
     projectionOverlap: emptyProjectionOverlap(),
     workingSet: emptyWorkingSetDiagnostics(),
+    latency: emptyLatencyDiagnostics(),
+    evidenceCoverage: emptyEvidenceCoverageDiagnostics(),
     warnings: [],
   };
+}
+
+function emptyEvidenceCoverageDiagnostics(): BenchmarkEvidenceCoverageDiagnostics {
+  return {
+    plannerInputCount: 0,
+    states: {},
+    requirementStatuses: {},
+  };
+}
+
+function emptyLatencyDiagnostics(): BenchmarkLatencyDiagnostics {
+  return {
+    stepCount: 0,
+    totalMs: 0,
+    unaccountedMs: 0,
+    phaseTotals: {},
+  };
+}
+
+async function summarizeLatencyLedger(
+  tracePath: string,
+  artifact: TraceArtifact,
+  warnings: string[],
+): Promise<BenchmarkLatencyDiagnostics> {
+  try {
+    const payload = JSON.parse(await readFile(resolveArtifactPath(tracePath, artifact.path), 'utf8')) as Record<string, unknown>;
+    const totals = section(payload, 'totals');
+    if (!totals || typeof totals !== 'object' || Array.isArray(totals)) {
+      throw new Error('latency ledger has no totals object');
+    }
+
+    const totalRecord = totals as Record<string, unknown>;
+    const phaseTotals: Record<string, number> = {};
+    for (const [phase, value] of Object.entries(totalRecord)) {
+      if (phase === 'total' || phase === 'unaccounted') continue;
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        phaseTotals[phase] = value;
+      }
+    }
+
+    return {
+      stepCount: numberField(payload, 'stepCount'),
+      totalMs: numberField(totalRecord, 'total'),
+      unaccountedMs: numberField(totalRecord, 'unaccounted'),
+      phaseTotals,
+    };
+  } catch (error) {
+    warnings.push(`latency_ledger_unavailable:${artifact.id}:${error instanceof Error ? error.message : String(error)}`);
+    return emptyLatencyDiagnostics();
+  }
 }
 
 function emptyProjectionOverlap(): BenchmarkProjectionOverlapDiagnostics {

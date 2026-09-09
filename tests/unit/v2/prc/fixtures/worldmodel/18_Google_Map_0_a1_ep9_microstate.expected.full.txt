@@ -1,0 +1,122 @@
+Planner input:
+MISSION
+  goal: Find 5 beauty salons with ratings greater than 4.8 in Seattle, WA.
+
+STATE
+  page: "beauty salons in Seattle, WA - Google Maps" https://www.google.com/maps/search/beauty+salons+in+Seattle,+WA/@47.6120211,-122.4170668,12z?entry=ttu&g_ep=EgoyMDI2MDkwMi4wIKXMDSoASAFQAw%3D%3D
+  observation: obs_1_10 gen=1 refs=218
+  focus: v2ref_1130 highest_operational_score
+
+RECENT EVENTS
+  last: click v2ref_1130 -> failed target_blocked
+  transition: microstate urlChanged=false appeared=0 disappeared=0 weakened=0 preserved=218
+  history: 8 steps truncated
+
+GOAL PROGRESS
+  destination: typed:"Seattle"
+
+TASK PROGRESS
+  state: incomplete
+  destination: pending requested="Seattle"
+
+EVIDENCE SNAPSHOT
+  Position 1 | WAXON
+  Position 2 | Sponsored | Rating: 4.7
+  Position 3 | Sky Barbershop & Salon
+  Position 4 | Sponsored | Rating: 4.8 | Price: 30
+  Position 5 | Liana Hair Salon | Rating: 4.7
+  Rank #1 | Vann Studio Salon | Rating: 4.8 | refs=v2ref_104
+
+PROBLEMS
+  failure: v2ref_1130 target_blocked persistent retryable=false
+  dead_state: high_uncertainty
+  recovery: wrong_target_type blocked=click:v2ref_1130
+    BLOCKED: Do NOT repeat the blocked action. Try: avoid_repeating_blocked_action, find_dismiss_or_close_control, reobserve_current_surface, choose_alternative_ref, expand_or_reobserve.
+  uncertainty: high transition_strength:none, failure:target_blocked, dead_state_evidence, repeated_no_progress_transition:click:v2ref_1130:2, navigation_oscillation
+
+PLANNER SURFACE
+  Repeated radio controls (region_repeated_1)
+    [v2ref_1133] <button name="openHoursFilter" role="radio" tools="c,r" />
+    [v2ref_1137] <button name="openHoursFilter" role="radio" tools="c,r" />
+    [v2ref_1141] <button name="openHoursFilter" role="radio" tools="c,r" />
+  Page Elements
+    [v2ref_102] <button name="Get app" tools="c,r" />
+    [v2ref_103] <generic name="" tools="r" />
+    [v2ref_104] <generic name="" tools="r" />
+    [v2ref_107] <button name="Google apps" tools="c,r" />
+    [v2ref_111] <link name="Sign in" tools="c,r" />
+    [v2ref_1124] <button name="Back" tools="c,r" />
+    [v2ref_1125] <generic name="" tools="r" />
+    [v2ref_1126] <button name="Clear" tools="c,r" />
+    [v2ref_1127] <generic name="Clear" tools="r" />
+    [v2ref_1128] <button name="Done" tools="c,r" />
+    [v2ref_1129] <generic name="Done" tools="r" />
+    [v2ref_1130] <button name="Any rating " aria-haspopup="true" failed="target_blockedx1" tools="r" +chg />
+    [v2ref_1131] <generic name="Any rating " tools="r" />
+    [v2ref_1132] <generic name="" tools="r" />
+    [v2ref_1134] <generic name="Any time" tools="r" />
+    [v2ref_1136] <generic name="Any time" tools="r" />
+    [v2ref_1138] <generic name="Open now" tools="r" />
+    [v2ref_1140] <generic name="Open now" tools="r" />
+    [v2ref_1142] <generic name="Open 24 hours" tools="r" />
+    [v2ref_1144] <generic name="Open 24 hours" tools="r" />
+    [v2ref_1145] <generic name="Sign in" tools="r" />
+    [v2ref_115] <button name="Show Your Location" tools="c,r" />
+    [v2ref_117] <generic name="" tools="r" />
+    [v2ref_1174] <button name="Any rating" role="menuitemradio" tools="c,r" />
+    [v2ref_1175] <generic name="Any rating" tools="r" />
+    [v2ref_1176] <generic name="Any rating" tools="r" />
+    [v2ref_1177] <button name="2.0" role="menuitemradio" tools="c,r" />
+    [v2ref_1178] <generic name="2.0 stars" tools="r" />
+    [v2ref_1179] <generic name="2.0" tools="r" />
+    [v2ref_1186] <button name="2.5" role="menuitemradio" tools="c,r" />
+    [v2ref_1187] <generic name="2.5 stars" tools="r" />
+    [v2ref_1188] <generic name="2.5" tools="r" />
+    [v2ref_1195] <button name="3.0" role="menuitemradio" tools="c,r" />
+    [v2ref_1196] <generic name="3.0 stars" tools="r" />
+    [v2ref_1197] <generic name="3.0" tools="r" />
+    [v2ref_120] <generic name="ZoomShow sliderHide slider" tools="r" />
+    [v2ref_1204] <button name="3.5" role="menuitemradio" tools="c,r" />
+    [v2ref_1205] <generic name="3.5 stars" tools="r" />
+    [v2ref_1206] <generic name="3.5" tools="r" />
+    [v2ref_1213] <button name="4.0" role="menuitemradio" tools="c,r" />
+    [v2ref_1214] <generic name="4.0 stars" tools="r" />
+    [v2ref_1215] <generic name="4.0" tools="r" />
+    [v2ref_122] <button name="Zoom in" tools="c,r" />
+    [v2ref_1222] <button name="4.5" role="menuitemradio" tools="c,r" />
+    [v2ref_1223] <generic name="4.5 stars" tools="r" />
+    [v2ref_1224] <generic name="4.5" tools="r" />
+    [v2ref_1236] <generic name="Saved" tools="r" />
+    [v2ref_1237] <generic name="Saved" tools="r" />
+    [v2ref_1238] <generic name="Get app" tools="r" />
+    [v2ref_1239] <generic name="Get app" tools="r" />
+    [v2ref_124] <generic name="" tools="r" />
+    [v2ref_132] <button name="Zoom out" tools="c,r" />
+    [v2ref_134] <generic name="" tools="r" />
+    [v2ref_136] <generic name="" tools="r" />
+    [v2ref_137] <button name="Browse Street View images" tools="c,r" />
+    [v2ref_145] <generic name=" Layers" tools="r" />
+    [v2ref_146] <generic name="" tools="r" />
+    [v2ref_152] <button name="Layers" tools="c,r" />
+    [v2ref_190] <button name="India" tools="c,r" />
+    [v2ref_191] <button name="Terms" tools="c,r" />
+    [v2ref_192] <button name="Privacy" tools="c,r" />
+    [v2ref_193] <button name="Send Product Feedback" tools="c,r" />
+    [v2ref_29] <generic name="Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key." role="application" tools="r" />
+    [v2ref_689] <button name="Collapse side panel" tools="c,r" />
+    [v2ref_690] <generic name="" tools="r" />
+    [v2ref_719] <button name="2 km" tools="c,r" />
+    [v2ref_722] <input name="q" role="combobox" aria-haspopup="grid" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_91] <button name="Menu" tools="c,r" />
+    [v2ref_92] <generic name="" tools="r" />
+    [v2ref_94] <generic name="" tools="r" />
+    [v2ref_95] <button name="Saved" tools="c,r" />
+    [v2ref_96] <generic name="" tools="r" />
+    [v2ref_98] <generic name="" tools="r" />
+  NEW SINCE LAST ACTION: v2ref_1130 "Any rating "
+
+WORKING SET
+  mode: recover
+
+DECISION SIGNALS
+  suppressed: 142 generic_low_value=49 hidden_low_value=39

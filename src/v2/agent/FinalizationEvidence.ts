@@ -1,11 +1,15 @@
 import type { OperationalProjection, ProjectionItem } from '../brain1/projectionTypes';
 import { inferAnswerContract } from './AnswerContract';
+import type { PlannerEvidenceCoverage } from '../planner/types';
+import type { TaskEvidenceRead } from './TaskEvidenceCoverage';
+import type { EvidenceLedger } from './EvidenceLedger';
 
 export interface FinalizationEvidenceInput {
   goal: string;
   projection: OperationalProjection;
   lastSuccessfulEvidenceValue?: string;
   readEvidenceHistory?: ReadEvidenceHistoryEntry[];
+  evidenceCoverage?: PlannerEvidenceCoverage;
   maxReadEvidenceItems?: number;
   maxReadableItems?: number;
   maxTextLength?: number;
@@ -17,6 +21,29 @@ export interface ReadEvidenceHistoryEntry {
   text: string;
 }
 
+/**
+ * Answer validation uses text returned by explicit read operations, structured card relations, and bounded visible surface observations.
+ */
+export function buildAnswerValidationEvidence(
+  readEvidenceHistory: ReadEvidenceHistoryEntry[],
+  surfaceEvidenceReads?: TaskEvidenceRead[],
+  evidenceLedger?: EvidenceLedger,
+): string {
+  if (evidenceLedger) {
+    return evidenceLedger.buildValidationEvidenceText();
+  }
+
+  const toolTexts = readEvidenceHistory
+    .map(entry => entry.text.replace(/\s+/g, ' ').trim())
+    .filter(text => text.length > 0);
+
+  const surfaceTexts = (surfaceEvidenceReads ?? [])
+    .map(entry => entry.text.replace(/\s+/g, ' ').trim())
+    .filter(text => text.length > 0);
+
+  return [...toolTexts, ...surfaceTexts].join('\n');
+}
+
 export function buildFinalizationEvidence(input: FinalizationEvidenceInput): string {
   const maxReadableItems = input.maxReadableItems ?? 12;
   const maxReadEvidenceItems = input.maxReadEvidenceItems ?? 8;
@@ -24,7 +51,7 @@ export function buildFinalizationEvidence(input: FinalizationEvidenceInput): str
   const sections: string[] = [];
 
   if (input.lastSuccessfulEvidenceValue?.trim()) {
-    sections.push(`Last successful evidence: ${compactText(input.lastSuccessfulEvidenceValue, maxTextLength)}`);
+    sections.push(`Last successful action preview: ${compactText(input.lastSuccessfulEvidenceValue, maxTextLength)}`);
   }
 
   const readEvidence = (input.readEvidenceHistory ?? [])
@@ -38,6 +65,15 @@ export function buildFinalizationEvidence(input: FinalizationEvidenceInput): str
         const ref = entry.targetRef ? ` ${entry.targetRef}` : '';
         return `- read_${index + 1} [${entry.kind}${ref}]: ${compactText(entry.text, maxTextLength)}`;
       }),
+    ].join('\n'));
+  }
+
+  if (input.evidenceCoverage && input.evidenceCoverage.requirements.length > 0) {
+    sections.push([
+      `Evidence coverage: ${input.evidenceCoverage.status}; reads=${input.evidenceCoverage.readCount}`,
+      ...input.evidenceCoverage.requirements.map(requirement =>
+        `- ${requirement.key}: ${requirement.status}${requirement.supportingReadIndexes.length > 0 ? ` (reads ${requirement.supportingReadIndexes.join(', ')})` : ''}`,
+      ),
     ].join('\n'));
   }
 

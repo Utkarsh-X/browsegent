@@ -64,7 +64,25 @@ def normalize_gemini_model_name(model: Any) -> str:
     return value.removeprefix("gemini/")
 
 
-class RateLimitedChatGoogle:
+import re
+
+def extract_json_block(text: str) -> str:
+    text = text.strip()
+    if text.startswith("{") and text.endswith("}"):
+        return text
+    # Match markdown code block ```json ... ```
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if match:
+        return match.group(1)
+    # Match outermost JSON object { ... }
+    first_brace = text.find("{")
+    last_brace = text.rfind("}")
+    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+        return text[first_brace:last_brace + 1]
+    return text
+
+
+class RateLimitedChat:
     def __init__(self, inner: Any, min_interval_ms: int | None) -> None:
         self._inner = inner
         self._min_interval_seconds = max(0, int(min_interval_ms or 0)) / 1000
@@ -85,15 +103,85 @@ class RateLimitedChatGoogle:
                     await asyncio.sleep(wait_seconds)
                     self.rate_limit_wait_ms += int(wait_seconds * 1000)
             self._last_request_started_at = time.monotonic()
-        return await self._inner.ainvoke(*args, **kwargs)
+        
+        # Retry loop for upstream rate limits / transient errors
+        retries = 5
+        for attempt in range(1, retries + 1):
+            try:
+                result = await self._inner.ainvoke(*args, **kwargs)
+                if hasattr(result, "content") and isinstance(result.content, str):
+                    result.content = extract_json_block(result.content)
+                return result
+            except Exception as e:
+                err_str = str(e).lower()
+                if ("429" in err_str or "rate" in err_str or "temporarily" in err_str or "upstream" in err_str) and attempt < retries:
+                    wait = 2 ** attempt
+                    await asyncio.sleep(wait)
+                    self.rate_limit_wait_ms += wait * 1000
+                    continue
+                raise
+
+
+RateLimitedChatGoogle = RateLimitedChat
+
+
+from browser_use.llm.openai.chat import ChatOpenAI, ChatInvokeCompletion
+
+
+class OpenRouterChat(ChatOpenAI):
+    async def ainvoke(
+        self, messages: list[Any], output_format: type[Any] | None = None, **kwargs: Any
+    ) -> Any:
+        if output_format is not None:
+            # Get raw text response
+            raw_res = await super().ainvoke(messages, output_format=None, **kwargs)
+            raw_text = raw_res.completion if isinstance(raw_res.completion, str) else ""
+            json_str = extract_json_block(raw_text)
+            try:
+                parsed = output_format.model_validate_json(json_str)
+                return ChatInvokeCompletion(
+                    completion=parsed,
+                    usage=raw_res.usage,
+                    stop_reason=raw_res.stop_reason,
+                )
+            except Exception:
+                return await super().ainvoke(messages, output_format=output_format, **kwargs)
+        return await super().ainvoke(messages, output_format=output_format, **kwargs)
+
+
+def create_llm(model_raw: Any) -> Any:
+    model_str = str(model_raw or "").strip()
+    openrouter_key = os.environ.get("OPENROUTER_API_KEY")
+
+    if model_str.startswith("openrouter/") or model_str.startswith("stealth/") or (openrouter_key and not model_str.startswith("gemini/")):
+        clean_model = model_str.removeprefix("openrouter/")
+        return OpenRouterChat(
+            model=clean_model,
+            base_url="https://openrouter.ai/api/v1",
+            api_key=openrouter_key or os.environ.get("OPENAI_API_KEY"),
+            temperature=0.1,
+            dont_force_structured_output=True,
+            add_schema_to_system_prompt=True,
+            default_headers={"HTTP-Referer": "https://browsegent.ai", "X-Title": "BrowseGent Benchmark"},
+        )
+
+    if model_str.startswith("openai/") or model_str.startswith("gpt"):
+        clean_model = model_str.removeprefix("openai/")
+        return ChatOpenAI(model=clean_model)
+
+    from browser_use import ChatGoogle
+    return ChatGoogle(model=normalize_gemini_model_name(model_str))
 
 
 async def run_browser_use(input_path: Path, output_path: Path) -> int:
     payload = load_json(input_path)
     try:
-        os.environ.setdefault("BROWSER_USE_CONFIG_DIR", str(output_path.parent / "browser-use-config"))
+        shared_config_dir = Path.home() / ".browser_use_benchmark_config"
+        shared_config_dir.mkdir(parents=True, exist_ok=True)
+        os.environ.setdefault("BROWSER_USE_CONFIG_DIR", str(shared_config_dir))
 
-        from browser_use import Agent, Browser, ChatGoogle
+        from browser_use import Agent, Browser
+        from browser_use.agent.views import AgentSettings
 
         browser = Browser(
             headless=not bool(payload.get("headed")),
@@ -101,11 +189,12 @@ async def run_browser_use(input_path: Path, output_path: Path) -> int:
         )
         try:
             task = f"Open {payload['url']} and complete this task: {payload['goal']}"
-            llm = RateLimitedChatGoogle(
-                ChatGoogle(model=normalize_gemini_model_name(payload.get("model"))),
+            llm = RateLimitedChat(
+                create_llm(payload.get("model")),
                 payload.get("requestMinIntervalMs"),
             )
-            agent = Agent(task=task, llm=llm, browser=browser)
+            settings = AgentSettings(llm_timeout=150)
+            agent = Agent(task=task, llm=llm, browser=browser, settings=settings)
             history = await agent.run(max_steps=int(payload.get("maxSteps") or 8))
             value = extract_final_result(history)
             step_count = count_history_steps(history)

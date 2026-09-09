@@ -44,21 +44,54 @@ def run_alumnium(input_path: Path, output_path: Path) -> int:
     t0 = time.time()
     try:
         from alumnium import Alumni
+        import alumnium.clients.http_client as hc
         from playwright.sync_api import sync_playwright
 
-        model_name = normalize_gemini_model_name(payload.get("model"))
+        # Increase default 120s timeout for heavy reasoning models
+        import requests
+        _orig_req_post = requests.post
+        _orig_req_get = requests.get
 
-        # Configure Alumnium for Google Gemini
-        os.environ["ALUMNIUM_MODEL"] = f"google/{model_name}"
-        os.environ["GOOGLE_API_KEY"] = resolve_google_api_key()
+        def _patched_post(*args, **kwargs):
+            if "timeout" in kwargs and (kwargs["timeout"] is None or kwargs["timeout"] < 300):
+                kwargs["timeout"] = 300
+            elif "timeout" not in kwargs:
+                kwargs["timeout"] = 300
+            return _orig_req_post(*args, **kwargs)
+
+        def _patched_get(*args, **kwargs):
+            if "timeout" in kwargs and (kwargs["timeout"] is None or kwargs["timeout"] < 300):
+                kwargs["timeout"] = 300
+            elif "timeout" not in kwargs:
+                kwargs["timeout"] = 300
+            return _orig_req_get(*args, **kwargs)
+
+        requests.post = _patched_post
+        requests.get = _patched_get
+        hc.post = _patched_post
+        hc.get = _patched_get
+
+        model_raw = str(payload.get("model") or "").strip()
+        openrouter_key = os.environ.get("OPENROUTER_API_KEY")
+
+        if model_raw.startswith("openrouter/") or model_raw.startswith("stealth/") or (openrouter_key and not model_raw.startswith("gemini/")):
+            clean_model = model_raw.removeprefix("openrouter/")
+            os.environ["ALUMNIUM_MODEL"] = f"openai/{clean_model}"
+            os.environ["OPENAI_API_KEY"] = openrouter_key or os.environ.get("OPENAI_API_KEY", "")
+            os.environ["OPENAI_BASE_URL"] = "https://openrouter.ai/api/v1"
+            os.environ["OPENAI_API_BASE"] = "https://openrouter.ai/api/v1"
+        else:
+            model_name = normalize_gemini_model_name(model_raw)
+            os.environ["ALUMNIUM_MODEL"] = f"google/{model_name}"
+            os.environ["GOOGLE_API_KEY"] = resolve_google_api_key()
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=not bool(payload.get("headed")))
             context = browser.new_context(viewport={"width": 1280, "height": 900})
             page = context.new_page()
 
-            # Navigate to the task's starting URL
-            page.goto(payload["url"])
+            # Navigate to the task's starting URL with robust domcontentloaded wait
+            page.goto(payload["url"], wait_until="domcontentloaded", timeout=60000)
 
             # Initialize Alumnium — single arg, the Playwright page
             al = Alumni(page)

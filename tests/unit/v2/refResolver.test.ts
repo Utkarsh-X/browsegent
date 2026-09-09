@@ -383,3 +383,48 @@ test('RefResolver rejects a single overflow candidate with only weak visibility 
     },
   );
 });
+
+test('RefResolver uses an exact semantic fallback when a broad selector overflows', async () => {
+  const resolver = new RefResolver();
+  const semanticLocator = {
+    count: async () => 1,
+    nth: () => ({
+      evaluate: async () => ({
+        score: 165,
+        identityKey: 'button|done',
+      }),
+    }),
+    evaluateAll: async () => [0],
+  };
+  const fakePage = {
+    locator: () => ({
+      count: async () => 6,
+      nth: (index: number) => ({
+        evaluate: async () => ({
+          score: 130,
+          identityKey: `button|unrelated_${index}`,
+          diagnostics: {
+            tagName: 'button',
+            role: 'button',
+            accessibleName: 'unrelated',
+            nameMatched: false,
+            textMatched: false,
+          },
+        }),
+      }),
+    }),
+    getByRole: () => semanticLocator,
+  } as never;
+
+  const result = await resolver.resolve(makeRef({
+    selectorCandidates: ['button[type="button"]'],
+    role: 'button',
+    name: 'Done',
+    text: 'Done',
+    nthRoleName: 1,
+  }), fakePage);
+
+  assert.equal(result.locator, semanticLocator);
+  assert.equal(result.resolution, 'semantic_selector');
+  assert.equal(result.diagnostics?.reason, 'resolved_exact_accessible_name');
+});

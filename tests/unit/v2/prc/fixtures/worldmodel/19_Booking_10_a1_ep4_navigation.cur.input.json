@@ -1,0 +1,3324 @@
+{
+  "continuity": {
+    "generationId": 2,
+    "latestTransition": {
+      "strength": "strong",
+      "transitionClass": "hard_reset",
+      "transitionId": "transition_obs_1_3_obs_2_4"
+    },
+    "observationId": "obs_2_4",
+    "presentRefCount": 1076,
+    "refCount": 5016,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_2_4_2",
+    "transitionCount": 2,
+    "url": "https://www.booking.com/index.hi.html"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_21"
+    },
+    "generationId": 2,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_21"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_39"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_53"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_60"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_46"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_23"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_7"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_32"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_44"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_58"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_65"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_51"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_14"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_4"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_67"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_25"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_37"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_4446"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_4456"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_5017"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_5019"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_5027"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_5029"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_5071"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_30"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_4443"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_5021"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_4441"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_4442"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_4447"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_4448"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_4457"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_4458"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_4459"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_4460"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_4461"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_4462"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_4463"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_4464"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_4465"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_4466"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_4467"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_4468"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_4469"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_4470"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_4471"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_4472"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_4473"
+      },
+      {
+        "rank": 49,
+        "refId": "v2ref_4474"
+      },
+      {
+        "rank": 50,
+        "refId": "v2ref_4475"
+      },
+      {
+        "rank": 51,
+        "refId": "v2ref_4476"
+      },
+      {
+        "rank": 52,
+        "refId": "v2ref_4477"
+      },
+      {
+        "rank": 53,
+        "refId": "v2ref_4478"
+      },
+      {
+        "rank": 54,
+        "refId": "v2ref_4479"
+      },
+      {
+        "rank": 55,
+        "refId": "v2ref_4480"
+      },
+      {
+        "rank": 56,
+        "refId": "v2ref_4481"
+      },
+      {
+        "rank": 57,
+        "refId": "v2ref_4482"
+      },
+      {
+        "rank": 58,
+        "refId": "v2ref_4483"
+      },
+      {
+        "rank": 59,
+        "refId": "v2ref_4484"
+      },
+      {
+        "rank": 60,
+        "refId": "v2ref_4485"
+      },
+      {
+        "rank": 61,
+        "refId": "v2ref_4486"
+      },
+      {
+        "rank": 62,
+        "refId": "v2ref_4487"
+      },
+      {
+        "rank": 63,
+        "refId": "v2ref_4488"
+      },
+      {
+        "rank": 64,
+        "refId": "v2ref_4489"
+      },
+      {
+        "rank": 65,
+        "refId": "v2ref_4490"
+      },
+      {
+        "rank": 66,
+        "refId": "v2ref_4491"
+      },
+      {
+        "rank": 67,
+        "refId": "v2ref_4492"
+      },
+      {
+        "rank": 68,
+        "refId": "v2ref_4493"
+      },
+      {
+        "rank": 69,
+        "refId": "v2ref_4494"
+      },
+      {
+        "rank": 70,
+        "refId": "v2ref_4495"
+      },
+      {
+        "rank": 71,
+        "refId": "v2ref_4496"
+      },
+      {
+        "rank": 72,
+        "refId": "v2ref_4497"
+      },
+      {
+        "rank": 73,
+        "refId": "v2ref_4498"
+      },
+      {
+        "rank": 74,
+        "refId": "v2ref_4499"
+      },
+      {
+        "rank": 75,
+        "refId": "v2ref_4500"
+      },
+      {
+        "rank": 76,
+        "refId": "v2ref_4501"
+      },
+      {
+        "rank": 77,
+        "refId": "v2ref_4502"
+      },
+      {
+        "rank": 78,
+        "refId": "v2ref_4503"
+      },
+      {
+        "rank": 79,
+        "refId": "v2ref_4504"
+      },
+      {
+        "rank": 80,
+        "refId": "v2ref_4505"
+      }
+    ],
+    "navigation": [
+      {
+        "rank": 1,
+        "refId": "v2ref_21"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_23"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_14"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_4"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_5017"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_5019"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_5027"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_5029"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_5071"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_5021"
+      }
+    ],
+    "observationId": "obs_2_4",
+    "page": {
+      "title": "Booking.com | आधिकारिक साइट | सबसे बेहतरीन होटल, फ़्लाइटें, किराये की कार और प्रॉपर्टी",
+      "url": "https://www.booking.com/index.hi.html"
+    },
+    "projectionId": "projection_obs_2_4",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_21"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_39"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_53"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_60"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_46"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_23"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_7"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_32"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_44"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_58"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_65"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_51"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_14"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_4"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_67"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_25"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_37"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_4446"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_4456"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_5017"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_5019"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_5027"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_5029"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_5071"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_30"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_4443"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_5021"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_4441"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_4442"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_4447"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_4448"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_4457"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_4458"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_4459"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_4460"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_4461"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_4462"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_4463"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_4464"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_4465"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_4466"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_4467"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_4468"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_4469"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_4470"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_4471"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_4472"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_4473"
+      }
+    ],
+    "refs": {
+      "v2ref_14": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "link",
+        "name": "ग्राहक सहायता",
+        "refId": "v2ref_14",
+        "role": "link",
+        "score": 95,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_21": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "link",
+        "name": "अकाउंट रजिस्टर करें",
+        "refId": "v2ref_21",
+        "role": "link",
+        "score": 101,
+        "state": "weakened",
+        "text": "रजिस्टर करें",
+        "visibility": "visible"
+      },
+      "v2ref_23": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "link",
+        "name": "साइन इन",
+        "refId": "v2ref_23",
+        "role": "link",
+        "score": 98,
+        "state": "weakened",
+        "text": "साइन इन करें",
+        "visibility": "visible"
+      },
+      "v2ref_25": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "स्टे",
+        "refId": "v2ref_25",
+        "role": "menuitem",
+        "score": 93,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_30": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "generic",
+        "name": "स्टे",
+        "refId": "v2ref_30",
+        "score": 89,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_32": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "फ़्लाइट",
+        "refId": "v2ref_32",
+        "role": "menuitem",
+        "score": 97,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_37": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "generic",
+        "name": "फ़्लाइट",
+        "refId": "v2ref_37",
+        "score": 93,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_39": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "फ़्लाइट + होटल",
+        "refId": "v2ref_39",
+        "role": "menuitem",
+        "score": 101,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_4": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "link",
+        "name": "Booking.com",
+        "refId": "v2ref_4",
+        "role": "link",
+        "score": 95,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_44": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "generic",
+        "name": "फ़्लाइट + होटल",
+        "refId": "v2ref_44",
+        "score": 97,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_4441": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "साइन इन करें",
+        "refId": "v2ref_4441",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4442": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "रजिस्टर करें",
+        "refId": "v2ref_4442",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4443": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "घरेलू शहर",
+        "refId": "v2ref_4443",
+        "role": "button",
+        "score": 89,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4446": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "अंतरराष्ट्रीय शहर",
+        "refId": "v2ref_4446",
+        "role": "button",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4447": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "अंतरराष्ट्रीय शहर",
+        "refId": "v2ref_4447",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4448": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "अंतरराष्ट्रीय शहर",
+        "refId": "v2ref_4448",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4456": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "स्टे के लिए जगहें",
+        "refId": "v2ref_4456",
+        "role": "button",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4457": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "स्टे के लिए जगहें",
+        "refId": "v2ref_4457",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4458": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "स्टे के लिए जगहें",
+        "refId": "v2ref_4458",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4459": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Ooty में होटल",
+        "refId": "v2ref_4459",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4460": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Ooty में होटल",
+        "refId": "v2ref_4460",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4461": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Ooty में होटल",
+        "refId": "v2ref_4461",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4462": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Ooty में होटल",
+        "refId": "v2ref_4462",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4463": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "हैदराबाद में होटल",
+        "refId": "v2ref_4463",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4464": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "हैदराबाद में होटल",
+        "refId": "v2ref_4464",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4465": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "हैदराबाद में होटल",
+        "refId": "v2ref_4465",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4466": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "हैदराबाद में होटल",
+        "refId": "v2ref_4466",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4467": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "जयपुर में होटल",
+        "refId": "v2ref_4467",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4468": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "जयपुर में होटल",
+        "refId": "v2ref_4468",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4469": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "जयपुर में होटल",
+        "refId": "v2ref_4469",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4470": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "जयपुर में होटल",
+        "refId": "v2ref_4470",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4471": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Puri में होटल",
+        "refId": "v2ref_4471",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4472": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Puri में होटल",
+        "refId": "v2ref_4472",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4473": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Puri में होटल",
+        "refId": "v2ref_4473",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4474": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Puri में होटल",
+        "refId": "v2ref_4474",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4475": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Cochin में होटल",
+        "refId": "v2ref_4475",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4476": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Cochin में होटल",
+        "refId": "v2ref_4476",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4477": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Cochin में होटल",
+        "refId": "v2ref_4477",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4478": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Cochin में होटल",
+        "refId": "v2ref_4478",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4479": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Munnar में होटल",
+        "refId": "v2ref_4479",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4480": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Munnar में होटल",
+        "refId": "v2ref_4480",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4481": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Munnar में होटल",
+        "refId": "v2ref_4481",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4482": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Munnar में होटल",
+        "refId": "v2ref_4482",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4483": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Mumbai में होटल",
+        "refId": "v2ref_4483",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4484": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Mumbai में होटल",
+        "refId": "v2ref_4484",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4485": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Mumbai में होटल",
+        "refId": "v2ref_4485",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4486": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Mumbai में होटल",
+        "refId": "v2ref_4486",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4487": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "बंगलुरू में होटल",
+        "refId": "v2ref_4487",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4488": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "बंगलुरू में होटल",
+        "refId": "v2ref_4488",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4489": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "बंगलुरू में होटल",
+        "refId": "v2ref_4489",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4490": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "बंगलुरू में होटल",
+        "refId": "v2ref_4490",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4491": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Udaipur में होटल",
+        "refId": "v2ref_4491",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4492": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Udaipur में होटल",
+        "refId": "v2ref_4492",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4493": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Udaipur में होटल",
+        "refId": "v2ref_4493",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4494": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Udaipur में होटल",
+        "refId": "v2ref_4494",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4495": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "वाराणसी में होटल",
+        "refId": "v2ref_4495",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4496": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "वाराणसी में होटल",
+        "refId": "v2ref_4496",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4497": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "वाराणसी में होटल",
+        "refId": "v2ref_4497",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4498": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "वाराणसी में होटल",
+        "refId": "v2ref_4498",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4499": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Srinagar में होटल",
+        "refId": "v2ref_4499",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4500": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Srinagar में होटल",
+        "refId": "v2ref_4500",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4501": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Srinagar में होटल",
+        "refId": "v2ref_4501",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4502": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Srinagar में होटल",
+        "refId": "v2ref_4502",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4503": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Rishīkesh में होटल",
+        "refId": "v2ref_4503",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4504": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Rishīkesh में होटल",
+        "refId": "v2ref_4504",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4505": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Rishīkesh में होटल",
+        "refId": "v2ref_4505",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_46": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "कार रेंटल",
+        "refId": "v2ref_46",
+        "role": "menuitem",
+        "score": 100,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_5017": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "हॉलिडे होम",
+        "refId": "v2ref_5017",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_5019": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "अपार्टमेंट",
+        "refId": "v2ref_5019",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_5021": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "रिज़ॉर्ट",
+        "refId": "v2ref_5021",
+        "role": "link",
+        "score": 87,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_5027": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "बेड एंड ब्रेकफ़ास्ट",
+        "refId": "v2ref_5027",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_5029": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "गेस्ट हाउस",
+        "refId": "v2ref_5029",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_5071": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "अपनी प्रॉपर्टी रजिस्टर करें",
+        "refId": "v2ref_5071",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_51": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "generic",
+        "name": "कार रेंटल",
+        "refId": "v2ref_51",
+        "score": 96,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_53": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "खास जगहें और गतिविधियां",
+        "refId": "v2ref_53",
+        "role": "menuitem",
+        "score": 101,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_58": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "generic",
+        "name": "खास जगहें और गतिविधियां",
+        "refId": "v2ref_58",
+        "score": 97,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_60": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "एयरपोर्ट टैक्सी",
+        "refId": "v2ref_60",
+        "role": "menuitem",
+        "score": 101,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_65": {
+        "actionability": "ready",
+        "confidence": 0.55,
+        "kind": "generic",
+        "name": "एयरपोर्ट टैक्सी",
+        "refId": "v2ref_65",
+        "score": 97,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_67": {
+        "actionability": "ready",
+        "ariaAutocomplete": "list",
+        "ariaHasPopup": "listbox",
+        "confidence": 0.55,
+        "kind": "input",
+        "name": "जगह डालें",
+        "placeholder": "आप कहां जा रहे हैं?",
+        "refId": "v2ref_67",
+        "role": "combobox",
+        "score": 94,
+        "state": "weakened",
+        "visibility": "visible"
+      },
+      "v2ref_7": {
+        "actionability": "ready",
+        "ariaHasPopup": "dialog",
+        "confidence": 0.55,
+        "kind": "button",
+        "name": "भारतीय रुपया में कीमतें, INR",
+        "refId": "v2ref_7",
+        "role": "button",
+        "score": 98,
+        "state": "weakened",
+        "text": "INR",
+        "visibility": "visible"
+      }
+    },
+    "regions": [],
+    "stats": {
+      "interactionCount": 80,
+      "navigationCount": 10,
+      "readableCount": 80,
+      "regionCount": 0
+    },
+    "warnings": []
+  },
+  "episodeId": "episode_4_obs_2_4",
+  "evidenceCoverage": {
+    "contractKind": "unknown",
+    "readCount": 59,
+    "requirements": [],
+    "status": "ready"
+  },
+  "goal": "Find a well-reviewed hotel in Paris with available bookings suitable for a couple (2 adults) on Valentine's Day week, February 14-21, 2027, that offers free cancellation options.",
+  "goalProgress": {
+    "entries": [
+      {
+        "key": "destination",
+        "state": "NOT_SET"
+      },
+      {
+        "key": "dates",
+        "state": "NOT_SET"
+      },
+      {
+        "key": "guests",
+        "state": "unverified"
+      },
+      {
+        "key": "free cancellation",
+        "state": "unverified"
+      },
+      {
+        "key": "well-reviewed",
+        "state": "unverified"
+      }
+    ],
+    "focus": "destination"
+  },
+  "lastResult": {
+    "effect": "local",
+    "evidence": {
+      "strength": "strong",
+      "transitionClass": "hard_reset"
+    },
+    "kind": "navigate",
+    "success": true,
+    "traceStepId": "step_3",
+    "valuePreview": "https://www.booking.com/index.hi.html"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_2",
+        "beforeObservationId": "obs_1_1",
+        "errorCode": "target_blocked",
+        "index": 0,
+        "kind": "type",
+        "status": "failed",
+        "stepId": "step_1",
+        "strength": "moderate",
+        "targetRef": "v2ref_67",
+        "transitionClass": "structural_local",
+        "value": "Paris"
+      },
+      {
+        "afterObservationId": "obs_1_3",
+        "beforeObservationId": "obs_1_2",
+        "index": 1,
+        "kind": "search_page",
+        "status": "completed",
+        "stepId": "step_2"
+      },
+      {
+        "afterObservationId": "obs_2_4",
+        "beforeObservationId": "obs_1_3",
+        "index": 2,
+        "kind": "navigate",
+        "status": "completed",
+        "stepId": "step_3",
+        "strength": "strong",
+        "transitionClass": "hard_reset",
+        "value": "https://www.booking.com/index.hi.html"
+      }
+    ],
+    "totalSteps": 3,
+    "truncated": false
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 20619,
+    "totalPlannerInputBytes": 53761,
+    "workingSetBytes": 29795
+  },
+  "taskProgress": {
+    "items": [
+      {
+        "key": "destination",
+        "requested": "Paris",
+        "status": "pending"
+      },
+      {
+        "key": "date_range",
+        "requested": "February 14-21, 2027",
+        "status": "pending"
+      },
+      {
+        "key": "traveler_count",
+        "requested": "2 adults",
+        "status": "pending"
+      },
+      {
+        "key": "filter:free_cancellation",
+        "requested": "free cancellation",
+        "status": "pending"
+      }
+    ],
+    "status": "incomplete"
+  },
+  "transition": {
+    "afterObservationId": "obs_2_4",
+    "beforeObservationId": "obs_1_3",
+    "generationChanged": true,
+    "notes": [
+      "generation_changed",
+      "refs_appeared:694",
+      "refs_disappeared:3281",
+      "refs_weakened:280",
+      "ref_changed:v2ref_1",
+      "ref_changed:v2ref_2",
+      "ref_changed:v2ref_3",
+      "ref_changed:v2ref_4"
+    ],
+    "refChangeCounts": {
+      "appeared": 694,
+      "disappeared": 3281,
+      "preserved": 102,
+      "weakened": 280
+    },
+    "strength": "strong",
+    "transitionClass": "hard_reset",
+    "urlChanged": false
+  },
+  "uncertainty": {
+    "level": "medium",
+    "signals": [
+      "low_confidence_refs:280",
+      "low_confidence_ref:v2ref_21",
+      "low_confidence_ref:v2ref_39",
+      "low_confidence_ref:v2ref_53",
+      "low_confidence_ref:v2ref_60",
+      "weakened_refs:280",
+      "transition_class:hard_reset",
+      "no_op_navigation"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_21",
+        "v2ref_39",
+        "v2ref_53",
+        "v2ref_60",
+        "v2ref_46",
+        "v2ref_23",
+        "v2ref_7",
+        "v2ref_32",
+        "v2ref_14",
+        "v2ref_4",
+        "v2ref_67",
+        "v2ref_25",
+        "v2ref_4446",
+        "v2ref_4456",
+        "v2ref_5017",
+        "v2ref_5019",
+        "v2ref_5027",
+        "v2ref_5029",
+        "v2ref_5071",
+        "v2ref_4443",
+        "v2ref_5021"
+      ],
+      "readableRefs": [
+        "v2ref_21",
+        "v2ref_39",
+        "v2ref_53",
+        "v2ref_60",
+        "v2ref_46",
+        "v2ref_23",
+        "v2ref_7",
+        "v2ref_32",
+        "v2ref_44",
+        "v2ref_58",
+        "v2ref_65",
+        "v2ref_51",
+        "v2ref_14",
+        "v2ref_4",
+        "v2ref_67",
+        "v2ref_25",
+        "v2ref_37",
+        "v2ref_4446",
+        "v2ref_4456",
+        "v2ref_5017",
+        "v2ref_5019",
+        "v2ref_5027",
+        "v2ref_5029",
+        "v2ref_5071",
+        "v2ref_30",
+        "v2ref_4443",
+        "v2ref_5021",
+        "v2ref_4441",
+        "v2ref_4442",
+        "v2ref_4447",
+        "v2ref_4448",
+        "v2ref_4457",
+        "v2ref_4458",
+        "v2ref_4459",
+        "v2ref_4460",
+        "v2ref_4461",
+        "v2ref_4462",
+        "v2ref_4463",
+        "v2ref_4464",
+        "v2ref_4465",
+        "v2ref_4466",
+        "v2ref_4467",
+        "v2ref_4468",
+        "v2ref_4469",
+        "v2ref_4470",
+        "v2ref_4471",
+        "v2ref_4472",
+        "v2ref_4473",
+        "v2ref_4474",
+        "v2ref_4475",
+        "v2ref_4476",
+        "v2ref_4477",
+        "v2ref_4478",
+        "v2ref_4479",
+        "v2ref_4480",
+        "v2ref_4481",
+        "v2ref_4482",
+        "v2ref_4483",
+        "v2ref_4484",
+        "v2ref_4485",
+        "v2ref_4486",
+        "v2ref_4487",
+        "v2ref_4488",
+        "v2ref_4489",
+        "v2ref_4490",
+        "v2ref_4491",
+        "v2ref_4492",
+        "v2ref_4493",
+        "v2ref_4494",
+        "v2ref_4495",
+        "v2ref_4496",
+        "v2ref_4497",
+        "v2ref_4498",
+        "v2ref_4499",
+        "v2ref_4500",
+        "v2ref_4501",
+        "v2ref_4502",
+        "v2ref_4503",
+        "v2ref_4504",
+        "v2ref_4505"
+      ],
+      "selectableRefs": [],
+      "typeableRefs": [
+        "v2ref_67"
+      ]
+    },
+    "changedRefs": {
+      "appearedCount": 694,
+      "omittedCount": 958,
+      "preservedCount": 102,
+      "topRefs": [
+        {
+          "kind": "button",
+          "name": "अंतरराष्ट्रीय शहर",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_4446",
+          "role": "button",
+          "score": 250,
+          "text": "अंतरराष्ट्रीय शहर"
+        },
+        {
+          "kind": "button",
+          "name": "स्टे के लिए जगहें",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_4456",
+          "role": "button",
+          "score": 250,
+          "text": "स्टे के लिए जगहें"
+        },
+        {
+          "kind": "link",
+          "name": "हॉलिडे होम",
+          "reasons": [
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_5017",
+          "role": "link",
+          "score": 250,
+          "text": "हॉलिडे होम"
+        },
+        {
+          "kind": "link",
+          "name": "अपार्टमेंट",
+          "reasons": [
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_5019",
+          "role": "link",
+          "score": 250,
+          "text": "अपार्टमेंट"
+        },
+        {
+          "kind": "link",
+          "name": "बेड एंड ब्रेकफ़ास्ट",
+          "reasons": [
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_5027",
+          "role": "link",
+          "score": 250,
+          "text": "बेड एंड ब्रेकफ़ास्ट"
+        },
+        {
+          "kind": "link",
+          "name": "गेस्ट हाउस",
+          "reasons": [
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_5029",
+          "role": "link",
+          "score": 250,
+          "text": "गेस्ट हाउस"
+        },
+        {
+          "kind": "link",
+          "name": "अपनी प्रॉपर्टी रजिस्टर करें",
+          "reasons": [
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_5071",
+          "role": "link",
+          "score": 250,
+          "text": "अपनी प्रॉपर्टी रजिस्टर करें"
+        },
+        {
+          "kind": "button",
+          "name": "घरेलू शहर",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_4443",
+          "role": "button",
+          "score": 249,
+          "text": "घरेलू शहर"
+        },
+        {
+          "kind": "link",
+          "name": "रिज़ॉर्ट",
+          "reasons": [
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_5021",
+          "role": "link",
+          "score": 247,
+          "text": "रिज़ॉर्ट"
+        },
+        {
+          "kind": "generic",
+          "name": "साइन इन करें",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_4441",
+          "score": 246,
+          "text": "साइन इन करें"
+        },
+        {
+          "kind": "generic",
+          "name": "रजिस्टर करें",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_4442",
+          "score": 246,
+          "text": "रजिस्टर करें"
+        },
+        {
+          "kind": "generic",
+          "name": "अंतरराष्ट्रीय शहर",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_4447",
+          "score": 246,
+          "text": "अंतरराष्ट्रीय शहर"
+        },
+        {
+          "kind": "generic",
+          "name": "अंतरराष्ट्रीय शहर",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_4448",
+          "score": 246,
+          "text": "अंतरराष्ट्रीय शहर"
+        },
+        {
+          "kind": "generic",
+          "name": "स्टे के लिए जगहें",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_4457",
+          "score": 246,
+          "text": "स्टे के लिए जगहें"
+        },
+        {
+          "kind": "generic",
+          "name": "स्टे के लिए जगहें",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_4458",
+          "score": 246,
+          "text": "स्टे के लिए जगहें"
+        },
+        {
+          "kind": "generic",
+          "name": "Ooty में होटल",
+          "reasons": [
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_4459",
+          "score": 246,
+          "text": "Ooty में होटल"
+        }
+      ],
+      "weakenedCount": 280
+    },
+    "deltaRefs": {
+      "appeared": [
+        "v2ref_4446",
+        "v2ref_4456",
+        "v2ref_5017",
+        "v2ref_5019",
+        "v2ref_5027",
+        "v2ref_5029",
+        "v2ref_5071",
+        "v2ref_4443"
+      ],
+      "changed": []
+    },
+    "failedRefs": [],
+    "mode": "verify",
+    "modeReason": "recent_value_evidence",
+    "navigationRefs": [
+      {
+        "kind": "link",
+        "name": "अकाउंट रजिस्टर करें",
+        "reasons": [
+          "navigation_candidate",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_21",
+        "role": "link",
+        "score": 101,
+        "text": "रजिस्टर करें"
+      },
+      {
+        "kind": "link",
+        "name": "साइन इन",
+        "reasons": [
+          "navigation_candidate",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_23",
+        "role": "link",
+        "score": 98,
+        "text": "साइन इन करें"
+      },
+      {
+        "kind": "link",
+        "name": "ग्राहक सहायता",
+        "reasons": [
+          "navigation_candidate",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_14",
+        "role": "link",
+        "score": 95
+      },
+      {
+        "kind": "link",
+        "name": "Booking.com",
+        "reasons": [
+          "navigation_candidate",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4",
+        "role": "link",
+        "score": 95
+      },
+      {
+        "kind": "link",
+        "name": "हॉलिडे होम",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5017",
+        "role": "link",
+        "score": 90,
+        "text": "हॉलिडे होम"
+      },
+      {
+        "kind": "link",
+        "name": "अपार्टमेंट",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5019",
+        "role": "link",
+        "score": 90,
+        "text": "अपार्टमेंट"
+      },
+      {
+        "kind": "link",
+        "name": "बेड एंड ब्रेकफ़ास्ट",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5027",
+        "role": "link",
+        "score": 90,
+        "text": "बेड एंड ब्रेकफ़ास्ट"
+      },
+      {
+        "kind": "link",
+        "name": "गेस्ट हाउस",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5029",
+        "role": "link",
+        "score": 90,
+        "text": "गेस्ट हाउस"
+      },
+      {
+        "kind": "link",
+        "name": "अपनी प्रॉपर्टी रजिस्टर करें",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5071",
+        "role": "link",
+        "score": 90,
+        "text": "अपनी प्रॉपर्टी रजिस्टर करें"
+      },
+      {
+        "kind": "link",
+        "name": "रिज़ॉर्ट",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5021",
+        "role": "link",
+        "score": 87,
+        "text": "रिज़ॉर्ट"
+      }
+    ],
+    "omitted": {
+      "droppedByReason": {
+        "generic_low_value": 43,
+        "hidden_low_value": 6,
+        "offscreen_low_value": 9,
+        "rank_loss": 936
+      },
+      "droppedRefCount": 996,
+      "observedRefCount": 1076,
+      "selectedRefCount": 80
+    },
+    "primaryRefs": [
+      {
+        "kind": "input",
+        "name": "जगह डालें",
+        "reasons": [
+          "form_candidate",
+          "recently_changed",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_67",
+        "role": "combobox",
+        "score": 304
+      },
+      {
+        "kind": "link",
+        "name": "अकाउंट रजिस्टर करें",
+        "reasons": [
+          "navigation_candidate",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_21",
+        "role": "link",
+        "score": 271,
+        "text": "रजिस्टर करें"
+      },
+      {
+        "kind": "button",
+        "name": "फ़्लाइट + होटल",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_39",
+        "role": "menuitem",
+        "score": 271,
+        "text": "फ़्लाइट + होटल"
+      },
+      {
+        "kind": "button",
+        "name": "खास जगहें और गतिविधियां",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_53",
+        "role": "menuitem",
+        "score": 271,
+        "text": "खास जगहें और गतिविधियां"
+      },
+      {
+        "kind": "button",
+        "name": "एयरपोर्ट टैक्सी",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_60",
+        "role": "menuitem",
+        "score": 271,
+        "text": "एयरपोर्ट टैक्सी"
+      },
+      {
+        "kind": "button",
+        "name": "कार रेंटल",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_46",
+        "role": "menuitem",
+        "score": 270,
+        "text": "कार रेंटल"
+      },
+      {
+        "kind": "link",
+        "name": "साइन इन",
+        "reasons": [
+          "navigation_candidate",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_23",
+        "role": "link",
+        "score": 268,
+        "text": "साइन इन करें"
+      },
+      {
+        "kind": "button",
+        "name": "भारतीय रुपया में कीमतें, INR",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_7",
+        "role": "button",
+        "score": 268,
+        "text": "INR"
+      },
+      {
+        "kind": "button",
+        "name": "फ़्लाइट",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_32",
+        "role": "menuitem",
+        "score": 267,
+        "text": "फ़्लाइट"
+      },
+      {
+        "kind": "generic",
+        "name": "फ़्लाइट + होटल",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_44",
+        "score": 267,
+        "text": "फ़्लाइट + होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "खास जगहें और गतिविधियां",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_58",
+        "score": 267,
+        "text": "खास जगहें और गतिविधियां"
+      },
+      {
+        "kind": "generic",
+        "name": "एयरपोर्ट टैक्सी",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_65",
+        "score": 267,
+        "text": "एयरपोर्ट टैक्सी"
+      },
+      {
+        "kind": "generic",
+        "name": "कार रेंटल",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_51",
+        "score": 266,
+        "text": "कार रेंटल"
+      },
+      {
+        "kind": "link",
+        "name": "ग्राहक सहायता",
+        "reasons": [
+          "navigation_candidate",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_14",
+        "role": "link",
+        "score": 265
+      },
+      {
+        "kind": "link",
+        "name": "Booking.com",
+        "reasons": [
+          "navigation_candidate",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4",
+        "role": "link",
+        "score": 265
+      },
+      {
+        "kind": "button",
+        "name": "स्टे",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_25",
+        "role": "menuitem",
+        "score": 263,
+        "text": "स्टे"
+      },
+      {
+        "kind": "generic",
+        "name": "फ़्लाइट",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_37",
+        "score": 263,
+        "text": "फ़्लाइट"
+      },
+      {
+        "kind": "generic",
+        "name": "स्टे",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_30",
+        "score": 259,
+        "text": "स्टे"
+      },
+      {
+        "kind": "button",
+        "name": "अंतरराष्ट्रीय शहर",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4446",
+        "role": "button",
+        "score": 250,
+        "text": "अंतरराष्ट्रीय शहर"
+      },
+      {
+        "kind": "button",
+        "name": "स्टे के लिए जगहें",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4456",
+        "role": "button",
+        "score": 250,
+        "text": "स्टे के लिए जगहें"
+      },
+      {
+        "kind": "link",
+        "name": "हॉलिडे होम",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5017",
+        "role": "link",
+        "score": 250,
+        "text": "हॉलिडे होम"
+      },
+      {
+        "kind": "link",
+        "name": "अपार्टमेंट",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5019",
+        "role": "link",
+        "score": 250,
+        "text": "अपार्टमेंट"
+      },
+      {
+        "kind": "link",
+        "name": "बेड एंड ब्रेकफ़ास्ट",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5027",
+        "role": "link",
+        "score": 250,
+        "text": "बेड एंड ब्रेकफ़ास्ट"
+      },
+      {
+        "kind": "link",
+        "name": "गेस्ट हाउस",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5029",
+        "role": "link",
+        "score": 250,
+        "text": "गेस्ट हाउस"
+      },
+      {
+        "kind": "link",
+        "name": "अपनी प्रॉपर्टी रजिस्टर करें",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5071",
+        "role": "link",
+        "score": 250,
+        "text": "अपनी प्रॉपर्टी रजिस्टर करें"
+      },
+      {
+        "kind": "button",
+        "name": "घरेलू शहर",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4443",
+        "role": "button",
+        "score": 249,
+        "text": "घरेलू शहर"
+      },
+      {
+        "kind": "link",
+        "name": "रिज़ॉर्ट",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_5021",
+        "role": "link",
+        "score": 247,
+        "text": "रिज़ॉर्ट"
+      },
+      {
+        "kind": "generic",
+        "name": "साइन इन करें",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4441",
+        "score": 246,
+        "text": "साइन इन करें"
+      },
+      {
+        "kind": "generic",
+        "name": "रजिस्टर करें",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4442",
+        "score": 246,
+        "text": "रजिस्टर करें"
+      },
+      {
+        "kind": "generic",
+        "name": "अंतरराष्ट्रीय शहर",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4447",
+        "score": 246,
+        "text": "अंतरराष्ट्रीय शहर"
+      },
+      {
+        "kind": "generic",
+        "name": "अंतरराष्ट्रीय शहर",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4448",
+        "score": 246,
+        "text": "अंतरराष्ट्रीय शहर"
+      },
+      {
+        "kind": "generic",
+        "name": "स्टे के लिए जगहें",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4457",
+        "score": 246,
+        "text": "स्टे के लिए जगहें"
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_67",
+        "text": "जगह डालें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_21",
+        "text": "अकाउंट रजिस्टर करें रजिस्टर करें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_39",
+        "text": "फ़्लाइट + होटल फ़्लाइट + होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_53",
+        "text": "खास जगहें और गतिविधियां खास जगहें और गतिविधियां"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_60",
+        "text": "एयरपोर्ट टैक्सी एयरपोर्ट टैक्सी"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_46",
+        "text": "कार रेंटल कार रेंटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_23",
+        "text": "साइन इन साइन इन करें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_7",
+        "text": "भारतीय रुपया में कीमतें, INR INR"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_32",
+        "text": "फ़्लाइट फ़्लाइट"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_44",
+        "text": "फ़्लाइट + होटल फ़्लाइट + होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_58",
+        "text": "खास जगहें और गतिविधियां खास जगहें और गतिविधियां"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_65",
+        "text": "एयरपोर्ट टैक्सी एयरपोर्ट टैक्सी"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_51",
+        "text": "कार रेंटल कार रेंटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_14",
+        "text": "ग्राहक सहायता"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4",
+        "text": "Booking.com"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_25",
+        "text": "स्टे स्टे"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_37",
+        "text": "फ़्लाइट फ़्लाइट"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_30",
+        "text": "स्टे स्टे"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4446",
+        "text": "अंतरराष्ट्रीय शहर अंतरराष्ट्रीय शहर"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4456",
+        "text": "स्टे के लिए जगहें स्टे के लिए जगहें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_5017",
+        "text": "हॉलिडे होम हॉलिडे होम"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_5019",
+        "text": "अपार्टमेंट अपार्टमेंट"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_5027",
+        "text": "बेड एंड ब्रेकफ़ास्ट बेड एंड ब्रेकफ़ास्ट"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_5029",
+        "text": "गेस्ट हाउस गेस्ट हाउस"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_5071",
+        "text": "अपनी प्रॉपर्टी रजिस्टर करें अपनी प्रॉपर्टी रजिस्टर करें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4443",
+        "text": "घरेलू शहर घरेलू शहर"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_5021",
+        "text": "रिज़ॉर्ट रिज़ॉर्ट"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4441",
+        "text": "साइन इन करें साइन इन करें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4442",
+        "text": "रजिस्टर करें रजिस्टर करें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4447",
+        "text": "अंतरराष्ट्रीय शहर अंतरराष्ट्रीय शहर"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4448",
+        "text": "अंतरराष्ट्रीय शहर अंतरराष्ट्रीय शहर"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4457",
+        "text": "स्टे के लिए जगहें स्टे के लिए जगहें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4458",
+        "text": "स्टे के लिए जगहें स्टे के लिए जगहें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4459",
+        "text": "Ooty में होटल Ooty में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4460",
+        "text": "Ooty में होटल Ooty में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4461",
+        "text": "Ooty में होटल Ooty में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4462",
+        "text": "Ooty में होटल Ooty में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4463",
+        "text": "हैदराबाद में होटल हैदराबाद में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4464",
+        "text": "हैदराबाद में होटल हैदराबाद में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4465",
+        "text": "हैदराबाद में होटल हैदराबाद में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4466",
+        "text": "हैदराबाद में होटल हैदराबाद में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4467",
+        "text": "जयपुर में होटल जयपुर में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4468",
+        "text": "जयपुर में होटल जयपुर में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4469",
+        "text": "जयपुर में होटल जयपुर में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4470",
+        "text": "जयपुर में होटल जयपुर में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4471",
+        "text": "Puri में होटल Puri में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4472",
+        "text": "Puri में होटल Puri में होटल"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4473",
+        "text": "Puri में होटल Puri में होटल"
+      }
+    ],
+    "regionSummaries": [],
+    "secondaryRefs": [
+      {
+        "kind": "generic",
+        "name": "स्टे के लिए जगहें",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4458",
+        "score": 246,
+        "text": "स्टे के लिए जगहें"
+      },
+      {
+        "kind": "generic",
+        "name": "Ooty में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4459",
+        "score": 246,
+        "text": "Ooty में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Ooty में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4460",
+        "score": 246,
+        "text": "Ooty में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Ooty में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4461",
+        "score": 246,
+        "text": "Ooty में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Ooty में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4462",
+        "score": 246,
+        "text": "Ooty में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "हैदराबाद में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4463",
+        "score": 246,
+        "text": "हैदराबाद में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "हैदराबाद में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4464",
+        "score": 246,
+        "text": "हैदराबाद में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "हैदराबाद में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4465",
+        "score": 246,
+        "text": "हैदराबाद में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "हैदराबाद में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4466",
+        "score": 246,
+        "text": "हैदराबाद में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "जयपुर में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4467",
+        "score": 246,
+        "text": "जयपुर में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "जयपुर में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4468",
+        "score": 246,
+        "text": "जयपुर में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "जयपुर में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4469",
+        "score": 246,
+        "text": "जयपुर में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "जयपुर में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4470",
+        "score": 246,
+        "text": "जयपुर में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Puri में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4471",
+        "score": 246,
+        "text": "Puri में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Puri में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4472",
+        "score": 246,
+        "text": "Puri में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Puri में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4473",
+        "score": 246,
+        "text": "Puri में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Puri में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4474",
+        "score": 246,
+        "text": "Puri में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Cochin में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4475",
+        "score": 246,
+        "text": "Cochin में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Cochin में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4476",
+        "score": 246,
+        "text": "Cochin में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Cochin में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4477",
+        "score": 246,
+        "text": "Cochin में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Cochin में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4478",
+        "score": 246,
+        "text": "Cochin में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Munnar में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4479",
+        "score": 246,
+        "text": "Munnar में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Munnar में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4480",
+        "score": 246,
+        "text": "Munnar में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Munnar में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4481",
+        "score": 246,
+        "text": "Munnar में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Munnar में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4482",
+        "score": 246,
+        "text": "Munnar में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Mumbai में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4483",
+        "score": 246,
+        "text": "Mumbai में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Mumbai में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4484",
+        "score": 246,
+        "text": "Mumbai में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Mumbai में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4485",
+        "score": 246,
+        "text": "Mumbai में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Mumbai में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4486",
+        "score": 246,
+        "text": "Mumbai में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "बंगलुरू में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4487",
+        "score": 246,
+        "text": "बंगलुरू में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "बंगलुरू में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4488",
+        "score": 246,
+        "text": "बंगलुरू में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "बंगलुरू में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4489",
+        "score": 246,
+        "text": "बंगलुरू में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "बंगलुरू में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4490",
+        "score": 246,
+        "text": "बंगलुरू में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Udaipur में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4491",
+        "score": 246,
+        "text": "Udaipur में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Udaipur में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4492",
+        "score": 246,
+        "text": "Udaipur में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Udaipur में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4493",
+        "score": 246,
+        "text": "Udaipur में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Udaipur में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4494",
+        "score": 246,
+        "text": "Udaipur में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "वाराणसी में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4495",
+        "score": 246,
+        "text": "वाराणसी में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "वाराणसी में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4496",
+        "score": 246,
+        "text": "वाराणसी में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "वाराणसी में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4497",
+        "score": 246,
+        "text": "वाराणसी में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "वाराणसी में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4498",
+        "score": 246,
+        "text": "वाराणसी में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Srinagar में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4499",
+        "score": 246,
+        "text": "Srinagar में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Srinagar में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4500",
+        "score": 246,
+        "text": "Srinagar में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Srinagar में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4501",
+        "score": 246,
+        "text": "Srinagar में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Srinagar में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4502",
+        "score": 246,
+        "text": "Srinagar में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Rishīkesh में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4503",
+        "score": 246,
+        "text": "Rishīkesh में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Rishīkesh में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4504",
+        "score": 246,
+        "text": "Rishīkesh में होटल"
+      },
+      {
+        "kind": "generic",
+        "name": "Rishīkesh में होटल",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_4505",
+        "score": 246,
+        "text": "Rishīkesh में होटल"
+      }
+    ]
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {
+      "generic_low_value": 43,
+      "hidden_low_value": 6,
+      "offscreen_low_value": 9,
+      "rank_loss": 936
+    },
+    "droppedRefCount": 996,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 1076,
+    "selectedByReason": {
+      "form_candidate": 1,
+      "navigation_candidate": 205,
+      "recently_appeared": 694,
+      "recently_changed": 974,
+      "role_relevant_to_goal": 1,
+      "visible_ready": 59
+    },
+    "selectedRefCount": 80
+  }
+}

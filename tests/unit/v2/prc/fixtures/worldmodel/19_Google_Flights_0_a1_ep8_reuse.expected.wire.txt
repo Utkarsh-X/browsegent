@@ -1,0 +1,124 @@
+Planner input:
+MISSION
+  goal: Book a journey with return option on same day from Edinburg to Manchester on December 28th and show me the lowest price option available.
+
+STATE
+
+  page: "Find Cheap Flights Worldwide & Book Your Ticket - Google Flights" https://www.google.com/travel/flights?tfs=CBwQARodag0IAhIJL20vMDIydHE0cgwIAxIIL20vMDUyYncaHWoMCAMSCC9tLzA1MmJ3cg0IAhIJL20vMDIydHE0QAFIAXABggELCP___________wGYAQE&tfu=KgIIAw
+
+PLANNER SURFACE
+    [v2ref_139] <select name="Round trip" role="combobox" aria-autocomplete="none" aria-haspopup="listbox" tools="c,s,r" />
+    [v2ref_15] <button name="Accessibility feedback" aria-haspopup="dialog" tools="c,r" />
+    [v2ref_180] <select name="Economy" role="combobox" aria-autocomplete="none" aria-haspopup="listbox" tools="c,s,r" />
+    [v2ref_20] <button name="Change appearance" aria-haspopup="menu" tools="c,r" />
+    [v2ref_216] <input name="Where from?" role="combobox" aria-autocomplete="inline" aria-haspopup="true" failed="action_blocked_by_loop_detectorx1" tools="c,t,r" +chg />
+    [v2ref_236] <input name="Where to?" role="combobox" aria-autocomplete="inline" aria-haspopup="true" value="Manchester" tools="c,t,r" />
+    [v2ref_253] <input name="Departure" role="textbox" tools="t,r" />
+    [v2ref_256] <input name="Return" role="textbox" tools="t,r" />
+    [v2ref_4380] <button name="1 passenger" aria-haspopup="dialog" tools="c,r" />
+    [v2ref_4398] <input name="Where else?" role="combobox" aria-autocomplete="both" aria-haspopup="true" value="Lucknow" tools="c,t,r" />
+  [v2ref_12] <link name="Google" />
+  [v2ref_14] <button name="Skip to main content" />
+  [v2ref_1573] <generic name="Economy" />
+  [v2ref_1574] <generic name="Economy" />
+  [v2ref_16] <link name="Explore" />
+  [v2ref_17] <link name="Flights" />
+  [v2ref_18] <link name="Hotels" />
+  [v2ref_19] <link name="Vacation rentals" />
+  [v2ref_21] <button name="Google apps" />
+  [v2ref_235] <button name="Swap origin and destination." />
+  [v2ref_25] <link name="Sign in" />
+  [v2ref_26] <generic name="Sign in" />
+  [v2ref_298] <button name="Explore deals with AI" />
+  [v2ref_3] <button name="Main menu" />
+  [v2ref_310] <button name="Find flights from Lucknow (LKO) to New Delhi (DEL) from ₹8,600. Operated by IndiGo. Nov 5 to Nov 12. 1 stop" />
+  [v2ref_323] <generic name="₹8,600" />
+  [v2ref_327] <button name="Find flights from Lucknow (LKO) to Mumbai (BOM) from ₹12,271. Operated by IndiGo. Sep 17 to Sep 24. Nonstop" />
+  [v2ref_340] <generic name="₹12,271" />
+  [v2ref_344] <button name="Find flights from Lucknow (LKO) to Bengaluru (BLR) from ₹13,121. Operated by IndiGo. Dec 4 to Dec 10. Nonstop" />
+  [v2ref_357] <generic name="₹13,121" />
+  [v2ref_361] <button name="Find flights from New Delhi (DEL) to Mumbai (BOM) from ₹11,860. Operated by IndiGo. Sep 24 to Oct 3. 1 stop" />
+  [v2ref_374] <generic name="₹11,860" />
+  [v2ref_378] <button name="Find flights from New Delhi (DEL) to Bengaluru (BLR) from ₹16,241. Operated by IndiGo. Sep 24 to Oct 3. 1 stop" />
+  [v2ref_391] <generic name="₹16,241" />
+  [v2ref_395] <button name="Find flights from New Delhi (DEL) to Kolkata (CCU) from ₹14,417. Operated by IndiGo. Sep 17 to Sep 24. 1 stop" />
+  [v2ref_408] <generic name="₹14,417" />
+  [v2ref_412] <button name="Find flights from Mumbai (BOM) to New Delhi (DEL) from ₹12,300. Operated by IndiGo. Sep 7 to Sep 13. 1 stop" />
+  [v2ref_425] <generic name="₹12,300" />
+  [v2ref_429] <button name="Find flights from Mumbai (BOM) to Bengaluru (BLR) from ₹9,308. Operated by IndiGo. Sep 17 to Sep 23. Nonstop" />
+  [v2ref_4399] <button name="Origin, Select multiple airports" />
+  [v2ref_4409] <generic name="Lucknow, Uttar Pradesh" />
+  [v2ref_4410] <button name="Toggle nearby airports for Lucknow, Uttar Pradesh" />
+  [v2ref_4415] <generic name="Chaudhary Charan Singh International Airport, Terminal 3 (LKO)" />
+  [v2ref_4416] <generic name="Lucknow, Australia" />
+  [v2ref_4417] <button name="Toggle nearby airports for Lucknow, Australia" />
+  [v2ref_4425] <generic name="Lucknow, Australia" />
+  [v2ref_4426] <button name="Toggle nearby airports for Lucknow, Australia" />
+  [v2ref_446] <button name="Find flights from Mumbai (BOM) to Kolkata (CCU) from ₹16,261. Operated by Akasa Air. Sep 7 to Sep 15. Nonstop" />
+  [v2ref_459] <generic name="₹16,261" />
+  [v2ref_463] <button name="Find flights from Bengaluru (BLR) to New Delhi (DEL) from ₹16,451. Operated by IndiGo. Sep 24 to Oct 3. 1 stop" />
+  [v2ref_476] <generic name="₹16,451" />
+  [v2ref_480] <button name="Find flights from Bengaluru (BLR) to Mumbai (BOM) from ₹9,181. Operated by IndiGo. Sep 24 to Oct 3. Nonstop" />
+  [v2ref_497] <button name="Find flights from Bengaluru (BLR) to Hyderabad (HYD) from ₹8,612. Operated by IndiGo. Sep 17 to Sep 23. Nonstop" />
+  [v2ref_6567] <button name="Search" />
+  [v2ref_6579] <generic name="from ₹8,600" />
+  [v2ref_6580] <generic name="from ₹8,600" />
+  [v2ref_6591] <generic name="from ₹12,271" />
+  [v2ref_6592] <generic name="from ₹12,271" />
+  [v2ref_6603] <generic name="from ₹13,121" />
+  [v2ref_6604] <generic name="from ₹13,121" />
+  [v2ref_6617] <generic name="from ₹11,860" />
+  [v2ref_6618] <generic name="from ₹11,860" />
+  [v2ref_6631] <generic name="from ₹16,241" />
+  [v2ref_6632] <generic name="from ₹16,241" />
+  [v2ref_6643] <generic name="from ₹14,417" />
+  [v2ref_6644] <generic name="from ₹14,417" />
+  [v2ref_6655] <generic name="from ₹12,300" />
+  [v2ref_6656] <generic name="from ₹12,300" />
+  [v2ref_6669] <generic name="from ₹9,308" />
+  [v2ref_6670] <generic name="from ₹9,308" />
+  [v2ref_6681] <generic name="from ₹16,261" />
+  [v2ref_6682] <generic name="from ₹16,261" />
+  [v2ref_6695] <generic name="from ₹16,451" />
+  [v2ref_6696] <generic name="from ₹16,451" />
+  [v2ref_6708] <generic name="from ₹9,181" />
+  [v2ref_6709] <generic name="from ₹9,181" />
+  [v2ref_6721] <generic name="from ₹8,612" />
+  [v2ref_6722] <generic name="from ₹8,612" />
+  [v2ref_838] <generic name="Round trip" />
+  [v2ref_839] <generic name="Round trip" />
+
+STATE
+  observation: obs_1_7 gen=1 refs=3212
+  focus: v2ref_139 highest_operational_score
+
+RECENT EVENTS
+  last: type v2ref_216 -> failed action_blocked_by_loop_detector
+  history: 7 steps truncated
+
+EVIDENCE COVERAGE
+  state: uncertain reads=35
+  ranking_evidence: uncertain
+
+GOAL PROGRESS
+  destination: typed:"Edinburg"
+  destinationTo: typed:"Manchester"
+  dates: NOT_SET
+  cheapest: unverified
+  focus: dates
+
+TASK PROGRESS
+  state: conflicting
+  destination: conflicting requested="Manchester" evidence=v2ref_4398,v2ref_236
+
+PROBLEMS
+  failure: v2ref_216 action_blocked_by_loop_detector transient retryable=true
+  recovery: navigation_oscillation
+    BLOCKED: Do NOT repeat the blocked action. Try: avoid_navigation_churn, commit_to_current_surface_until_progress, act_on_visible_controls, reobserve_current_surface.
+  uncertainty: medium failure:action_blocked_by_loop_detector, navigation_oscillation
+
+WORKING SET
+  mode: recover
+
+DECISION SIGNALS
+  suppressed: 3132 generic_low_value=31 hidden_low_value=1649 offscreen_low_value=137 rank_loss=138 unlabeled_action=8

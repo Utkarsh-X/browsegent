@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Keyboard Entry Blocked Suggestion Combobox Fixture</title>
+    <style>
+      #destination-blocker {
+        position: absolute;
+        z-index: 2;
+        top: 20px;
+        left: 0;
+        width: 300px;
+        height: 50px;
+        background: white;
+      }
+
+      #destination {
+        position: absolute;
+        top: 28px;
+        left: 8px;
+        width: 220px;
+        height: 32px;
+      }
+
+      #destinations {
+        margin-top: 70px;
+      }
+    </style>
+  </head>
+  <body>
+    <label for="destination">Destination</label>
+    <input id="destination" type="text" role="combobox" aria-label="Destination"
+      aria-autocomplete="list" aria-haspopup="listbox" aria-controls="destinations">
+    <p id="destination-blocker">Decorative label</p>
+    <ul id="destinations" role="listbox" hidden>
+      <li role="option">Paris</li>
+    </ul>
+    <script>
+      const input = document.querySelector('#destination');
+      const list = document.querySelector('#destinations');
+
+      input.addEventListener('input', () => {
+        // This widget ignores programmatic fill values while closed, but
+        // accepts the subsequent keyboard-generated input events.
+        if (input.value.trim().toLowerCase() === 'paris' && input.__keyboardEntry) {
+          list.hidden = false;
+        } else if (!input.__keyboardEntry) {
+          input.value = '';
+        }
+      });
+
+      input.addEventListener('keydown', event => {
+        if (event.key.length === 1) input.__keyboardEntry = true;
+      });
+    </script>
+  </body>
+</html>

@@ -45,6 +45,10 @@ test('v2 boundary checker flags forbidden dependency directions', async () => {
       path: 'src/BrowseGent.ts',
       content: "import { scenarios } from '../tests/eval/v2/continuity_scenarios';\n",
     },
+    {
+      path: 'src/v2/trace/Brain1SurfaceOverlap.ts',
+      content: "import type { Brain1Snapshot } from '../../brain1/types';\n",
+    },
   ]);
 
   assert.equal(result.ok, false);
@@ -52,11 +56,13 @@ test('v2 boundary checker flags forbidden dependency directions', async () => {
     result.violations.map(violation => violation.ruleId),
     [
       'substrate-no-agent-imports',
+      'v2-no-v1-imports',
       'runtime-no-planner-or-provider-imports',
       'graph-no-llm-or-provider-imports',
       'brain1-no-brain2-imports',
       'runtime-services-no-trace-imports',
       'src-no-eval-imports',
+      'v2-no-v1-imports',
     ],
   );
 });
@@ -74,7 +80,7 @@ test('v2 boundary checker accepts approved runtime dependency directions', async
       content: "import { TraceStore } from '../trace/TraceStore';\n",
     },
     {
-      path: 'src/v2/adapter/V1CompatibilityAdapter.ts',
+      path: 'src/v2/public/BrowserAgentRunner.ts',
       content: "import { PlannerInputComposer } from '../planner/PlannerInputComposer';\n",
     },
   ]);

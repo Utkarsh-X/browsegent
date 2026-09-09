@@ -123,3 +123,377 @@ test('resolveBackendNodeIds returns empty identities on persistent querySelector
   assert.equal(callCount, 2); // Verifies retry was triggered and failed
   assert.deepEqual(identities, [{}, {}, {}]);
 });
+
+test('ObservationService.capture succeeds on first attempt (no retry, waitForLoadState not called)', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let waitForLoadStateCalled = false;
+  let evaluateCallCount = 0;
+
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => 'Example Title',
+    evaluate: async (script: any) => {
+      evaluateCallCount++;
+      return [] as any[];
+    },
+    waitForLoadState: async (state: string) => {
+      waitForLoadStateCalled = true;
+    },
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  const result = await service.capture({
+    page: mockPage as any,
+    sessionId: 'session_123',
+    generationId: 1,
+  });
+
+  assert.equal(result.url, 'https://example.com');
+  assert.equal(result.title, 'Example Title');
+  assert.equal(waitForLoadStateCalled, false);
+  assert.equal(evaluateCallCount, 2); // 1 for capture, 1 for cleanupBackendMarkers
+});
+
+test('ObservationService.capture retries one empty navigation capture when readiness retry is enabled', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let waitForLoadStateCalled = false;
+  let evaluateCallCount = 0;
+  let titleCallCount = 0;
+
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => {
+      titleCallCount += 1;
+      return titleCallCount === 1 ? '' : 'Loaded Title';
+    },
+    evaluate: async () => {
+      evaluateCallCount += 1;
+      if (evaluateCallCount === 1) {
+        return [] as any[];
+      }
+      if (evaluateCallCount === 2) {
+        return [{ targetId: 'target_1', selectorCandidates: ['#search'] }] as any[];
+      }
+      return undefined;
+    },
+    waitForLoadState: async (state: string) => {
+      if (state === 'domcontentloaded') {
+        waitForLoadStateCalled = true;
+      }
+    },
+    waitForTimeout: async () => undefined,
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  const result = await service.capture({
+    page: mockPage as any,
+    sessionId: 'session_123',
+    generationId: 1,
+    retryEmptyNavigationCapture: true,
+  });
+
+  assert.equal(waitForLoadStateCalled, true);
+  assert.equal(evaluateCallCount, 3); // empty capture, retry capture, marker cleanup
+  assert.equal(result.title, 'Loaded Title');
+  assert.equal(result.refs.length, 1);
+});
+
+test('ObservationService.capture throws Execution context was destroyed on first attempt -> retries once after waitForLoadState -> succeeds on second attempt', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let waitForLoadStateCalled = false;
+  let evaluateCallCount = 0;
+
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => 'Example Title',
+    evaluate: async (script: any) => {
+      evaluateCallCount++;
+      if (evaluateCallCount === 1) {
+        throw new Error('Execution context was destroyed, details here...');
+      }
+      if (evaluateCallCount === 2) {
+        return [{ targetId: 'target_1', selectorCandidates: ['#btn'] }] as any[];
+      }
+      return undefined; // for cleanupBackendMarkers
+    },
+    waitForLoadState: async (state: string) => {
+      if (state === 'domcontentloaded') {
+        waitForLoadStateCalled = true;
+      }
+    },
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  const result = await service.capture({
+    page: mockPage as any,
+    sessionId: 'session_123',
+    generationId: 1,
+  });
+
+  assert.equal(result.url, 'https://example.com');
+  assert.equal(result.title, 'Example Title');
+  assert.equal(waitForLoadStateCalled, true);
+  assert.equal(evaluateCallCount, 3); // 1st try (fails), 2nd try (succeeds), 3rd try (cleanupBackendMarkers)
+  assert.equal(result.refs.length, 1);
+});
+
+test('ObservationService.capture throws a non-navigation error -> throws immediately without retrying or calling waitForLoadState', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let waitForLoadStateCalled = false;
+  let evaluateCallCount = 0;
+
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => 'Example Title',
+    evaluate: async (script: any) => {
+      evaluateCallCount++;
+      throw new Error('Some standard evaluation error');
+    },
+    waitForLoadState: async (state: string) => {
+      waitForLoadStateCalled = true;
+    },
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  await assert.rejects(
+    async () => {
+      await service.capture({
+        page: mockPage as any,
+        sessionId: 'session_123',
+        generationId: 1,
+      });
+    },
+    (err: any) => {
+      assert.equal(err.message, 'Some standard evaluation error');
+      return true;
+    }
+  );
+
+  assert.equal(waitForLoadStateCalled, false);
+  assert.equal(evaluateCallCount, 1);
+});
+
+test('ObservationService.capture fails on both attempts with navigation race errors -> throws the second error', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let waitForLoadStateCalled = false;
+  let evaluateCallCount = 0;
+
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => 'Example Title',
+    evaluate: async (script: any) => {
+      evaluateCallCount++;
+      if (evaluateCallCount === 1) {
+        throw new Error('first error: execution context destroyed');
+      } else {
+        throw new Error('second error: target closed');
+      }
+    },
+    waitForLoadState: async (state: string) => {
+      if (state === 'domcontentloaded') {
+        waitForLoadStateCalled = true;
+      }
+    },
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  await assert.rejects(
+    async () => {
+      await service.capture({
+        page: mockPage as any,
+        sessionId: 'session_123',
+        generationId: 1,
+      });
+    },
+    (err: any) => {
+      assert.equal(err.message, 'second error: target closed');
+      return true;
+    }
+  );
+
+  assert.equal(waitForLoadStateCalled, true);
+  assert.equal(evaluateCallCount, 2);
+});
+
+test('ObservationService.capture keeps polling through a navigation race inside the bounded wait and recovers', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let evaluateCallCount = 0;
+  const mockPage = {
+    url: async () => 'https://example.com',
+    title: async () => 'Loaded Title',
+    evaluate: async () => {
+      evaluateCallCount += 1;
+      if (evaluateCallCount === 1) {
+        return [] as any[]; // initial empty capture triggers the bounded wait
+      }
+      if (evaluateCallCount === 2) {
+        // A navigation commits under the poll while waiting for content.
+        throw new Error('page.evaluate: Execution context was destroyed, most likely because of a navigation');
+      }
+      if (evaluateCallCount === 3) {
+        return [{ targetId: 'target_1', selectorCandidates: ['#btn'] }] as any[];
+      }
+      return undefined; // cleanupBackendMarkers
+    },
+    waitForLoadState: async () => undefined,
+    waitForTimeout: async () => undefined,
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  const result = await service.capture({
+    page: mockPage as any,
+    sessionId: 'session_123',
+    generationId: 1,
+    retryEmptyNavigationCapture: true,
+  });
+
+  assert.equal(result.refs.length, 1);
+  assert.equal(result.title, 'Loaded Title');
+  assert.equal(evaluateCallCount, 4); // empty, race (survived), refs, cleanup
+});
+
+test('ObservationService.capture waits out a titled interactive-free shell and recovers when refs hydrate', async () => {
+  const { ObservationService } = await import('../../../src/v2/substrate/ObservationService');
+
+  let evaluateCallCount = 0;
+  const mockPage = {
+    url: async () => 'https://example.com/results',
+    // Titled shell with body text and zero interactive elements: the exact
+    // mid-transition shape that previously bypassed the bounded wait.
+    title: async () => 'Results shell title',
+    evaluate: async () => {
+      evaluateCallCount += 1;
+      if (evaluateCallCount === 1) {
+        return [] as any[];
+      }
+      if (evaluateCallCount === 2) {
+        return [] as any[];
+      }
+      if (evaluateCallCount === 3) {
+        return [{ targetId: 'target_9', selectorCandidates: ['#row'] }] as any[];
+      }
+      return undefined;
+    },
+    waitForLoadState: async () => undefined,
+    waitForTimeout: async () => undefined,
+    context: () => ({
+      newCDPSession: async () => {
+        throw new Error('CDP not supported in mock');
+      },
+    }),
+  };
+
+  const service = new ObservationService();
+  const result = await service.capture({
+    page: mockPage as any,
+    sessionId: 'session_123',
+    generationId: 1,
+    retryEmptyNavigationCapture: true,
+  });
+
+  assert.equal(result.refs.length, 1);
+  assert.equal(evaluateCallCount, 4); // empty, empty (waited), refs, cleanup
+});
+
+test('resolveBackendNodeIds joins backendNodeIds from one batched getDocument tree', async () => {
+  const { resolveBackendNodeIds } = await import('../../../src/v2/substrate/ObservationService');
+  const calls: string[] = [];
+  const mockBridge = {
+    send: async (method: string) => {
+      calls.push(method);
+      if (method === 'DOM.getDocument') {
+        return {
+          root: {
+            nodeId: 1, nodeName: '#document', nodeType: 9, frameId: 'frame-main',
+            children: [
+              { nodeId: 2, nodeName: 'HTML', nodeType: 1, backendNodeId: 101, children: [
+                { nodeId: 3, nodeName: 'BODY', nodeType: 1, backendNodeId: 102, children: [
+                  { nodeId: 4, nodeName: 'DIV', nodeType: 1, backendNodeId: 103, children: [] },
+                  { nodeId: 5, nodeName: '#text', nodeType: 3, children: [] },
+                  { nodeId: 6, nodeName: 'A', nodeType: 1, backendNodeId: 104, children: [] },
+                ] },
+              ] },
+            ],
+          },
+        };
+      }
+      throw new Error(`unexpected ${method}`);
+    },
+    dispose: async () => undefined,
+  };
+
+  const captured = [
+    { walkIndex: 0, tagName: 'HTML' },
+    { walkIndex: 1, tagName: 'BODY' },
+    { walkIndex: 2, tagName: 'DIV' },
+    { walkIndex: 3, tagName: 'A' },
+  ];
+  const identities = await resolveBackendNodeIds({ evaluate: async () => undefined } as never, 4, async () => mockBridge as never, captured);
+
+  assert.deepEqual(calls, ['DOM.getDocument'], 'one round trip, no describeNode calls');
+  assert.equal(identities[0].backendNodeId, 101);
+  assert.equal(identities[2].backendNodeId, 103);
+  assert.equal(identities[3].backendNodeId, 104, 'walk order counts elements only');
+  assert.equal(identities[3].frameId, 'frame-main');
+});
+
+test('resolveBackendNodeIds falls back to the legacy path when the join mismatches', async () => {
+  const { resolveBackendNodeIds } = await import('../../../src/v2/substrate/ObservationService');
+  const mockBridge = {
+    send: async (method: string) => {
+      if (method === 'DOM.getDocument') {
+        return { root: { nodeId: 1, nodeName: '#document', nodeType: 9, children: [
+          { nodeId: 2, nodeName: 'SPAN', nodeType: 1, backendNodeId: 900, children: [] },
+        ] } };
+      }
+      if (method === 'DOM.querySelectorAll') {
+        return { nodeIds: [7] };
+      }
+      if (method === 'DOM.describeNode') {
+        return { node: { backendNodeId: 901, frameId: 'f', attributes: ['data-browsegent-v2-marker', 'browsegent-x-0'] } };
+      }
+      throw new Error(`unexpected ${method}`);
+    },
+    dispose: async () => undefined,
+  };
+
+  const captured = [{ walkIndex: 0, tagName: 'A' }];
+  const identities = await resolveBackendNodeIds({ evaluate: async () => undefined } as never, 1, async () => mockBridge as never, captured);
+  assert.equal(identities[0].backendNodeId, 901, 'legacy describeNode path recovered the identity');
+});

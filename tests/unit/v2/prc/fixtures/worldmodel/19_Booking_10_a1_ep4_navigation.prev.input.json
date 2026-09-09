@@ -1,0 +1,3351 @@
+{
+  "continuity": {
+    "generationId": 1,
+    "latestTransition": {
+      "strength": "moderate",
+      "transitionClass": "structural_local",
+      "transitionId": "transition_obs_1_1_obs_1_2"
+    },
+    "observationId": "obs_1_3",
+    "presentRefCount": 3642,
+    "refCount": 4322,
+    "regionCount": 0,
+    "snapshotId": "graph_obs_1_3_1",
+    "transitionCount": 1,
+    "url": "https://www.booking.com/index.hi.html"
+  },
+  "current": {
+    "focus": {
+      "reason": "highest_operational_score",
+      "refId": "v2ref_4356"
+    },
+    "generationId": 1,
+    "interactions": [
+      {
+        "rank": 1,
+        "refId": "v2ref_4356"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_68"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_86"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_103"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_104"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_106"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_112"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_113"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_4357"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_74"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_75"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_76"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_78"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_84"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_85"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_97"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_4351"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_92"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_95"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_77"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_4352"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_4353"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_4354"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_4355"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_1401"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_1446"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_1635"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_1683"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_1731"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_1769"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_1973"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_1402"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_1416"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_1417"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_1418"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_1426"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_1427"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_1447"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_1461"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_1462"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_1463"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_1471"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_1472"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_1636"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_1650"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_1651"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_1652"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_1660"
+      },
+      {
+        "rank": 49,
+        "refId": "v2ref_1661"
+      },
+      {
+        "rank": 50,
+        "refId": "v2ref_1684"
+      },
+      {
+        "rank": 51,
+        "refId": "v2ref_1698"
+      },
+      {
+        "rank": 52,
+        "refId": "v2ref_1699"
+      },
+      {
+        "rank": 53,
+        "refId": "v2ref_1700"
+      },
+      {
+        "rank": 54,
+        "refId": "v2ref_1708"
+      },
+      {
+        "rank": 55,
+        "refId": "v2ref_1709"
+      },
+      {
+        "rank": 56,
+        "refId": "v2ref_1732"
+      },
+      {
+        "rank": 57,
+        "refId": "v2ref_1746"
+      },
+      {
+        "rank": 58,
+        "refId": "v2ref_1747"
+      },
+      {
+        "rank": 59,
+        "refId": "v2ref_1748"
+      },
+      {
+        "rank": 60,
+        "refId": "v2ref_1749"
+      },
+      {
+        "rank": 61,
+        "refId": "v2ref_1750"
+      },
+      {
+        "rank": 62,
+        "refId": "v2ref_1770"
+      },
+      {
+        "rank": 63,
+        "refId": "v2ref_1784"
+      },
+      {
+        "rank": 64,
+        "refId": "v2ref_1785"
+      },
+      {
+        "rank": 65,
+        "refId": "v2ref_1786"
+      },
+      {
+        "rank": 66,
+        "refId": "v2ref_1794"
+      },
+      {
+        "rank": 67,
+        "refId": "v2ref_1795"
+      },
+      {
+        "rank": 68,
+        "refId": "v2ref_1974"
+      },
+      {
+        "rank": 69,
+        "refId": "v2ref_1988"
+      },
+      {
+        "rank": 70,
+        "refId": "v2ref_1989"
+      },
+      {
+        "rank": 71,
+        "refId": "v2ref_1990"
+      },
+      {
+        "rank": 72,
+        "refId": "v2ref_1991"
+      },
+      {
+        "rank": 73,
+        "refId": "v2ref_1992"
+      },
+      {
+        "rank": 74,
+        "refId": "v2ref_2827"
+      },
+      {
+        "rank": 75,
+        "refId": "v2ref_1411"
+      },
+      {
+        "rank": 76,
+        "refId": "v2ref_1456"
+      },
+      {
+        "rank": 77,
+        "refId": "v2ref_1645"
+      },
+      {
+        "rank": 78,
+        "refId": "v2ref_1693"
+      },
+      {
+        "rank": 79,
+        "refId": "v2ref_1741"
+      },
+      {
+        "rank": 80,
+        "refId": "v2ref_1779"
+      }
+    ],
+    "navigation": [
+      {
+        "rank": 1,
+        "refId": "v2ref_4356"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_1401"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_1446"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_1635"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_1683"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_1731"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_1769"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_1973"
+      }
+    ],
+    "observationId": "obs_1_3",
+    "page": {
+      "title": "Booking.com | आधिकारिक साइट | सबसे बेहतरीन होटल, फ़्लाइटें, किराये की कार और प्रॉपर्टी",
+      "url": "https://www.booking.com/index.hi.html"
+    },
+    "projectionId": "projection_obs_1_3",
+    "readables": [
+      {
+        "rank": 1,
+        "refId": "v2ref_4356"
+      },
+      {
+        "rank": 2,
+        "refId": "v2ref_68"
+      },
+      {
+        "rank": 3,
+        "refId": "v2ref_86"
+      },
+      {
+        "rank": 4,
+        "refId": "v2ref_103"
+      },
+      {
+        "rank": 5,
+        "refId": "v2ref_104"
+      },
+      {
+        "rank": 6,
+        "refId": "v2ref_106"
+      },
+      {
+        "rank": 7,
+        "refId": "v2ref_112"
+      },
+      {
+        "rank": 8,
+        "refId": "v2ref_113"
+      },
+      {
+        "rank": 9,
+        "refId": "v2ref_4357"
+      },
+      {
+        "rank": 10,
+        "refId": "v2ref_74"
+      },
+      {
+        "rank": 11,
+        "refId": "v2ref_75"
+      },
+      {
+        "rank": 12,
+        "refId": "v2ref_76"
+      },
+      {
+        "rank": 13,
+        "refId": "v2ref_78"
+      },
+      {
+        "rank": 14,
+        "refId": "v2ref_84"
+      },
+      {
+        "rank": 15,
+        "refId": "v2ref_85"
+      },
+      {
+        "rank": 16,
+        "refId": "v2ref_97"
+      },
+      {
+        "rank": 17,
+        "refId": "v2ref_4351"
+      },
+      {
+        "rank": 18,
+        "refId": "v2ref_92"
+      },
+      {
+        "rank": 19,
+        "refId": "v2ref_95"
+      },
+      {
+        "rank": 20,
+        "refId": "v2ref_77"
+      },
+      {
+        "rank": 21,
+        "refId": "v2ref_1401"
+      },
+      {
+        "rank": 22,
+        "refId": "v2ref_1446"
+      },
+      {
+        "rank": 23,
+        "refId": "v2ref_1635"
+      },
+      {
+        "rank": 24,
+        "refId": "v2ref_1683"
+      },
+      {
+        "rank": 25,
+        "refId": "v2ref_1731"
+      },
+      {
+        "rank": 26,
+        "refId": "v2ref_1769"
+      },
+      {
+        "rank": 27,
+        "refId": "v2ref_1973"
+      },
+      {
+        "rank": 28,
+        "refId": "v2ref_1402"
+      },
+      {
+        "rank": 29,
+        "refId": "v2ref_1416"
+      },
+      {
+        "rank": 30,
+        "refId": "v2ref_1417"
+      },
+      {
+        "rank": 31,
+        "refId": "v2ref_1418"
+      },
+      {
+        "rank": 32,
+        "refId": "v2ref_1426"
+      },
+      {
+        "rank": 33,
+        "refId": "v2ref_1427"
+      },
+      {
+        "rank": 34,
+        "refId": "v2ref_1447"
+      },
+      {
+        "rank": 35,
+        "refId": "v2ref_1461"
+      },
+      {
+        "rank": 36,
+        "refId": "v2ref_1462"
+      },
+      {
+        "rank": 37,
+        "refId": "v2ref_1463"
+      },
+      {
+        "rank": 38,
+        "refId": "v2ref_1471"
+      },
+      {
+        "rank": 39,
+        "refId": "v2ref_1472"
+      },
+      {
+        "rank": 40,
+        "refId": "v2ref_1636"
+      },
+      {
+        "rank": 41,
+        "refId": "v2ref_1650"
+      },
+      {
+        "rank": 42,
+        "refId": "v2ref_1651"
+      },
+      {
+        "rank": 43,
+        "refId": "v2ref_1652"
+      },
+      {
+        "rank": 44,
+        "refId": "v2ref_1660"
+      },
+      {
+        "rank": 45,
+        "refId": "v2ref_1661"
+      },
+      {
+        "rank": 46,
+        "refId": "v2ref_1684"
+      },
+      {
+        "rank": 47,
+        "refId": "v2ref_1698"
+      },
+      {
+        "rank": 48,
+        "refId": "v2ref_1699"
+      }
+    ],
+    "refs": {
+      "v2ref_103": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "यह मेरी बिज़नेस यात्रा है",
+        "refId": "v2ref_103",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_104": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "यह मेरी बिज़नेस यात्रा है",
+        "refId": "v2ref_104",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_106": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "मेरी खोज में फ़्लाइटें जोड़ें",
+        "refId": "v2ref_106",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_112": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "मेरी खोज में फ़्लाइटें जोड़ें",
+        "refId": "v2ref_112",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_113": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "मेरी खोज में फ़्लाइटें जोड़ें",
+        "refId": "v2ref_113",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_1401": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239.",
+        "refId": "v2ref_1401",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1402": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239.",
+        "refId": "v2ref_1402",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1411": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "asar hotel Varanasi को ट्रिप लिस्ट में सेव करें",
+        "refId": "v2ref_1411",
+        "role": "button",
+        "score": 84,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1416": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239.",
+        "refId": "v2ref_1416",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1417": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239.",
+        "refId": "v2ref_1417",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1418": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू",
+        "refId": "v2ref_1418",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1426": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "asar hotel Varanasiवाराणसी, भारत",
+        "refId": "v2ref_1426",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1427": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "asar hotel Varanasi",
+        "refId": "v2ref_1427",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1446": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+        "refId": "v2ref_1446",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1447": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+        "refId": "v2ref_1447",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1456": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahal को ट्रिप लिस्ट में सेव करें",
+        "refId": "v2ref_1456",
+        "role": "button",
+        "score": 84,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1461": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+        "refId": "v2ref_1461",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1462": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+        "refId": "v2ref_1462",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1463": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील",
+        "refId": "v2ref_1463",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1471": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत",
+        "refId": "v2ref_1471",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1472": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahal",
+        "refId": "v2ref_1472",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1635": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120.",
+        "refId": "v2ref_1635",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1636": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120.",
+        "refId": "v2ref_1636",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1645": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Hotel Urban Grand RD - Vrindavan को ट्रिप लिस्ट में सेव करें",
+        "refId": "v2ref_1645",
+        "role": "button",
+        "score": 84,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1650": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120.",
+        "refId": "v2ref_1650",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1651": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120.",
+        "refId": "v2ref_1651",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1652": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील",
+        "refId": "v2ref_1652",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1660": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत",
+        "refId": "v2ref_1660",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1661": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - Vrindavan",
+        "refId": "v2ref_1661",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1683": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559.",
+        "refId": "v2ref_1683",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1684": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559.",
+        "refId": "v2ref_1684",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1693": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasi को ट्रिप लिस्ट में सेव करें",
+        "refId": "v2ref_1693",
+        "role": "button",
+        "score": 84,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1698": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559.",
+        "refId": "v2ref_1698",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1699": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559.",
+        "refId": "v2ref_1699",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1700": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील",
+        "refId": "v2ref_1700",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1708": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत",
+        "refId": "v2ref_1708",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1709": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasi",
+        "refId": "v2ref_1709",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1731": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480.",
+        "refId": "v2ref_1731",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1732": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480.",
+        "refId": "v2ref_1732",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1741": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "Rich Grand Hotel Near To Tajmahal को ट्रिप लिस्ट में सेव करें",
+        "refId": "v2ref_1741",
+        "role": "button",
+        "score": 84,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1746": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480.",
+        "refId": "v2ref_1746",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1747": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480.",
+        "refId": "v2ref_1747",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1748": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू",
+        "refId": "v2ref_1748",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1749": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत",
+        "refId": "v2ref_1749",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1750": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahal",
+        "refId": "v2ref_1750",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1769": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250.",
+        "refId": "v2ref_1769",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1770": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250.",
+        "refId": "v2ref_1770",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1779": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple Vrindavan को ट्रिप लिस्ट में सेव करें",
+        "refId": "v2ref_1779",
+        "role": "button",
+        "score": 84,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1784": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250.",
+        "refId": "v2ref_1784",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1785": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250.",
+        "refId": "v2ref_1785",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1786": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील",
+        "refId": "v2ref_1786",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1794": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत",
+        "refId": "v2ref_1794",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1795": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple Vrindavan",
+        "refId": "v2ref_1795",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1973": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126",
+        "refId": "v2ref_1973",
+        "role": "link",
+        "score": 90,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1974": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126",
+        "refId": "v2ref_1974",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1988": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126",
+        "refId": "v2ref_1988",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1989": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126",
+        "refId": "v2ref_1989",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1990": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यू",
+        "refId": "v2ref_1990",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1991": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli",
+        "refId": "v2ref_1991",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_1992": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotel",
+        "refId": "v2ref_1992",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_2827": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "The Leela Kovalam, A Raviz Hotel",
+        "refId": "v2ref_2827",
+        "score": 86,
+        "state": "live",
+        "visibility": "offscreen"
+      },
+      "v2ref_4351": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "साइन इन की जानकारी को खारिज करें.",
+        "refId": "v2ref_4351",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4352": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4352",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4353": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4353",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4354": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4354",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4355": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "refId": "v2ref_4355",
+        "score": 95,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4356": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "link",
+        "name": "साइन इन करें या रजिस्टर करें",
+        "refId": "v2ref_4356",
+        "role": "link",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_4357": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "साइन इन करें या रजिस्टर करें",
+        "refId": "v2ref_4357",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_68": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "तारीखें चुनेंचेक-इन करने की तारीख — चेक-आउट करने की तारीख",
+        "refId": "v2ref_68",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_74": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "तारीखें चुनें",
+        "refId": "v2ref_74",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_75": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "चेक-इन करने की तारीख — चेक-आउट करने की तारीख",
+        "refId": "v2ref_75",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_76": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "चेक-इन करने की तारीख",
+        "refId": "v2ref_76",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_77": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "—",
+        "refId": "v2ref_77",
+        "score": 97,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_78": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "चेक-आउट करने की तारीख",
+        "refId": "v2ref_78",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_84": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "ओक्यूपेंसी चुनें",
+        "refId": "v2ref_84",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_85": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "2 वयस्क · 0 बच्चे · 1 रूम",
+        "refId": "v2ref_85",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_86": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "यात्रियों और कमरे की संख्या. वर्तमान में चुने गए: 2 वयस्क · 0 बच्चे · 1 रूम",
+        "refId": "v2ref_86",
+        "role": "button",
+        "score": 115,
+        "state": "live",
+        "text": "2 वयस्क · 0 बच्चे · 1 रूम",
+        "visibility": "visible"
+      },
+      "v2ref_92": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "button",
+        "name": "खोजें",
+        "refId": "v2ref_92",
+        "role": "button",
+        "score": 109,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_95": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "खोजें",
+        "refId": "v2ref_95",
+        "score": 105,
+        "state": "live",
+        "visibility": "visible"
+      },
+      "v2ref_97": {
+        "actionability": "ready",
+        "confidence": 1,
+        "kind": "generic",
+        "name": "यह मेरी बिज़नेस यात्रा है",
+        "refId": "v2ref_97",
+        "score": 111,
+        "state": "live",
+        "visibility": "visible"
+      }
+    },
+    "regions": [],
+    "stats": {
+      "interactionCount": 80,
+      "navigationCount": 8,
+      "readableCount": 76,
+      "regionCount": 0
+    },
+    "warnings": []
+  },
+  "deadState": {
+    "deadState": true,
+    "evidenceId": "dead_state_obs_1_2",
+    "failureKinds": [
+      "target_blocked"
+    ],
+    "observationId": "obs_1_2",
+    "reasons": [
+      "high_uncertainty"
+    ],
+    "severity": "warning",
+    "signals": [
+      "reason:high_uncertainty",
+      "low_confidence_refs:294",
+      "low_confidence_ref:v2ref_68",
+      "low_confidence_ref:v2ref_86",
+      "low_confidence_ref:v2ref_103",
+      "low_confidence_ref:v2ref_104",
+      "weakened_refs:294",
+      "failure:target_blocked"
+    ]
+  },
+  "episodeId": "episode_3_obs_1_3",
+  "evidenceCoverage": {
+    "contractKind": "unknown",
+    "readCount": 62,
+    "requirements": [],
+    "status": "ready"
+  },
+  "failures": [
+    {
+      "category": "target",
+      "failureId": "failure_target_blocked_obs_1_2",
+      "kind": "target_blocked",
+      "observationId": "obs_1_2",
+      "persistence": "persistent",
+      "retryable": false,
+      "severity": "warning",
+      "signals": [
+        "error:target_blocked"
+      ],
+      "targetRef": "v2ref_67"
+    }
+  ],
+  "goal": "Find a well-reviewed hotel in Paris with available bookings suitable for a couple (2 adults) on Valentine's Day week, February 14-21, 2027, that offers free cancellation options.",
+  "goalProgress": {
+    "entries": [
+      {
+        "key": "destination",
+        "state": "NOT_SET"
+      },
+      {
+        "key": "dates",
+        "state": "NOT_SET"
+      },
+      {
+        "key": "guests",
+        "state": "unverified"
+      },
+      {
+        "key": "free cancellation",
+        "state": "unverified"
+      },
+      {
+        "key": "well-reviewed",
+        "state": "unverified"
+      }
+    ],
+    "focus": "destination"
+  },
+  "lastResult": {
+    "effect": "none",
+    "kind": "search_page",
+    "success": true,
+    "traceStepId": "step_2",
+    "valuePreview": "{\"matches\":0,\"preview\":[]}"
+  },
+  "lineage": {
+    "steps": [
+      {
+        "afterObservationId": "obs_1_2",
+        "beforeObservationId": "obs_1_1",
+        "errorCode": "target_blocked",
+        "index": 0,
+        "kind": "type",
+        "status": "failed",
+        "stepId": "step_1",
+        "strength": "moderate",
+        "targetRef": "v2ref_67",
+        "transitionClass": "structural_local",
+        "value": "Paris"
+      },
+      {
+        "afterObservationId": "obs_1_3",
+        "beforeObservationId": "obs_1_2",
+        "index": 1,
+        "kind": "search_page",
+        "status": "completed",
+        "stepId": "step_2"
+      }
+    ],
+    "totalSteps": 2,
+    "truncated": false
+  },
+  "sizeDiagnostics": {
+    "currentBytes": 29480,
+    "totalPlannerInputBytes": 99208,
+    "workingSetBytes": 66533
+  },
+  "taskProgress": {
+    "items": [
+      {
+        "key": "destination",
+        "requested": "Paris",
+        "status": "pending"
+      },
+      {
+        "key": "date_range",
+        "requested": "February 14-21, 2027",
+        "status": "pending"
+      },
+      {
+        "key": "traveler_count",
+        "requested": "2 adults",
+        "status": "pending"
+      },
+      {
+        "key": "filter:free_cancellation",
+        "requested": "free cancellation",
+        "status": "pending"
+      }
+    ],
+    "status": "incomplete"
+  },
+  "uncertainty": {
+    "level": "high",
+    "signals": [
+      "failure:target_blocked",
+      "dead_state_evidence"
+    ]
+  },
+  "version": "v2.planner_input.v2",
+  "workingSet": {
+    "actionSurface": {
+      "ambiguousRefs": [],
+      "clickableRefs": [
+        "v2ref_4356",
+        "v2ref_68",
+        "v2ref_86",
+        "v2ref_4351",
+        "v2ref_92",
+        "v2ref_1401",
+        "v2ref_1446",
+        "v2ref_1635",
+        "v2ref_1683",
+        "v2ref_1731",
+        "v2ref_1769",
+        "v2ref_1973",
+        "v2ref_1411",
+        "v2ref_1456",
+        "v2ref_1645",
+        "v2ref_1693",
+        "v2ref_1741",
+        "v2ref_1779"
+      ],
+      "readableRefs": [
+        "v2ref_4356",
+        "v2ref_68",
+        "v2ref_86",
+        "v2ref_103",
+        "v2ref_104",
+        "v2ref_106",
+        "v2ref_112",
+        "v2ref_113",
+        "v2ref_4357",
+        "v2ref_74",
+        "v2ref_75",
+        "v2ref_76",
+        "v2ref_78",
+        "v2ref_84",
+        "v2ref_85",
+        "v2ref_97",
+        "v2ref_4351",
+        "v2ref_92",
+        "v2ref_95",
+        "v2ref_77",
+        "v2ref_1401",
+        "v2ref_1446",
+        "v2ref_1635",
+        "v2ref_1683",
+        "v2ref_1731",
+        "v2ref_1769",
+        "v2ref_1973",
+        "v2ref_1402",
+        "v2ref_1416",
+        "v2ref_1417",
+        "v2ref_1418",
+        "v2ref_1426",
+        "v2ref_1427",
+        "v2ref_1447",
+        "v2ref_1461",
+        "v2ref_1462",
+        "v2ref_1463",
+        "v2ref_1471",
+        "v2ref_1472",
+        "v2ref_1636",
+        "v2ref_1650",
+        "v2ref_1651",
+        "v2ref_1652",
+        "v2ref_1660",
+        "v2ref_1661",
+        "v2ref_1684",
+        "v2ref_1698",
+        "v2ref_1699",
+        "v2ref_1700",
+        "v2ref_1708",
+        "v2ref_1709",
+        "v2ref_1732",
+        "v2ref_1746",
+        "v2ref_1747",
+        "v2ref_1748",
+        "v2ref_1749",
+        "v2ref_1750",
+        "v2ref_1770",
+        "v2ref_1784",
+        "v2ref_1785",
+        "v2ref_1786",
+        "v2ref_1794",
+        "v2ref_1795",
+        "v2ref_1974",
+        "v2ref_1988",
+        "v2ref_1989",
+        "v2ref_1990",
+        "v2ref_1991",
+        "v2ref_1992",
+        "v2ref_2827",
+        "v2ref_1411",
+        "v2ref_1456",
+        "v2ref_1645",
+        "v2ref_1693",
+        "v2ref_1741",
+        "v2ref_1779"
+      ],
+      "selectableRefs": [],
+      "typeableRefs": []
+    },
+    "changedRefs": {
+      "appearedCount": 3260,
+      "omittedCount": 3533,
+      "preservedCount": 102,
+      "topRefs": [
+        {
+          "kind": "input",
+          "name": "जगह डालें",
+          "reasons": [
+            "form_candidate",
+            "last_failure",
+            "role_relevant_to_goal",
+            "visible_ready"
+          ],
+          "refId": "v2ref_67",
+          "role": "combobox",
+          "score": 248
+        },
+        {
+          "kind": "link",
+          "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1446",
+          "role": "link",
+          "score": 280,
+          "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+        },
+        {
+          "kind": "generic",
+          "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1447",
+          "score": 276,
+          "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+        },
+        {
+          "kind": "generic",
+          "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1461",
+          "score": 276,
+          "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+        },
+        {
+          "kind": "generic",
+          "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1462",
+          "score": 276,
+          "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+        },
+        {
+          "kind": "generic",
+          "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1463",
+          "score": 276,
+          "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील"
+        },
+        {
+          "kind": "generic",
+          "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1471",
+          "score": 276,
+          "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत"
+        },
+        {
+          "kind": "generic",
+          "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahal",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1472",
+          "score": 276,
+          "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahal"
+        },
+        {
+          "kind": "button",
+          "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahal को ट्रिप लिस्ट में सेव करें",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1456",
+          "role": "button",
+          "score": 274
+        },
+        {
+          "kind": "link",
+          "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239.",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1401",
+          "role": "link",
+          "score": 260,
+          "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239."
+        },
+        {
+          "kind": "link",
+          "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120.",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1635",
+          "role": "link",
+          "score": 260,
+          "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120."
+        },
+        {
+          "kind": "link",
+          "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559.",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1683",
+          "role": "link",
+          "score": 260,
+          "text": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559."
+        },
+        {
+          "kind": "link",
+          "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480.",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1731",
+          "role": "link",
+          "score": 260,
+          "text": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480."
+        },
+        {
+          "kind": "link",
+          "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250.",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1769",
+          "role": "link",
+          "score": 260,
+          "text": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250."
+        },
+        {
+          "kind": "link",
+          "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126",
+          "reasons": [
+            "goal_keyword_match",
+            "navigation_candidate",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1973",
+          "role": "link",
+          "score": 260,
+          "text": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126"
+        },
+        {
+          "kind": "generic",
+          "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239.",
+          "reasons": [
+            "goal_keyword_match",
+            "recently_appeared",
+            "recently_changed"
+          ],
+          "refId": "v2ref_1402",
+          "score": 256,
+          "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239."
+        }
+      ],
+      "weakenedCount": 294
+    },
+    "deltaRefs": {
+      "appeared": [
+        "v2ref_1446",
+        "v2ref_1447",
+        "v2ref_1461",
+        "v2ref_1462",
+        "v2ref_1463",
+        "v2ref_1471",
+        "v2ref_1472"
+      ],
+      "changed": [
+        "v2ref_67"
+      ]
+    },
+    "failedRefs": [
+      {
+        "kind": "input",
+        "name": "जगह डालें",
+        "reasons": [
+          "form_candidate",
+          "last_failure",
+          "role_relevant_to_goal",
+          "visible_ready"
+        ],
+        "refId": "v2ref_67",
+        "role": "combobox",
+        "score": 248
+      }
+    ],
+    "mode": "recover",
+    "modeReason": "recent_failure_evidence",
+    "navigationRefs": [
+      {
+        "kind": "link",
+        "name": "साइन इन करें या रजिस्टर करें",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4356",
+        "role": "link",
+        "score": 115,
+        "text": "साइन इन करें या रजिस्टर करें"
+      },
+      {
+        "kind": "link",
+        "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1401",
+        "role": "link",
+        "score": 90,
+        "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239."
+      },
+      {
+        "kind": "link",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1446",
+        "role": "link",
+        "score": 90,
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+      },
+      {
+        "kind": "link",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1635",
+        "role": "link",
+        "score": 90,
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120."
+      },
+      {
+        "kind": "link",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1683",
+        "role": "link",
+        "score": 90,
+        "text": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559."
+      },
+      {
+        "kind": "link",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1731",
+        "role": "link",
+        "score": 90,
+        "text": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480."
+      },
+      {
+        "kind": "link",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1769",
+        "role": "link",
+        "score": 90,
+        "text": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250."
+      },
+      {
+        "kind": "link",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1973",
+        "role": "link",
+        "score": 90,
+        "text": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126"
+      }
+    ],
+    "omitted": {
+      "droppedByReason": {
+        "generic_low_value": 43,
+        "hidden_low_value": 6,
+        "offscreen_low_value": 10,
+        "rank_loss": 3511,
+        "unlabeled_action": 13
+      },
+      "droppedRefCount": 3583,
+      "observedRefCount": 3663,
+      "selectedRefCount": 80
+    },
+    "primaryRefs": [
+      {
+        "kind": "button",
+        "name": "साइन इन की जानकारी को खारिज करें.",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "recovery_control",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4351",
+        "role": "button",
+        "score": 549
+      },
+      {
+        "kind": "link",
+        "name": "साइन इन करें या रजिस्टर करें",
+        "reasons": [
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4356",
+        "role": "link",
+        "score": 375,
+        "text": "साइन इन करें या रजिस्टर करें"
+      },
+      {
+        "kind": "generic",
+        "name": "साइन इन करें या रजिस्टर करें",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4357",
+        "score": 371,
+        "text": "साइन इन करें या रजिस्टर करें"
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4352",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4353",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4354",
+        "score": 355
+      },
+      {
+        "kind": "generic",
+        "reasons": [
+          "recently_appeared",
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_4355",
+        "score": 355
+      },
+      {
+        "kind": "button",
+        "name": "तारीखें चुनेंचेक-इन करने की तारीख — चेक-आउट करने की तारीख",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_68",
+        "role": "button",
+        "score": 285,
+        "text": "तारीखें चुनेंचेक-इन करने की तारीख — चेक-आउट करने की तारीख"
+      },
+      {
+        "kind": "button",
+        "name": "यात्रियों और कमरे की संख्या. वर्तमान में चुने गए: 2 वयस्क · 0 बच्चे · 1 रूम",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_86",
+        "role": "button",
+        "score": 285,
+        "text": "2 वयस्क · 0 बच्चे · 1 रूम"
+      },
+      {
+        "kind": "generic",
+        "name": "यह मेरी बिज़नेस यात्रा है",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_103",
+        "score": 281,
+        "text": "यह मेरी बिज़नेस यात्रा है"
+      },
+      {
+        "kind": "generic",
+        "name": "यह मेरी बिज़नेस यात्रा है",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_104",
+        "score": 281,
+        "text": "यह मेरी बिज़नेस यात्रा है"
+      },
+      {
+        "kind": "generic",
+        "name": "मेरी खोज में फ़्लाइटें जोड़ें",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_106",
+        "score": 281,
+        "text": "मेरी खोज में फ़्लाइटें जोड़ें"
+      },
+      {
+        "kind": "generic",
+        "name": "मेरी खोज में फ़्लाइटें जोड़ें",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_112",
+        "score": 281,
+        "text": "मेरी खोज में फ़्लाइटें जोड़ें"
+      },
+      {
+        "kind": "generic",
+        "name": "मेरी खोज में फ़्लाइटें जोड़ें",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_113",
+        "score": 281,
+        "text": "मेरी खोज में फ़्लाइटें जोड़ें"
+      },
+      {
+        "kind": "generic",
+        "name": "तारीखें चुनें",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_74",
+        "score": 281,
+        "text": "तारीखें चुनें"
+      },
+      {
+        "kind": "generic",
+        "name": "चेक-इन करने की तारीख — चेक-आउट करने की तारीख",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_75",
+        "score": 281,
+        "text": "चेक-इन करने की तारीख — चेक-आउट करने की तारीख"
+      },
+      {
+        "kind": "generic",
+        "name": "चेक-इन करने की तारीख",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_76",
+        "score": 281,
+        "text": "चेक-इन करने की तारीख"
+      },
+      {
+        "kind": "generic",
+        "name": "चेक-आउट करने की तारीख",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_78",
+        "score": 281,
+        "text": "चेक-आउट करने की तारीख"
+      },
+      {
+        "kind": "generic",
+        "name": "ओक्यूपेंसी चुनें",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_84",
+        "score": 281,
+        "text": "ओक्यूपेंसी चुनें"
+      },
+      {
+        "kind": "generic",
+        "name": "2 वयस्क · 0 बच्चे · 1 रूम",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_85",
+        "score": 281,
+        "text": "2 वयस्क · 0 बच्चे · 1 रूम"
+      },
+      {
+        "kind": "generic",
+        "name": "यह मेरी बिज़नेस यात्रा है",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_97",
+        "score": 281,
+        "text": "यह मेरी बिज़नेस यात्रा है"
+      },
+      {
+        "kind": "link",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1446",
+        "role": "link",
+        "score": 280,
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+      },
+      {
+        "kind": "button",
+        "name": "खोजें",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_92",
+        "role": "button",
+        "score": 279,
+        "text": "खोजें"
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1447",
+        "score": 276,
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1461",
+        "score": 276,
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹ 1,873मूल कीमत ₹ 2,497. मौजूदा कीमत ₹ 1,873.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1462",
+        "score": 276,
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1463",
+        "score": 276,
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील"
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1471",
+        "score": 276,
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत"
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahal",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1472",
+        "score": 276,
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahal"
+      },
+      {
+        "kind": "generic",
+        "name": "खोजें",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_95",
+        "score": 275,
+        "text": "खोजें"
+      },
+      {
+        "kind": "button",
+        "name": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahal को ट्रिप लिस्ट में सेव करें",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1456",
+        "role": "button",
+        "score": 274
+      },
+      {
+        "kind": "generic",
+        "name": "—",
+        "reasons": [
+          "recently_changed",
+          "visible_ready"
+        ],
+        "refId": "v2ref_77",
+        "score": 267,
+        "text": "—"
+      }
+    ],
+    "quarantinedActions": [],
+    "readableEvidence": [
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4351",
+        "text": "साइन इन की जानकारी को खारिज करें."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4356",
+        "text": "साइन इन करें या रजिस्टर करें साइन इन करें या रजिस्टर करें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_4357",
+        "text": "साइन इन करें या रजिस्टर करें साइन इन करें या रजिस्टर करें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_68",
+        "text": "तारीखें चुनेंचेक-इन करने की तारीख — चेक-आउट करने की तारीख तारीखें चुनेंचेक-इन करने की तारीख — चेक-आउट करने की तारीख"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_86",
+        "text": "यात्रियों और कमरे की संख्या. वर्तमान में चुने गए: 2 वयस्क · 0 बच्चे · 1 रूम 2 वयस्क · 0 बच्चे · 1 रूम"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_103",
+        "text": "यह मेरी बिज़नेस यात्रा है यह मेरी बिज़नेस यात्रा है"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_104",
+        "text": "यह मेरी बिज़नेस यात्रा है यह मेरी बिज़नेस यात्रा है"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_106",
+        "text": "मेरी खोज में फ़्लाइटें जोड़ें मेरी खोज में फ़्लाइटें जोड़ें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_112",
+        "text": "मेरी खोज में फ़्लाइटें जोड़ें मेरी खोज में फ़्लाइटें जोड़ें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_113",
+        "text": "मेरी खोज में फ़्लाइटें जोड़ें मेरी खोज में फ़्लाइटें जोड़ें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_74",
+        "text": "तारीखें चुनें तारीखें चुनें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_75",
+        "text": "चेक-इन करने की तारीख — चेक-आउट करने की तारीख चेक-इन करने की तारीख — चेक-आउट करने की तारीख"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_76",
+        "text": "चेक-इन करने की तारीख चेक-इन करने की तारीख"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_78",
+        "text": "चेक-आउट करने की तारीख चेक-आउट करने की तारीख"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_84",
+        "text": "ओक्यूपेंसी चुनें ओक्यूपेंसी चुनें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_85",
+        "text": "2 वयस्क · 0 बच्चे · 1 रूम 2 वयस्क · 0 बच्चे · 1 रूम"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_97",
+        "text": "यह मेरी बिज़नेस यात्रा है यह मेरी बिज़नेस यात्रा है"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1446",
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_92",
+        "text": "खोजें खोजें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1447",
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1461",
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1462",
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील2 रातें₹ 2,497₹..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1463",
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत5.85.8रिव्यू स्कोर रिव्यू स्कोर10 रिव्यूछुट्टियों के लिए डील Hotel The Gran..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1471",
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahalआगरा, भारत Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Pa..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1472",
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahal Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And ..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_95",
+        "text": "खोजें खोजें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1456",
+        "text": "Hotel The Grand Shelter Elite Most Luxury Air Condition Rooms With Free Parking And Wifi !!! Highly Recommended Hotel Near Taj Mahal को ट्रिप लिस्ट में सेव करें"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_77",
+        "text": "— —"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1401",
+        "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239. asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. ..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1635",
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120. Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1683",
+        "text": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559. Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1731",
+        "text": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480. Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1769",
+        "text": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250. K D Dham Hotel- Near Prem Mandir & Isk..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1973",
+        "text": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126 NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1402",
+        "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239. asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. ..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1416",
+        "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239. asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. ..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1417",
+        "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239. asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. ..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1418",
+        "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1426",
+        "text": "asar hotel Varanasiवाराणसी, भारत asar hotel Varanasiवाराणसी, भारत"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1427",
+        "text": "asar hotel Varanasi asar hotel Varanasi"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1636",
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120. Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1650",
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120. Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1651",
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120. Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1652",
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1660",
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत Hotel Urban Grand RD - VrindavanVrindāvan, भारत"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1661",
+        "text": "Hotel Urban Grand RD - Vrindavan Hotel Urban Grand RD - Vrindavan"
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1684",
+        "text": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559. Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत..."
+      },
+      {
+        "reasons": [
+          "answer_candidate"
+        ],
+        "refId": "v2ref_1698",
+        "text": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559. Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत..."
+      }
+    ],
+    "regionSummaries": [],
+    "secondaryRefs": [
+      {
+        "kind": "link",
+        "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1401",
+        "role": "link",
+        "score": 260,
+        "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239."
+      },
+      {
+        "kind": "link",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1635",
+        "role": "link",
+        "score": 260,
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120."
+      },
+      {
+        "kind": "link",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1683",
+        "role": "link",
+        "score": 260,
+        "text": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559."
+      },
+      {
+        "kind": "link",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1731",
+        "role": "link",
+        "score": 260,
+        "text": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480."
+      },
+      {
+        "kind": "link",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250.",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1769",
+        "role": "link",
+        "score": 260,
+        "text": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250."
+      },
+      {
+        "kind": "link",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126",
+        "reasons": [
+          "goal_keyword_match",
+          "navigation_candidate",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1973",
+        "role": "link",
+        "score": 260,
+        "text": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126"
+      },
+      {
+        "kind": "generic",
+        "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1402",
+        "score": 256,
+        "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239."
+      },
+      {
+        "kind": "generic",
+        "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1416",
+        "score": 256,
+        "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239."
+      },
+      {
+        "kind": "generic",
+        "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1417",
+        "score": 256,
+        "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू2 रातें₹ 4,318₹ 3,239मूल कीमत ₹ 4,318. मौजूदा कीमत ₹ 3,239."
+      },
+      {
+        "kind": "generic",
+        "name": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1418",
+        "score": 256,
+        "text": "asar hotel Varanasiवाराणसी, भारत7.47.4बढ़िया बढ़िया129 रिव्यू"
+      },
+      {
+        "kind": "generic",
+        "name": "asar hotel Varanasiवाराणसी, भारत",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1426",
+        "score": 256,
+        "text": "asar hotel Varanasiवाराणसी, भारत"
+      },
+      {
+        "kind": "generic",
+        "name": "asar hotel Varanasi",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1427",
+        "score": 256,
+        "text": "asar hotel Varanasi"
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1636",
+        "score": 256,
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120."
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1650",
+        "score": 256,
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120."
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1651",
+        "score": 256,
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील2 रातें₹ 5,200₹ 3,120मूल कीमत ₹ 5,200. मौजूदा कीमत ₹ 3,120."
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1652",
+        "score": 256,
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत8.78.7उम्दा उम्दा30 रिव्यूछुट्टियों के लिए डील"
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1660",
+        "score": 256,
+        "text": "Hotel Urban Grand RD - VrindavanVrindāvan, भारत"
+      },
+      {
+        "kind": "generic",
+        "name": "Hotel Urban Grand RD - Vrindavan",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1661",
+        "score": 256,
+        "text": "Hotel Urban Grand RD - Vrindavan"
+      },
+      {
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1684",
+        "score": 256,
+        "text": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559."
+      },
+      {
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1698",
+        "score": 256,
+        "text": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559."
+      },
+      {
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1699",
+        "score": 256,
+        "text": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील2 रातें₹ 15,443₹ 5,559मूल कीमत ₹ 15,443. मौजूदा कीमत ₹ 5,559."
+      },
+      {
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1700",
+        "score": 256,
+        "text": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत7.67.6बढ़िया बढ़िया221 रिव्यूछुट्टियों के लिए डील"
+      },
+      {
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1708",
+        "score": 256,
+        "text": "Super Hotel O Dashashwamedh Ghat Varanasiवाराणसी, भारत"
+      },
+      {
+        "kind": "generic",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasi",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1709",
+        "score": 256,
+        "text": "Super Hotel O Dashashwamedh Ghat Varanasi"
+      },
+      {
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1732",
+        "score": 256,
+        "text": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480."
+      },
+      {
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1746",
+        "score": 256,
+        "text": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480."
+      },
+      {
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1747",
+        "score": 256,
+        "text": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू2 रातें₹ 3,100₹ 2,480मूल कीमत ₹ 3,100. मौजूदा कीमत ₹ 2,480."
+      },
+      {
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1748",
+        "score": 256,
+        "text": "Rich Grand Hotel Near To Tajmahalआगरा, भारत7.37.3बढ़िया बढ़िया104 रिव्यू"
+      },
+      {
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahalआगरा, भारत",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1749",
+        "score": 256,
+        "text": "Rich Grand Hotel Near To Tajmahalआगरा, भारत"
+      },
+      {
+        "kind": "generic",
+        "name": "Rich Grand Hotel Near To Tajmahal",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1750",
+        "score": 256,
+        "text": "Rich Grand Hotel Near To Tajmahal"
+      },
+      {
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1770",
+        "score": 256,
+        "text": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250."
+      },
+      {
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1784",
+        "score": 256,
+        "text": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250."
+      },
+      {
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250.",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1785",
+        "score": 256,
+        "text": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील2 रातें₹ 4,062₹ 3,250मूल कीमत ₹ 4,062. मौजूदा कीमत ₹ 3,250."
+      },
+      {
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1786",
+        "score": 256,
+        "text": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत7.67.6बढ़िया बढ़िया90 रिव्यूछुट्टियों के लिए डील"
+      },
+      {
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1794",
+        "score": 256,
+        "text": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple VrindavanVrindāvan, भारत"
+      },
+      {
+        "kind": "generic",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple Vrindavan",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1795",
+        "score": 256,
+        "text": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple Vrindavan"
+      },
+      {
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1974",
+        "score": 256,
+        "text": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126"
+      },
+      {
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1988",
+        "score": 256,
+        "text": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126"
+      },
+      {
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1989",
+        "score": 256,
+        "text": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यूइतने से शुरू₹ 65,126कीमत ₹ 65,126"
+      },
+      {
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यू",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1990",
+        "score": 256,
+        "text": "NĒRO Boutique Hotelयूनान, Imerovigli9.79.7बेहद शानदार बेहद शानदार148 रिव्यू"
+      },
+      {
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotelयूनान, Imerovigli",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1991",
+        "score": 256,
+        "text": "NĒRO Boutique Hotelयूनान, Imerovigli"
+      },
+      {
+        "kind": "generic",
+        "name": "NĒRO Boutique Hotel",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1992",
+        "score": 256,
+        "text": "NĒRO Boutique Hotel"
+      },
+      {
+        "kind": "generic",
+        "name": "The Leela Kovalam, A Raviz Hotel",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_2827",
+        "score": 256,
+        "text": "The Leela Kovalam, A Raviz Hotel"
+      },
+      {
+        "kind": "button",
+        "name": "asar hotel Varanasi को ट्रिप लिस्ट में सेव करें",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1411",
+        "role": "button",
+        "score": 254
+      },
+      {
+        "kind": "button",
+        "name": "Hotel Urban Grand RD - Vrindavan को ट्रिप लिस्ट में सेव करें",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1645",
+        "role": "button",
+        "score": 254
+      },
+      {
+        "kind": "button",
+        "name": "Super Hotel O Dashashwamedh Ghat Varanasi को ट्रिप लिस्ट में सेव करें",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1693",
+        "role": "button",
+        "score": 254
+      },
+      {
+        "kind": "button",
+        "name": "Rich Grand Hotel Near To Tajmahal को ट्रिप लिस्ट में सेव करें",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1741",
+        "role": "button",
+        "score": 254
+      },
+      {
+        "kind": "button",
+        "name": "K D Dham Hotel- Near Prem Mandir & Iskcon Temple Vrindavan को ट्रिप लिस्ट में सेव करें",
+        "reasons": [
+          "goal_keyword_match",
+          "recently_appeared",
+          "recently_changed"
+        ],
+        "refId": "v2ref_1779",
+        "role": "button",
+        "score": 254
+      }
+    ]
+  },
+  "workingSetDiagnostics": {
+    "droppedByReason": {
+      "generic_low_value": 43,
+      "hidden_low_value": 6,
+      "offscreen_low_value": 10,
+      "rank_loss": 3511,
+      "unlabeled_action": 13
+    },
+    "droppedRefCount": 3583,
+    "maxNavigationRefs": 24,
+    "maxPrimaryRefs": 32,
+    "maxReadableEvidence": 48,
+    "maxRegionSummaries": 12,
+    "maxSecondaryRefs": 48,
+    "observedRefCount": 3663,
+    "selectedByReason": {
+      "form_candidate": 1,
+      "goal_keyword_match": 70,
+      "last_failure": 1,
+      "navigation_candidate": 288,
+      "recently_appeared": 3268,
+      "recently_changed": 3548,
+      "recovery_control": 1,
+      "role_relevant_to_goal": 1,
+      "visible_ready": 66
+    },
+    "selectedRefCount": 80
+  }
+}

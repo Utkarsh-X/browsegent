@@ -30,7 +30,11 @@ export class ContinuityGraph {
     const currentRefIds = new Set<string>();
     for (const ref of observation.refs) {
       currentRefIds.add(ref.refId);
-      this.refs.set(ref.refId, this.toRefNode(ref, observation.observationId));
+      const existing = this.resolveExistingNode(ref);
+      if (existing && existing.refId !== ref.refId) {
+        this.refs.delete(existing.refId);
+      }
+      this.refs.set(ref.refId, this.toRefNode(ref, observation.observationId, existing));
     }
 
     for (const [refId, node] of this.refs) {
@@ -99,8 +103,11 @@ export class ContinuityGraph {
     };
   }
 
-  private toRefNode(ref: V2Ref, observationId: string): ContinuityGraphRefNode {
-    const existing = this.refs.get(ref.refId);
+  private toRefNode(
+    ref: V2Ref,
+    observationId: string,
+    existing?: ContinuityGraphRefNode,
+  ): ContinuityGraphRefNode {
 
     return {
       refId: ref.refId,
@@ -116,6 +123,20 @@ export class ContinuityGraph {
       lastSeenObservationId: observationId,
       lastChangedTransitionId: existing?.lastChangedTransitionId,
     };
+  }
+
+  private resolveExistingNode(ref: V2Ref): ContinuityGraphRefNode | undefined {
+    const exact = this.refs.get(ref.refId);
+    if (exact) return exact;
+
+    if (!ref.targetId) {
+      return exact;
+    }
+
+    return [...this.refs.values()].find(node =>
+      node.present
+      && node.targetId === ref.targetId,
+    );
   }
 
   private markChangedRefs(transitionId: string, evidence: TransitionEvidence): void {

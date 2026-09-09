@@ -4,10 +4,17 @@ import type { PlannerElementIR, PlannerElementLane, PlannerRepresentationIR, Pla
 import type { PlannerActionSurface } from '../workingSetTypes';
 
 export class PlannerRepresentationCompiler {
-  compile(input: PlannerInput): PlannerRepresentationIR {
+  compile(input: PlannerInput, options: { stableOrder?: boolean } = {}): PlannerRepresentationIR {
     const failureMap = buildFailureMap(input.failures ?? []);
     const pinnedRefIds = buildPinnedRefIds(input.workingSet);
-    const surface = buildSurface(input.current, failureMap, pinnedRefIds, input.workingSet?.actionSurface);
+    const surface = buildSurface(
+      input.current,
+      failureMap,
+      pinnedRefIds,
+      input.workingSet?.actionSurface,
+      buildDeltaMap(input.workingSet?.deltaRefs),
+      options.stableOrder === true,
+    );
     const workingSet = input.workingSet ? buildWorkingSet(input.workingSet) : undefined;
     const decisionSignals = input.workingSet ? buildDecisionSignals(input.workingSet) : undefined;
     const allElements = [...surface.groups.flatMap(group => group.elements), ...surface.remainder];
@@ -24,8 +31,13 @@ export class PlannerRepresentationCompiler {
         deadState: input.deadState,
         recovery: input.recovery,
         answerFeedback: input.answerFeedback,
+        evidenceCoverage: input.evidenceCoverage,
+        taskProgress: input.taskProgress,
+        evidenceSnapshot: input.evidenceSnapshot,
         uncertainty: input.uncertainty,
         lineage: input.lineage,
+        goalProgress: input.goalProgress,
+        horizon: input.horizon,
       },
       surface,
       workingSet,
@@ -46,7 +58,11 @@ function buildSurface(
   failureMap: Map<string, PlannerElementIR['failure']>,
   pinnedRefIds: Set<string>,
   actionSurface?: PlannerActionSurface,
+  deltaMap?: Map<string, 'new' | 'chg'>,
+  stableOrder = false,
 ) {
+  // O1 canonical order: numeric refId suffix (v2ref_N first-appearance order,
+  // append-only). Ties keep insertion order (Array.sort is stable).
   const laneByRef = new Map<string, { lane: PlannerElementLane; rank: number }>();
   addLane(laneByRef, current.interactions, 'interaction');
   addLane(laneByRef, current.readables, 'readable');
@@ -71,6 +87,7 @@ function buildSurface(
         laneInfo?.rank,
         failureMap.get(refId),
         tools.length > 0 ? tools : undefined,
+        deltaMap?.get(refId),
       ),
     );
   }
@@ -81,6 +98,7 @@ function buildSurface(
       const regionElements = region.refIds
         .map(refId => elementsByRef.get(refId))
         .filter((element): element is PlannerElementIR => Boolean(element));
+      if (stableOrder) regionElements.sort((a, b) => refNum(a.refId) - refNum(b.refId));
       for (const element of regionElements) groupedRefs.add(element.refId);
       const maxVisible = regionElements.length <= 5 ? regionElements.length : regionElements.length <= 20 ? 3 : 2;
       const visibleElements = selectVisibleRegionElements(regionElements, maxVisible, pinnedRefIds);
@@ -96,10 +114,23 @@ function buildSurface(
     .filter(group => group.totalCount > 0);
 
   const remainder = [...elementsByRef.values()].filter(element => !groupedRefs.has(element.refId));
+  if (stableOrder) {
+    remainder.sort((a, b) => refNum(a.refId) - refNum(b.refId));
+    groups.sort((a, b) => minRefNum(a.elements) - minRefNum(b.elements));
+  }
 
   return {
     groups,
     remainder,
+    prose: current.prose?.map(entry => ({
+      proseId: entry.proseId,
+      anchorRefIds: [...entry.anchorRefIds],
+      text: entry.text,
+    })),
+    // Serialized refs-map order = interactions rank order (the composer builds
+    // the map by iterating selected interactions), so this is the rank order
+    // the W2 wire renders in.
+    elementsInRefOrder: [...elementsByRef.values()],
     inputRefCount: Object.keys(current.refs).length,
     surfaceRefCount: groups.reduce((sum, group) => sum + group.elements.length, 0) + remainder.length,
   };
@@ -135,6 +166,7 @@ function normalizeElement(
   rank: number | undefined,
   failure: PlannerElementIR['failure'],
   tools: string[] | undefined,
+  delta: 'new' | 'chg' | undefined,
 ): PlannerElementIR {
   const anomalies: string[] = [];
   if (ref.visibility !== 'visible') anomalies.push(`visibility=${ref.visibility}`);
@@ -148,16 +180,29 @@ function normalizeElement(
     role: ref.role,
     name: ref.name ?? ref.text ?? ref.refId,
     text: ref.text && ref.text !== ref.name ? ref.text : undefined,
+    ariaAutocomplete: ref.ariaAutocomplete,
+    ariaHasPopup: ref.ariaHasPopup,
+    value: ref.value,
+    placeholder: ref.placeholder,
     lane,
     rank,
     scoreTier: scoreTier(ref.score),
     score: ref.score,
     regionId: ref.regionId,
     selectOptions: ref.selectOptions,
+    delta,
     anomalies,
     failure,
     tools,
   };
+}
+
+function buildDeltaMap(deltaRefs: { appeared?: readonly string[]; changed?: readonly string[] } | undefined): Map<string, 'new' | 'chg'> | undefined {
+  if (!deltaRefs || (deltaRefs.appeared?.length ?? 0) === 0 && (deltaRefs.changed?.length ?? 0) === 0) return undefined;
+  const map = new Map<string, 'new' | 'chg'>();
+  for (const refId of deltaRefs.changed ?? []) map.set(refId, 'chg');
+  for (const refId of deltaRefs.appeared ?? []) if (!map.has(refId)) map.set(refId, 'new');
+  return map;
 }
 
 function scoreTier(score: number): PlannerScoreTier {
@@ -210,21 +255,23 @@ function buildPinnedRefIds(workingSet: PlannerInput['workingSet']): Set<string> 
   if (!workingSet) return pinned;
 
   for (const ref of [
-    ...workingSet.primaryRefs,
-    ...workingSet.secondaryRefs,
-    ...workingSet.navigationRefs,
-    ...workingSet.failedRefs,
+    ...(workingSet.primaryRefs ?? []),
+    ...(workingSet.secondaryRefs ?? []),
+    ...(workingSet.navigationRefs ?? []),
+    ...(workingSet.failedRefs ?? []),
   ]) {
-    pinned.add(ref.refId);
+    if (ref?.refId) pinned.add(ref.refId);
   }
 
-  for (const refId of [
-    ...workingSet.actionSurface.clickableRefs,
-    ...workingSet.actionSurface.typeableRefs,
-    ...workingSet.actionSurface.selectableRefs,
-    ...workingSet.actionSurface.readableRefs,
-  ]) {
-    pinned.add(refId);
+  if (workingSet.actionSurface) {
+    for (const refId of [
+      ...(workingSet.actionSurface.clickableRefs ?? []),
+      ...(workingSet.actionSurface.typeableRefs ?? []),
+      ...(workingSet.actionSurface.selectableRefs ?? []),
+      ...(workingSet.actionSurface.readableRefs ?? []),
+    ]) {
+      if (refId) pinned.add(refId);
+    }
   }
 
   return pinned;
@@ -241,6 +288,10 @@ function buildWorkingSet(workingSet: NonNullable<PlannerInput['workingSet']>): W
     secondary: compact(workingSet.secondaryRefs),
     navigation: compact(workingSet.navigationRefs),
     failed: compact(workingSet.failedRefs),
+    readableEvidence: workingSet.readableEvidence,
+    changedRefs: workingSet.changedRefs,
+    quarantinedActions: workingSet.quarantinedActions,
+    regionSummaries: workingSet.regionSummaries,
     actionSurface: workingSet.actionSurface,
     omitted: workingSet.omitted ? {
       observed: workingSet.omitted.observedRefCount,
@@ -249,4 +300,13 @@ function buildWorkingSet(workingSet: NonNullable<PlannerInput['workingSet']>): W
       byReason: workingSet.omitted.droppedByReason,
     } : undefined,
   };
+}
+
+function refNum(refId: string): number {
+  const match = /(\d+)$/.exec(refId);
+  return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+}
+
+function minRefNum(elements: PlannerElementIR[]): number {
+  return elements.reduce((min, element) => Math.min(min, refNum(element.refId)), Number.MAX_SAFE_INTEGER);
 }

@@ -30,12 +30,40 @@ test('buildV2PlannerSystemPrompt describes working set and targeted expansion', 
   assert.match(prompt, /search_page/i);
 });
 
+test('buildV2PlannerSystemPrompt forbids typing when no typeable ref is exposed', () => {
+  const prompt = buildV2PlannerSystemPrompt();
+
+  assert.match(prompt, /no current ref is compatible with type/i);
+  assert.match(prompt, /click a compatible launcher and reobserve/i);
+  assert.match(prompt, /never emit type/i);
+});
+
+test('buildV2PlannerSystemPrompt requires opening closed suggestion controls before typing', () => {
+  const prompt = buildV2PlannerSystemPrompt();
+
+  assert.match(prompt, /aria-autocomplete or aria-haspopup=listbox/i);
+  assert.match(prompt, /click the control once/i);
+  assert.match(prompt, /no read tool is ever needed just to re-observe/i);
+  assert.match(prompt, /type the requested value into the control in your very next plan/i);
+  assert.match(prompt, /never use search_page, get, or inspect_region to look for controls or suggestion options/i);
+  assert.match(prompt, /visible suggestion options do not match/i);
+  assert.match(prompt, /do not click an unrelated option/i);
+});
+
 test('buildV2PlannerSystemPrompt describes recovery state', () => {
   const prompt = buildV2PlannerSystemPrompt();
 
   assert.match(prompt, /recovery\.state/);
   assert.match(prompt, /nextMechanisms/);
   assert.match(prompt, /blockedAction/);
+});
+
+test('buildV2PlannerSystemPrompt treats empty navigation surfaces as unproven progress', () => {
+  const prompt = buildV2PlannerSystemPrompt();
+
+  assert.match(prompt, /empty_navigation_surface/);
+  assert.match(prompt, /URL-only transition/);
+  assert.match(prompt, /bounded wait or re-observation/);
 });
 
 test('buildV2PlannerSystemPrompt exposes bounded press keys', () => {
@@ -86,6 +114,15 @@ test('buildV2PlannerSystemPrompt includes strong failed-ref recovery invariant',
 test('buildV2PlannerSystemPrompt describes finalization constraints', () => {
   const prompt = buildV2PlannerSystemPrompt();
   assert.match(prompt, /In finalization mode, plans are invalid/i);
+});
+
+test('buildV2PlannerSystemPrompt documents compact PRC markers and preserved fields', () => {
+  const prompt = buildV2PlannerSystemPrompt({ compactDataPlane: true });
+
+  assert.match(prompt, /compact data-plane notation/i);
+  assert.match(prompt, /S:\/LAST:\/EVIDENCE:\/W:/);
+  assert.match(prompt, /supporting read indexes/i);
+  assert.match(prompt, /bounded lineage/i);
 });
 
 test('buildV2PlannerSystemPrompt requires complete multi-detail answers before done', () => {
@@ -146,10 +183,47 @@ test('buildV2PlannerUserMessage renders PRC when explicitly requested', () => {
   assert.doesNotMatch(message, /"visibility":"visible"/);
 });
 
+test('buildV2PlannerUserMessage renders compact PRC only when requested', () => {
+  const input = makeMinimalPlannerInputForPromptTest();
+  const message = buildV2PlannerUserMessage(input, {
+    mode: 'prc',
+    compactDataPlane: true,
+  });
+
+  assert.match(message, /^Planner input:\nS:/);
+  assert.match(message, /SURFACE:/);
+  assert.match(message, /\[ref_docs\]/);
+});
+
 test('buildV2PlannerUserMessage treats explicit undefined mode as JSON', () => {
   const input = makeMinimalPlannerInputForPromptTest();
   // PlannerSerializationConfig.mode is now required at type level,
   // but we test the runtime branch fallback defensively
   const message = buildV2PlannerUserMessage(input, { mode: 'json' });
   assert.match(message, /^Planner input JSON:\n\{/);
+});
+
+test('buildV2PlannerUserMessage renders relation-bound evidence snapshots', () => {
+  const input = makeMinimalPlannerInputForPromptTest();
+  input.evidenceSnapshot = {
+    activeSort: { dimension: 'stars', direction: 'desc', source: 'url_query' },
+    cards: [{
+      position: 0,
+      entity: 'owner/repo-one',
+      provenRank: 1,
+      metrics: { stars: 73 },
+      refIds: ['ref_repo_one', 'ref_stars_one'],
+    }],
+  };
+
+  const expanded = buildV2PlannerUserMessage(input, { mode: 'prc' });
+  assert.match(expanded, /EVIDENCE SNAPSHOT/);
+  assert.match(expanded, /Rank #1/);
+  assert.match(expanded, /owner\/repo-one/);
+  assert.match(expanded, /73 stars/);
+
+  const compact = buildV2PlannerUserMessage(input, { mode: 'prc', compactDataPlane: true });
+  assert.match(compact, /facts=/);
+  assert.match(compact, /owner\/repo-one/);
+  assert.match(compact, /73/);
 });

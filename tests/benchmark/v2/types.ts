@@ -1,4 +1,5 @@
 import type { PlannerSerializationConfig } from '../../../src/v2/planner/types';
+import type { PlannerWorkingSetOptions } from '../../../src/v2/planner/workingSetTypes';
 
 export type BenchmarkDifficulty = 'extraction' | 'navigation' | 'interaction' | 'recovery' | 'adversarial';
 export type BenchmarkPartition = 'dev' | 'holdout';
@@ -8,6 +9,7 @@ export type BenchmarkFailureType =
   | 'action_error'
   | 'planning_error'
   | 'environment_block'
+  | 'captcha_wall'
   | 'validation_error'
   | 'budget_exceeded'
   | 'rate_limited'
@@ -45,6 +47,7 @@ export interface BenchmarkAdapterRunOptions {
   requestMinIntervalMs?: number;
   plannerMode?: 'current' | 'compact_enforced';
   plannerSerialization?: PlannerSerializationConfig;
+  workingSetOptions?: PlannerWorkingSetOptions;
 }
 
 export type BenchmarkEvidenceMode = 'browsegent_trace' | 'external_artifact';
@@ -58,6 +61,8 @@ export interface BenchmarkAdapterResult {
   tracePath?: string;
   artifactPath?: string;
   failureReason?: string;
+  /** Advisory contract reasons that fired but were overridden to preserve the answer. */
+  advisoryNotes?: string;
   failureType?: BenchmarkFailureType;
   metrics: {
     plannerCalls: number;
@@ -65,6 +70,8 @@ export interface BenchmarkAdapterResult {
     durationMs: number;
     inputTokens?: number;
     outputTokens?: number;
+    postActionObservationReuseCount?: number;
+    postActionObservationRecaptureCount?: number;
   };
   diagnostics?: BenchmarkDiagnostics;
 }
@@ -178,7 +185,22 @@ export interface BenchmarkDiagnostics {
   actions: BenchmarkActionDiagnostics;
   projectionOverlap: BenchmarkProjectionOverlapDiagnostics;
   workingSet: BenchmarkWorkingSetDiagnostics;
+  latency?: BenchmarkLatencyDiagnostics;
+  evidenceCoverage?: BenchmarkEvidenceCoverageDiagnostics;
   warnings: string[];
+}
+
+export interface BenchmarkLatencyDiagnostics {
+  stepCount: number;
+  totalMs: number;
+  unaccountedMs: number;
+  phaseTotals: Record<string, number>;
+}
+
+export interface BenchmarkEvidenceCoverageDiagnostics {
+  plannerInputCount: number;
+  states: Record<string, number>;
+  requirementStatuses: Record<string, number>;
 }
 
 export interface BenchmarkProjectionOverlapDiagnostics {
@@ -218,6 +240,17 @@ export interface BenchmarkDiagnosticsSummary {
   totalProviderUserBytes: number;
   totalProviderAttempts: number;
   totalPlannerCalls: number;
+  latency?: BenchmarkLatencySummary;
+  evidenceCoverage?: BenchmarkEvidenceCoverageDiagnostics;
+}
+
+export interface BenchmarkLatencySummary {
+  runCount: number;
+  totalMs: number;
+  p50Ms: number;
+  p95Ms: number;
+  unaccountedMs: number;
+  phaseTotals: Record<string, number>;
 }
 
 export interface BenchmarkRunMetadata {
@@ -237,6 +270,7 @@ export interface BenchmarkRunMetadata {
     minIntervalMs: number;
   };
   plannerSerialization?: PlannerSerializationConfig;
+  workingSetOptions?: PlannerWorkingSetOptions;
 }
 
 export interface BenchmarkGeminiKeyAssignment {

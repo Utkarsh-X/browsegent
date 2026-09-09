@@ -51,6 +51,8 @@ test('BrowserAgentRunner maps task-first input into a v2 agent loop run', async 
     model: 'gemini/gemini-3.1-flash-lite',
     browser: { headless: true, viewport: { width: 1000, height: 700 } },
     trace: { dir: 'logs/bench', runId: 'public_api_unit' },
+    plannerSerialization: { mode: 'prc', prcTierOmitted: true },
+    workingSetOptions: { maxPrimaryRefs: 4, readablePhraseBonus: 60 },
   });
 
   assert.equal(result.success, true);
@@ -68,6 +70,8 @@ test('BrowserAgentRunner maps task-first input into a v2 agent loop run', async 
     goal: 'Find the first price',
     maxSteps: 3,
     model: 'gemini/gemini-3.1-flash-lite',
+    plannerSerialization: { mode: 'prc', prcTierOmitted: true },
+    workingSetOptions: { maxPrimaryRefs: 4, readablePhraseBonus: 60 },
   });
 });
 

@@ -12,6 +12,8 @@ export function resolveWebVoyagerTaskIds(slice: WebVoyagerTaskSlice = 'balanced3
 export const WEBVOYAGER_LITE_TASK_IDS = WEBVOYAGER_STABLE_SLICES.balanced30;
 export const WEBVOYAGER_MVR_5_TASK_IDS = WEBVOYAGER_STABLE_SLICES.mvr5;
 export const WEBVOYAGER_MVR_5_STABLE_TASK_IDS = WEBVOYAGER_STABLE_SLICES['mvr5-stable'];
+export const WEBVOYAGER_FRESH_50_TASK_IDS = WEBVOYAGER_STABLE_SLICES.fresh50;
+export const WEBVOYAGER_FRESH_50_STABLE_TASK_IDS = WEBVOYAGER_STABLE_SLICES['fresh50-stable'];
 
 export function selectWebVoyagerLiteTasks(
   sourceTasks: WebVoyagerSourceTask[],

@@ -158,8 +158,9 @@ test('BrowserUseLocalAdapter scales timeoutMs dynamically based on requestMinInt
     attempt: 1,
     traceDir: outputRoot,
     headed: false,
+    maxSteps: 10,
     requestMinIntervalMs: 30000,
   });
 
-  assert.equal(capturedTimeoutMs, 300_000);
+  assert.equal(capturedTimeoutMs, 1_680_000);
 });

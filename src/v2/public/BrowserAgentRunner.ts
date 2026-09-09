@@ -46,8 +46,8 @@ export class BrowserAgentRunner {
       goal: buildGoal(task, options),
       maxSteps,
       model: options.model ?? this.options.defaultModel,
-      ...(options.plannerMode !== undefined ? { plannerMode: options.plannerMode } : {}),
       ...(options.plannerSerialization !== undefined ? { plannerSerialization: options.plannerSerialization } : {}),
+      ...(options.workingSetOptions !== undefined ? { workingSetOptions: options.workingSetOptions } : {}),
     });
 
     return applyOutputMode(loopResult, options, warnings);
@@ -137,6 +137,7 @@ function applyOutputMode(
     success: loopResult.success,
     value: loopResult.value,
     failureReason: loopResult.failureReason,
+    advisoryNotes: loopResult.advisoryNotes,
     tracePath: loopResult.tracePath,
     warnings,
     metrics: loopResult.metrics,

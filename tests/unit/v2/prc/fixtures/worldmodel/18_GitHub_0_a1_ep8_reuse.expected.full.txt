@@ -1,0 +1,120 @@
+Planner input:
+MISSION
+  goal: Search for an open-source project related to 'climate change data visualization' on GitHub and report the project with the most stars.
+
+STATE
+  page: "Repository search results · GitHub" https://github.com/search?q=climate+change+data+visualization&type=repositories
+  observation: obs_1_10 gen=1 refs=384
+  focus: v2ref_2701 highest_operational_score
+
+RECENT EVENTS
+  last: click v2ref_2133 -> ok
+  transition: structural_local urlChanged=false appeared=184 disappeared=591 weakened=0 preserved=4
+  history: 7 steps truncated
+
+EVIDENCE COVERAGE
+  state: uncertain reads=88
+  ranking_evidence: uncertain
+
+EVIDENCE SNAPSHOT
+  sort: relevance (desc) via active_control
+  Position 1 | moriahtaylor1/climate-change-analysis | 6 stars
+  Position 2 | WorldWindLabs/AgroSphere | 20 stars
+  Position 3 | akshaysonvane/Climate-Change-Data-Analytics-Visualization | 11 stars
+  Position 4 | AndreasPrein/Thunderstorm_Downbursts_Climate_Change
+
+PROBLEMS
+  recovery: navigation_oscillation
+    BLOCKED: Do NOT repeat the blocked action. Try: avoid_navigation_churn, commit_to_current_surface_until_progress, act_on_visible_controls, reobserve_current_surface.
+  answer_feedback: missing missing_ranking_evidence
+  uncertainty: medium low_confidence_refs:196, low_confidence_ref:v2ref_1, low_confidence_ref:v2ref_1551, low_confidence_ref:v2ref_1582, low_confidence_ref:v2ref_1611, navigation_oscillation, answer_contract:missing_ranking_evidence, navigation_oscillation
+
+PLANNER SURFACE
+  Page Elements
+    [v2ref_1] <link name="Skip to content" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_1506] <generic name="v2ref_1506" />
+    [v2ref_1551] <button name="Open Source" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_1584] <generic name="v2ref_1584" />
+    [v2ref_1918] <link name="Advanced search" state="state=weakened,confidence=0.55" tools="c,r" />
+    [v2ref_2581] <generic name="v2ref_2581" />
+    [v2ref_2582] <generic name="v2ref_2582" />
+    [v2ref_2590] <generic name="v2ref_2590" />
+    [v2ref_2591] <generic name="v2ref_2591" />
+    [v2ref_2620] <link name="Documentation" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_2631] <generic name="v2ref_2631" />
+    [v2ref_2632] <generic name="v2ref_2632" />
+    [v2ref_2644] <generic name="v2ref_2644" />
+    [v2ref_2652] <link name="Documentation" state="visibility=hidden,actionability=blocked" tools="r" />
+    [v2ref_2661] <generic name="v2ref_2661" />
+    [v2ref_2662] <generic name="v2ref_2662" />
+    [v2ref_2671] <generic name="v2ref_2671" />
+    [v2ref_2682] <generic name="Search/" tools="r" +new />
+    [v2ref_2683] <generic name="Search/" tools="r" +new />
+    [v2ref_2684] <generic name="Search/" tools="r" +new />
+    [v2ref_2685] <generic name="v2ref_2685" />
+    [v2ref_2686] <generic name="v2ref_2686" />
+    [v2ref_2687] <generic name="Sign in" tools="r" />
+    [v2ref_2688] <generic name="Sign in" tools="r" />
+    [v2ref_2689] <generic name="Sign up" tools="r" />
+    [v2ref_2690] <generic name="Sign up" tools="r" />
+    [v2ref_2691] <generic name="v2ref_2691" />
+    [v2ref_2692] <generic name="v2ref_2692" />
+    [v2ref_2693] <generic name="v2ref_2693" />
+    [v2ref_2701] <generic name="Filter byCode... (...)resultsRepositories535 (535)resultsIssues1.4k (1.4k)resultsPull requests1.3k (1.3k)resultsDiscu..." role="region" tools="r" +new />
+    [v2ref_2703] <generic name="v2ref_2703" />
+    [v2ref_2704] <generic name="v2ref_2704" />
+    [v2ref_2705] <generic name="v2ref_2705" />
+    [v2ref_2706] <generic name="results" tools="r" />
+    [v2ref_2708] <generic name="v2ref_2708" />
+    [v2ref_2709] <generic name="v2ref_2709" />
+    [v2ref_2710] <generic name="v2ref_2710" />
+    [v2ref_2711] <generic name="535" tools="r" />
+    [v2ref_2712] <generic name="535" tools="r" />
+    [v2ref_2713] <generic name="535" tools="r" />
+    [v2ref_2714] <generic name="results" tools="r" />
+    [v2ref_2716] <generic name="v2ref_2716" />
+    [v2ref_2717] <generic name="v2ref_2717" />
+    [v2ref_2718] <generic name="v2ref_2718" />
+    [v2ref_2719] <generic name="v2ref_2719" />
+    [v2ref_2720] <generic name="1.4k" tools="r" />
+    [v2ref_2721] <generic name="1.4k" tools="r" />
+    [v2ref_2722] <generic name="1.4k" tools="r" />
+    [v2ref_2723] <generic name="results" tools="r" />
+    [v2ref_2725] <generic name="v2ref_2725" />
+    [v2ref_2726] <generic name="v2ref_2726" />
+    [v2ref_2727] <generic name="v2ref_2727" />
+    [v2ref_2728] <generic name="1.3k" tools="r" />
+    [v2ref_2729] <generic name="1.3k" tools="r" />
+    [v2ref_2730] <generic name="1.3k" tools="r" />
+    [v2ref_2731] <generic name="results" tools="r" />
+    [v2ref_2733] <generic name="v2ref_2733" />
+    [v2ref_2734] <generic name="v2ref_2734" />
+    [v2ref_2735] <generic name="v2ref_2735" />
+    [v2ref_2736] <generic name="152" tools="r" />
+    [v2ref_2737] <generic name="152" tools="r" />
+    [v2ref_2738] <generic name="152" tools="r" />
+    [v2ref_2739] <generic name="results" tools="r" />
+    [v2ref_2741] <generic name="v2ref_2741" />
+    [v2ref_2742] <generic name="v2ref_2742" />
+    [v2ref_2743] <generic name="v2ref_2743" />
+    [v2ref_2744] <generic name="6" tools="r" />
+    [v2ref_2745] <generic name="6" tools="r" />
+    [v2ref_2746] <generic name="6" tools="r" />
+    [v2ref_2747] <generic name="results" tools="r" />
+    [v2ref_2749] <generic name="v2ref_2749" />
+    [v2ref_2750] <generic name="v2ref_2750" />
+    [v2ref_2751] <generic name="v2ref_2751" />
+    [v2ref_2752] <generic name="More" tools="r" />
+    [v2ref_2753] <generic name="More" tools="r" />
+    [v2ref_2755] <generic name="v2ref_2755" />
+    [v2ref_2756] <generic name="v2ref_2756" />
+    [v2ref_2757] <generic name="v2ref_2757" />
+    [v2ref_2758] <generic name="Advanced search" tools="r" +new />
+    [v2ref_2759] <generic name="Advanced search" tools="r" +new />
+  NEW SINCE LAST ACTION: v2ref_2701 "Filter byCode... (...)resultsRepositories535 ..." | v2ref_2758 "Advanced search" | v2ref_2759 "Advanced search" | v2ref_2682 "Search/" | v2ref_2683 "Search/" | v2ref_2684 "Search/" | v2ref_2613 "GitHub Advanced Security" | v2ref_2674 "GitHub Advanced Security"
+
+WORKING SET
+  mode: extract
+
+DECISION SIGNALS
+  suppressed: 304 hidden_low_value=2 rank_loss=229

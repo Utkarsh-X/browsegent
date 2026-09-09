@@ -108,6 +108,44 @@ test('UncertaintySignals derives high uncertainty from blocked target and empty 
   assert.ok(uncertainty.signals.includes('failure:target_blocked'));
 });
 
+test('UncertaintySignals bounds repetitive low-confidence ref signals without hiding actionable failures', () => {
+  const projection = makeProjection({
+    interactions: Array.from({ length: 100 }, (_, index) => makeItem({
+      refId: `ref_weakened_${index}`,
+      continuityConfidence: 0.4,
+      state: 'weakened',
+    })),
+    stats: {
+      interactionCount: 100,
+      readableCount: 0,
+      navigationCount: 0,
+      regionCount: 0,
+    },
+  });
+  const failure = new FailureClassifier().classify({
+    success: false,
+    kind: 'type',
+    targetRef: 'ref_blocked',
+    error: {
+      code: 'target_blocked',
+      message: 'Target center point is covered by another element.',
+      retryable: false,
+    },
+    traceStepId: 'step_blocked',
+  });
+
+  const uncertainty = new UncertaintySignals().fromRuntimeState({
+    projection,
+    failures: [failure],
+  });
+
+  assert.equal(uncertainty.level, 'high');
+  assert.ok(uncertainty.signals.includes('low_confidence_refs:100'));
+  assert.ok(uncertainty.signals.includes('low_confidence_ref:ref_weakened_0'));
+  assert.ok(uncertainty.signals.includes('failure:target_blocked'));
+  assert.ok(uncertainty.signals.length <= 10);
+});
+
 test('PlannerInputComposer carries failure and dead-state evidence compactly', () => {
   const projection = makeProjection({
     interactions: [],

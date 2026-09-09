@@ -165,3 +165,185 @@ test('v2 public barrel exports the tool dispatcher surface', async () => {
 
   assert.equal(typeof v2.V2ToolDispatcher, 'function');
 });
+
+// ---- seek macro ----
+
+import type { BrowserObservation } from '../../../src/v2/runtime/types';
+import type { SeekIterationVerdict, V2ToolDispatchContext } from '../../../src/v2/tools/types';
+
+class SeekFakeRuntime {
+  clickCount = 0;
+  observations: Array<BrowserObservation | null>;
+  failClickAt: number | null = null;
+
+  constructor(observations: Array<BrowserObservation | null>, failClickAt: number | null = null) {
+    this.observations = observations;
+    this.failClickAt = failClickAt;
+  }
+
+  async click(): Promise<V2ToolResult> {
+    this.clickCount += 1;
+    if (this.failClickAt !== null && this.clickCount === this.failClickAt) {
+      return {
+        success: false,
+        kind: 'click',
+        traceStepId: 'trace_fail',
+        error: { code: 'stale_ref', message: 'Ref no longer resolves.', retryable: false },
+      };
+    }
+    return { success: true, kind: 'click', targetRef: 'ref_nav', traceStepId: `trace_${this.clickCount}` };
+  }
+
+  async observe(): Promise<BrowserObservation | null> {
+    return this.observations[Math.min(this.clickCount, this.observations.length) - 1];
+  }
+}
+
+function makeSeekVerdicts(keys: string[], stopAt: number | null): (obs: unknown) => SeekIterationVerdict {
+  let index = 0;
+  return () => {
+    const key = keys[Math.min(index, keys.length - 1)];
+    index += 1;
+    if (stopAt !== null && index >= stopAt) {
+      return { stop: true, reason: 'target_reachable', progressKey: key };
+    }
+    return { stop: false, reason: 'window_advancing', progressKey: key };
+  };
+}
+
+function seekContext(verdicts: (obs: unknown) => SeekIterationVerdict): V2ToolDispatchContext {
+  return { goal: 'Find a hotel for December 25-26', seekStop: verdicts };
+}
+
+test('seek loops click-observe until the stop condition reports the target reachable', async () => {
+  const { V2ToolDispatcher } = await loadDispatcherModule();
+  const runtime = new SeekFakeRuntime([{} as BrowserObservation, {} as BrowserObservation, {} as BrowserObservation]);
+  const dispatcher = new V2ToolDispatcher(runtime as never);
+  const result = await dispatcher.dispatch(
+    { tool: 'seek', ref: 'ref_nav' } as PlannerOutputStep,
+    seekContext(makeSeekVerdicts(['Sep,Oct', 'Oct,Nov', 'Nov,Dec'], 3)),
+  );
+
+  assert.equal(result.success, true);
+  assert.equal(result.kind, 'seek');
+  assert.equal((result.value as { iterationCount: number }).iterationCount, 3);
+  assert.equal((result.value as { stopReason: string }).stopReason, 'target_reachable');
+  assert.equal(runtime.clickCount, 3);
+});
+
+test('seek stops honestly when the window stops advancing (stall)', async () => {
+  const { V2ToolDispatcher } = await loadDispatcherModule();
+  const runtime = new SeekFakeRuntime([{} as BrowserObservation, {} as BrowserObservation]);
+  const dispatcher = new V2ToolDispatcher(runtime as never);
+  const result = await dispatcher.dispatch(
+    { tool: 'seek', ref: 'ref_nav' } as PlannerOutputStep,
+    seekContext(makeSeekVerdicts(['Sep,Oct', 'Sep,Oct'], null)),
+  );
+
+  assert.equal(result.success, false);
+  assert.equal((result.value as { stopReason: string }).stopReason, 'seek_stalled');
+  assert.equal(runtime.clickCount, 2);
+});
+
+test('seek fails honestly on a click error mid-loop', async () => {
+  const { V2ToolDispatcher } = await loadDispatcherModule();
+  const runtime = new SeekFakeRuntime([{} as BrowserObservation], 2);
+  const dispatcher = new V2ToolDispatcher(runtime as never);
+  const result = await dispatcher.dispatch(
+    { tool: 'seek', ref: 'ref_nav' } as PlannerOutputStep,
+    seekContext(makeSeekVerdicts(['Sep,Oct'], null)),
+  );
+
+  assert.equal(result.success, false);
+  assert.equal(result.error?.code, 'stale_ref');
+  assert.equal(runtime.clickCount, 2);
+});
+
+test('seek enforces the iteration cap', async () => {
+  const { V2ToolDispatcher } = await loadDispatcherModule();
+  const observations = Array.from({ length: 10 }, () => ({}) as BrowserObservation);
+  const runtime = new SeekFakeRuntime(observations);
+  const dispatcher = new V2ToolDispatcher(runtime as never);
+  const result = await dispatcher.dispatch(
+    { tool: 'seek', ref: 'ref_nav' } as PlannerOutputStep,
+    seekContext(makeSeekVerdicts(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'], null)),
+  );
+
+  assert.equal(result.success, false);
+  assert.equal((result.value as { stopReason: string }).stopReason, 'seek_iteration_cap');
+  assert.equal(runtime.clickCount, 8);
+});
+
+test('seek rejects missing ref and unsupported runtimes without acting', async () => {
+  const { V2ToolDispatcher } = await loadDispatcherModule();
+  const runtime = new SeekFakeRuntime([]);
+  const dispatcher = new V2ToolDispatcher(runtime as never);
+
+  const missingRef = await dispatcher.dispatch({ tool: 'seek' } as PlannerOutputStep, seekContext(makeSeekVerdicts([], null)));
+  assert.equal(missingRef.success, false);
+  assert.equal(missingRef.error?.code, 'missing_ref');
+
+  const unsupported = await dispatcher.dispatch(
+    { tool: 'seek', ref: 'ref_nav' } as PlannerOutputStep,
+    { goal: 'g' },
+  );
+  assert.equal(unsupported.success, false);
+  assert.equal(unsupported.error?.code, 'seek_unsupported');
+  assert.equal(runtime.clickCount, 0);
+});
+
+test('dispatcher routes pick_option with ref and text to the runtime primitive', async () => {
+  const { V2ToolDispatcher } = await loadDispatcherModule();
+  const runtime = new FakeToolRuntime();
+  (runtime as unknown as { pickOption: unknown }).pickOption = async (refId: string, text: string) => {
+    runtime.calls.push({ method: 'pickOption', args: [refId, text] });
+    return { success: true, kind: 'click', targetRef: refId, value: { committed: 'Manchester' }, traceStepId: 'trace_pick' } as V2ToolResult;
+  };
+  const dispatcher = new V2ToolDispatcher(runtime as never);
+
+  const result = await dispatcher.dispatch(
+    { tool: 'pick_option', ref: 'ref_airport', text: 'Manchester' } as PlannerOutputStep,
+    { goal: 'g' },
+  );
+
+  assert.equal(result.success, true);
+  assert.deepEqual(runtime.calls[runtime.calls.length - 1], { method: 'pickOption', args: ['ref_airport', 'Manchester'] });
+});
+
+test('dispatcher refuses pick_option without text and on unsupported runtimes', async () => {
+  const { V2ToolDispatcher } = await loadDispatcherModule();
+  const dispatcher = new V2ToolDispatcher(new FakeToolRuntime() as never);
+
+  const missingText = await dispatcher.dispatch({ tool: 'pick_option', ref: 'ref_x' } as PlannerOutputStep, { goal: 'g' });
+  assert.equal(missingText.success, false);
+  assert.equal(missingText.error?.code, 'missing_text');
+
+  const unsupported = await dispatcher.dispatch({ tool: 'pick_option', ref: 'ref_x', text: 'y' } as PlannerOutputStep, { goal: 'g' });
+  assert.equal(unsupported.success, false);
+  assert.equal(unsupported.error?.code, 'pick_option_unsupported');
+});
+
+test('dispatcher refuses submit_form via the shared commit-phase predicate', async () => {
+  const { V2ToolDispatcher } = await loadDispatcherModule();
+  const runtime = new FakeToolRuntime();
+  const dispatcher = new V2ToolDispatcher(runtime as never);
+
+  const refused = await dispatcher.dispatch(
+    { tool: 'submit_form', ref: 'ref_submit' } as PlannerOutputStep,
+    { goal: 'g', commitPhaseReady: false },
+  );
+  assert.equal(refused.success, false);
+  assert.equal(refused.error?.code, 'requirements_unmet');
+  assert.deepEqual(runtime.calls.filter(call => call.method === 'click'), [], 'refusal must not dispatch');
+
+  (runtime as unknown as { submitForm: unknown }).submitForm = async (refId: string) => {
+    runtime.calls.push({ method: 'submitForm', args: [refId] });
+    return { success: true, kind: 'submit_form', targetRef: refId, value: { resultsSurface: 'loaded' }, traceStepId: 'trace_submit' } as V2ToolResult;
+  };
+  const allowed = await dispatcher.dispatch(
+    { tool: 'submit_form', ref: 'ref_submit' } as PlannerOutputStep,
+    { goal: 'g', commitPhaseReady: true },
+  );
+  assert.equal(allowed.success, true, 'allowed submit dispatches to runtime.submitForm');
+  assert.deepEqual(runtime.calls[runtime.calls.length - 1], { method: 'submitForm', args: ['ref_submit'] });
+});

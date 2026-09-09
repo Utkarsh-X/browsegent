@@ -15,6 +15,7 @@
     "benchmark:v2:compare": "tsx tests/benchmark/v2/compare_reports.ts",
     "benchmark:webvoyager-lite": "tsx tests/benchmark/webvoyager/run_webvoyager_lite.ts",
     "test:unit": "tsx --test tests/unit/**/*.test.ts",
+    "test:unit:v2": "tsx --test tests/unit/v2/*.test.ts",
     "check:v2:boundaries": "tsx scripts/check_v2_boundaries.ts",
     "check:v2:no-cognition": "tsx scripts/check_v2_no_cognition_leakage.ts",
     "check:v2": "npm run check:v2:boundaries && npm run check:v2:no-cognition",

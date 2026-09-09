@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Keyboard Open Suggestion Combobox Fixture</title>
+    <style>
+      #destination-blocker {
+        position: absolute;
+        z-index: 2;
+        top: 20px;
+        left: 0;
+        width: 300px;
+        height: 50px;
+        background: white;
+      }
+
+      #destination {
+        position: absolute;
+        top: 28px;
+        left: 8px;
+        width: 220px;
+        height: 32px;
+      }
+
+      #destinations {
+        margin-top: 70px;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="search-form">
+      <label for="destination">Destination</label>
+      <input id="destination" type="text" role="combobox" aria-label="Destination"
+        aria-autocomplete="list" aria-haspopup="listbox" aria-controls="destinations">
+      <p id="destination-blocker">Decorative label</p>
+      <ul id="destinations" role="listbox" hidden>
+        <li role="option">Paris</li>
+      </ul>
+      <button type="submit">Search</button>
+    </form>
+    <p id="result" aria-live="polite">submitted:New Delhi</p>
+    <script>
+      const input = document.querySelector('#destination');
+      const list = document.querySelector('#destinations');
+      const result = document.querySelector('#result');
+      let selectedDestination = 'New Delhi';
+
+      input.addEventListener('keydown', event => {
+        if (event.key === 'ArrowDown') list.hidden = false;
+      });
+
+      input.addEventListener('input', () => {
+        const value = input.value.trim().toLowerCase();
+        if (!list.hidden && value === 'paris') return;
+        if (list.hidden || value !== 'paris') input.value = '';
+      });
+
+      list.querySelector('[role="option"]').addEventListener('click', event => {
+        selectedDestination = event.currentTarget.textContent.trim();
+        input.value = selectedDestination;
+        list.hidden = true;
+      });
+
+      document.querySelector('#search-form').addEventListener('submit', event => {
+        event.preventDefault();
+        result.textContent = `submitted:${selectedDestination}`;
+      });
+    </script>
+  </body>
+</html>

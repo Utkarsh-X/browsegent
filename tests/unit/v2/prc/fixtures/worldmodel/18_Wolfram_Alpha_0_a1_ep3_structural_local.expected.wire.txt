@@ -1,0 +1,120 @@
+Planner input:
+MISSION
+  goal: derivative of x^2 when x=5.6
+
+STATE
+
+  page: "Wolfram|Alpha: Computational Intelligence" https://www.wolframalpha.com/
+
+PLANNER SURFACE
+    [v2ref_1] <button name="UPGRADE TO PRO" aria-haspopup="true" tools="c,r" />
+    [v2ref_186] <link name="Transportation" state="visibility=offscreen" tools="c,r" />
+    [v2ref_195] <link name="More Topics »" state="visibility=offscreen" tools="c,r" />
+    [v2ref_228] <link name="Money &amp; Finance" state="visibility=offscreen" tools="c,r" />
+    [v2ref_232] <link name="Food &amp; Nutrition" state="visibility=offscreen" tools="c,r" />
+    [v2ref_239] <link name="Political Geography" state="visibility=offscreen" tools="c,r" />
+    [v2ref_250] <link name="More Topics »" state="visibility=offscreen" tools="c,r" />
+    [v2ref_292] <link name="Household Science" state="visibility=offscreen" tools="c,r" />
+    [v2ref_301] <link name="Household Math" state="visibility=offscreen" tools="c,r" />
+    [v2ref_311] <link name="Today's World" state="visibility=offscreen" tools="c,r" />
+    [v2ref_315] <link name="More Topics »" state="visibility=offscreen" tools="c,r" />
+    [v2ref_320] <link name="Made possible by the Wolfram Language—building on 35+ years of research &amp; development »Wolfram|AlphaNatural Language ..." state="visibility=offscreen" tools="c,r" />
+    [v2ref_322] <link name="Wolfram Language" state="visibility=offscreen" tools="c,r" />
+    [v2ref_424] <button name="Sign in" tools="c,r" />
+    [v2ref_425] <generic name="Sign in" tools="r" />
+    [v2ref_457] <input name="WolframAlpha input field" role="textbox" value="derivative of x^2 at x=5.6" tools="t,r" />
+    [v2ref_5] <button name="APPS" aria-haspopup="true" tools="c,r" />
+    [v2ref_461] <generic name="v2ref_461" />
+    [v2ref_462] <generic name="v2ref_462" />
+    [v2ref_463] <generic name="v2ref_463" />
+    [v2ref_464] <generic name="v2ref_464" />
+    [v2ref_431] <generic name="v2ref_431" />
+  [v2ref_10] <generic name="TOUR" />
+  [v2ref_101] <generic name="Algebra" />
+  [v2ref_102] <link name="Plotting &amp; Graphics" />
+  [v2ref_110] <generic name="Plotting &amp; Graphics" />
+  [v2ref_111] <link name="Calculus &amp; Analysis" />
+  [v2ref_125] <link name="Differential Equations" />
+  [v2ref_132] <link name="Statistics" />
+  [v2ref_139] <link name="More Topics »" />
+  [v2ref_144] <link name="Science &amp; Technology" />
+  [v2ref_145] <generic name="Science &amp; Technology" />
+  [v2ref_146] <generic name="›" />
+  [v2ref_147] <link name="Units &amp; Measures" />
+  [v2ref_150] <generic name="Units &amp; Measures" />
+  [v2ref_151] <link name="Physics" />
+  [v2ref_154] <generic name="Physics" />
+  [v2ref_155] <link name="Chemistry" />
+  [v2ref_16] <button name="Language and theme selector" />
+  [v2ref_161] <generic name="Chemistry" />
+  [v2ref_162] <link name="Engineering" />
+  [v2ref_170] <generic name="Engineering" />
+  [v2ref_171] <link name="Computational Sciences" />
+  [v2ref_175] <link name="Earth Sciences" />
+  [v2ref_2] <generic name="UPGRADE TO PRO" />
+  [v2ref_200] <link name="Society &amp; Culture" />
+  [v2ref_201] <generic name="Society &amp; Culture" />
+  [v2ref_202] <generic name="›" />
+  [v2ref_203] <link name="People" />
+  [v2ref_209] <generic name="People" />
+  [v2ref_210] <link name="Arts &amp; Media" />
+  [v2ref_213] <generic name="Arts &amp; Media" />
+  [v2ref_214] <link name="Dates &amp; Times" />
+  [v2ref_220] <generic name="Dates &amp; Times" />
+  [v2ref_221] <link name="Words &amp; Linguistics" />
+  [v2ref_227] <generic name="Words &amp; Linguistics" />
+  [v2ref_24] <link name="WolframAlpha logo" />
+  [v2ref_255] <link name="Everyday Life" />
+  [v2ref_256] <generic name="Everyday Life" />
+  [v2ref_257] <generic name="›" />
+  [v2ref_258] <link name="Personal Health" />
+  [v2ref_266] <generic name="Personal Health" />
+  [v2ref_267] <link name="Personal Finance" />
+  [v2ref_275] <generic name="Personal Finance" />
+  [v2ref_276] <link name="Surprises" />
+  [v2ref_284] <generic name="Surprises" />
+  [v2ref_285] <link name="Entertainment" />
+  [v2ref_291] <generic name="Entertainment" />
+  [v2ref_50] <button name="Compute input button" />
+  [v2ref_54] <button name="natural language" />
+  [v2ref_57] <generic name="Natural Language" />
+  [v2ref_58] <button name="math input" />
+  [v2ref_6] <generic name="APPS" />
+  [v2ref_62] <generic name="Math Input" />
+  [v2ref_63] <button name="photo input" />
+  [v2ref_69] <link name="v2ref_69" />
+  [v2ref_78] <link name="Mathematics" />
+  [v2ref_79] <generic name="Mathematics" />
+  [v2ref_80] <generic name="›" />
+  [v2ref_81] <link name="Step-by-Step Solutions" />
+  [v2ref_87] <generic name="Step-by-Step Solutions" />
+  [v2ref_88] <link name="Elementary Math" />
+  [v2ref_9] <link name="TOUR" />
+  [v2ref_94] <generic name="Elementary Math" />
+  [v2ref_95] <link name="Algebra" />
+  [v2ref_432] <generic name="v2ref_432" />
+  [v2ref_433] <generic name="v2ref_433" />
+  [v2ref_434] <generic name="v2ref_434" />
+  [v2ref_435] <generic name="v2ref_435" />
+  [v2ref_436] <generic name="v2ref_436" />
+  [v2ref_459] <generic name="v2ref_459" />
+  [v2ref_460] <generic name="v2ref_460" />
+  CONTINUITY: weakened=1 refs carried from before the last action; changed=0
+
+STATE
+  observation: obs_1_3 gen=1 refs=423
+  focus: v2ref_1 highest_operational_score
+
+RECENT EVENTS
+  last: click v2ref_50 -> ok (no observable effect)
+  transition: structural_local urlChanged=false appeared=0 disappeared=0 weakened=0 preserved=422
+  history: 2 steps
+
+PROBLEMS
+  uncertainty: medium low_confidence_refs:1, low_confidence_ref:v2ref_16
+
+WORKING SET
+  mode: extract
+
+DECISION SIGNALS
+  suppressed: 343 generic_low_value=111 hidden_low_value=48 offscreen_low_value=157 rank_loss=23 unlabeled_action=4

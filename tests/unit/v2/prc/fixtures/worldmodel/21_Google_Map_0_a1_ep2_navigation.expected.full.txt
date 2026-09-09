@@ -1,0 +1,54 @@
+Planner input:
+MISSION
+  goal: Find 5 beauty salons with ratings greater than 4.8 in Seattle, WA.
+
+STATE
+  page: "Google Maps" https://www.google.com/maps/@26.8402688,80.9435136,10z?entry=ttu&g_ep=EgoyMDI2MDkwMi4wIKXMDSoASAFQAw%3D%3D
+  observation: obs_1_2 gen=1 refs=24
+  focus: v2ref_22 highest_operational_score
+
+RECENT EVENTS
+  last: type v2ref_2 -> ok
+  transition: structural_macrostate urlChanged=true appeared=18 disappeared=2 weakened=2 preserved=4
+  history: 1 steps
+
+GOAL PROGRESS
+  destination: typed:"Seattle"
+
+TASK PROGRESS
+  state: ready
+  destination: applied requested="Seattle" evidence=v2ref_10
+
+PROBLEMS
+  uncertainty: medium low_confidence_refs:2, low_confidence_ref:v2ref_7, low_confidence_ref:v2ref_8, weakened_refs:2
+
+PLANNER SURFACE
+  Page Elements
+    [v2ref_10] <input name="beauty salons in Seattle, WA" role="combobox" aria-haspopup="grid" value="beauty salons in Seattle, WA" tools="c,t,r" +new />
+    [v2ref_11] <button name="Menu" tools="c,r" />
+    [v2ref_12] <generic name="" tools="r" />
+    [v2ref_13] <generic name="v2ref_13" />
+    [v2ref_14] <generic name="" tools="r" />
+    [v2ref_15] <button name="Saved" tools="c,r" +new />
+    [v2ref_16] <generic name="" tools="r" />
+    [v2ref_17] <generic name="v2ref_17" />
+    [v2ref_18] <generic name="" tools="r" />
+    [v2ref_19] <generic name="Saved" tools="r" +new />
+    [v2ref_20] <generic name="Saved" tools="r" +new />
+    [v2ref_21] <button name="Recents" state="actionability=disabled" tools="r" />
+    [v2ref_22] <button name="Get app" tools="c,r" +new />
+    [v2ref_23] <generic name="" tools="r" />
+    [v2ref_24] <generic name="" tools="r" />
+    [v2ref_25] <generic name="Get app" tools="r" +new />
+    [v2ref_26] <generic name="Get app" tools="r" +new />
+    [v2ref_3] <button name="Search" tools="c,r" />
+    [v2ref_4] <generic name="" tools="r" />
+    [v2ref_5] <button name="Directions" tools="c,r" />
+    [v2ref_6] <generic name="" tools="r" />
+    [v2ref_7] <button name="Collapse side panel" state="visibility=hidden,actionability=blocked,state=weakened,confidence=0.55" tools="r" />
+    [v2ref_8] <generic name="" state="visibility=hidden,actionability=blocked,state=weakened,confidence=0.55" tools="r" />
+    [v2ref_9] <generic name="Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key." role="application" tools="r" +new />
+  NEW SINCE LAST ACTION: v2ref_10 "beauty salons in Seattle, WA" | v2ref_22 "Get app" | v2ref_15 "Saved" | v2ref_9 "Map · Use arrow keys to pan the map. · Get de..." | v2ref_25 "Get app" | v2ref_26 "Get app" | v2ref_19 "Saved" | v2ref_20 "Saved"
+
+WORKING SET
+  mode: verify

@@ -38,6 +38,10 @@ export interface V2Ref {
   text?: string;
   tagName?: string;
   inputType?: string;
+  inForm?: boolean;
+  /** Bounded current value for non-password editable controls. */
+  value?: string;
+  placeholder?: string;
   editableKind?: EditableKind;
   ariaAutocomplete?: string;
   ariaHasPopup?: string;
@@ -66,14 +70,31 @@ export interface BrowserObservation {
   generationId: number;
   url: string;
   title: string;
+  /** Page-declared language (html lang attribute); enables locale-aware deterministic parsing. */
+  lang?: string;
   timestamp: number;
   refs: V2Ref[];
   warnings: RuntimeWarning[];
+  /** Bounded non-interactive page text (D1); absent when the page carries
+   *  no qualifying prose or the schema predates v3. */
+  prose?: ProseRef[];
   stats: {
     refCount: number;
     visibleRefCount: number;
     durationMs: number;
+    bodyTextLength?: number;
   };
+}
+
+/** Bounded non-interactive page text captured beside the interactive walk
+ *  (D1). Prose never enters ref identity — it cannot be clicked — and is
+ *  capped at capture time. */
+export interface ProseRef {
+  proseId: string;
+  /** Refs whose section anchors this text (drives the read-path window). */
+  anchorRefIds: string[];
+  text: string;
+  chars: number;
 }
 
 export interface TransitionEvidence {
@@ -90,6 +111,9 @@ export interface TransitionEvidence {
     preserved: string[];
   };
   notes: string[];
+  /** Resolved href of the clicked anchor (C1 href-vs-landed check); absent
+   *  for non-link clicks. Additive telemetry, never a decision by itself. */
+  clickedHref?: string;
 }
 
 export interface V2ToolError {

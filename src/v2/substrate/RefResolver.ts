@@ -25,6 +25,7 @@ interface CandidateDiagnostics {
   accessibleName: string;
   nameMatched: boolean;
   textMatched: boolean;
+  geometryMatched?: boolean;
   semanticOrdinal?: number;
   semanticGroupSize: number;
   semanticScope: 'owner_document' | 'unknown';
@@ -75,6 +76,11 @@ export class RefResolver {
 
     const sorted = [...candidates.values()].sort((left, right) => right.score - left.score);
     if (sorted.length === 0) {
+      const semanticFallback = await resolveExactAccessibleName(ref, page, overflowed);
+      if (semanticFallback) {
+        return semanticFallback;
+      }
+
       throw new V2OperationalError('stale_ref', `Ref "${ref.refId}" no longer resolves to a verified target.`, {
         retryable: false,
         diagnostics: {
@@ -101,6 +107,11 @@ export class RefResolver {
           && selected.score < 140
           && (sorted.length > 1 || selected.score < MIN_SINGLE_OVERFLOW_CANDIDATE_SCORE)
         ) {
+          const semanticFallback = await resolveExactAccessibleName(ref, page, overflowed);
+          if (semanticFallback) {
+            return semanticFallback;
+          }
+
           throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" matched too many weak selector candidates.`, {
             retryable: false,
             diagnostics: {
@@ -130,6 +141,11 @@ export class RefResolver {
         };
       }
 
+      const semanticFallback = await resolveExactAccessibleName(ref, page, overflowed);
+      if (semanticFallback) {
+        return semanticFallback;
+      }
+
       throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" resolved to multiple equivalent candidates.`, {
         retryable: false,
         diagnostics: {
@@ -154,6 +170,11 @@ export class RefResolver {
       && selected.score < 140
       && (sorted.length > 1 || selected.score < MIN_SINGLE_OVERFLOW_CANDIDATE_SCORE)
     ) {
+      const semanticFallback = await resolveExactAccessibleName(ref, page, overflowed);
+      if (semanticFallback) {
+        return semanticFallback;
+      }
+
       throw new V2OperationalError('ambiguous_ref_resolution', `Ref "${ref.refId}" matched too many weak selector candidates.`, {
         retryable: false,
         diagnostics: {
@@ -181,6 +202,87 @@ export class RefResolver {
     };
   }
 }
+
+type PageAriaRole = Parameters<Page['getByRole']>[0];
+
+async function resolveExactAccessibleName(
+  ref: V2Ref,
+  page: Page,
+  overflowed: boolean,
+): Promise<ResolvedRefTarget | undefined> {
+  if (!overflowed || ref.state !== 'live' || !ref.role?.trim() || !ref.name?.trim()) {
+    return undefined;
+  }
+
+  let semanticLocator: Locator;
+  try {
+    semanticLocator = page.getByRole(ref.role.trim() as PageAriaRole, {
+      name: ref.name.trim(),
+      exact: true,
+    });
+  } catch {
+    return undefined;
+  }
+
+  const semanticGroupSize = await semanticLocator.count().catch(() => 0);
+  const matchingIndexes = await semanticLocator
+    .evaluateAll(MATCHES_REFERENCE_SELECTORS_PAGE_FUNCTION, ref.selectorCandidates)
+    .catch(() => [] as number[]);
+
+  if (matchingIndexes.length === 1) {
+    return {
+      locator: semanticGroupSize === 1
+        ? semanticLocator
+        : semanticLocator.nth(matchingIndexes[0]),
+      resolution: 'semantic_selector',
+      diagnostics: {
+        reason: 'resolved_exact_accessible_name',
+        candidateCount: matchingIndexes.length,
+        semanticGroupSize,
+      },
+    };
+  }
+
+  const expectedOrdinal = ref.nthRoleName;
+  if (
+    matchingIndexes.length > 1
+    && Number.isInteger(expectedOrdinal)
+    && Number(expectedOrdinal) >= 1
+    && matchingIndexes.includes(Number(expectedOrdinal) - 1)
+  ) {
+    return {
+      locator: semanticLocator.nth(Number(expectedOrdinal) - 1),
+      resolution: 'semantic_selector',
+      diagnostics: {
+        reason: 'resolved_exact_accessible_name_ordinal',
+        candidateCount: matchingIndexes.length,
+        expectedOrdinal,
+        semanticGroupSize,
+      },
+    };
+  }
+
+  return undefined;
+}
+
+const MATCHES_REFERENCE_SELECTORS_SOURCE = String.raw`
+return elements
+  .map((element, index) => ({ element, index }))
+  .filter(({ element }) => selectors.some(selector => {
+    try {
+      return element.matches(selector);
+    } catch {
+      return false;
+    }
+  }))
+  .map(({ index }) => index);
+`;
+
+const MATCHES_REFERENCE_SELECTORS_PAGE_FUNCTION = Function(
+  'elements',
+  'selectors',
+  MATCHES_REFERENCE_SELECTORS_SOURCE,
+) as unknown as (elements: Element[], selectors: string[]) => number[];
 
 function selectExactSemanticOrdinalCandidate(candidates: ScoredCandidate[], ref: V2Ref): OrdinalSelection {
   const expectedRole = normalizeSemanticIdentity(ref.role || '');
@@ -422,6 +524,21 @@ if (expected.role && role === normalizedSemanticIdentity(expected.role)) score +
 if (name && accessibleNameIdentity === name) score += 30;
 if (expectedText && text === expectedText) score += 20;
 
+const expectedBox = expected.box;
+const geometryDelta = expectedBox
+  ? Math.max(
+      Math.abs(rect.left - expectedBox.x),
+      Math.abs(rect.top - expectedBox.y),
+      Math.abs(rect.width - expectedBox.width),
+      Math.abs(rect.height - expectedBox.height),
+    )
+  : undefined;
+if (geometryDelta !== undefined) {
+  if (geometryDelta <= 2) score += 40;
+  else if (geometryDelta <= 8) score += 20;
+  else if (geometryDelta <= 24) score += 5;
+}
+
 const semanticGroup = walkOwnerDocument(element)
   .filter(candidate => isInteractiveElement(candidate) && isVisible(candidate))
   .filter(candidate => normalizedSemanticIdentity(explicitOrNativeRole(candidate) || '') === role)
@@ -437,6 +554,7 @@ return {
     accessibleName: accessibleNameIdentity,
     nameMatched: Boolean(name && accessibleNameIdentity === name),
     textMatched: Boolean(expectedText && text === expectedText),
+    geometryMatched: geometryDelta !== undefined && geometryDelta <= 2,
     semanticOrdinal: semanticIndex >= 0 ? semanticIndex + 1 : undefined,
     semanticGroupSize: semanticGroup.length,
     semanticScope: ownerDocument === document ? 'owner_document' : 'unknown',
@@ -450,6 +568,7 @@ interface ScoreCandidateExpected {
   name?: string;
   text?: string;
   nthRoleName?: number;
+  box?: { x: number; y: number; width: number; height: number };
 }
 
 const SCORE_CANDIDATE_PAGE_FUNCTION = Function(
@@ -468,5 +587,6 @@ async function scoreCandidate(locator: Locator, ref: V2Ref): Promise<{ score: nu
     name: ref.name,
     text: ref.text,
     nthRoleName: ref.nthRoleName,
+    box: ref.box,
   });
 }

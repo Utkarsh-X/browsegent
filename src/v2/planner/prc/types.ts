@@ -4,12 +4,24 @@ import type {
   PlannerDeadStateSummary,
   PlannerFailureSummary,
   PlannerLastResultSummary,
+  PlannerTaskProgress,
   PlannerTransitionSummary,
   PlannerUncertainty,
   CompressedLineage,
 } from '../types';
+import type { PlannerGoalProgress } from '../GoalProgressTracker';
+import type { SurfaceHorizon } from '../HorizonDetector';
 import type { PlannerRecoveryState } from '../../runtime/RecoveryState';
-import type { PlannerActionSurface, WorkingSetDropReason, WorkingSetIncludeReason, WorkingSetMode } from '../workingSetTypes';
+import type {
+  PlannerActionSurface,
+  PlannerChangedRefsSummary,
+  PlannerQuarantinedAction,
+  PlannerWorkingSetEvidence,
+  PlannerWorkingSetRegionSummary,
+  WorkingSetDropReason,
+  WorkingSetIncludeReason,
+  WorkingSetMode,
+} from '../workingSetTypes';
 
 export type PlannerElementLane = 'interaction' | 'readable' | 'navigation' | 'mixed';
 export type PlannerScoreTier = 'top' | 'high' | 'mid' | 'low';
@@ -21,12 +33,19 @@ export interface PlannerElementIR {
   /** Guaranteed non-empty by compiler: falls back to text, then refId */
   name: string;
   text?: string;
+  ariaAutocomplete?: string;
+  ariaHasPopup?: string;
+  value?: string;
+  placeholder?: string;
   lane: PlannerElementLane;
   rank?: number;
   scoreTier: PlannerScoreTier;
   score: number;
   regionId?: string;
   selectOptions?: string[];
+  /** Diff-first marker: element appeared ('new') or changed ('chg') since the
+   *  previous action. Deterministic from transition evidence. */
+  delta?: 'new' | 'chg';
   anomalies: string[];
   failure?: { kind: string; count: number; retryable: boolean; persistence: 'transient' | 'persistent' | 'unknown' };
   tools?: string[];
@@ -44,6 +63,12 @@ export interface PlannerRegionIR {
 export interface PlannerSurfaceIR {
   groups: PlannerRegionIR[];
   remainder: PlannerElementIR[];
+  /** Bounded non-interactive page text (D1); rendered as its own group. */
+  prose?: Array<{ proseId: string; anchorRefIds: string[]; text: string }>;
+  /** All elements in serialized refs-map order (rank order) — the W2 wire's
+   *  flat surface order. The serialized projection is built in interactions
+   *  rank order, so refs-map order IS rank order. */
+  elementsInRefOrder: PlannerElementIR[];
   inputRefCount: number;
   surfaceRefCount: number;
 }
@@ -59,8 +84,13 @@ export interface ExecutionContextIR {
   deadState?: PlannerDeadStateSummary;
   recovery?: PlannerRecoveryState;
   answerFeedback?: PlannerAnswerFeedback;
+  evidenceCoverage?: import('../types').PlannerEvidenceCoverage;
+  taskProgress?: PlannerTaskProgress;
+  evidenceSnapshot?: import('../types').PlannerEvidenceSnapshot;
   uncertainty: PlannerUncertainty;
   lineage?: CompressedLineage;
+  goalProgress?: PlannerGoalProgress;
+  horizon?: SurfaceHorizon;
 }
 
 export interface WorkingSetIR {
@@ -70,6 +100,10 @@ export interface WorkingSetIR {
   secondary: Array<{ refId: string; reasons: WorkingSetIncludeReason[] }>;
   navigation: Array<{ refId: string; reasons: WorkingSetIncludeReason[] }>;
   failed: Array<{ refId: string; reasons: WorkingSetIncludeReason[] }>;
+  readableEvidence: PlannerWorkingSetEvidence[];
+  changedRefs: PlannerChangedRefsSummary;
+  quarantinedActions: PlannerQuarantinedAction[];
+  regionSummaries: PlannerWorkingSetRegionSummary[];
   /** Operational action surface — available for working-set reasoning */
   actionSurface?: PlannerActionSurface;
   omitted?: { observed: number; selected: number; dropped: number; byReason: Partial<Record<WorkingSetDropReason, number>> };

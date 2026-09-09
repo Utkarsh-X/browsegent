@@ -87,12 +87,13 @@ class FakeHarness {
   openedUrl?: string;
   navigatedUrl?: string;
   closed = false;
+  observeCount = 0;
   observations: BrowserObservation[];
   plannerInputs: Array<{ episodeId: string; input: unknown }> = [];
   plannerOutputs: Array<{ episodeId: string; output: unknown }> = [];
-  compactPlannerViews: Array<{ episodeId: string; payload: unknown }> = [];
   failures: FailureEvidence[] = [];
   flushCount = 0;
+  latencySummary?: { totals: Record<string, number> };
 
   constructor(observations = [makeObservation('obs_initial'), makeObservation('obs_after_action')]) {
     this.observations = [...observations];
@@ -104,6 +105,11 @@ class FakeHarness {
   }
 
   async observe(): Promise<BrowserObservation> {
+    this.observeCount += 1;
+    return this.observations[Math.min(1, this.observations.length - 1)];
+  }
+
+  getCurrentObservation(): BrowserObservation {
     return this.observations[Math.min(1, this.observations.length - 1)];
   }
 
@@ -124,7 +130,6 @@ class FakeHarness {
         transitions: [],
         graph: [],
         planner: [],
-        compactPlannerViews: [],
         failures: [],
         screenshots: [],
       },
@@ -138,7 +143,7 @@ class FakeHarness {
 
   recordCompactPlannerInput(episodeId: string, input: unknown): TraceArtifact {
     this.plannerInputs.push({ episodeId, input });
-    return { kind: 'compact_planner_input', id: 'compact-planner-input', path: 'compact-planner-input.json' };
+    return { kind: 'planner_input', id: `compact-planner-input-${episodeId}`, path: 'compact-planner-input.json' };
   }
 
   recordPlannerOutput(episodeId: string, output: unknown): TraceArtifact {
@@ -146,14 +151,14 @@ class FakeHarness {
     return { kind: 'planner_output', id: 'planner-output', path: 'planner-output.json' };
   }
 
-  recordCompactPlannerView(episodeId: string, payload: unknown): TraceArtifact {
-    this.compactPlannerViews.push({ episodeId, payload });
-    return { kind: 'planner_compact_view', id: `${episodeId}-compact`, path: `${episodeId}-compact.json` };
-  }
 
   recordFailureEvidence(failure: FailureEvidence): TraceArtifact {
     this.failures.push(failure);
     return { kind: 'failure', id: failure.failureId, path: `${failure.failureId}.json` };
+  }
+
+  recordLatencyLedger(summary: { totals: Record<string, number> }): void {
+    this.latencySummary = summary;
   }
 
   async click(refId: string): Promise<V2ToolResult> {
@@ -207,14 +212,16 @@ class FakeHarness {
 
 class FakePlanner {
   readonly inputs: PlannerInput[] = [];
+  readonly modes: Array<'normal' | 'finalization' | undefined> = [];
   private readonly outputs: PlannerOutput[];
 
   constructor(outputs: PlannerOutput[]) {
     this.outputs = [...outputs];
   }
 
-  async call(input: { plannerInput: PlannerInput; model?: string }) {
+  async call(input: { plannerInput: PlannerInput; model?: string; mode?: 'normal' | 'finalization' }) {
     this.inputs.push(input.plannerInput);
+    this.modes.push(input.mode);
     const output = this.outputs.shift() ?? { escalate: 'dead_end', reason: 'no planner output' };
     return {
       output,
@@ -276,6 +283,72 @@ test('V2AgentLoop returns done output without executing tools', async () => {
   assert.equal(harness.closed, true);
 });
 
+test('V2AgentLoop reuses the harness post-action observation instead of recapturing it', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'navigate', url: 'https://example.test/results' }], confidence: 'high' },
+    { done: true, val: 'The result is visible.' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'navigate',
+    value: { url: 'https://example.test/results' },
+    evidence: makeEvidence('obs_initial', 'obs_after_action'),
+    traceStepId: 'fake_navigate',
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read the visible result',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(harness.observeCount, 0);
+  assert.equal(result.metrics.postActionObservationReuseCount, 1);
+  assert.equal(result.metrics.postActionObservationRecaptureCount, 0);
+});
+
+test('V2AgentLoop refreshes after a low-information click transition', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'The opened control is visible.' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    evidence: makeNoProgressEvidence('obs_initial', 'obs_after_action'),
+    traceStepId: 'fake_click',
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Open the control and read the visible result',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(harness.observeCount, 1);
+  assert.equal(result.metrics.postActionObservationReuseCount, 0);
+  assert.equal(result.metrics.postActionObservationRecaptureCount, 1);
+});
+
 test('V2AgentLoop replans once when done output misses required answer details', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const harness = new FakeHarness();
@@ -308,6 +381,114 @@ test('V2AgentLoop replans once when done output misses required answer details',
   assert.equal(result.metrics.toolExecutions, 0);
   assert.match(planner.inputs[1].answerFeedback?.previousAnswer ?? '', /Pronunciation is available/);
   assert.deepEqual(planner.inputs[1].answerFeedback?.missingDetails, ['missing_pronunciation_detail']);
+});
+
+test('V2AgentLoop bounds repeated rejected done answers when evidence is unchanged', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { done: true, val: 'The answer is not available yet.' },
+    { done: true, val: 'The answer is not available yet.' },
+    { done: true, val: 'The answer is not available yet.' },
+    { done: true, val: 'The answer is not available yet.' },
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => new FakeDispatcher(),
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/dictionary',
+    goal: 'Look up the pronunciation of the word "sustainability"',
+    maxSteps: 8,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'planner_repeated_answer_rejection:missing_pronunciation_detail');
+  assert.equal(result.metrics.plannerCalls, 3);
+  assert.match(planner.inputs[2].answerFeedback?.instruction ?? '', /do not return done again/i);
+});
+
+test('V2AgentLoop replans when answer text passes but explicit evidence is incomplete', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'UK: /səˌsteɪ.nəˈbɪl.ə.ti/, US: /səˌsteɪ.nəˈbɪl.ə.t̬i/; definition: the quality of being able to continue.' },
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'UK: /səˌsteɪ.nəˈbɪl.ə.ti/, US: /səˌsteɪ.nəˈbɪl.ə.t̬i/; definition: the quality of being able to continue.' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      traceStepId: 'fake_get_partial',
+      value: { text: 'UK pronunciation /səˌsteɪ.nəˈbɪl.ə.ti/ US pronunciation /səˌsteɪ.nəˈbɪl.ə.t̬i/' },
+    },
+    {
+      success: true,
+      kind: 'get',
+      targetRef: 'ref_submit',
+      traceStepId: 'fake_get_complete',
+      value: { text: 'UK pronunciation /səˌsteɪ.nəˈbɪl.ə.ti/ US pronunciation /səˌsteɪ.nəˈbɪl.ə.t̬i/ definition: the quality of being able to continue.' },
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/dictionary',
+    goal: 'Look up the pronunciation and definition of sustainability',
+    maxSteps: 4,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs[1].evidenceCoverage?.requirements[1]?.status, 'missing');
+  assert.equal(planner.inputs[3].evidenceCoverage?.status, 'ready');
+});
+
+test('V2AgentLoop replans when done output explicitly reports an unfinished result', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const obs = makeObservation('obs_flights', {
+    refs: [
+      makeRef({
+        refId: 'ref_price',
+        role: 'text',
+        name: 'Lowest price: $412 round-trip',
+        text: 'Lowest price: $412 round-trip',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+  const harness = new FakeHarness([obs, obs]);
+  const planner = new FakePlanner([
+    {
+      done: true,
+      val: 'The search has not been executed yet, so the lowest price option is not currently available.',
+    },
+    { done: true, val: 'The lowest round-trip price is 412 USD.' },
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => new FakeDispatcher(),
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/flights',
+    goal: 'Find the lowest round-trip flight price',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'The lowest round-trip price is 412 USD.');
+  assert.equal(result.metrics.plannerCalls, 2);
+  assert.deepEqual(planner.inputs[1].answerFeedback?.missingDetails, ['incomplete_answer']);
 });
 
 test('V2AgentLoop replans when done output omits a pronunciation variant present in evidence', async () => {
@@ -583,6 +764,43 @@ test('V2AgentLoop executes planner plan and feeds runtime evidence into next pla
   assert.equal(dispatcher.steps?.[0].ref, 'ref_submit');
   assert.equal(planner.inputs[1].lastResult?.kind, 'click');
   assert.equal(planner.inputs[1].transition?.transitionClass, 'structural_local');
+  assert.equal(planner.inputs[1].lineage?.totalSteps, 1);
+  assert.deepEqual(planner.inputs[1].lineage?.steps.map(step => step.stepId), ['tool_1']);
+  assert.equal(planner.inputs[1].lineage?.steps[0].strength, 'moderate');
+});
+
+test('V2AgentLoop retries an incompatible type through the real planner client before dispatch', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const { V2PlannerClient } = await import('../../../src/v2/planner/V2PlannerClient');
+  const providerTexts = [
+    '{"plan":[{"tool":"type","ref":"ref_submit","text":"hello"}],"confidence":"high"}',
+    '{"plan":[{"tool":"click","ref":"ref_submit"}],"confidence":"medium"}',
+    '{"done":true,"val":"Clicked"}',
+  ];
+  const planner = new V2PlannerClient({
+    provider: async () => ({
+      text: providerTexts.shift() ?? '{"escalate":"dead_end","reason":"missing fixture output"}',
+      inputTokens: 5,
+      outputTokens: 3,
+    }),
+  });
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Clicked');
+  assert.deepEqual(dispatcher.steps, [{ tool: 'click', ref: 'ref_submit' }]);
+  assert.equal(providerTexts.length, 0);
 });
 
 test('V2AgentLoop interrupts a mini-plan after a mutating transition before executing stale follow-up refs', async () => {
@@ -757,6 +975,227 @@ test('V2AgentLoop feeds failed runtime evidence into the next planner input', as
   assert.ok(planner.inputs[1].uncertainty.signals.includes('failure:target_blocked'));
   assert.equal(planner.inputs[1].deadState?.deadState, true);
   assert.ok(planner.inputs[1].deadState?.reasons.includes('high_uncertainty'));
+});
+
+test('V2AgentLoop clears stale recovery context after a URL or generation change', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'navigate', url: 'https://example.test/next' }], confidence: 'high' },
+    { done: true, val: 'Arrived on the next page' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      error: { code: 'target_blocked', message: 'Target was blocked.', retryable: false },
+      traceStepId: 'failed_click',
+    },
+    {
+      success: true,
+      kind: 'navigate',
+      value: { url: 'https://example.test/next' },
+      evidence: {
+        ...makeEvidence('obs_initial', 'obs_next'),
+        urlChanged: true,
+        generationChanged: true,
+        notes: ['url_changed', 'generation_changed'],
+      },
+      traceStepId: 'navigate_next',
+    },
+  );
+  const harness = new FakeHarness([
+    makeObservation('obs_initial'),
+    makeObservation('obs_next', { url: 'https://example.test/next', generationId: 2 }),
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Navigate to the next page',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs[1].deadState?.deadState, true);
+  assert.equal(planner.inputs[2].deadState, undefined);
+  assert.equal(planner.inputs[2].failures, undefined);
+  assert.equal(planner.inputs[2].uncertainty.signals.includes('failure:target_blocked'), false);
+});
+
+test('V2AgentLoop clears dead-state evidence after meaningful same-page recovery progress', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_dismiss' }], confidence: 'high' },
+    { escalate: 'dead_end', reason: 'bounded recovery evidence received' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      error: {
+        code: 'target_blocked',
+        message: 'Target was blocked.',
+        retryable: false,
+        diagnostics: { candidateCount: 1 },
+      },
+      traceStepId: 'failed_click',
+    },
+    {
+      success: true,
+      kind: 'click',
+      targetRef: 'ref_dismiss',
+      evidence: {
+        ...makeEvidence(),
+        refChanges: {
+          appeared: ['ref_after_dismiss'],
+          disappeared: ['ref_overlay'],
+          weakened: [],
+          preserved: ['ref_dismiss'],
+        },
+        notes: ['overlay dismissed'],
+      },
+      traceStepId: 'dismiss_click',
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Dismiss the blocking overlay',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(planner.inputs[1].deadState?.deadState, true);
+  assert.equal(planner.inputs[2].deadState, undefined);
+});
+
+test('V2AgentLoop replans after a timeout when post-action transition proves progress', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'The page changed and the task is complete.' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: false,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    traceStepId: 'tool_timeout_after_transition',
+    error: {
+      code: 'timeout',
+      message: 'Click exceeded its bounded wait.',
+      retryable: true,
+    },
+    evidence: makeEvidence(),
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit and report the result',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.metrics.toolExecutions, 1);
+  assert.equal(harness.failures.length, 1);
+  assert.equal(harness.failures[0].kind, 'timeout');
+  assert.equal(planner.inputs[1].failures, undefined);
+  assert.equal(planner.inputs[1].deadState, undefined);
+  assert.ok(planner.inputs[1].uncertainty.signals.includes('progress_after_error:timeout'));
+  assert.equal(planner.inputs[1].lastResult?.error?.code, 'timeout');
+  assert.equal(planner.inputs[1].transition?.strength, 'moderate');
+});
+
+test('V2AgentLoop keeps a timeout without transition on the failure path', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { escalate: 'dead_end', reason: 'timeout requires recovery' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: false,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    traceStepId: 'tool_timeout_without_transition',
+    error: {
+      code: 'timeout',
+      message: 'Click exceeded its bounded wait.',
+      retryable: true,
+    },
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(planner.inputs[1].failures?.[0].kind, 'timeout');
+  assert.equal(planner.inputs[1].uncertainty.signals.includes('progress_after_error:timeout'), false);
+});
+
+test('V2AgentLoop does not reconcile target blockers with transition evidence', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { escalate: 'dead_end', reason: 'blocked target requires recovery' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: false,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    traceStepId: 'tool_blocked_with_transition',
+    error: {
+      code: 'target_blocked',
+      message: 'Target is covered by another element.',
+      retryable: false,
+    },
+    evidence: makeEvidence(),
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(planner.inputs[1].failures?.[0].kind, 'target_blocked');
+  assert.equal(planner.inputs[1].uncertainty.signals.includes('progress_after_error:target_blocked'), false);
 });
 
 test('V2AgentLoop feeds repeated no-progress mutation evidence into the next planner input', async () => {
@@ -1247,6 +1686,53 @@ test('V2AgentLoop emits repeated no-progress signal for same-ref structural_loca
   assert.ok(planner.inputs[2].uncertainty.signals.includes('repeated_no_progress_transition:click:ref_compute:2'));
 });
 
+test('V2AgentLoop retains no-progress memory across same-url generation resets without ref changes', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'navigate', url: 'https://example.test/form' }], confidence: 'high' },
+    { plan: [{ tool: 'navigate', url: 'https://example.test/form' }], confidence: 'high' },
+    { plan: [{ tool: 'navigate', url: 'https://example.test/form' }], confidence: 'high' },
+    { done: true, val: 'Recovered after reload loop' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'navigate',
+    value: { url: 'https://example.test/form' },
+    evidence: {
+      beforeObservationId: 'obs_before',
+      afterObservationId: 'obs_after',
+      transitionClass: 'hard_reset',
+      strength: 'strong',
+      generationChanged: true,
+      urlChanged: false,
+      refChanges: {
+        appeared: [],
+        disappeared: [],
+        weakened: [],
+        preserved: [],
+      },
+      notes: ['generation_changed'],
+    },
+    traceStepId: 'tool_reload',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read the visible text',
+    maxSteps: 4,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(dispatcher.steps?.length, 3);
+  assert.ok(planner.inputs[3].uncertainty.signals.includes('repeated_no_progress_transition:navigate:global:3'));
+});
+
 test('V2AgentLoop does not emit no-progress signal for repeated strong local mutations', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([
@@ -1368,45 +1854,6 @@ test('V2AgentLoop preserves planner escalation reason in failureReason', async (
   );
 });
 
-test('V2AgentLoop records compact planner telemetry without changing planner input', async () => {
-  const { V2AgentLoop } = await loadAgentLoopModule();
-  const harness = new FakeHarness();
-  const planner = new FakePlanner([{ plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' }, { done: true, val: 'Clicked' }]);
-  const dispatcher = new FakeDispatcher();
-  const loop = new V2AgentLoop({
-    harnessFactory: () => harness,
-    plannerClient: planner,
-    dispatcherFactory: () => dispatcher,
-  });
-
-  const result = await loop.run({
-    url: 'https://example.test/form',
-    goal: 'Click submit',
-    maxSteps: 3,
-  });
-
-  assert.equal(result.success, true);
-  assert.equal(harness.plannerInputs.length, 2);
-  assert.equal(harness.compactPlannerViews.length, 2);
-  assert.equal(harness.compactPlannerViews[0].episodeId, harness.plannerInputs[0].episodeId);
-
-  const firstPayload = harness.compactPlannerViews[0].payload as {
-    version?: string;
-    stats?: { originalBytes?: number; compactBytes?: number; reductionRatio?: number };
-    coverage?: { plannedRefs?: string[]; actionRefCoverage?: number };
-    view?: { version?: string; actions?: Array<{ refId: string }> };
-  };
-
-  assert.equal(firstPayload.version, 'compact_planner_telemetry.v1');
-  assert.equal(firstPayload.view?.version, 'compact_planner_view.v1');
-  assert.ok((firstPayload.stats?.originalBytes ?? 0) > 0);
-  assert.ok((firstPayload.stats?.compactBytes ?? 0) > 0);
-  assert.ok((firstPayload.stats?.reductionRatio ?? 1) < 1);
-  assert.deepEqual(firstPayload.coverage?.plannedRefs, ['ref_submit']);
-  assert.equal(firstPayload.coverage?.actionRefCoverage, 1);
-  assert.deepEqual(planner.inputs[0], harness.plannerInputs[0].input);
-});
-
 test('V2AgentLoop routes through default planner when plannerMode is undefined or current', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const harness = new FakeHarness();
@@ -1421,7 +1868,6 @@ test('V2AgentLoop routes through default planner when plannerMode is undefined o
     url: 'https://example.test/form',
     goal: 'Click submit',
     maxSteps: 1,
-    plannerMode: 'current',
   });
 
   assert.equal(result.success, true);
@@ -1429,21 +1875,22 @@ test('V2AgentLoop routes through default planner when plannerMode is undefined o
   assert.equal(planner.inputs.length, 1);
 });
 
-test('V2AgentLoop routes through compact client and returns ineligible when first ref is not represented', async () => {
+test('V2AgentLoop records provider pacing separately from provider latency', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const harness = new FakeHarness();
-
   const loop = new V2AgentLoop({
     harnessFactory: () => harness,
     plannerClient: {
-      call: async () => {
-        throw Object.assign(new Error('compact_planner_input_ineligible'), {
-          code: 'COMPACT_PLANNER_INPUT_INELIGIBLE',
-          inputTokens: 0,
-          outputTokens: 0,
-          durationMs: 5
-        });
-      }
+      call: async input => {
+        input.onPacingWait?.(37);
+        return {
+          output: { done: true, val: 'Pacing recorded' },
+          rawText: '{"done":true,"val":"Pacing recorded"}',
+          inputTokens: 1,
+          outputTokens: 1,
+          durationMs: 1,
+        };
+      },
     },
     dispatcherFactory: () => new FakeDispatcher(),
   });
@@ -1452,76 +1899,11 @@ test('V2AgentLoop routes through compact client and returns ineligible when firs
     url: 'https://example.test/form',
     goal: 'Click submit',
     maxSteps: 1,
-    plannerMode: 'compact_enforced',
   });
 
-  assert.equal(result.success, false);
-  assert.equal(result.failureReason, 'compact_planner_input_ineligible');
-});
-
-test('V2AgentLoop routes through compact client and succeeds when mock provider resolves successfully', async () => {
-  const { V2AgentLoop } = await loadAgentLoopModule();
-
-  // Create a custom observation with a clickable ref
-  const customRef = makeRef({ refId: 'ref_submit', name: 'Submit Button' });
-  const harness = new FakeHarness([
-    makeObservation('obs_initial', {
-      refs: [customRef]
-    })
-  ]);
-
-  const loop = new V2AgentLoop({
-    harnessFactory: () => harness,
-    dispatcherFactory: () => new FakeDispatcher(),
-  });
-
-  // Mock global fetch to return a valid compact plan
-  const originalFetch = globalThis.fetch;
-  const originalEnv = { ...process.env };
-  process.env.GEMINI_API_KEY = 'mock-key';
-  process.env.BROWSEGENT_GEMINI_RETRIES = '1';
-
-  globalThis.fetch = async (url, options) => {
-    return {
-      ok: true,
-      status: 200,
-      json: async () => ({
-        candidates: [
-          {
-            content: {
-              parts: [
-                { text: JSON.stringify({ done: true, val: 'Compact Mode Succeeds' }) }
-              ]
-            }
-          }
-        ],
-        usageMetadata: {
-          promptTokenCount: 10,
-          candidatesTokenCount: 20
-        }
-      })
-    } as any;
-  };
-
-  try {
-    const result = await loop.run({
-      url: 'https://example.test/form',
-      goal: 'Click submit',
-      maxSteps: 1,
-      plannerMode: 'compact_enforced',
-    });
-
-    assert.equal(result.success, true);
-    assert.equal(result.value, 'Compact Mode Succeeds');
-    assert.equal(result.metrics.inputTokens, 10);
-    assert.equal(result.metrics.outputTokens, 20);
-    assert.equal(harness.plannerInputs.length, 2);
-    assert.equal((harness.plannerInputs[0].input as any).version, 'v2.planner_input.v2');
-    assert.equal((harness.plannerInputs[1].input as any).version, 'compact_shadow_input.v1');
-  } finally {
-    globalThis.fetch = originalFetch;
-    process.env = originalEnv;
-  }
+  assert.equal(result.success, true);
+  assert.equal(harness.latencySummary?.totals.provider_pacing_wait, 37);
+  assert.ok((harness.latencySummary?.totals.provider ?? 0) >= 0);
 });
 
 test('V2AgentLoop hard-blocks after 3 identical search_page actions', async () => {
@@ -1561,6 +1943,167 @@ test('V2AgentLoop hard-blocks after 3 identical search_page actions', async () =
   assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
   assert.equal(planner.inputs[4].lastResult?.error?.retryable, true);
   // The dispatcher should only have been called 3 times (4th was blocked before dispatch)
+  assert.equal(dispatcher.steps?.length, 3);
+});
+
+test('V2AgentLoop hard-blocks repeated press when the runtime result omits targetRef and transition evidence', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'press', ref: 'ref_submit', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_submit', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_submit', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_submit', key: 'Enter' }], confidence: 'high' },
+    { done: true, val: 'Gave up' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'press',
+    value: { key: 'Enter' },
+    traceStepId: 'tool_press',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Submit the form',
+    maxSteps: 5,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Gave up');
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+  assert.equal(dispatcher.steps?.length, 3);
+});
+
+test('V2AgentLoop hard-blocks an identical repeated type value', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'same value' }], confidence: 'high' },
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'same value' }], confidence: 'high' },
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'same value' }], confidence: 'high' },
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'same value' }], confidence: 'high' },
+    { done: true, val: 'Gave up' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'type',
+    targetRef: 'ref_submit',
+    value: { inputValue: 'same value' },
+    traceStepId: 'tool_type',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Fill the form field',
+    maxSteps: 5,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Gave up');
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+  assert.equal(dispatcher.steps?.length, 3);
+});
+
+test('V2AgentLoop hard-blocks no-progress actions when refs churn around one stable target identity', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const targetId = 'target_shared';
+  const observations = [
+    makeObservation('obs_initial', { refs: [makeRef({ refId: 'ref_a', targetId })] }),
+    makeObservation('obs_after_a', { refs: [makeRef({ refId: 'ref_b', targetId })] }),
+    makeObservation('obs_after_b', { refs: [makeRef({ refId: 'ref_c', targetId })] }),
+    makeObservation('obs_after_c', { refs: [makeRef({ refId: 'ref_d', targetId })] }),
+  ];
+  class RotatingHarness extends FakeHarness {
+    private cursor = 0;
+
+    override async observe(): Promise<BrowserObservation> {
+      return this.observations[Math.min(++this.cursor, this.observations.length - 1)];
+    }
+  }
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_a' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_b' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_c' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_d' }], confidence: 'high' },
+    { done: true, val: 'Gave up' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'click',
+    traceStepId: 'tool_click',
+  };
+  const harness = new RotatingHarness(observations);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Submit the form',
+    maxSteps: 5,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+  assert.equal(dispatcher.steps?.length, 3);
+});
+
+test('V2AgentLoop pivots after 3 no-progress actions using the same tool across ref churn', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const observations = [
+    makeObservation('obs_initial', {
+      refs: [
+        makeRef({ refId: 'ref_a', targetId: 'target_a' }),
+        makeRef({ refId: 'ref_b', targetId: 'target_b' }),
+        makeRef({ refId: 'ref_c', targetId: 'target_c' }),
+        makeRef({ refId: 'ref_d', targetId: 'target_d' }),
+      ],
+    }),
+  ];
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'press', ref: 'ref_a', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_b', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_c', key: 'Enter' }], confidence: 'high' },
+    { plan: [{ tool: 'press', ref: 'ref_d', key: 'Enter' }], confidence: 'high' },
+    { done: true, val: 'Changed strategy' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'press',
+    evidence: makeNoProgressEvidence(),
+    traceStepId: 'tool_press',
+  };
+  const harness = new FakeHarness(observations);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Submit the form',
+    maxSteps: 5,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Changed strategy');
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
   assert.equal(dispatcher.steps?.length, 3);
 });
 
@@ -1701,6 +2244,114 @@ test('V2AgentLoop interrupts mini-plan after typing into a combobox', async () =
   assert.deepEqual(dispatcher.steps?.map(step => step.tool), ['type']);
 });
 
+test('V2AgentLoop re-observes before pressing Enter after typing into a combobox', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    {
+      plan: [
+        { tool: 'type', ref: 'ref_destination', text: 'Paris' },
+        { tool: 'press', ref: 'ref_destination', key: 'Enter' },
+      ],
+      confidence: 'high',
+    },
+    // The fresh observation must let the planner choose a visible suggestion.
+    { done: true, val: 'Suggestion selected' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'type',
+    targetRef: 'ref_destination',
+    value: { inputValue: 'Paris' },
+    target: { refId: 'ref_destination', role: 'combobox', name: 'Destination', text: 'Paris' },
+    evidence: makeNoProgressEvidence(),
+    traceStepId: 'tool_type_combobox',
+  });
+  const harness = new FakeHarness([
+    makeObservation('obs_initial', {
+      refs: [makeRef({ refId: 'ref_destination', role: 'combobox', name: 'Destination' })],
+    }),
+    makeObservation('obs_after_type', {
+      refs: [
+        makeRef({ refId: 'ref_destination', role: 'combobox', name: 'Destination', value: 'Paris' }),
+        makeRef({ refId: 'ref_option', role: 'option', name: 'Paris, France', text: 'Paris, France' }),
+      ],
+    }),
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/travel',
+    goal: 'Select Paris as the destination',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.deepEqual(dispatcher.steps?.map(step => step.tool), ['type']);
+  assert.equal(planner.inputs.length, 2);
+});
+
+test('V2AgentLoop preserves suggestion target metadata for task progress history', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    {
+      plan: [{ tool: 'type', ref: 'ref_destination', text: 'Paris' }],
+      confidence: 'high',
+    },
+    { done: true, val: 'Destination remains uncommitted.' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'type',
+    targetRef: 'ref_destination',
+    value: { inputValue: 'Paris' },
+    target: { refId: 'ref_destination', role: 'combobox', name: 'Destination', text: 'Paris' },
+    evidence: makeNoProgressEvidence(),
+    traceStepId: 'tool_type_suggestion',
+  });
+  const harness = new FakeHarness([
+    makeObservation('obs_initial', {
+      refs: [makeRef({
+        refId: 'ref_destination',
+        role: 'combobox',
+        name: 'Destination',
+        ariaAutocomplete: 'list',
+        ariaHasPopup: 'listbox',
+      })],
+    }),
+    makeObservation('obs_after_type', {
+      refs: [makeRef({
+        refId: 'ref_destination',
+        role: 'combobox',
+        name: 'Destination',
+        value: 'Paris',
+        text: 'Paris',
+        ariaAutocomplete: 'list',
+        ariaHasPopup: 'listbox',
+      })],
+    }),
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/travel',
+    goal: 'Find a hotel in Paris',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs[1].taskProgress?.items[0].status, 'observed');
+});
+
 test('V2AgentLoop interrupts mini-plan after type when new refs appeared (dropdown opened)', async () => {
   const { V2AgentLoop } = await loadAgentLoopModule();
   const planner = new FakePlanner([
@@ -1832,4 +2483,1185 @@ test('V2AgentLoop continues mini-plan after type into regular textbox without ne
   // Planner should have been called exactly once for the plan (+ once for done)
   assert.equal(planner.inputs.length, 2);
   assert.equal(result.metrics.toolExecutions, 2);
+});
+
+test('V2AgentLoop validates and rejects navigate step with oversized URL', async () => {
+  const { V2AgentLoop, validatePlannerStep } = await loadAgentLoopModule();
+  
+  // Test the validation function directly
+  const oversizedUrl = 'https://example.test/search?' + 'a'.repeat(2048);
+  const error = validatePlannerStep({ tool: 'navigate', url: oversizedUrl });
+  assert.ok(error);
+  assert.equal(error.code, 'invalid_action_payload');
+  assert.match(error.message, /URL too long/);
+  assert.equal(error.retryable, true);
+
+  // Test that the loop processes this validation failure correctly
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'navigate', url: oversizedUrl }], confidence: 'high' },
+    { done: true, val: 'Fellback' },
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Navigate to oversized URL',
+    maxSteps: 3,
+  });
+
+  assert.equal(planner.inputs.length, 2);
+  const lastResultFeed = planner.inputs[1].lastResult;
+  assert.equal(lastResultFeed?.success, false);
+  assert.equal(lastResultFeed?.error?.code, 'invalid_action_payload');
+  assert.equal(lastResultFeed?.error?.retryable, true);
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Fellback');
+});
+
+test('V2AgentLoop validates and rejects navigate step with malformed URL', async () => {
+  const { V2AgentLoop, validatePlannerStep } = await loadAgentLoopModule();
+  
+  // Test the validation function directly
+  const malformedUrl = 'not-a-valid-url';
+  const error = validatePlannerStep({ tool: 'navigate', url: malformedUrl });
+  assert.ok(error);
+  assert.equal(error.code, 'invalid_action_payload');
+  assert.match(error.message, /Malformed URL/);
+  assert.equal(error.retryable, true);
+
+  // Test that the loop processes this validation failure correctly
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'navigate', url: malformedUrl }], confidence: 'high' },
+    { done: true, val: 'Fellback' },
+  ]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Navigate to malformed URL',
+    maxSteps: 3,
+  });
+
+  assert.equal(planner.inputs.length, 2);
+  const lastResultFeed = planner.inputs[1].lastResult;
+  assert.equal(lastResultFeed?.success, false);
+  assert.equal(lastResultFeed?.error?.code, 'invalid_action_payload');
+  assert.equal(lastResultFeed?.error?.retryable, true);
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Fellback');
+});
+
+test('normalizeAnswerValue helper function tests', async () => {
+  const { normalizeAnswerValue } = await loadAgentLoopModule();
+
+  // 1. Pronunciation goal, value '/kæt/, /kæt/' -> returns 'UK: /kæt/ US: /kæt/'
+  assert.equal(
+    normalizeAnswerValue('/kæt/, /kæt/', 'What is the pronunciation of cat?'),
+    'UK: /kæt/ US: /kæt/'
+  );
+  
+  // Variations with different separators (comma, semicolon, newline) and spacing
+  assert.equal(
+    normalizeAnswerValue('/kæt/;\n/kæt/', 'Find pronunciation of cat'),
+    'UK: /kæt/ US: /kæt/'
+  );
+
+  // 2. Pronunciation goal, value already labeled 'UK: /kæt/ US: /kæt/' -> unchanged
+  assert.equal(
+    normalizeAnswerValue('UK: /kæt/ US: /kæt/', 'What is the pronunciation of cat?'),
+    'UK: /kæt/ US: /kæt/'
+  );
+  assert.equal(
+    normalizeAnswerValue('British: /kæt/ American: /kæt/', 'pronunc'),
+    'British: /kæt/ American: /kæt/'
+  );
+
+  // 3. Non-pronunciation goal -> value unchanged
+  assert.equal(
+    normalizeAnswerValue('/kæt/, /kæt/', 'What is the meaning of cat?'),
+    '/kæt/, /kæt/'
+  );
+
+  // 4. Pronunciation goal, single IPA '/kæt/' -> unchanged (not a pair)
+  assert.equal(
+    normalizeAnswerValue('/kæt/', 'Find the pronunciation of cat'),
+    '/kæt/'
+  );
+  assert.equal(
+    normalizeAnswerValue('/kæt/ /kæt/ /kæt/', 'pronunciation'),
+    '/kæt/ /kæt/ /kæt/'
+  );
+});
+
+test('V2AgentLoop integration - returns normalized answer in successful completion result', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { done: true, val: '/kæt/, /kæt/' },
+  ]);
+  const harness = new FakeHarness();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Find the pronunciation of cat',
+    maxSteps: 3,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'UK: /kæt/ US: /kæt/');
+});
+
+test('URL guard rejection routes through failure classifier and replans', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const oversizedUrl = 'https://example.test/search?' + 'a'.repeat(3000);
+  const planner = new FakePlanner([
+    // Step 1: navigate with oversized URL (should be rejected by validatePlannerStep),
+    //         followed by a click that should NOT be dispatched (mini-plan breaks)
+    {
+      plan: [
+        { tool: 'navigate', url: oversizedUrl },
+        { tool: 'click', ref: 'ref_submit' },
+      ],
+      confidence: 'high',
+    },
+    // Step 2: planner receives the error and gives up
+    { done: true, val: 'Recovered' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Navigate to oversized URL',
+    maxSteps: 3,
+  });
+
+  // Step 2 (click) was NOT dispatched — mini-plan broke after pre-execution rejection
+  assert.deepEqual(dispatcher.steps?.map(step => step.tool), []);
+
+  // failureClassifier.classify() was called — harness.failures should have the evidence
+  assert.ok(harness.failures.length >= 1, 'harness.recordFailureEvidence should have been called');
+  assert.equal(harness.failures[0].kind, 'invalid_action_payload');
+
+  // Planner was called again with the error in lastResult (replan happened)
+  assert.equal(planner.inputs.length, 2);
+  assert.equal(planner.inputs[1].lastResult?.success, false);
+  assert.equal(planner.inputs[1].lastResult?.error?.code, 'invalid_action_payload');
+
+  // Failures array is fed into the next planner input
+  assert.ok(planner.inputs[1].failures && planner.inputs[1].failures.length >= 1);
+  assert.equal(planner.inputs[1].failures![0].kind, 'invalid_action_payload');
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Recovered');
+});
+
+test('hard-block rejection routes through failure classifier and replans', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    // Steps 1-3: identical click on ref_submit with no-progress evidence (builds up to hard-block)
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    // Step 4: same click again — this should trigger hard-block (3 identical repeats registered)
+    //         followed by a second click that should NOT be dispatched
+    {
+      plan: [
+        { tool: 'click', ref: 'ref_submit' },
+        { tool: 'click', ref: 'ref_submit' },
+      ],
+      confidence: 'high',
+    },
+    // Step 5: planner receives the blocked error and escalates
+    { done: true, val: 'Changed strategy' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    evidence: makeNoProgressEvidence(),
+    traceStepId: 'tool_click',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit button',
+    maxSteps: 5,
+  });
+
+  // The 4th planner step's second click was NOT dispatched — mini-plan broke
+  // Dispatcher received 3 clicks (steps 1-3), NOT 4
+  assert.equal(dispatcher.steps?.length, 3);
+
+  // failureClassifier.classify() was called with the blocked error
+  assert.ok(harness.failures.length >= 1, 'harness.recordFailureEvidence should have been called');
+
+  // Planner received the blocked error with failure evidence
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+
+  // Failure evidence was recorded and passed to planner
+  assert.ok(planner.inputs[4].failures && planner.inputs[4].failures.length >= 1);
+  assert.equal(planner.inputs[4].failures![planner.inputs[4].failures!.length - 1].kind, 'action_blocked_by_loop_detector');
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Changed strategy');
+});
+
+test('V2AgentLoop hard-blocks repeated persistent mutation failures', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'Changed strategy' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const failedClick: V2ToolResult = {
+    success: false,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    error: {
+      code: 'target_blocked',
+      message: 'blocked',
+      retryable: false,
+    },
+    traceStepId: 'failed_click',
+  };
+  dispatcher.results.push(failedClick, failedClick, failedClick);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit button',
+    maxSteps: 5,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(dispatcher.steps?.length, 2);
+  assert.ok(planner.inputs[2].uncertainty.signals.includes('repeated_persistent_target:target_submit:2'));
+  assert.equal(planner.inputs[4].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+});
+
+test('V2AgentLoop hard-blocks cross-tool persistent mutations on one semantic target', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'Paris' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'Paris' }], confidence: 'high' },
+    { done: true, val: 'Changed target' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_submit',
+      error: {
+        code: 'input_not_applied',
+        message: 'input did not apply',
+        retryable: false,
+      },
+      traceStepId: 'failed_type',
+    },
+    {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      error: {
+        code: 'target_blocked',
+        message: 'target was blocked',
+        retryable: false,
+      },
+      traceStepId: 'failed_click',
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Search for Paris',
+    maxSteps: 4,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Changed target');
+  assert.equal(dispatcher.steps?.length, 2);
+  assert.ok(planner.inputs[2].uncertainty.signals.includes('repeated_persistent_target:target_submit:2'));
+  assert.equal(planner.inputs[3].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+});
+
+test('V2AgentLoop preserves persistent-target blocking across failed local ref churn', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'Paris' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'Paris' }], confidence: 'high' },
+    { done: true, val: 'Changed target' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const failedLocalChurn = {
+    ...makeEvidence(),
+    refChanges: {
+      ...makeEvidence().refChanges,
+      appeared: ['ref_overlay'],
+    },
+  };
+  dispatcher.results.push(
+    {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_submit',
+      error: { code: 'input_not_applied', message: 'input did not apply', retryable: false },
+      evidence: failedLocalChurn,
+      traceStepId: 'failed_type',
+    },
+    {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      error: { code: 'target_blocked', message: 'target was blocked', retryable: false },
+      evidence: failedLocalChurn,
+      traceStepId: 'failed_click',
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Search for Paris',
+    maxSteps: 4,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(dispatcher.steps?.length, 2);
+  assert.ok(planner.inputs[2].uncertainty.signals.includes('repeated_persistent_target:target_submit:2'));
+  assert.equal(planner.inputs[3].lastResult?.error?.code, 'action_blocked_by_loop_detector');
+});
+
+test('V2AgentLoop allows an alternative semantic target after persistent target blocking', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const primaryRef = makeRef({ refId: 'ref_submit', targetId: 'target_submit' });
+  const alternativeRef = makeRef({
+    refId: 'ref_alternative',
+    targetId: 'target_alternative',
+    name: 'Alternative search',
+  });
+  const observations = [
+    makeObservation('obs_initial', { refs: [primaryRef, alternativeRef] }),
+    makeObservation('obs_after_action', { refs: [primaryRef, alternativeRef] }),
+  ];
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'Paris' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_alternative' }], confidence: 'high' },
+    { done: true, val: 'Changed target' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    {
+      success: false,
+      kind: 'type',
+      targetRef: 'ref_submit',
+      error: { code: 'input_not_applied', message: 'input did not apply', retryable: false },
+      traceStepId: 'failed_type',
+    },
+    {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      error: { code: 'target_blocked', message: 'target was blocked', retryable: false },
+      traceStepId: 'failed_click',
+    },
+    {
+      success: true,
+      kind: 'click',
+      targetRef: 'ref_alternative',
+      traceStepId: 'alternative_click',
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(observations),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Search for Paris',
+    maxSteps: 4,
+  });
+
+  assert.equal(result.success, true);
+  assert.deepEqual(dispatcher.steps?.map(step => step.ref), [
+    'ref_submit',
+    'ref_submit',
+    'ref_alternative',
+  ]);
+});
+
+test('V2AgentLoop resets persistent target blocking after an observable page change', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'navigate', url: 'https://example.test/next' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'Recovered after navigation' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(
+    {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      error: { code: 'target_blocked', message: 'target was blocked', retryable: false },
+      traceStepId: 'failed_click_1',
+    },
+    {
+      success: false,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      error: { code: 'target_blocked', message: 'target was blocked', retryable: false },
+      traceStepId: 'failed_click_2',
+    },
+    {
+      success: true,
+      kind: 'navigate',
+      value: { url: 'https://example.test/next' },
+      evidence: { ...makeEvidence(), urlChanged: true },
+      traceStepId: 'navigate_after_block',
+    },
+    {
+      success: true,
+      kind: 'click',
+      targetRef: 'ref_submit',
+      traceStepId: 'click_after_reset',
+    },
+  );
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Click submit after navigation',
+    maxSteps: 5,
+  });
+
+  assert.equal(result.success, true);
+  assert.deepEqual(dispatcher.steps?.map(step => step.tool), ['click', 'click', 'navigate', 'click']);
+  assert.equal(dispatcher.steps?.[3]?.ref, 'ref_submit');
+});
+
+test('pre-execution rejection records progress memory', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const oversizedUrl = 'https://example.test/search?' + 'a'.repeat(3000);
+  const planner = new FakePlanner([
+    // Step 1: navigate with oversized URL — pre-execution rejection
+    { plan: [{ tool: 'navigate', url: oversizedUrl }], confidence: 'high' },
+    // Step 2: planner should receive error and recover
+    { done: true, val: 'Recovered' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Navigate to oversized URL',
+    maxSteps: 3,
+  });
+
+  // The synthetic lastResult should have been fed to the planner
+  assert.equal(planner.inputs[1].lastResult?.success, false);
+  assert.equal(planner.inputs[1].lastResult?.error?.code, 'invalid_action_payload');
+
+  // Failure evidence should be recorded
+  assert.ok(harness.failures.length >= 1);
+
+  // Uncertainty signals should be present (from failure pipeline)
+  assert.ok(planner.inputs[1].uncertainty !== undefined);
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Recovered');
+});
+
+test('V2AgentLoop finalizes successfully when required details are grounded in direct surface observation', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const surfaceObs = makeObservation('obs_dictionary', {
+    refs: [
+      makeRef({
+        refId: 'ref_pron',
+        role: 'text',
+        name: 'UK /ˌser.ənˈdɪp.ə.ti/',
+        text: 'UK /ˌser.ənˈdɪp.ə.ti/',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+      makeRef({
+        refId: 'ref_def',
+        role: 'text',
+        name: 'serendipity definition: finding valuable things by chance',
+        text: 'serendipity definition: finding valuable things by chance',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+
+  const planner = new FakePlanner([
+    {
+      done: true,
+      val: 'Serendipity is pronounced UK /ˌser.ənˈdɪp.ə.ti/. It means finding valuable things by chance.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness([surfaceObs, surfaceObs]),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://dictionary.cambridge.org/dictionary/english/serendipity',
+    goal: 'Find the Cambridge definition and pronunciation for serendipity',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.match(result.value, /UK \/ˌser\.ənˈdɪp\.ə\.ti\//);
+  assert.equal(planner.inputs[0].evidenceCoverage?.status, 'ready');
+  assert.equal(planner.inputs[0].evidenceCoverage?.requirements.length, 2);
+  assert.equal(planner.inputs[0].evidenceCoverage?.requirements[0].status, 'proven');
+  assert.equal(planner.inputs[0].evidenceCoverage?.requirements[1].status, 'proven');
+});
+
+test('V2AgentLoop finalizes successfully when required details are grounded via tool read', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    {
+      done: true,
+      val: 'Serendipity is pronounced UK /ˌser.ənˈdɪp.ə.ti/. Definition: finding good things without looking for them.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'get',
+    targetRef: 'ref_submit',
+    value: { text: 'UK /ˌser.ənˈdɪp.ə.ti/ Definition: finding good things without looking for them.' },
+    traceStepId: 'tool_get_pron',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/serendipity',
+    goal: 'Find the Cambridge definition and pronunciation for serendipity',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.match(result.value, /UK \/ˌser\.ənˈdɪp\.ə\.ti\//);
+  assert.equal(planner.inputs[1].evidenceCoverage?.status, 'ready');
+});
+
+test('V2AgentLoop finalization rejects when required details are missing from both surface and tool reads', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'get', ref: 'ref_submit' }], confidence: 'high' },
+    {
+      done: true,
+      val: 'Serendipity is pronounced UK /ˌser.ənˈdɪp.ə.ti/. Definition: finding good things.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.nextResult = {
+    success: true,
+    kind: 'get',
+    targetRef: 'ref_submit',
+    value: { text: 'Cambridge Dictionary home navigation menu and search bar.' },
+    traceStepId: 'tool_get_irrelevant',
+  };
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/serendipity',
+    goal: 'Find the Cambridge definition and pronunciation for serendipity',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, false);
+  assert.match(result.failureReason ?? '', /answer_contract_failed|missing_evidence/);
+});
+
+test('V2AgentLoop surface provenance dynamically updates on fresh observation and aggregates multi-ref facts', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const step1Obs = makeObservation('obs_initial', {
+    refs: [
+      makeRef({
+        refId: 'ref_search',
+        role: 'searchbox',
+        name: 'Search Google Maps',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+
+  const step2Obs = makeObservation('obs_place_details', {
+    refs: [
+      makeRef({
+        refId: 'ref_address',
+        role: 'text',
+        name: 'Address: Barstow, CA 92311, United States',
+        text: 'Address: Barstow, CA 92311, United States',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+      makeRef({
+        refId: 'ref_hours',
+        role: 'text',
+        name: 'Open 24 hours',
+        text: 'Open 24 hours',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+
+  const harness = new FakeHarness([step1Obs, step2Obs]);
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_search' }], confidence: 'high' },
+    {
+      done: true,
+      val: 'Castle Mountains National Monument is located at Barstow, CA 92311, United States. It is open 24 hours.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://maps.google.com',
+    goal: 'Find basic information for Castle Mountains National Monument on Google Maps',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.match(result.value, /Barstow, CA 92311/);
+  // Step 1: Initial observation had 0 basic info signals -> coverage uncertain
+  assert.equal(planner.inputs[0].evidenceCoverage?.status, 'uncertain');
+  // Step 2: Fresh observation with 2 distinct surface refs -> coverage ready with proven basic info!
+  assert.equal(planner.inputs[1].evidenceCoverage?.status, 'ready');
+  assert.equal(planner.inputs[1].evidenceCoverage?.requirements[0].status, 'proven');
+});
+
+test('V2AgentLoop finalizes successfully when ranking evidence is grounded on visible surface without tool read', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const obs = makeObservation('obs_arxiv', {
+    refs: [
+      makeRef({
+        refId: 'ref_result_1',
+        role: 'text',
+        name: '#1 Result: Quantum Error Correction Architecture',
+        text: '#1 Result: Quantum Error Correction Architecture',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+      makeRef({
+        refId: 'ref_result_2',
+        role: 'text',
+        name: 'Top 10 preprints in quantum computing',
+        text: 'Top 10 preprints in quantum computing',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+
+  const harness = new FakeHarness([obs]);
+  const planner = new FakePlanner([
+    {
+      done: true,
+      val: 'The top result for quantum computing is #1 Quantum Error Correction Architecture.',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://arxiv.org',
+    goal: 'Find latest preprints about quantum computing on arXiv and report the top results',
+    maxSteps: 2,
+  });
+
+  assert.equal(result.success, true);
+  assert.match(result.value, /Quantum Error Correction Architecture/);
+});
+
+test('V2AgentLoop forwards relation-bound ranking facts to the next planner call', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const obs = makeObservation('obs_github_ranked', {
+    url: 'https://github.com/search?q=climate&s=stars&o=desc',
+    refs: [
+      makeRef({
+        refId: 'ref_repo_one',
+        role: 'link',
+        name: 'owner/repo-one',
+        text: 'owner/repo-one',
+        selectorCandidates: ['a[href="/owner/repo-one"]'],
+        box: { x: 100, y: 100, width: 200, height: 30 },
+      }),
+      makeRef({
+        refId: 'ref_stars_one',
+        role: 'text',
+        name: '73 stars',
+        text: '73 stars',
+        box: { x: 100, y: 140, width: 50, height: 20 },
+      }),
+    ],
+  });
+  const harness = new FakeHarness([obs]);
+  const planner = new FakePlanner([{
+    done: true,
+    val: 'The project with the most stars is owner/repo-one with 73 stars.',
+  }]);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => new FakeDispatcher(),
+  });
+
+  const result = await loop.run({
+    url: obs.url,
+    goal: 'Find the project with the most stars on GitHub.',
+    maxSteps: 1,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(planner.inputs[0].evidenceSnapshot?.cards[0]?.entity, 'owner/repo-one');
+  assert.equal(planner.inputs[0].evidenceSnapshot?.cards[0]?.provenRank, 1);
+  assert.equal(planner.inputs[0].evidenceSnapshot?.cards[0]?.metrics.stars, 73);
+});
+
+test('V2AgentLoop replans when surface contains only control-only ranking labels or isolated IDs', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const obs = makeObservation('obs_github_controls', {
+    refs: [
+      makeRef({
+        refId: 'ref_sort',
+        role: 'combobox',
+        name: 'Sort by: Most stars',
+        text: 'Sort by: Most stars',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+      makeRef({
+        refId: 'ref_arxiv_id',
+        role: 'text',
+        name: 'arXiv:2608.24832',
+        text: 'arXiv:2608.24832',
+        visibility: 'visible',
+        actionability: 'ready',
+      }),
+    ],
+  });
+
+  const harness = new FakeHarness([obs, obs]);
+  const planner = new FakePlanner([
+    {
+      done: true,
+      val: 'The top project is arXiv:2608.24832.',
+    },
+    {
+      plan: [{ tool: 'click', ref: 'ref_sort' }],
+      confidence: 'high',
+    },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://github.com',
+    goal: 'Find trending TypeScript repositories on GitHub and note top stars',
+    maxSteps: 2,
+  });
+
+  // Step 1 done was rejected because surface only had sort controls and isolated IDs
+  // Planner received feedback and continued to step 2
+  assert.equal(planner.inputs.length, 2);
+  assert.ok(planner.inputs[1].answerFeedback);
+  assert.deepEqual(planner.inputs[1].answerFeedback.missingDetails, ['missing_ranking_evidence']);
+});
+test('V2AgentLoop grants exactly one terminal continuation when the budget ends on a newly opened actionable surface', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: true, val: 'Visible answer' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    traceStepId: 'fake_click_surface',
+    evidence: {
+      beforeObservationId: 'obs_initial',
+      afterObservationId: 'obs_after_action',
+      transitionClass: 'structural_local',
+      strength: 'moderate',
+      generationChanged: false,
+      urlChanged: false,
+      refChanges: {
+        appeared: ['ref_calendar_next'],
+        disappeared: [],
+        weakened: [],
+        preserved: ['ref_submit'],
+      },
+      notes: [],
+    },
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read the visible text',
+    maxSteps: 1,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'Visible answer');
+  assert.equal(result.metrics.plannerCalls, 2);
+  assert.equal(result.metrics.terminalContinuations, 1);
+  assert.deepEqual(planner.modes, ['normal', 'normal']);
+});
+
+test('V2AgentLoop does not grant a terminal continuation without a newly opened actionable surface', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    traceStepId: 'fake_click_noop',
+    evidence: makeNoProgressEvidence('obs_initial', 'obs_after_action'),
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read the visible text',
+    maxSteps: 1,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.failureReason, 'v2_max_steps_exhausted');
+  assert.equal(result.metrics.plannerCalls, 1);
+  assert.equal(result.metrics.terminalContinuations, 0);
+});
+
+test('V2AgentLoop caps the terminal continuation at one per run', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const surfaceOpeningClick: V2ToolResult = {
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_submit',
+    target: { refId: 'ref_submit', name: 'Open calendar', text: 'Open calendar', role: 'button' },
+    traceStepId: 'fake_click_surface',
+    evidence: {
+      beforeObservationId: 'obs_initial',
+      afterObservationId: 'obs_after_action',
+      transitionClass: 'structural_local',
+      strength: 'moderate',
+      generationChanged: false,
+      urlChanged: false,
+      refChanges: {
+        appeared: ['ref_calendar_next'],
+        disappeared: [],
+        weakened: [],
+        preserved: ['ref_submit'],
+      },
+      notes: [],
+    },
+  };
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { plan: [{ tool: 'click', ref: 'ref_submit' }], confidence: 'high' },
+    { done: false },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push(surfaceOpeningClick, surfaceOpeningClick);
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Read the visible text',
+    maxSteps: 1,
+  });
+
+  assert.equal(result.metrics.terminalContinuations, 1);
+  assert.equal(result.metrics.plannerCalls, 3); // iteration 1, continuation, finalization
+  assert.deepEqual(planner.modes, ['normal', 'normal', 'finalization']);
+  assert.equal(result.failureReason, 'v2_max_steps_exhausted');
+});
+
+// ---- implicit seek continuation ----
+
+const HI_MONTHS = ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'];
+
+function makeCalendarRefs(monthIndexes: Array<[number, number]>): V2Ref[] {
+  const refs: V2Ref[] = [];
+  let position = 0;
+  for (const [monthIndex, monthCount] of monthIndexes) {
+    for (let day = 1; day <= monthCount; day += 1) {
+      refs.push(makeRef({
+        refId: `ref_cell_${monthIndex}_${day}`,
+        targetId: `target_cell_${monthIndex}_${day}`,
+        role: 'checkbox',
+        name: `गुरुवार, ${day} ${HI_MONTHS[monthIndex]} 2026`,
+        text: String(day),
+        box: {
+          x: 100 + (position % 30) * 40,
+          y: 500 + Math.floor(position / 30) * 40,
+          width: 40,
+          height: 40,
+        },
+      }));
+      position += 1;
+    }
+  }
+  return refs;
+}
+
+function makeCalendarObservation(id: string, monthIndexes: Array<[number, number]>): BrowserObservation {
+  const cellCount = monthIndexes.reduce((sum, [, count]) => sum + count, 0);
+  const maxX = 100 + 29 * 40 + 40;
+  return makeObservation(id, {
+    lang: 'hi',
+    url: 'https://www.example.test/index.html',
+    refs: [
+      ...makeCalendarRefs(monthIndexes),
+      makeRef({
+        refId: 'ref_prev_month',
+        targetId: 'target_prev_month',
+        name: 'पिछले महीने',
+        text: 'पिछले महीने',
+        box: { x: 40, y: 460, width: 30, height: 30 },
+      }),
+      makeRef({
+        refId: 'ref_next_month',
+        targetId: 'target_next_month',
+        name: 'अगले महीने',
+        text: 'अगले महीने',
+        box: { x: maxX + 20, y: 460, width: 30, height: 30 },
+      }),
+    ],
+  });
+}
+
+class SequentialObserveHarness extends FakeHarness {
+  private index = 0;
+  constructor(observations: BrowserObservation[]) {
+    super(observations);
+  }
+  override async observe(): Promise<BrowserObservation> {
+    this.observeCount += 1;
+    this.index = Math.min(this.index + 1, this.observations.length - 1);
+    return this.observations[this.index];
+  }
+  override getCurrentObservation(): BrowserObservation {
+    return this.observations[this.index];
+  }
+}
+
+test('V2AgentLoop extends a manual click on the recommended horizon control with the seek loop', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  // Window advances Sep/Oct -> Oct/Nov -> Nov/Dec where the goal dates live.
+  const observations = [
+    makeCalendarObservation('obs_cal_1', [[8, 30], [9, 31]]),
+    makeCalendarObservation('obs_cal_2', [[9, 31], [10, 30]]),
+    makeCalendarObservation('obs_cal_3', [[10, 30], [11, 31]]),
+  ];
+  const harness = new SequentialObserveHarness(observations);
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'click', ref: 'ref_next_month' }], confidence: 'high' },
+    { done: true, val: 'dates reachable' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'click',
+    targetRef: 'ref_next_month',
+    evidence: makeEvidence('obs_cal_1', 'obs_cal_2'),
+    traceStepId: 'fake_click_nav',
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://www.example.test/index.html',
+    goal: 'Find hotel deals for December 25-26',
+    maxSteps: 3,
+  });
+
+  const seekDispatch = (dispatcher.steps ?? []).find(step => step.tool === 'seek');
+  assert.ok(seekDispatch, 'implicit seek continuation must be dispatched');
+  assert.equal(seekDispatch.ref, 'ref_next_month');
+  assert.equal(result.metrics.toolExecutions, 2);
+});
+
+test('V2AgentLoop refuses a same-URL navigation that follows a successful type', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const harness = new FakeHarness();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'type', ref: 'ref_submit', text: 'typed value' }], confidence: 'high' },
+    { plan: [{ tool: 'navigate', url: 'https://example.test/form/' }], confidence: 'high' },
+    { done: true, val: 'stayed on page' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'type',
+    targetRef: 'ref_submit',
+    value: { inputValue: 'typed value' },
+    evidence: makeEvidence('obs_initial', 'obs_after_action'),
+    traceStepId: 'fake_type',
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => harness,
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  const result = await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Fill the form without reloading',
+    maxSteps: 4,
+  });
+
+  const navDispatch = (dispatcher.steps ?? []).find(step => step.tool === 'navigate');
+  assert.equal(navDispatch, undefined, 'the destructive same-URL reset must be refused pre-dispatch');
+  assert.equal(result.success, true);
+  assert.equal(result.value, 'stayed on page');
+});
+
+test('V2AgentLoop delivers the no_op_navigation signal to the next planner input', async () => {
+  const { V2AgentLoop } = await loadAgentLoopModule();
+  const planner = new FakePlanner([
+    { plan: [{ tool: 'navigate', url: 'https://other.example.test/landing' }], confidence: 'high' },
+    { done: true, val: 'acknowledged reload' },
+  ]);
+  const dispatcher = new FakeDispatcher();
+  dispatcher.results.push({
+    success: true,
+    kind: 'navigate',
+    value: { url: 'https://example.test/form' },
+    evidence: {
+      ...makeEvidence('obs_initial', 'obs_after_action'),
+      urlChanged: false,
+      generationChanged: true,
+      notes: ['generation_changed'],
+    },
+    traceStepId: 'reload_same_url',
+  });
+  const loop = new V2AgentLoop({
+    harnessFactory: () => new FakeHarness(),
+    plannerClient: planner,
+    dispatcherFactory: () => dispatcher,
+  });
+
+  await loop.run({
+    url: 'https://example.test/form',
+    goal: 'Continue the task',
+    maxSteps: 3,
+  });
+
+  assert.ok(
+    planner.inputs[1].uncertainty.signals.includes('no_op_navigation'),
+    'the same-URL reload must surface no_op_navigation to the planner',
+  );
 });

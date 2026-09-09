@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 
-import { countTokens } from '../brain1/serializer';
+import { countTokens } from '../utils/tokens';
 import { getRuntimeConfig, resolveLlmSelection, type LlmProvider } from '../config/runtime';
-import { buildGeminiResponseSchema } from '../executor/catalog';
+import { buildGeminiResponseSchema } from './responseSchema';
 import { logger } from '../logger';
 import {
   ProviderBudgetExceededError,
@@ -12,19 +12,44 @@ import {
   recordProviderCall,
   type ProviderFailureType,
 } from './apiBudget';
+import {
+  collectGeminiFailoverKeyPool,
+  createGeminiQuotaKeyRotator,
+  numberedKeyIndex,
+  type GeminiQuotaKeyRotator,
+} from './geminiKeyFailover';
 import { waitForGeminiRequestSlot } from './requestPacer';
 
 export interface ProviderResult {
   text: string;
   inputTokens: number;
   outputTokens: number;
+  /** Tokens the provider reported as served from its prompt cache, if it
+   *  reports one at all. Gemini: usageMetadata.cachedContentTokenCount;
+   *  OpenRouter: usage.prompt_tokens_details.cached_tokens. Undefined means
+   *  the provider sent no cache field — it is NOT evidence of zero caching. */
+  cachedInputTokens?: number;
 }
 
 export interface ProviderCallOptions {
   responseSchema?: Record<string, unknown>;
+  onPacingWait?: (durationMs: number) => void;
+  /** Omit the Gemini JSON response schema and mime type: for callers that
+   *  need free-form text output (e.g. the benchmark result judge). */
+  plainTextResponse?: boolean;
 }
 
 export function detectProvider(model: string): LlmProvider {
+  if (
+    model.startsWith('openrouter/') ||
+    model.startsWith('stealth/') ||
+    model.startsWith('ox/') ||
+    model.startsWith('ox-') ||
+    model.startsWith('anthropic/') ||
+    model.startsWith('meta-llama/') ||
+    model.startsWith('deepseek/') ||
+    model.startsWith('minimax/')
+  ) return 'openrouter';
   if (model.startsWith('gemini') || model.startsWith('google/gemini')) return 'gemini';
   if (model.startsWith('cerebras/') || model.startsWith('qwen')) return 'cerebras';
   if (model.startsWith('ollama/')) return 'ollama';
@@ -44,6 +69,8 @@ export async function callProvider(
   const selection = resolveLlmSelection(modelOverride);
 
   switch (selection.provider) {
+    case 'openrouter':
+      return callOpenRouter(system, user, selection.model, options);
     case 'gemini':
       return callGemini(system, user, selection.model, options);
     case 'cerebras':
@@ -99,8 +126,10 @@ async function callGemini(system: string, user: string, model: string, options: 
   const startedAt = Date.now();
   const estimatedInputTokens = estimateProviderInputTokens(system, user);
   const keyMetadata = readActiveGeminiKeyMetadata();
-  const apiKey = getRuntimeConfig().llm.geminiApiKey;
+  let apiKey = getRuntimeConfig().llm.geminiApiKey;
   if (!apiKey) throw new Error('GEMINI_API_KEY not set in .env');
+  let activeKeyEnvName = keyMetadata?.envName;
+  let activeKeyIndex = keyMetadata?.keyIndex;
 
   try {
     assertProviderInputWithinBudget({
@@ -109,41 +138,61 @@ async function callGemini(system: string, user: string, model: string, options: 
       inputTokens: estimatedInputTokens,
     });
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
     const responseSchema = options.responseSchema ?? buildGeminiResponseSchema();
     const body = JSON.stringify({
       system_instruction: { parts: [{ text: system }] },
       contents: [{ parts: [{ text: user }] }],
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 1024,
-        responseMimeType: 'application/json',
-        responseJsonSchema: responseSchema,
-      },
+      generationConfig: options.plainTextResponse === true
+        ? {
+            temperature: 0.1,
+            maxOutputTokens: 1024,
+          }
+        : {
+            temperature: 0.1,
+            maxOutputTokens: 1024,
+            responseMimeType: 'application/json',
+            responseJsonSchema: responseSchema,
+          },
     });
 
-    const retries = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRIES', 6);
+    const retries = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRIES', 11);
     const retryBaseMs = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRY_BASE_MS', 4000);
-    const retryMaxMs = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRY_MAX_MS', 45000);
+    const retryMaxMs = readPositiveIntEnv('BROWSEGENT_GEMINI_RETRY_MAX_MS', 30000);
     const retryCodes = new Set([429, 500, 502, 503]);
 
     for (let attempt = 1; attempt <= retries; attempt++) {
-      await waitForGeminiRequestSlot();
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-      });
+      const pacingWaitMs = await waitForGeminiRequestSlot();
+      if (pacingWaitMs > 0) options.onPacingWait?.(pacingWaitMs);
+      let response: Response;
+      try {
+        response = await fetch(`${url}?key=${encodeURIComponent(apiKey)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+        });
+      } catch (fetchError) {
+        if (isTransientNetworkError(fetchError) && attempt < retries) {
+          const wait = Math.min(retryMaxMs, retryBaseMs * Math.pow(2, attempt - 1));
+          logger.warn('providers', `Gemini network error retry ${attempt}/${retries} in ${wait}ms: ${fetchError}`);
+          await new Promise(resolve => setTimeout(resolve, wait));
+          continue;
+        }
+        throw fetchError;
+      }
 
       if (response.ok) {
         const data = await response.json() as {
           candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-          usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+          usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; cachedContentTokenCount?: number };
         };
         const result = {
           text: data.candidates?.[0]?.content?.parts?.[0]?.text ?? '',
           inputTokens: data.usageMetadata?.promptTokenCount ?? estimatedInputTokens,
           outputTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
+          ...(data.usageMetadata?.cachedContentTokenCount !== undefined
+            ? { cachedInputTokens: data.usageMetadata.cachedContentTokenCount }
+            : {}),
         };
         recordProviderCall({
           provider: 'gemini',
@@ -152,8 +201,8 @@ async function callGemini(system: string, user: string, model: string, options: 
           inputTokens: result.inputTokens,
           outputTokens: result.outputTokens,
           durationMs: Date.now() - startedAt,
-          keyIndex: keyMetadata?.keyIndex,
-          keyEnvName: keyMetadata?.envName,
+          keyIndex: activeKeyIndex,
+          keyEnvName: activeKeyEnvName,
         });
         return result;
       }
@@ -161,6 +210,19 @@ async function callGemini(system: string, user: string, model: string, options: 
       if (response.status === 429) {
         const errorBody = await response.text().catch(() => '');
         if (errorBody.includes('quota') || errorBody.includes('RESOURCE_EXHAUSTED') || errorBody.includes('rate')) {
+          const rotator = getGeminiQuotaKeyRotator();
+          if (rotator.poolSize() > 0) {
+            rotator.markBlocked(apiKey, errorBody);
+            const failover = rotator.nextKey(apiKey);
+            if (failover) {
+              logger.warn('providers', `Gemini quota on active key (${activeKeyEnvName ?? 'GEMINI_API_KEY'}); failing over to ${failover.envName}`);
+              apiKey = failover.value;
+              activeKeyEnvName = failover.envName;
+              activeKeyIndex = numberedKeyIndex(failover.envName);
+              continue;
+            }
+            logger.warn('providers', `Gemini quota exhausted on all ${rotator.poolSize() + 1} configured keys; failing the request`);
+          }
           throw formatGeminiQuotaError();
         }
       }
@@ -186,11 +248,30 @@ async function callGemini(system: string, user: string, model: string, options: 
       inputTokens: estimatedInputTokens,
       outputTokens: 0,
       durationMs: Date.now() - startedAt,
-      keyIndex: keyMetadata?.keyIndex,
-      keyEnvName: keyMetadata?.envName,
+      keyIndex: activeKeyIndex,
+      keyEnvName: activeKeyEnvName,
     });
     throw error;
   }
+}
+
+let geminiQuotaKeyRotator: GeminiQuotaKeyRotator | undefined;
+
+function getGeminiQuotaKeyRotator(): GeminiQuotaKeyRotator {
+  if (!geminiQuotaKeyRotator) {
+    geminiQuotaKeyRotator = createGeminiQuotaKeyRotator(collectGeminiFailoverKeyPool());
+  }
+  return geminiQuotaKeyRotator;
+}
+
+/** Test seam: clears the lazily-initialized failover pool and blocked-key state. */
+export function resetGeminiKeyFailoverState(): void {
+  geminiQuotaKeyRotator = undefined;
+}
+
+function isTransientNetworkError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|socket hang up|network|UND_ERR/i.test(message);
 }
 
 function classifyProviderFailure(error: unknown): ProviderFailureType {
@@ -284,6 +365,94 @@ async function callCerebras(system: string, user: string, model: string): Promis
   }
 
   throw new Error('Cerebras API: all retries exhausted');
+}
+
+async function callOpenRouter(
+  system: string,
+  user: string,
+  model: string,
+  options: ProviderCallOptions = {},
+): Promise<ProviderResult> {
+  const apiKey = getRuntimeConfig().llm.openrouterApiKey ?? process.env.OPENROUTER_API_KEY ?? 'stealth-key';
+  const baseUrl = process.env.OPENROUTER_BASE_URL
+    ?? process.env.BROWSEGENT_OPENROUTER_BASE_URL
+    ?? 'https://openrouter.ai/api/v1';
+
+  const isLocalOrGateway = baseUrl.includes('127.0.0.1') || baseUrl.includes('localhost');
+
+  const retries = readPositiveIntEnv('BROWSEGENT_OPENROUTER_RETRIES', 6);
+  const retryBaseMs = readPositiveIntEnv('BROWSEGENT_OPENROUTER_RETRY_BASE_MS', 3000);
+  const retryMaxMs = readPositiveIntEnv('BROWSEGENT_OPENROUTER_RETRY_MAX_MS', 30000);
+  const retryCodes = new Set([429, 500, 502, 503]);
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    if (!isLocalOrGateway) {
+      const pacingWaitMs = await waitForGeminiRequestSlot();
+      if (pacingWaitMs > 0) options.onPacingWait?.(pacingWaitMs);
+    }
+
+    let response: Response;
+    try {
+      const url = `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
+      const responseFormat = options.responseSchema
+        ? { type: 'json_schema', json_schema: { schema: options.responseSchema } }
+        : { type: 'json_object' };
+
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://browsegent.ai',
+          'X-Title': 'BrowseGent Benchmark',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: user },
+          ],
+          temperature: 0.1,
+          response_format: responseFormat,
+        }),
+      });
+    } catch (fetchError) {
+      if (isTransientNetworkError(fetchError) && attempt < retries) {
+        const wait = Math.min(retryMaxMs, retryBaseMs * Math.pow(2, attempt - 1));
+        logger.warn('providers', `OpenRouter network error retry ${attempt}/${retries} in ${wait}ms: ${fetchError}`);
+        await new Promise(resolve => setTimeout(resolve, wait));
+        continue;
+      }
+      throw fetchError;
+    }
+
+    if (response.ok) {
+      const data = (await response.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } };
+      };
+      const text = data.choices?.[0]?.message?.content ?? '';
+      const cached = data.usage?.prompt_tokens_details?.cached_tokens;
+      return {
+        text,
+        inputTokens: data.usage?.prompt_tokens ?? countTokens(system + user),
+        outputTokens: data.usage?.completion_tokens ?? countTokens(text),
+        ...(cached !== undefined ? { cachedInputTokens: cached } : {}),
+      };
+    }
+
+    if (retryCodes.has(response.status) && attempt < retries) {
+      const wait = Math.min(retryMaxMs, retryBaseMs * Math.pow(2, attempt - 1));
+      logger.warn('providers', `OpenRouter ${response.status} retry ${attempt}/${retries} in ${wait}ms`);
+      await new Promise(resolve => setTimeout(resolve, wait));
+      continue;
+    }
+
+    const errorBody = await response.text().catch(() => '');
+    throw new Error(`OpenRouter API error: ${response.status}${errorBody ? ` - ${errorBody}` : ''}`);
+  }
+
+  throw new Error('OpenRouter API: all retries exhausted');
 }
 
 function readPositiveIntEnv(name: string, fallback: number): number {
