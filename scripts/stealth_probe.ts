@@ -32,7 +32,6 @@ const CHALLENGE_MARKERS = [
   'Attention Required',
 ];
 
-const EXTENSION_PATH = path.resolve('extension');
 const PROFILE_DIR = path.resolve('logs/stealth-probe-profile');
 
 function readFlag(name: string): string | undefined {
@@ -121,12 +120,10 @@ async function makeContext(variant: string, browser: Browser): Promise<BrowserCo
   }
   const headless = variant !== 'hardened-headed';
   fs.mkdirSync(PROFILE_DIR, { recursive: true });
-  const useExtension = variant === 'hardened-headed';
   return chromium.launchPersistentContext(PROFILE_DIR, {
     headless: false,
     args: [
       ...(headless ? ['--headless=new'] : []),
-      ...(useExtension ? [`--load-extension=${EXTENSION_PATH}`, `--disable-extensions-except=${EXTENSION_PATH}`] : []),
       '--disable-blink-features=AutomationControlled',
       '--no-first-run',
       '--no-default-browser-check',

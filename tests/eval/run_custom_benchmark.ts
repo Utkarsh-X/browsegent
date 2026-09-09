@@ -822,7 +822,7 @@ function parseArgs(): CustomRunOptions & { listOnly: boolean } {
   const encIdx = process.argv.indexOf('--enc');
   const buEncPath = encIdx !== -1
     ? process.argv[encIdx + 1]!
-    : path.resolve('browser-use-inspirationbenchmark/benchmark/BU_Bench_V1.enc');
+    : path.resolve('tests/fixtures/BU_Bench_V1.enc');
   const countIdx = process.argv.indexOf('--count');
   const countArg = countIdx !== -1 ? process.argv[countIdx + 1] ?? null : null;
   const seedIdx = process.argv.indexOf('--seed');

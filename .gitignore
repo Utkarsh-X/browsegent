@@ -1,38 +1,58 @@
-node_modules/
-dist/
-logs/
-browser-use-config/
+# -----------------------------------------------------------------------------
+# BrowseGent - Comprehensive Project .gitignore
+# -----------------------------------------------------------------------------
+
+# 1. Environment & API Credentials
 .env
+.env.*
+!.env.example
 *.secrets.*
 configs/secrets*
 *.key
-*.js.map
-extension/.chrome_profile*/
-.DS_Store
-*.local
-coverage/
-browser-use-docs(inspiration-only)/
-skills/
-skills-lock.json
-discussion/
 new-keys.yaml
 
-# Temporary & Runtime files
-.alumnium/
+# 2. Dependencies & Build Artifacts
+node_modules/
+dist/
+coverage/
+*.js.map
+*.tsbuildinfo
+
+# 3. OS & Editor Artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# 4. Runtime Logs, Telemetry & Temporary Files
+logs/
+scratch/
 *.pid
-docs/
+*.local
+browser-use-config/
 
-# WebArena: official dataset download + login storage states stay local;
-# manifests record their sha256 provenance instead.
-tests/benchmark/v2/webarena/source/
-tests/benchmark/v2/webarena/auth/
-
-# Internal stateless AGY adapter and gateway
+# 5. Local Agent Workspaces & Gateways
+.agents/
 .agy-gateway/
 agy-gateway/
+.alumnium/
 .browser-control/
 .claude/
 .freebuff/
 .opencodego-gateway/
-scratch/
 
+# 6. Internal Documentation & Developer Skills
+# (Preserved locally for development; untracked from public remote repository)
+docs/
+skills/
+skills-lock.json
+discussion/
+browser-use-docs(inspiration-only)/
+
+# 7. Benchmark Datasets & Authentication Caches
+# WebArena official dataset downloads and login session states stay local;
+# manifests record their sha256 provenance instead.
+tests/benchmark/v2/webarena/source/
+tests/benchmark/v2/webarena/auth/

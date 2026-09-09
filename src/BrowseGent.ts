@@ -6,7 +6,7 @@ import * as v2AgentLoopFactory from './v2/agent/createV2AgentLoop';
 export interface BrowseGentOptions {
   model?: string;           // default: read from centralized runtime config
   headless?: boolean;       // default: true
-  profileDir?: string;      // default: 'extension/.chrome_profile_api'
+  profileDir?: string;      // default: 'logs/stealth-profile'
   warmup?: boolean;         // default: true
   maxSteps?: number;        // default: 15
   pageWaitMs?: number;      // default: 5000

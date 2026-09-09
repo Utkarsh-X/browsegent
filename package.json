@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc --noEmit",
-    "extension:build": "tsx extension/build.ts",
     "demo": "tsx scripts/record_demo.ts",
     "eval": "tsx tests/eval/run_eval.ts",
     "eval:custom": "tsx tests/eval/run_custom_benchmark.ts",

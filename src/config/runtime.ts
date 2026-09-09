@@ -102,7 +102,7 @@ export function getRuntimeConfig(): RuntimeConfig {
     browser: {
       headless: getEnvBoolean('PHASE6_HEADLESS', true),
       chromePath: readEnv('CHROME_PATH') || undefined,
-      profileDir: getEnvString('BROWSEGENT_PROFILE_DIR', 'extension/.chrome_profile_api'),
+      profileDir: getEnvString('BROWSEGENT_PROFILE_DIR', 'logs/stealth-profile'),
       warmup: getEnvBoolean('BROWSEGENT_WARMUP', true),
       maxSteps: getEnvNumber('BROWSEGENT_MAX_STEPS', 15),
       pageWaitMs: getEnvNumber('BROWSEGENT_PAGE_WAIT_MS', 5000),
