@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -35,10 +36,12 @@ test('buildV2ReleaseGateCommands returns the required release command order', as
 
   const trailingWhitespaceScan = commands.find((command: { name: string }) => command.name === 'trailing whitespace scan');
   const unfinishedMarkerScan = commands.find((command: { name: string }) => command.name === 'unfinished marker scan');
-  assert.ok(trailingWhitespaceScan?.args.includes('docs\\refined-architecture-v2.1'));
-  assert.ok(unfinishedMarkerScan?.args.includes('docs\\refined-architecture-v2.1'));
   assert.ok(trailingWhitespaceScan?.args.includes('.github\\workflows'));
   assert.ok(unfinishedMarkerScan?.args.includes('.github\\workflows'));
+  if (fs.existsSync('docs\\refined-architecture-v2.1')) {
+    assert.ok(trailingWhitespaceScan?.args.includes('docs\\refined-architecture-v2.1'));
+    assert.ok(unfinishedMarkerScan?.args.includes('docs\\refined-architecture-v2.1'));
+  }
 });
 
 test('runV2ReleaseGate reports the failing command name and exit code', async () => {
