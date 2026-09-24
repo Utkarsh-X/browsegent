@@ -1,6 +1,6 @@
-# Balanced30 Threesome Faceoff & Truth Audit Report (v4)
+# Balanced30 Benchmark Runs Comparison Report
 
-A comprehensive comparison evaluating **BrowseGent v2 (Aug 12 - Latest Audit)** against previous runs, **Browser-Use**, and **Alumnium** on the `balanced30` task slice, incorporating the new instrumented run (`webvoyager_lite_1786533152242`) completed on August 12, 2026.
+A comprehensive comparison evaluating **BrowseGent v2** against previous baseline runs, **Browser-Use**, and **Alumnium** on the `balanced30` benchmark slice, tracking execution efficiency, loop recovery, and token consumption.
 
 ---
 

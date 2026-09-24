@@ -56,3 +56,41 @@ browser-use-docs(inspiration-only)/
 # manifests record their sha256 provenance instead.
 tests/benchmark/v2/webarena/source/
 tests/benchmark/v2/webarena/auth/
+
+# 8. Internal Research Documents & Raw Telemetry
+# Only public curated benchmark summaries remain in progress-docs/
+progress-docs/research/
+progress-docs/answer-fidelity-analysis/
+progress-docs/benchmark-data-exports/
+progress-docs/discussion-v3/
+progress-docs/foundational-investigation/
+progress-docs/coordination/
+progress-docs/research-v2/
+progress-docs/*-validation-report.md
+progress-docs/*-forensic-report.md
+progress-docs/*-inventory.md
+progress-docs/ARCHITECTURE-CHARTER.md
+progress-docs/commit-strategy-plan.md
+progress-docs/flash-lite-runs-comparison.md
+progress-docs/browser-control-vs-browsegent-lean-comparison.md
+progress-docs/unlimit-provider-test.md
+progress-docs/2026-08-27-gemini-flash-lite-historical-comparative-report.md
+progress-docs/2026-08-30-correctness-bottleneck-audit.md
+progress-docs/2026-09-03-parallel-work-protocol.md
+progress-docs/2026-09-03-surface-horizon-awareness.md
+progress-docs/CAMPAIGN*
+progress-docs/COORDINATION*
+progress-docs/fresh100*
+PORTFOLIO_DATA_REQUEST*
+
+# 9. Internal Developer Scripts & Probes
+scripts/*.ps1
+scripts/*probe*
+scripts/webvoyager_rejudge*
+scripts/crm_demo*
+scripts/inspect_*
+scripts/replay_*
+scripts/audit/analyze-traces*
+scripts/audit/evaluate-working-set-coverage*
+scripts/audit/replay-rank-evaluation*
+

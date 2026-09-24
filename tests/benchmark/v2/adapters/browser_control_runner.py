@@ -230,7 +230,7 @@ def run_bc_cmd(bc_bin: str, args: list[str], env: dict[str, str], timeout: int =
 def run_browser_control(input_path: Path, output_path: Path) -> int:
     payload = load_json(input_path)
     t0 = time.time()
-    bc_bin = os.environ.get("BROWSER_CONTROL_BIN", r"D:\agent-tools\browser-control\target\x86_64-pc-windows-gnu\release\browser-control.exe")
+    bc_bin = os.environ.get("BROWSER_CONTROL_BIN", "browser-control.exe" if sys.platform == "win32" else "browser-control")
     workspace = os.environ.get("BROWSER_CONTROL_WORKSPACE", str(output_path.parent / ".browser-control"))
     profile_dir = Path(workspace) / "profile"
     profile_dir.mkdir(parents=True, exist_ok=True)

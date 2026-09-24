@@ -92,10 +92,10 @@ sequenceDiagram
 ### 3.1 The Ref System (Operational Identity)
 
 Instead of passing fragile selectors to the planner, BrowseGent v2 tags elements with stable operational identities known as **Refs** (`V2Ref`).
-- **Fingerprinting**: Refs are fingerprinted when first encountered using two mechanisms in [refFingerprint.ts](file:///d:/BrowseGent/src/v2/runtime/refFingerprint.ts):
+- **Fingerprinting**: Refs are fingerprinted when first encountered using two mechanisms in [refFingerprint.ts](src/v2/runtime/refFingerprint.ts):
   - **Hard Fingerprint**: Combines structural selectors, tag names, roles, accessible names, text contents, and Chrome DevTools Protocol (CDP) `backendNodeId`s.
   - **Soft Fingerprint**: Ignores raw DOM selectors and node IDs, relying solely on semantic variables (role, accessible name, text, input type, actionability).
-- **Tracking**: The [RefService.ts](file:///d:/BrowseGent/src/v2/runtime/RefService.ts) maintains a database of all assigned references. During page updates, elements are compared against existing fingerprints. If only a soft match occurs, the reference's `continuityConfidence` degrades, and its state is updated to `weakened`.
+- **Tracking**: The [RefService.ts](src/v2/runtime/RefService.ts) maintains a database of all assigned references. During page updates, elements are compared against existing fingerprints. If only a soft match occurs, the reference's `continuityConfidence` degrades, and its state is updated to `weakened`.
 - **Thresholds**: If an element's confidence drops below `0.7`, the system flags it as weakened. If it disappears completely, it is marked as `stale` or `invalid`, preventing the planner from targeting a dead control.
 
 > [!NOTE]
@@ -106,54 +106,54 @@ Instead of passing fragile selectors to the planner, BrowseGent v2 tags elements
 ### 3.2 The Runtime Substrate
 
 The Substrate layer interacts directly with Playwright and the Chrome DevTools Protocol (CDP) to drive the browser.
-- [BrowserSession.ts](file:///d:/BrowseGent/src/v2/substrate/BrowserSession.ts): Encapsulates low-level page navigation, headless launch profiles, page lifecycle, and window dimensions.
-- [CdpBridge.ts](file:///d:/BrowseGent/src/v2/substrate/CdpBridge.ts): Wraps Playwright's `CDPSession` to send raw CDP commands, bypassing high-level automation wrappers when querying low-level document nodes.
-- [ObservationService.ts](file:///d:/BrowseGent/src/v2/substrate/ObservationService.ts):
+- [BrowserSession.ts](src/v2/substrate/BrowserSession.ts): Encapsulates low-level page navigation, headless launch profiles, page lifecycle, and window dimensions.
+- [CdpBridge.ts](src/v2/substrate/CdpBridge.ts): Wraps Playwright's `CDPSession` to send raw CDP commands, bypassing high-level automation wrappers when querying low-level document nodes.
+- [ObservationService.ts](src/v2/substrate/ObservationService.ts):
   - Injects a DOM-crawling script that gathers all interactive elements, computes their accessible names, roles, bounding boxes, visibility, and actionability.
   - Temporarily tags elements with random runtime markers and resolves their true `backendNodeId` and `frameId` using CDP's `DOM.getDocument` and `DOM.describeNode`.
-- [InputService.ts](file:///d:/BrowseGent/src/v2/substrate/InputService.ts) & [RefResolver.ts](file:///d:/BrowseGent/src/v2/substrate/RefResolver.ts):
+- [InputService.ts](src/v2/substrate/InputService.ts) & [RefResolver.ts](src/v2/substrate/RefResolver.ts):
   - Executes interactions (clicks, keyboard entry, option selections).
   - Resolves ref IDs back to physical locators by testing all recorded selector candidates and evaluating their semantic resemblance using a scoring function (`scoreCandidate`).
   - Implements **pre-action checks**, including center-point pointer interception checking using `document.elementFromPoint`, preventing click failures before they occur.
-  - Automatically translates browser exceptions to structured [errors.ts](file:///d:/BrowseGent/src/v2/runtime/errors.ts) codes (e.g., `target_hidden`, `target_blocked`, `element_detached`).
+  - Automatically translates browser exceptions to structured [errors.ts](src/v2/runtime/errors.ts) codes (e.g., `target_hidden`, `target_blocked`, `element_detached`).
 
 ---
 
 ### 3.3 Continuity & Stabilization
 
 Pages are highly dynamic during user interaction. The Continuity and Stabilization layer ensures that actions are only executed when the browser state is settled.
-- [StabilizationService.ts](file:///d:/BrowseGent/src/v2/runtime/StabilizationService.ts): Waits for the page's `'domcontentloaded'` status, followed by an adjustable quiet window (typically `75ms`) to ensure layout paints and asynchronous JavaScript execution have finished.
-- [TransitionService.ts](file:///d:/BrowseGent/src/v2/runtime/TransitionService.ts): Analyzes page updates by comparing observations before and after an action. It classifies transitions into:
+- [StabilizationService.ts](src/v2/runtime/StabilizationService.ts): Waits for the page's `'domcontentloaded'` status, followed by an adjustable quiet window (typically `75ms`) to ensure layout paints and asynchronous JavaScript execution have finished.
+- [TransitionService.ts](src/v2/runtime/TransitionService.ts): Analyzes page updates by comparing observations before and after an action. It classifies transitions into:
   - `microstate`: Minor layout shifts (e.g., hover effects, style shifts) with no structural element updates.
   - `structural_local`: Elements appeared, disappeared, or weakened, but the URL and page generation index remain identical.
   - `structural_macrostate`: Major page changes, such as full-page navigation, URL updates, or server-side routing events.
-- [ContinuityGraph.ts](file:///d:/BrowseGent/src/v2/graph/ContinuityGraph.ts): Maintains a running snapshot of the DOM topology. It tracks which elements exist, flags their last seen status, maps them to specific physical screen regions, and traces their stability across recorded transitions.
+- [ContinuityGraph.ts](src/v2/graph/ContinuityGraph.ts): Maintains a running snapshot of the DOM topology. It tracks which elements exist, flags their last seen status, maps them to specific physical screen regions, and traces their stability across recorded transitions.
 
 ---
 
 ### 3.4 The Planning Layer
 
 The planning layer presents the LLM with a clean representation of the browser state and guides it to correct errors.
-- [V2PlannerClient.ts](file:///d:/BrowseGent/src/v2/planner/V2PlannerClient.ts): Handles client communications with the LLM. It includes **self-correction mechanisms**: if the planner suggests an action that violates schema rules (such as typing into a non-editable element or targeting an invalid ref), the client catches the validation error and retries. It provides the planner with detailed guidance, listing compatible ref alternatives.
-- [PlannerWorkingSetSelector.ts](file:///d:/BrowseGent/src/v2/planner/PlannerWorkingSetSelector.ts): Performs smart DOM pruning to prevent token bloat.
+- [V2PlannerClient.ts](src/v2/planner/V2PlannerClient.ts): Handles client communications with the LLM. It includes **self-correction mechanisms**: if the planner suggests an action that violates schema rules (such as typing into a non-editable element or targeting an invalid ref), the client catches the validation error and retries. It provides the planner with detailed guidance, listing compatible ref alternatives.
+- [PlannerWorkingSetSelector.ts](src/v2/planner/PlannerWorkingSetSelector.ts): Performs smart DOM pruning to prevent token bloat.
   - Elements are scored based on visibility, actionability, goal keyword relevance, and role matching (e.g., prioritizing links for navigation, inputs for query goals).
   - High-scoring elements are placed in the **Primary Working Set**, while lower-priority elements go into the **Secondary Working Set**.
   - Irrelevant or hidden generic elements with no textual labels are dropped completely.
   - Failed or blocked elements are quarantined (ignored) if they repeatedly result in loops or failures, forcing the planner to try alternate paths.
-- [PlannerInputComposer.ts](file:///d:/BrowseGent/src/v2/planner/PlannerInputComposer.ts): Builds the final compressed [types.ts](file:///d:/BrowseGent/src/v2/planner/types.ts) payload sent to the LLM, containing the compressed working set, active failures, current uncertainty levels, and the task's action lineage (history).
+- [PlannerInputComposer.ts](src/v2/planner/PlannerInputComposer.ts): Builds the final compressed [types.ts](src/v2/planner/types.ts) payload sent to the LLM, containing the compressed working set, active failures, current uncertainty levels, and the task's action lineage (history).
 
 ---
 
 ### 3.5 Trace & Auditability
 
 BrowseGent v2 treats audibility and replayability as primary design requirements.
-- [TraceStore.ts](file:///d:/BrowseGent/src/v2/trace/TraceStore.ts): Serializes all run data to disk under a structured directory named after a unique `runId`. It captures:
+- [TraceStore.ts](src/v2/trace/TraceStore.ts): Serializes all run data to disk under a structured directory named after a unique `runId`. It captures:
   - Exact `BrowserObservation` structures.
   - Planner inputs, compact views, and JSON outputs.
   - Transition evidence logs.
   - Continuity graph snapshots.
   - Action steps, execution statuses, and failure reports.
-- [TraceReplayAuditor.ts](file:///d:/BrowseGent/src/v2/trace/TraceReplayAuditor.ts): Reviews trace files to ensure their integrity. It verifies that:
+- [TraceReplayAuditor.ts](src/v2/trace/TraceReplayAuditor.ts): Reviews trace files to ensure their integrity. It verifies that:
   - The runtime operated in the correct agent mode.
   - Observations were successfully recorded.
   - Every mutating step (e.g., click, type) was followed by subsequent observation frames and valid transition evidence.
@@ -165,7 +165,7 @@ BrowseGent v2 treats audibility and replayability as primary design requirements
 
 ### 3.6 V2 Agent Loop Orchestrator
 
-The [V2AgentLoop.ts](file:///d:/BrowseGent/src/v2/agent/V2AgentLoop.ts) brings all the subsystems together in an orchestrator.
+The [V2AgentLoop.ts](src/v2/agent/V2AgentLoop.ts) brings all the subsystems together in an orchestrator.
 
 ```
        ┌──────────────────────────────────────────────────────────┐
@@ -238,15 +238,15 @@ The [V2AgentLoop.ts](file:///d:/BrowseGent/src/v2/agent/V2AgentLoop.ts) brings a
 BrowseGent v2 does not crash or loop indefinitely when page layouts change. It isolates and resolves failures automatically.
 
 ### 4.1 Failure Classification
-When an action fails, the [FailureClassifier.ts](file:///d:/BrowseGent/src/v2/runtime/FailureClassifier.ts) categorizes the error:
+When an action fails, the [FailureClassifier.ts](src/v2/runtime/FailureClassifier.ts) categorizes the error:
 - **Category**: Classifies failures under `target` (obscured, disabled), `continuity` (stale ref, detached element), `navigation`, `timing` (timeouts), or `environment` (CAPTCHA, access blocks).
 - **Persistence**:
   - **Transient**: The action is retryable (e.g., page navigation timeout or temporary load block).
   - **Persistent**: The action is not retryable without plan adjustments (e.g., target is disabled, hidden, or blocked by another element).
 
 ### 4.2 Uncertainty & Dead State Detection
-- [UncertaintySignals.ts](file:///d:/BrowseGent/src/v2/runtime/UncertaintySignals.ts) evaluates the stability of the current environment, checking for weakened refs, consecutive no-progress transitions, empty interaction projections, or CAPTCHA indicators.
-- [DeadStateDetector.ts](file:///d:/BrowseGent/src/v2/runtime/DeadStateDetector.ts) assesses these signals. If a critical blockade is detected, it raises a `dead_state` flag. This halts execution, prevents token-wasting retries, and escalates the issue to the caller with clear diagnostics.
+- [UncertaintySignals.ts](src/v2/runtime/UncertaintySignals.ts) evaluates the stability of the current environment, checking for weakened refs, consecutive no-progress transitions, empty interaction projections, or CAPTCHA indicators.
+- [DeadStateDetector.ts](src/v2/runtime/DeadStateDetector.ts) assesses these signals. If a critical blockade is detected, it raises a `dead_state` flag. This halts execution, prevents token-wasting retries, and escalates the issue to the caller with clear diagnostics.
 
 ### 4.3 Action Quarantining
 If an action on a specific element results in a persistent error or a no-progress loop, the working set selector places that action in quarantine:
@@ -264,9 +264,9 @@ Quarantined actions are removed from the `actionSurface` sent to the planner. Th
 
 ### 5.1 How to Add a New Tool
 To introduce a new browser interaction (such as `hover` or `drag`):
-1. **Define the Tool Action**: Add the tool definition schema to the typescript types in [types.ts](file:///d:/BrowseGent/src/v2/planner/types.ts).
-2. **Implement the Action in the Substrate**: Open [InputService.ts](file:///d:/BrowseGent/src/v2/substrate/InputService.ts) and add the lower-level execution and capability checks.
-3. **Register in Tool Dispatcher**: Update [V2ToolDispatcher.ts](file:///d:/BrowseGent/src/v2/tools/V2ToolDispatcher.ts) to translate the planner action to the substrate method:
+1. **Define the Tool Action**: Add the tool definition schema to the typescript types in [types.ts](src/v2/planner/types.ts).
+2. **Implement the Action in the Substrate**: Open [InputService.ts](src/v2/substrate/InputService.ts) and add the lower-level execution and capability checks.
+3. **Register in Tool Dispatcher**: Update [V2ToolDispatcher.ts](src/v2/tools/V2ToolDispatcher.ts) to translate the planner action to the substrate method:
    ```typescript
    case 'hover':
      return this.dispatchRefTool(step, 'hover', ref => this.runtime.hover(ref));
@@ -298,9 +298,9 @@ If you want to use an alternative inference endpoint:
 
 For easy onboarding, here is where key abstractions reside:
 
-- [/src/v2/agent/](file:///d:/BrowseGent/src/v2/agent/): Outer loop execution orchestrator (`V2AgentLoop.ts`).
-- [/src/v2/substrate/](file:///d:/BrowseGent/src/v2/substrate/): Low-level Playwright and CDP connectors (`BrowserSession.ts`, `CdpBridge.ts`, `InputService.ts`, `ObservationService.ts`).
-- [/src/v2/runtime/](file:///d:/BrowseGent/src/v2/runtime/): Operational reference tracking, stabilization, transitions, and failure classifications.
-- [/src/v2/planner/](file:///d:/BrowseGent/src/v2/planner/): Planner client, input selectors, token compression utilities, and system prompts.
-- [/src/v2/graph/](file:///d:/BrowseGent/src/v2/graph/): Topology tracking and DOM relation structures (`ContinuityGraph.ts`).
-- [/src/v2/trace/](file:///d:/BrowseGent/src/v2/trace/): Offline log stores and trace replay auditors (`TraceStore.ts`, `TraceReplayAuditor.ts`).
+- [/src/v2/agent/](src/v2/agent/): Outer loop execution orchestrator (`V2AgentLoop.ts`).
+- [/src/v2/substrate/](src/v2/substrate/): Low-level Playwright and CDP connectors (`BrowserSession.ts`, `CdpBridge.ts`, `InputService.ts`, `ObservationService.ts`).
+- [/src/v2/runtime/](src/v2/runtime/): Operational reference tracking, stabilization, transitions, and failure classifications.
+- [/src/v2/planner/](src/v2/planner/): Planner client, input selectors, token compression utilities, and system prompts.
+- [/src/v2/graph/](src/v2/graph/): Topology tracking and DOM relation structures (`ContinuityGraph.ts`).
+- [/src/v2/trace/](src/v2/trace/): Offline log stores and trace replay auditors (`TraceStore.ts`, `TraceReplayAuditor.ts`).

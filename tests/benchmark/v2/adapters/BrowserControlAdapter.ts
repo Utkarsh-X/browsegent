@@ -68,7 +68,7 @@ export class BrowserControlAdapter implements BenchmarkAdapter {
       ?? resolve(__dirname, 'browser_control_runner.py');
     this.binPath = options.binPath
       ?? this.env.BROWSER_CONTROL_BIN
-      ?? resolve('D:\\agent-tools\\browser-control\\target\\x86_64-pc-windows-gnu\\release\\browser-control.exe');
+      ?? (process.platform === 'win32' ? 'browser-control.exe' : 'browser-control');
     this.cwd = options.cwd ?? resolve(__dirname, '../../../../');
     this.timeoutMs = options.timeoutMs ?? 180_000;
     this.processRunner = options.processRunner ?? spawnProcess;
